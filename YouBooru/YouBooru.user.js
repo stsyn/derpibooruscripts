@@ -40,7 +40,7 @@
             sd:'random'
         },
 		{
-            name:'Your cat derpibooru',
+            name:'Your cat\'s derpibooru',
             query:'cat || cat lingerie || behaving like a cat',
             sort:'',
             sd:'desc'
