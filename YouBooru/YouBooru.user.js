@@ -5,7 +5,7 @@
 // @include      *://*.trixiebooru.org/
 // @include      *://*.derpibooru.org/
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.0.1
+// @version      0.0.2
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -36,8 +36,8 @@
 		{
             name:'Fresh ponuts every day',
             query:'ponut',
-            sort:'',
-            sd:'random'
+            sort:'random',
+            sd:'desc'
         },
 		{
             name:'Your cat\'s derpibooru',
@@ -76,7 +76,7 @@
 		let c = '';
 		let cc = 'created_at:';
 		for (let i = date.getFullYear() - 1; i>2011; i--)
-			c+=(c===''?'':' || ')+cc+i+'-'+((date.getMonth()+1)<10?('0'+(date.getMonth()+1)):(date.getMonth()+1))+'-'+(date.getDay()<10?('0'+date.getDay()):date.getDay());
+			c+=(c===''?'':' || ')+cc+i+'-'+((date.getMonth()+1)<10?('0'+(date.getMonth()+1)):(date.getMonth()+1))+'-'+(date.getDate()<10?('0'+date.getDate()):date.getDate());
 		return c;
 	}
 
