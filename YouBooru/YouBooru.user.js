@@ -1,9 +1,10 @@
 // ==UserScript==
-// @name         YouBooru
+// @name         YourBooru
 // @namespace    http://tampermonkey.net/
 // @match        *://*.derpiboo.ru/
 // @include      *://*.trixiebooru.org/
 // @include      *://*.derpibooru.org/
+// @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @version      0.0.1
 // @description  Feedz
 // @author       stsyn
