@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.1.0
+// @version      0.1.1
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -120,7 +120,7 @@
 
     function postRun() {
         let date = new Date();
-        for (let i=0; i<feedz.length; i++) feedz[i].saved = parseInt(date.getTime() / 60000);
+        for (let i=0; i<feedz.length; i++) if (feedz[i] != undefined) feedz[i].saved = parseInt(date.getTime() / 60000);
         resizeEverything();
         localStorage._ydb = JSON.stringify(feedz);
     }
