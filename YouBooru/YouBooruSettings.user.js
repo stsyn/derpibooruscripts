@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/settings
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/settings
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.1.0
+// @version      0.1.1
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -32,6 +32,7 @@
     
     function resetCaches() {
         for (let i=0; i<feedz.length; i++) {
+            if (feedz[i] == undefined) continue;
             feedz[i].cachedResp = '';
             feedz[i].saved = 0;
             feedz[i].responsed = 0;
@@ -74,7 +75,7 @@
         x.id = i;
         x.style.width = '6em';
         x.className = 'input';
-        x.addEventListener('input', function() {feedz[this.id].sort = this.sort; write();});
+        x.addEventListener('input', function() {feedz[this.id].sort = this.value; write();});
         l.appendChild(x);
         
         x = document.createElement('span');
@@ -88,7 +89,7 @@
         x.id = i;
         x.style.width = '4em';
         x.className = 'input';
-        x.addEventListener('input', function() {feedz[this.id].sd = this.sd; write();});
+        x.addEventListener('input', function() {feedz[this.id].sd = this.value; write();});
         l.appendChild(x);
         
         x = document.createElement('span');
@@ -102,7 +103,7 @@
         x.id = i;
         x.style.width = '3em';
         x.className = 'input';
-        x.addEventListener('input', function() {feedz[this.id].cache = parseInt(this.cache); write();});
+        x.addEventListener('input', function() {feedz[this.id].cache = parseInt(this.value); write();});
         l.appendChild(x);
         
         x = document.createElement('span');
@@ -128,7 +129,7 @@
         x.id = i;
         x.className = 'input';
         x.style.width = 'calc(100% - 9em)';
-        x.addEventListener('input', function() {feedz[this.id].query = this.query; write();});
+        x.addEventListener('input', function() {feedz[this.id].query = this.value; write();});
         l.appendChild(x);
         
         x = document.createElement('span');
