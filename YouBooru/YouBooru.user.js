@@ -1,11 +1,14 @@
 // ==UserScript==
 // @name         YourBooru
 // @namespace    http://tampermonkey.net/
-// @match        *://*.derpiboo.ru/
-// @include      *://*.trixiebooru.org/
-// @include      *://*.derpibooru.org/
+// @match        *://derpiboo.ru/
+// @include      *://trixiebooru.org/
+// @include      *://derpibooru.org/
+// @match        *://www.derpiboo.ru/
+// @include      *://www.trixiebooru.org/
+// @include      *://www.derpibooru.org/
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.0.2
+// @version      0.0.3
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -36,7 +39,7 @@
 		{
             name:'Fresh ponuts every day',
             query:'ponut',
-            sort:'random',
+            sort:'',
             sd:'desc'
         },
 		{
@@ -123,7 +126,12 @@
 			if (!config.doNotRemoveControls) pc.childNodes[0].getElementsByClassName('media-box__header')[0].style.display = 'none';
 			pc.childNodes[0].getElementsByClassName('media-box__header')[0].style.width = parseInt(mwidth/config.imagesInFeeds-8)+'px';
 			pc.childNodes[0].querySelector('.media-box__content--large .image-container.thumb a img').onload = function() {
-				if ((this.width==1) && (this.height==1)) this.src = '/tagblocked.svg';
+				if ((this.width==1) && (this.height==1)) {
+                    this.src = '/tagblocked.svg';
+                    this.style.position = 'absolute';
+                    this.style.left = '0';
+                    this.style.top = '0';
+                }
 			};
 			pc.childNodes[0].getElementsByClassName('media-box__content--large')[0].style.width = parseInt(mwidth/config.imagesInFeeds-8)+'px';
 			pc.childNodes[0].getElementsByClassName('media-box__content--large')[0].style.height = parseInt(mwidth/config.imagesInFeeds-8)+'px';
@@ -132,7 +140,6 @@
 		r.feed.temp.parentNode.removeChild(r.feed.temp);
     }
 
-	console.log(getYearsQuery());
     var cont = document.getElementsByClassName('column-layout__main')[0];
     for (i=0; i<(config.doNotRemoveWatchList?1:2); i++) cont.childNodes[i].style.display = 'none';
 
