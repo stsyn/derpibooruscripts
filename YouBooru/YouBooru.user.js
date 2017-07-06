@@ -1,14 +1,16 @@
 // ==UserScript==
 // @name         YourBooru
 // @namespace    http://tampermonkey.net/
-// @match        *://derpiboo.ru/
 // @include      *://trixiebooru.org/
 // @include      *://derpibooru.org/
-// @match        *://www.derpiboo.ru/
 // @include      *://www.trixiebooru.org/
 // @include      *://www.derpibooru.org/
+// @include      *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/
+// @include      *://*.orzgs6djmvrg633souxg64th.*.*/
+// @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/
+// @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.0.3
+// @version      0.0.4
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -119,12 +121,15 @@
         r.feed.temp.innerHTML = r.responseText;
 		let pc = r.feed.temp.querySelector('.block__content.js-resizable-media-container');
 		let c = r.feed.container;
-		var mwidth = parseInt(cont.clientWidth) - 14;
+		let mwidth = parseInt(cont.clientWidth) - 14;
+        let twidth = parseInt(mwidth/config.imagesInFeeds-8);
+        console.log(twidth);
 		if (pc === null) c.innerHTML = 'Empty feed';
 		else for (let i=0; i<config.imagesInFeeds; i++) {
 			if (pc.childNodes[0] === null) break;
 			if (!config.doNotRemoveControls) pc.childNodes[0].getElementsByClassName('media-box__header')[0].style.display = 'none';
-			pc.childNodes[0].getElementsByClassName('media-box__header')[0].style.width = parseInt(mwidth/config.imagesInFeeds-8)+'px';
+            pc.childNodes[0].classList.add('_ydb_resizible');
+			pc.childNodes[0].getElementsByClassName('media-box__header')[0].style.width = twidth+'px';
 			pc.childNodes[0].querySelector('.media-box__content--large .image-container.thumb a img').onload = function() {
 				if ((this.width==1) && (this.height==1)) {
                     this.src = '/tagblocked.svg';
@@ -133,14 +138,20 @@
                     this.style.top = '0';
                 }
 			};
-			pc.childNodes[0].getElementsByClassName('media-box__content--large')[0].style.width = parseInt(mwidth/config.imagesInFeeds-8)+'px';
-			pc.childNodes[0].getElementsByClassName('media-box__content--large')[0].style.height = parseInt(mwidth/config.imagesInFeeds-8)+'px';
+			pc.childNodes[0].getElementsByClassName('media-box__content--large')[0].style.width = twidth+'px';
+			pc.childNodes[0].getElementsByClassName('media-box__content--large')[0].style.height = twidth+'px';
+            if (twidth < 240) {
+                pc.childNodes[0].getElementsByClassName('media-box__header')[0].classList.add('media-box__header--small');
+            }
 			c.appendChild(pc.childNodes[0]);
 		}
 		r.feed.temp.parentNode.removeChild(r.feed.temp);
     }
 
     var cont = document.getElementsByClassName('column-layout__main')[0];
+    cont.style.minWidth = 'calc(100% - 338px)';
+    if (cont.childNodes.length == 1) config.hasWatchList = false;
+    else config.hasWatchList = true;
     for (i=0; i<(config.doNotRemoveWatchList?1:2); i++) cont.childNodes[i].style.display = 'none';
 
     for (i=0; i<feedz.length; i++) {
@@ -177,5 +188,20 @@
         getFeed(feedz[i]);
     }
 	
-	if (config.doNotRemoveWatchList) cont.appendChild(cont.childNodes[1]);
+    window.addEventListener("resize", function() {
+		let mwidth = parseInt(cont.clientWidth) - 14;
+        let twidth = parseInt(mwidth/config.imagesInFeeds-8);
+        for (let i=0; i<document.getElementsByClassName('_ydb_resizible').length; i++) {
+			document.getElementsByClassName('_ydb_resizible')[i].getElementsByClassName('media-box__header')[0].style.width = twidth+'px';
+			document.getElementsByClassName('_ydb_resizible')[i].getElementsByClassName('media-box__content--large')[0].style.width = twidth+'px';
+			document.getElementsByClassName('_ydb_resizible')[i].getElementsByClassName('media-box__content--large')[0].style.height = twidth+'px';
+            if (twidth < 240) {
+                document.getElementsByClassName('_ydb_resizible')[i].getElementsByClassName('media-box__header')[0].classList.add('media-box__header--small');
+            }
+            else {
+                document.getElementsByClassName('_ydb_resizible')[i].getElementsByClassName('media-box__header')[0].classList.remove('media-box__header--small');
+            }
+        }
+    });
+	if (config.doNotRemoveWatchList && config.hasWatchList) cont.appendChild(cont.childNodes[1]);
 })();
