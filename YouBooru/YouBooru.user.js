@@ -10,10 +10,11 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.1.1
+// @version      0.1.2
 // @description  Feedz
 // @author       stsyn
 // @grant        none
+// @run-at       document-idle
 // ==/UserScript==
 
 (function() {
@@ -32,7 +33,10 @@
         optimizeLS:true
 	};
 
-	/* Create your own feed (or remove some) here. Fields value... probably it's really easy. Really, just look! */
+	/*
+       Please install YourBooruSettings to adjust feeds in normal way.
+       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
+    */
     var feedz = [
         {
             name:'Hot',
@@ -57,7 +61,7 @@
         },
 		{
             name:'That day in history',
-            query:getYearsQuery(),
+            query:'__ydb_LastYears',
             sort:'score',
             sd:'desc',
             cache:0,
@@ -119,8 +123,6 @@
     }
 
     function postRun() {
-        let date = new Date();
-        for (let i=0; i<feedz.length; i++) if (feedz[i] != undefined) feedz[i].saved = parseInt(date.getTime() / 60000);
         resizeEverything();
         localStorage._ydb = JSON.stringify(feedz);
     }
@@ -135,11 +137,15 @@
 	}
 
     function compileURL(f) {
-        return '/search?q='+encodeURIComponent(f.query.replace(new RegExp(' ','g'),'+')).replace(new RegExp('%2B','g'),'+')+'&sf='+f.sort+'&sd='+f.sd;
+        let tx = f.query;
+        if (f.query == '__ydb_LastYears') tx = getYearsQuery();
+        return '/search?q='+encodeURIComponent(tx.replace(new RegExp(' ','g'),'+')).replace(new RegExp('%2B','g'),'+')+'&sf='+f.sort+'&sd='+f.sd;
     }
 
     function compileJSONURL(f) {
-        return '/search.json?q='+encodeURIComponent(f.query.replace(new RegExp(' ','g'),'+')).replace(new RegExp('%2B','g'),'+')+'&sf='+f.sort+'&sd='+f.sd;
+        let tx = f.query;
+        if (f.query == '__ydb_LastYears') tx = getYearsQuery();
+        return '/search.json?q='+encodeURIComponent(tx.replace(new RegExp(' ','g'),'+')).replace(new RegExp('%2B','g'),'+')+'&sf='+f.sort+'&sd='+f.sd;
     }
 
     function getFeed(feed) {
@@ -229,9 +235,11 @@
 			c.appendChild(pc.childNodes[0]);
 		}
 
+        let date = new Date();
 		r.feed.temp.parentNode.removeChild(r.feed.temp);
         r.feed.loaded = true;
         r.feed.responsed = config.imagesInFeeds;
+        r.feed.saved = parseInt(date.getTime() / 60000);
 
         r.feed.cachedResp = c.innerHTML;
         for (let i=0; i<feedz.length; i++) if (feedz[i] != null) if (!feedz[i].loaded) return;
@@ -261,60 +269,64 @@
         postRun();
     }
 
-    preRun();
-    var cont = document.getElementsByClassName('column-layout__main')[0];
-    cont.style.minWidth = 'calc(100% - 338px)';
-    if (cont.childNodes.length == 1) config.hasWatchList = false;
-    else config.hasWatchList = true;
-    for (i=0; i<(config.doNotRemoveWatchList?1:2); i++) cont.childNodes[i].style.display = 'none';
+    function init()
+    {
+        preRun();
+        cont.style.minWidth = 'calc(100% - 338px)';
+        if (cont.childNodes.length == 1) config.hasWatchList = false;
+        else config.hasWatchList = true;
+        for (i=0; i<(config.doNotRemoveWatchList?1:2); i++) cont.childNodes[i].style.display = 'none';
 
-    let ptime = new Date();
-    ptime = parseInt(ptime.getTime()/60000);
-    for (i=0; i<feedz.length; i++) {
-        if (feedz[i] == null) continue;
-       	let elem = document.createElement('div');
-        elem.className = 'block';
-			let head = document.createElement('div');
-			head.className = 'block__header';
-				let title = document.createElement('span');
-				title.className = 'block__header__title';
-				title.innerHTML = feedz[i].name;
-			head.appendChild(title);
-				let url = document.createElement('a');
-		        if (config.watchFeedLinkOnRightSide) url.style.float = 'right';
-				url.href = compileURL(feedz[i]);
-					let ie = document.createElement('i');
-					ie.className = 'fa fa-eye';
-				url.appendChild(ie);
-					let ut = document.createElement('span');
-					ut.className = 'hide-mobile';
-					ut.innerHTML = 'Watch feed';
-				url.appendChild(ut);
-			head.appendChild(url);
-		elem.appendChild(head);
+        let ptime = new Date();
+        ptime = parseInt(ptime.getTime()/60000);
+        for (i=0; i<feedz.length; i++) {
+            if (feedz[i] == null) continue;
+            let elem = document.createElement('div');
+            elem.className = 'block';
+            let head = document.createElement('div');
+            head.className = 'block__header';
+            let title = document.createElement('span');
+            title.className = 'block__header__title';
+            title.innerHTML = feedz[i].name;
+            head.appendChild(title);
+            let url = document.createElement('a');
+            if (config.watchFeedLinkOnRightSide) url.style.float = 'right';
+            url.href = compileURL(feedz[i]);
+            let ie = document.createElement('i');
+            ie.className = 'fa fa-eye';
+            url.appendChild(ie);
+            let ut = document.createElement('span');
+            ut.className = 'hide-mobile';
+            ut.innerHTML = 'Watch feed';
+            url.appendChild(ut);
+            head.appendChild(url);
+            elem.appendChild(head);
             let container = document.createElement('div');
             container.className = 'block__content js-resizable-media-container';
-		    feedz[i].container = container;
-		elem.appendChild(container);
+            feedz[i].container = container;
+            elem.appendChild(container);
             let shitcontainer = document.createElement('div');
             shitcontainer.style.display = 'none';
             feedz[i].temp = shitcontainer;
-		elem.appendChild(shitcontainer);
-        cont.appendChild(elem);
+            elem.appendChild(shitcontainer);
+            cont.appendChild(elem);
 
-        if (feedz[i].cachedResp == undefined) getFeed(feedz[i]);
-        else if (ptime > (feedz[i].saved+feedz[i].cache))
-        {
-            if ((feedz[i].ccache !== undefined) && (feedz[i].ccache>0)) {
-                if (parseInt(ptime/feedz[i].ccache) > parseInt(feedz[i].saved/feedz[i].ccache)) getFeed(feedz[i]);
-                else fillParsed(feedz[i]);
+            if (feedz[i].cachedResp == undefined) getFeed(feedz[i]);
+            else if (ptime > (feedz[i].saved+feedz[i].cache))
+            {
+                if ((feedz[i].ccache !== undefined) && (feedz[i].ccache>0)) {
+                    if (parseInt(ptime/feedz[i].ccache) > parseInt(feedz[i].saved/feedz[i].ccache)) getFeed(feedz[i]);
+                    else fillParsed(feedz[i]);
+                }
+                else getFeed(feedz[i]);
             }
-            else getFeed(feedz[i]);
+            else if (config.imagesInFeeds != feedz[i].responsed) getFeed(feedz[i]);
+            else fillParsed(feedz[i]);
         }
-        else if (config.imagesInFeeds != feedz[i].responsed) getFeed(feedz[i]);
-        else fillParsed(feedz[i]);
-    }
 
-    window.addEventListener("resize", resizeEverything);
-	if (config.doNotRemoveWatchList && config.hasWatchList) cont.appendChild(cont.childNodes[1]);
+        window.addEventListener("resize", resizeEverything);
+        if (config.doNotRemoveWatchList && config.hasWatchList) cont.appendChild(cont.childNodes[1]);
+    }
+    var cont = document.getElementsByClassName('column-layout__main')[0];
+    setTimeout(init, 333);
 })();
