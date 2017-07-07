@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/settings
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/settings
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.1.1
+// @version      0.1.2
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -129,7 +129,11 @@
         x.id = i;
         x.className = 'input';
         x.style.width = 'calc(100% - 9em)';
-        x.addEventListener('input', function() {feedz[this.id].query = this.value; write();});
+        x.addEventListener('input', function() {
+            feedz[this.id].query = this.value;
+            feedz[this.id].cachedResp = undefined;
+            write();
+        });
         l.appendChild(x);
         
         x = document.createElement('span');
