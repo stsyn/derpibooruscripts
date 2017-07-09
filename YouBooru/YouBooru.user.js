@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.1.2
+// @version      0.1.4
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -90,7 +90,7 @@
 
 	 ********************/
 
-    
+
     function resizeEverything() {
         let ccont = document.getElementsByClassName('column-layout__main')[0];
         let mwidth = parseInt(ccont.clientWidth) - 14;
@@ -127,24 +127,50 @@
         localStorage._ydb = JSON.stringify(feedz);
     }
 
+	/*********************************/
+
 	function getYearsQuery() {
 		let date = new Date();
-		let c = '';
+		let c = '(';
 		let cc = 'created_at:';
 		for (let i = date.getFullYear() - 1; i>2011; i--)
-			c+=(c===''?'':' || ')+cc+i+'-'+((date.getMonth()+1)<10?('0'+(date.getMonth()+1)):(date.getMonth()+1))+'-'+(date.getDate()<10?('0'+date.getDate()):date.getDate());
-		return c;
+			c+=(c==='('?'':' || ')+cc+i+'-'+((date.getMonth()+1)<10?('0'+(date.getMonth()+1)):(date.getMonth()+1))+'-'+(date.getDate()<10?('0'+date.getDate()):date.getDate());
+		return c+')';
 	}
 
+	function getNotSeenYetQuery(f) {
+		let gc = f.saved;
+		if (gc == undefined) gc = 0;
+		gc*=60000;
+		let t = new Date(gc);
+		return '(created_at.gte:'+t.toISOString()+')';
+	}
+	
+	function getNotSeenYetQueryNoNew(f) {
+		let gc = f.saved;
+		if (gc == undefined) gc = 0;
+		gc*=60000;
+		let t = new Date(gc);
+		let t2 = new Date();
+		return '(created_at.gte:'+t.toISOString()+', created_at.lte:'+t2.toISOString()+')';
+	}
+
+	function customQueries(f) {
+		let tx = f.query.replace('__ydb_LastYears', getYearsQuery());
+		tx = tx.replace('__ydb_SinceLeavedNoNew', getNotSeenYetQueryNoNew(f));
+		tx = tx.replace('__ydb_SinceLeaved', getNotSeenYetQuery(f));
+		return tx;
+	}
+	
+	/*********************************/
+
     function compileURL(f) {
-        let tx = f.query;
-        if (f.query == '__ydb_LastYears') tx = getYearsQuery();
+        let tx = customQueries(f);
         return '/search?q='+encodeURIComponent(tx.replace(new RegExp(' ','g'),'+')).replace(new RegExp('%2B','g'),'+')+'&sf='+f.sort+'&sd='+f.sd;
     }
 
     function compileJSONURL(f) {
-        let tx = f.query;
-        if (f.query == '__ydb_LastYears') tx = getYearsQuery();
+        let tx = customQueries(f);
         return '/search.json?q='+encodeURIComponent(tx.replace(new RegExp(' ','g'),'+')).replace(new RegExp('%2B','g'),'+')+'&sf='+f.sort+'&sd='+f.sd;
     }
 
@@ -185,7 +211,7 @@
 		if (pc === null) c.innerHTML = 'Empty feed';
 		else for (let i=0; i<config.imagesInFeeds; i++) {
             let elem = pc.childNodes[0];
-			if (elem === null) break;
+			if (elem == null) break;
 			if (!config.doNotRemoveControls) elem.getElementsByClassName('media-box__header')[0].style.display = 'none';
             
             let act = 'nope';
@@ -218,7 +244,6 @@
             }
 
             elem.classList.add('_ydb_resizible');
-			//elem.getElementsByClassName('media-box__header')[0].style.width = twidth+'px';
 			if (elem.querySelector('.media-box__content .image-container.thumb a img') !== null) elem.querySelector('.media-box__content--large .image-container.thumb a img').onload = function() {
 				if ((this.width==1) && (this.height==1)) {
                     this.src = '/tagblocked.svg';
@@ -227,8 +252,6 @@
                     this.style.top = '0';
                 }
 			};
-			/*elem.getElementsByClassName('media-box__content')[0].style.width = twidth+'px';
-			elem.getElementsByClassName('media-box__content')[0].style.height = twidth+'px';*/
             if (twidth < 240) {
                 elem.getElementsByClassName('media-box__header')[0].classList.add('media-box__header--small');
             }
@@ -236,19 +259,21 @@
 		}
 
         let date = new Date();
+		r.feed.cachedQuery = compileURL(r.feed);
+		r.feed.url.href = r.feed.cachedQuery;
 		r.feed.temp.parentNode.removeChild(r.feed.temp);
         r.feed.loaded = true;
         r.feed.responsed = config.imagesInFeeds;
-        r.feed.saved = parseInt(date.getTime() / 60000);
 
         r.feed.cachedResp = c.innerHTML;
+        r.feed.saved = parseInt(date.getTime() / 60000);
         for (let i=0; i<feedz.length; i++) if (feedz[i] != null) if (!feedz[i].loaded) return;
         postRun();
     }
 
     function fillParsed(feed) {
         let c = feed.container;
-        if (feed.cachedResp == null) c.innerHTML = 'Empty feed';
+        if ((feed.cachedResp == null) || (feed.cachedResp == 'Empty feed')) c.innerHTML = 'Empty feed';
         else {
             c.innerHTML = feed.cachedResp;
             for (let i=0; i<c.childNodes.length; i++) {
@@ -265,6 +290,7 @@
         }
         feed.temp.parentNode.removeChild(feed.temp);
         feed.loaded = true;
+		feed.url.href = feed.cachedQuery;
         for (let i=0; i<feedz.length; i++) if (feedz[i] != null) if (!feedz[i].loaded) return;
         postRun();
     }
@@ -289,17 +315,16 @@
             title.className = 'block__header__title';
             title.innerHTML = feedz[i].name;
             head.appendChild(title);
-            let url = document.createElement('a');
-            if (config.watchFeedLinkOnRightSide) url.style.float = 'right';
-            url.href = compileURL(feedz[i]);
+            feedz[i].url = document.createElement('a');
+            if (config.watchFeedLinkOnRightSide) feedz[i].url.style.float = 'right';
             let ie = document.createElement('i');
             ie.className = 'fa fa-eye';
-            url.appendChild(ie);
+            feedz[i].url.appendChild(ie);
             let ut = document.createElement('span');
             ut.className = 'hide-mobile';
             ut.innerHTML = 'Watch feed';
-            url.appendChild(ut);
-            head.appendChild(url);
+            feedz[i].url.appendChild(ut);
+            head.appendChild(feedz[i].url);
             elem.appendChild(head);
             let container = document.createElement('div');
             container.className = 'block__content js-resizable-media-container';
@@ -321,6 +346,7 @@
                 else getFeed(feedz[i]);
             }
             else if (config.imagesInFeeds != feedz[i].responsed) getFeed(feedz[i]);
+            else if (feedz[i].cachedQuery == undefined) getFeed(feedz[i]);
             else fillParsed(feedz[i]);
         }
 
@@ -328,5 +354,5 @@
         if (config.doNotRemoveWatchList && config.hasWatchList) cont.appendChild(cont.childNodes[1]);
     }
     var cont = document.getElementsByClassName('column-layout__main')[0];
-    setTimeout(init, 333);
+    setTimeout(init, 222);
 })();
