@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/settings
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/settings
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.1.3
+// @version      0.1.4
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -140,7 +140,7 @@
         x.style.marginLeft = '1em';
         x.id = i;
         x.classList = 'button commission__category';
-        x.innerHTML = 'Cache Reset';
+        x.innerHTML = 'Reset cache';
         x.addEventListener('click',function() {
 			feedz[this.id].cachedResp = undefined;
             write();
@@ -196,6 +196,7 @@
         el2 = document.createElement('span');
         el2.classList = 'button commission__category';
         el2.innerHTML = 'Reset feeds cache';
+        el2.style.marginLeft = '1em';
         el2.style.marginRight = '12em';
         el2.addEventListener('click',resetCaches);
         el.appendChild(el2);
