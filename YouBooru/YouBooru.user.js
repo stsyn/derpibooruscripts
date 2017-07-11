@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.2
+// @version      0.2.1
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -188,7 +188,7 @@
 			let spx = JSON.parse(x.getAttribute('data-image-tags'));
 			let fls = data.spoilers;
 			let mx = 0;
-			let n = '', s = '';
+			let n = '', s = null;
 			for (let i=0; i<spx.length; i++) {
 				for (let j=0; j<fls.length; j++) {
 					if (spx[i] == fls[j]) {
@@ -198,7 +198,7 @@
 							if (a > mx) {
 								mx = a;
 								n += (n==''?'':', ')+u.name;
-								s = u.spoiler_image_uri;
+								if (u.spoiler_image_uri != null) s = u.spoiler_image_uri;
 							}
 						}
 					}
