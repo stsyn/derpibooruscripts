@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         YourBooru
+// @name         YourBooru:Feeds
 // @namespace    http://tampermonkey.net/
 // @include      *://trixiebooru.org/
 // @include      *://derpibooru.org/
@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.2.1
+// @version      0.2.3
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -20,7 +20,17 @@
 (function() {
 	'use strict';
 	var data={};
+
+	/*
+       Please install YourBooru:Settings to adjust feeds and settings in normal way.
+       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
+	   
+	   These configs work from this place until you install YourBooru:Settings
+    */
+	
 	var config = {
+		/* Enable if you need to override YourBooru:Settings */
+		forceScriptConfig:false,
 		/* How many images are showing in the each feed on the derpibooru main page */
 		imagesInFeeds:6,
 		/* Keep vanilla watchlist on the top of the page */
@@ -32,15 +42,10 @@
 		/* Removing unneeded content from HTML. Disable if you meet some problems or if you just want to shit up your localstorage */
 		optimizeLS:true
 	};
-
-	/*
-       Please install YourBooruSettings to adjust feeds in normal way.
-       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-    */
 	var feedz = [
 		{
 			name:'Hot',
-			query:'created_at.gte:6 hours ago',
+			query:'first_seen_at.gte:6 hours ago',
 			sort:'score',
 			sd:'desc',
 			cache:5
@@ -61,7 +66,7 @@
 		},
 		{
 			name:'That day in history',
-			query:'__ydb_LastYears',
+			query:'__ydb_LastYearsAlt',
 			sort:'score',
 			sd:'desc',
 			cache:0,
@@ -69,7 +74,7 @@
 		},
 		{
 			name:'Watch it again',
-			query:'my:watched, created_at.lte:1 years ago',
+			query:'my:watched, first_seen_at.lte:1 years ago',
 			sort:'random',
 			sd:'desc',
 			cache:5
@@ -90,6 +95,16 @@
 
 	 ********************/
 
+	function register() {
+		let date = new Date();
+		let x = localStorage._ydb_main;
+		if (x == undefined) x = {};
+		else x = JSON.parse(x);
+		x.feeds = {};
+		x.feeds.timestamp = date.getTime();
+		x.feeds.version = GM_info.script.version;
+		localStorage._ydb_main = JSON.stringify(x);
+	}
 
 	function resizeEverything() {
 		let ccont = document.getElementsByClassName('column-layout__main')[0];
@@ -110,8 +125,7 @@
 
 	function preRun() {
 		let svd = localStorage._ydb;
-		if (svd === undefined) return;
-		else {
+		if (svd !== undefined) {
 			try {
 				feedz = JSON.parse(svd);
 			}
@@ -120,6 +134,23 @@
 			}
 		}
 		for (let i=0; i<feedz.length; i++) if (feedz[i] != null) feedz[i].loaded = false;
+		
+		if (!config.forceScriptConfig) 
+		{
+			svd = localStorage._ydb_config;
+			if (svd !== undefined) {
+				try {
+					let svd2 = JSON.parse(svd);
+					if (svd2.feeds !== undefined) config = svd2.feeds;
+				}
+				catch (e) {
+					console.log('Cannot get config');
+				}
+			}
+			let c2 = {};
+			c2.feeds = config;
+			localStorage._ydb_config = JSON.stringify(c2);
+		}
 	}
 
 	function postRun() {
@@ -133,6 +164,15 @@
 		let date = new Date();
 		let c = '(';
 		let cc = 'created_at:';
+		for (let i = date.getFullYear() - 1; i>2011; i--)
+			c+=(c==='('?'':' || ')+cc+i+'-'+((date.getMonth()+1)<10?('0'+(date.getMonth()+1)):(date.getMonth()+1))+'-'+(date.getDate()<10?('0'+date.getDate()):date.getDate());
+		return c+')';
+	}
+	
+	function getYearsAltQuery() {
+		let date = new Date();
+		let c = '(';
+		let cc = 'first_seen_at:';
 		for (let i = date.getFullYear() - 1; i>2011; i--)
 			c+=(c==='('?'':' || ')+cc+i+'-'+((date.getMonth()+1)<10?('0'+(date.getMonth()+1)):(date.getMonth()+1))+'-'+(date.getDate()<10?('0'+date.getDate()):date.getDate());
 		return c+')';
@@ -156,7 +196,9 @@
 	}
 
 	function customQueries(f) {
-		let tx = f.query.replace('__ydb_LastYears', getYearsQuery());
+		let tx = f.query;
+		tx = tx.replace('__ydb_LastYearsAlt', getYearsAltQuery());
+		tx = tx.replace('__ydb_LastYears', getYearsQuery());
 		tx = tx.replace('__ydb_SinceLeavedNoNew', getNotSeenYetQueryNoNew(f));
 		tx = tx.replace('__ydb_SinceLeaved', getNotSeenYetQuery(f));
 		return tx;
@@ -343,6 +385,7 @@
 
 	function init()
 	{
+		register();
 		let i;
 		data.spoilerType = document.getElementsByClassName('js-datastore')[0].getAttribute('data-spoiler-type');
 		data.spoilers = JSON.parse(document.getElementsByClassName('js-datastore')[0].getAttribute('data-spoilered-tag-list'));
