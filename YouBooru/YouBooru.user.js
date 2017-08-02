@@ -452,6 +452,7 @@
 			});
 
 			if (f.cachedResp == undefined) getFeed(f);
+			else if (config.imagesInFeeds != feedz[i].responsed) getFeed(f);
 			else if (ptime > (f.saved+feedz[i].cache))
 			{
 				if ((f.ccache !== undefined) && (f.ccache>0)) {
@@ -460,7 +461,6 @@
 				}
 				else getFeed(f);
 			}
-			else if (config.imagesInFeeds != feedz[i].responsed) getFeed(f);
 			else if (f.cachedQuery == undefined) getFeed(f);
 			else fillParsed(f);
 		}
