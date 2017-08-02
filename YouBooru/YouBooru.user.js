@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.2.4
+// @version      0.2.5
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -334,7 +334,7 @@
 			if (faved) elem.querySelector('.media-box__header .interaction--fave').classList.add('active');
 
 			if (config.optimizeLS) {
-				let temp = (JSON.parse(elem.querySelector('.media-box__content .image-container').getAttribute('data-uris'))).thumb_small;
+				let temp = (JSON.parse(elem.querySelector('.media-box__content .image-container').getAttribute('data-uris'))).thumb;
 				elem.querySelector('.media-box__content .image-container').setAttribute('data-thumb', temp);
 				elem.querySelector('.media-box__content .image-container').removeAttribute('data-download-uri');
 				elem.querySelector('.media-box__content .image-container').removeAttribute('data-image-tag-aliases');
