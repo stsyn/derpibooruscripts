@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.2.6
+// @version      0.2.7
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -75,6 +75,13 @@
 		{
 			name:'Watch it again',
 			query:'my:watched, first_seen_at.lte:1 years ago',
+			sort:'random',
+			sd:'desc',
+			cache:5
+		},
+		{
+			name:'Upvoted',
+			query:'my:upvotes',
 			sort:'random',
 			sd:'desc',
 			cache:5
@@ -418,7 +425,7 @@
 			f.url.appendChild(ie);
 			let ut = document.createElement('span');
 			ut.className = 'hide-mobile';
-			ut.innerHTML = ' Watch feed';
+			ut.innerHTML = ' Browse feed';
 			f.url.appendChild(ut);
 			head.appendChild(f.url);
 			
