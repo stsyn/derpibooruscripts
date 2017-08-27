@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/settings
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/settings
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.2
+// @version      0.3
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -76,21 +76,21 @@
 			return;
 		}
 		let x = document.createElement('span');
-		l.style.marginBottom = '1em';
+		l.style.marginBottom = '.5em';
 		x.innerHTML = 'Name ';
 		l.appendChild(x);
 
 		x = document.createElement('input');
 		x.type = 'text';
 		x.value = f.name;
-		x.style.width = '16em';
+		x.style.width = '15em';
 		x.id = i;
 		x.className = 'input';
 		x.addEventListener('input', function() {feedz[this.id].name = this.value; write();});
 		l.appendChild(x);
 
 		x = document.createElement('span');
-		x.style.marginLeft = '1em';
+		x.style.marginLeft = '.5em';
 		x.innerHTML = 'Sort ';
 		l.appendChild(x);
 
@@ -104,7 +104,7 @@
 		l.appendChild(x);
 
 		x = document.createElement('span');
-		x.style.marginLeft = '1em';
+		x.style.marginLeft = '.5em';
 		x.innerHTML = 'Direction';
 		l.appendChild(x);
 
@@ -118,7 +118,7 @@
 		l.appendChild(x);
 
 		x = document.createElement('span');
-		x.style.marginLeft = '1em';
+		x.style.marginLeft = '.5em';
 		x.innerHTML = 'Cache (in minutes)';
 		l.appendChild(x);
 
@@ -132,7 +132,7 @@
 		l.appendChild(x);
 
 		x = document.createElement('span');
-		x.innerHTML = '... or update each (in minutes)';
+		x.innerHTML = ' ... or update each (in minutes)';
 		l.appendChild(x);
 
 		x = document.createElement('input');
@@ -144,6 +144,25 @@
 		x.addEventListener('input', function() {feedz[this.id].ccache = parseInt(this.ccache); write();});
 		l.appendChild(x);
 
+		if (i > 0) {
+			x = document.createElement('span');
+			x.style.marginLeft = '.5em';
+			x.style.float = 'right';
+			x.classList = 'button';
+			x.innerHTML = '<i class="fa fa-arrow-up"></i>';
+			x.addEventListener('click',function() {
+				var t = feedz[i];
+				feedz[i] = feedz[i-1];
+				feedz[i-1] = t;
+				write();
+				location.hash = '#YourBooru';
+				location.reload();
+			});
+			l.appendChild(x);
+		}
+
+		/******************/
+
 		x = document.createElement('span');
 		x.innerHTML = '<br>Query ';
 		l.appendChild(x);
@@ -153,7 +172,7 @@
 		x.value = f.query;
 		x.id = i;
 		x.className = 'input';
-		x.style.width = 'calc(100% - 18em)';
+		x.style.width = 'calc(100% - 26em)';
 		x.addEventListener('input', function() {
 			feedz[this.id].query = this.value;
 			feedz[this.id].cachedResp = undefined;
@@ -162,7 +181,23 @@
 		l.appendChild(x);
 
 		x = document.createElement('span');
-		x.style.marginLeft = '1em';
+		x.innerHTML = ' Double size ';
+		l.appendChild(x);
+
+		x = document.createElement('input');
+		x.type = 'checkbox';
+		x.checked = f.double;
+		x.id = i;
+		x.addEventListener('click', function() {
+			feedz[this.id].double = this.checked;
+			feedz[this.id].cachedResp = undefined;
+			write();
+		});
+		l.appendChild(x);
+
+		x = document.createElement('span');
+		x.style.marginLeft = '.5em';
+		x.style.marginRight = '0';
 		x.id = i;
 		x.classList = 'button commission__category';
 		x.innerHTML = 'Reset cache';
@@ -173,16 +208,33 @@
 		l.appendChild(x);
 
 		x = document.createElement('span');
-		x.style.marginLeft = '1em';
+		x.style.marginLeft = '.5em';
+		x.style.marginRight = '0';
 		x.id = i;
 		x.classList = 'button commission__category';
 		x.innerHTML = 'Delete';
 		x.addEventListener('click',function() {
-			feedz[this.id] = undefined;
+			feedz.splice(this.id, 1);
 			write();
 			this.parentNode.style.display = 'none';
 		});
 		l.appendChild(x);
+
+		if (i<feedz.length-1) {
+			x = document.createElement('span');
+			x.style.marginLeft = '.5em';
+			x.style.float = 'right';
+			x.classList = 'button';
+			x.innerHTML = '<i class="fa fa-arrow-down"></i>';
+			x.addEventListener('click',function() {
+				var t = feedz[i];
+				feedz[i] = feedz[i+1];
+				feedz[i+1] = t;
+				write();
+				location.reload();
+			});
+			l.appendChild(x);
+		}
 
 		e.appendChild(l);
 	}
@@ -230,7 +282,7 @@
 		el.className = 'input';
 		el.addEventListener('input', function() {config.feeds.imagesInFeeds = parseInt(this.value); writeConfig();});
 		el2.appendChild(el);
-		
+
 		el2 = document.createElement('label');
 		el2.innerHTML = 'Watch link on the right side ';
 		cont.appendChild(el2);
@@ -239,7 +291,7 @@
 		el.checked = config.feeds.watchFeedLinkOnRightSide;
 		el.addEventListener('change', function() {config.feeds.watchFeedLinkOnRightSide = this.checked; writeConfig();});
 		el2.appendChild(el);
-		
+
 		el2 = document.createElement('label');
 		el2.innerHTML = '<br>Remove unneeded content from HTML (disable if issues happens (but it will fill up your localStorage!))';
 		cont.appendChild(el2);
@@ -263,7 +315,8 @@
 						query:'*',
 						sort:'',
 						sd:'desc',
-						cache:30
+						cache:30,
+						double:false
 					};
 					write();
 					break;
@@ -289,6 +342,7 @@
 		el2 = document.createElement('span');
 		el2.classList = 'button commission__category';
 		el2.innerHTML = 'Reset everything';
+		el2.style.marginLeft = '.5em';
 		el2.style.marginRight = '6em';
 		el2.addEventListener('click', function() {
 			if (document.getElementById('ydb_reset').checked) {
@@ -310,6 +364,7 @@
 		el2 = document.createElement('span');
 		el2.classList = 'button commission__category';
 		el2.innerHTML = 'I uninstalled YourBooru: Feeds.<br>';
+		el2.style.marginLeft = '.5em';
 		el2.href = '#';
 		el2.addEventListener('click', function() {
 			if (document.getElementById('ydb_feeds_del').checked) {
@@ -325,7 +380,13 @@
 		});
 		cont.appendChild(el2);
 
-		if (feedz != undefined) for (let i=0; i<feedz.length; i++) putLine(fel, feedz[i], i);
+		if (feedz != undefined) {
+			for (let i=0; i<feedz.length; i++) if (feedz[i] == undefined) {
+				feedz.splice(i,1);
+				i--;
+			};
+			for (let i=0; i<feedz.length; i++) putLine(fel, feedz[i], i);
+		}
 		else {
 			fel.classList.add('block--warning');
 			fel.classList.add('block');
@@ -353,4 +414,16 @@
 		el.innerHTML =s;
 		cont.appendChild(el);
 	}
+	let hh = function () {
+		if (location.hash!='') {
+			let t = location.hash.slice(1);
+			if (document.querySelector('a[data-click-tab="'+t+'"]') != null) document.querySelector('a[data-click-tab="'+t+'"]').click();
+		}
+	};
+
+	for (let i=0; i<document.getElementsByClassName('block__header')[0].childNodes.length; i++) {
+		document.getElementsByClassName('block__header')[0].childNodes[i].href = '#'+document.getElementsByClassName('block__header')[0].childNodes[i].getAttribute('data-click-tab');
+		document.getElementsByClassName('block__header')[0].childNodes[i].addEventListener('click', function(e) {location.hash = e.target.href.split('#')[1];});
+	}
+	setTimeout(hh, 500);
 })();
