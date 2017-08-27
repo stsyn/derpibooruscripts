@@ -92,7 +92,8 @@
 			sort:'',
 			sd:'desc',
 			cache:0,
-			ccache:0
+			ccache:0,
+			double:true
 		}
 	];
 
@@ -319,7 +320,7 @@
 		let twidth = parseInt(mwidth/config.imagesInFeeds-8);
 
 		if (pc === null) c.innerHTML = 'Empty feed';
-		else for (let i=0; i<config.imagesInFeeds; i++) {
+		else for (let i=0; i<config.imagesInFeeds*(r.feed.double?2:1); i++) {
 			let elem = pc.childNodes[0];
 			if (elem == null) break;
 			if (!config.doNotRemoveControls) elem.getElementsByClassName('media-box__header')[0].style.display = 'none';
