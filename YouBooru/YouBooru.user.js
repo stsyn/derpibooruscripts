@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.2.7
+// @version      0.2.8
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -235,6 +235,7 @@
 	function spoiler(event) {
 		if ((event.target.width==1) && (event.target.height==1)) {
 			let x = event.target.parentNode.parentNode.parentNode;
+            console.log(x);
 			let spx = JSON.parse(x.getAttribute('data-image-tags'));
 			let fls = data.spoilers;
 			let mx = 999999999;
@@ -259,32 +260,34 @@
 			let ux = x.querySelector('.media-box__overlay.js-spoiler-info-overlay');
 			ux.classList.remove('hidden');
 			ux.innerHTML = n;
+            let ix = event.target;
+            let ax = ix.parentNode.parentNode;
 			if (data.spoilerType == 'off') {
 				ux.classList.add('hidden');
-				event.target.src = x.getAttribute('data-thumb');
+				ix.src = x.getAttribute('data-thumb');
 			}
 			else {
 				if (s == null) s = '/tagblocked.svg';
-				event.target.src = s;
-				event.target.style.position = 'absolute';
-				event.target.style.left = '0';
-				event.target.style.top = '0';
+				ix.src = s;
+				ix.style.position = 'absolute';
+				ix.style.left = '0';
+				ix.style.top = '0';
 				if (data.spoilerType != 'static') {
 					let ac = data.spoilerType;
 					if (ac == 'hover') ac = 'mouseenter'; 
-					event.target.addEventListener(ac, function(e) {
+					ax.addEventListener(ac, function(e) {
 						if (!ux.classList.contains('hidden')) {
-							this.style.position = 'static';
-							this.spoiler = this.src;
-							this.src = x.getAttribute('data-thumb');
+							ix.style.position = 'static';
+							ix.spoiler = ix.src;
+							ix.src = x.getAttribute('data-thumb');
 							ux.classList.add('hidden');
 							e.preventDefault();
 						}
 					});
-					event.target.addEventListener('mouseleave', function(e) {
+					ax.addEventListener('mouseleave', function(e) {
 						if (ux.classList.contains('hidden')) {
-							this.style.position = 'absolute';
-							this.src = this.spoiler;
+							ix.style.position = 'absolute';
+							ix.src = ix.spoiler;
 							ux.classList.remove('hidden');
 						}
 					});
