@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.js
-// @version      0.0.2
+// @version      0.0.3
 // @description  Allows Next/Prev navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -54,28 +54,22 @@
         let i;
         if (myURL.params.sf!= 'random') {
             if (r.level == 'pre') {
-                for (i=0; i<u.search.length; i++) {
-                    if (u.search[i].id == id) {
-                        if (i==u.search.length-1) {
-                            //не удалось найти следующую пикчу по номеру, пробуем теперь реально следующую
-                            let req = new XMLHttpRequest();
-                            req.sel = r.sel;
-                            req.level = 'act';
-                            req.onreadystatechange = readyHandler(req, type);
-                            req.open('GET', compileQuery(type));
-                            req.send();
-                            return;
-                        }
-                        else {
-                            //нашли с тем же критерием, но другим очком
-                            document.querySelectorAll(r.sel)[0].href=location.href.replace(id, u.search[i+1].id);
-                            return;
-                        }
-
-                    }
+                if (u.total == 0) {
+                    //не удалось найти следующую пикчу по номеру, пробуем теперь реально следующую
+                    let req = new XMLHttpRequest();
+                    req.sel = r.sel;
+                    req.level = 'act';
+                    req.onreadystatechange = readyHandler(req, type);
+                    req.open('GET', compileQuery(type));
+                    req.send();
+                    return;
                 }
-                //чот нихуя не нашли. Это вообще возможно?
-                document.querySelectorAll(r.sel)[0].href='#';
+                else {
+                    //нашли с тем же критерием, но другим очком
+                    document.querySelectorAll(r.sel)[0].href=location.href.replace(id, u.search[0].id);
+                    return;
+                }
+
             }
             else if (r.level == 'act') {
                 if (u.total == 0) {
@@ -164,7 +158,7 @@
         else if (myURL.params.sf == "comments") {
             prevUrl += ',(comment_count:'+v+')';
         }
-        prevUrl+='&sf=created_at&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
+        prevUrl+='&perpage=1&sf=created_at&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
         return prevUrl;
     }
 
@@ -172,7 +166,7 @@
         //due to unpredictable sorting mechanism firstly gonna check by id
         if (type == 'random' || myURL.params.sf == "random") return compileQuery(type);
         let prevUrl = '//'+myURL.host+'/search.json?q='+myURL.params.q;
-        let dir = ((myURL.params.sd=='asc'^type=='prev')?'gte':'lte');
+        let dir = ((myURL.params.sd=='asc'^type=='prev')?'gt':'lt');
         if (myURL.params.sf == "score") {
             let cscore = parseInt(document.getElementsByClassName('score')[0].innerHTML);
             prevUrl += ',(score:'+cscore+',id.'+dir+':'+id+')';
@@ -189,7 +183,7 @@
             let cscore = document.querySelectorAll('.comments_count')[0].innerHTML;
             prevUrl += ',(comment_count:'+cscore+',id.'+dir+':'+id+')';
         }
-        prevUrl+='&sf=created_at&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
+        prevUrl+='&perpage=1&sf=created_at&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
         return prevUrl;
     }
 
@@ -213,9 +207,9 @@
                 let cscore = document.querySelectorAll('.comments_count')[0].innerHTML;
                 prevUrl += ',((comment_count:'+cscore+',id.'+dir+':'+id+')+||+(comment_count.'+dir+':'+cscore+'))';
             }
-            prevUrl+='&sf='+myURL.params.sf+'&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
+            prevUrl+='&perpage=2&sf='+myURL.params.sf+'&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
         }
-        else prevUrl+='&sf=random';
+        else prevUrl+='&perpage=3&sf=random';
         return prevUrl;
     }
 
