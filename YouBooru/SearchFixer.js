@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.js
-// @version      0.0.1
+// @version      0.0.2
 // @description  Allows Next/Prev navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -254,7 +254,7 @@
         id = parseInt(id[2]);
     }
 
-    if (!isNaN(id) && myURL.params.sf != undefined && myURL.params.sf != 'created_at' && myURL.params.sf != 'wilson' && myURL.params.sf != 'relevance') {
+    if (!isNaN(id) && myURL.params.sf != undefined && myURL.params.sf != "" && myURL.params.sf != 'created_at' && myURL.params.sf != 'wilson' && myURL.params.sf != 'relevance') {
         myURL.params.sf = myURL.params.sf.split('%')[0];
         execute();
     }
