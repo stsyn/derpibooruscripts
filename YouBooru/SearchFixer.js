@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.js
-// @version      0.0.3
+// @version      0.1.0
 // @description  Allows Next/Prev navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -49,6 +49,17 @@
     }
 
     //////////////////////////////////////////////
+    function unblink(e) {
+        e.classList.remove('active');
+        e.classList.remove('interaction--upvote');
+    }
+
+    function blink(e) {
+        e.classList.add('active');
+        e.classList.add('interaction--upvote');
+        setTimeout(function() {unblink(e);},200);
+    }
+
     function parse(r, type) {
         let u = JSON.parse(r.responseText);
         let i;
@@ -67,6 +78,7 @@
                 else {
                     //нашли с тем же критерием, но другим очком
                     document.querySelectorAll(r.sel)[0].href=location.href.replace(id, u.search[0].id);
+                    blink(document.querySelectorAll(r.sel)[0]);
                     return;
                 }
 
@@ -96,12 +108,14 @@
                         else {
                             //а все норм, она одна такая
                             document.querySelectorAll(r.sel)[0].href=location.href.replace(id, u.search[0].id);
+                            blink(document.querySelectorAll(r.sel)[0]);
                             return;
                         }
                     }
                     else {
                         //в запросе ваще одна пихча
                         document.querySelectorAll(r.sel)[0].href=location.href.replace(id, u.search[0].id);
+                        blink(document.querySelectorAll(r.sel)[0]);
                         return;
                     }
                 }
@@ -115,14 +129,35 @@
                 }
                 //вот это точно должна идти
                 document.querySelectorAll(r.sel)[0].href=location.href.replace(id, u.search[i].id);
+                blink(document.querySelectorAll(r.sel)[0]);
                 return;
             }
         }
         else {
-            if (r.sel == '.js-rand' && u.total>2) document.querySelectorAll(r.sel)[0].href=location.href.replace(id, u.search[2].id);
-            else if (r.sel == '.js-next' && u.total>0) document.querySelectorAll(r.sel)[0].href=location.href.replace(id, u.search[0].id);
-            else if (r.sel == '.js-prev' && u.total>1) document.querySelectorAll(r.sel)[0].href=location.href.replace(id, u.search[1].id);
-            else document.querySelectorAll(r.sel)[0].href='#';
+            if (u.total>1)
+            {
+                let x = 0;
+                if (u.search[0].id == id) x = 1;
+                document.querySelectorAll('.js-next')[0].href=location.href.replace(id, u.search[x].id);
+                if (u.total>2) {
+                    if (u.search[x+1].id == id) document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, u.search[x+2].id);
+                    else document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, u.search[x+1].id);
+                }
+                else document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, u.search[x].id);
+                if (u.total>3) {
+                    if (u.search[x+2].id == id) document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x+3].id);
+                    else document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x+2].id);
+                }
+                else document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x].id);
+            }
+            else {
+                document.querySelectorAll('.js-rand')[0].href='#';
+                document.querySelectorAll('.js-prev')[0].href='#';
+                document.querySelectorAll('.js-next')[0].href='#';
+            }
+            blink(document.querySelectorAll('.js-rand')[0]);
+            blink(document.querySelectorAll('.js-prev')[0]);
+            blink(document.querySelectorAll('.js-next')[0]);
         }
     }
 
@@ -189,7 +224,7 @@
 
     function compileQuery(type) {
         let prevUrl = '//'+myURL.host+'/search.json?q='+myURL.params.q;
-        if (type !='random' || myURL.params.sf == "random") {
+        if (type !='random' && myURL.params.sf != "random") {
             let dir = ((myURL.params.sd=='asc'^type=='prev')?'gt':'lt');
             if (myURL.params.sf == "score") {
                 let cscore = parseInt(document.getElementsByClassName('score')[0].innerHTML);
@@ -209,27 +244,30 @@
             }
             prevUrl+='&perpage=2&sf='+myURL.params.sf+'&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
         }
-        else prevUrl+='&perpage=3&sf=random';
+        else prevUrl+='&perpage='+(myURL.params.sf=="random"?4:2)+'&sf=random';
         return prevUrl;
     }
 
     function execute() {
-        let url = compilePreQuery('prev');
-        let req = new XMLHttpRequest();
-        req.sel = '.js-prev';
-        req.level = 'pre';
-        req.onreadystatechange = readyHandler(req, 'prev');
-        req.open('GET', url);
-        req.send();
+        let url, req;
+        if (myURL.params.sf != "random") {
+            url = compilePreQuery('prev');
+            req = new XMLHttpRequest();
+            req.sel = '.js-prev';
+            req.level = 'pre';
+            req.onreadystatechange = readyHandler(req, 'prev');
+            req.open('GET', url);
+            req.send();
 
-        url = compilePreQuery('next');
-        req = new XMLHttpRequest();
-        req.sel = '.js-next';
-        req.level = 'pre';
-        req.onreadystatechange = readyHandler(req, 'next');
-        req.open('GET', url);
-        req.send();
+            url = compilePreQuery('next');
+            req = new XMLHttpRequest();
+            req.sel = '.js-next';
+            req.level = 'pre';
+            req.onreadystatechange = readyHandler(req, 'next');
+            req.open('GET', url);
+            req.send();
 
+        }
         url = compilePreQuery('random');
         req = new XMLHttpRequest();
         req.sel = '.js-rand';
