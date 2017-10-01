@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.2.10
+// @version      0.2.11
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -97,6 +97,9 @@
         }
     ];
 
+	var feedzCache = [];
+	var feedzURLs = [];
+
     /********************
 
 	Please, stop there
@@ -138,10 +141,38 @@
                 feedz = JSON.parse(svd);
             }
             catch (e) {
-                console.log('Cannot get cached feeds');
+                console.log('Cannot get feeds');
             }
         }
-        for (let i=0; i<feedz.length; i++) if (feedz[i] != null) feedz[i].loaded = false;
+		svd = localStorage._ydb_caches;
+        if (svd !== undefined) {
+            try {
+                feedzCache = JSON.parse(svd);
+            }
+            catch (e) {
+                console.log('Cannot get feeds cache');
+            }
+        }
+        svd = localStorage._ydb_cachesUrls;
+        if (svd !== undefined) {
+            try {
+                feedzURLs = JSON.parse(svd);
+            }
+            catch (e) {
+                console.log('Cannot get feeds cache');
+            }
+        }
+        for (let i=0; i<feedz.length; i++) {
+            if (feedz[i] != null) feedz[i].loaded = false;
+            if (feedz[i].cachedResp != undefined) {
+                feedzCache[i] = feedz[i].cachedResp;
+                delete feedz[i].cachedResp;
+            }
+            if (feedz[i].cachedQuery != undefined) {
+                feedzURLs[i] = feedz[i].cachedQuery;
+                delete feedz[i].cachedQuery;
+            }
+        }
 
         if (!config.forceScriptConfig)
         {
@@ -164,6 +195,8 @@
     function postRun() {
         resizeEverything();
         localStorage._ydb = JSON.stringify(feedz);
+        localStorage._ydb_caches = JSON.stringify(feedzCache);
+        localStorage._ydb_cachesUrls = JSON.stringify(feedzURLs);
     }
 
     /*********************************/
@@ -224,10 +257,10 @@
         return '/search.json?q='+encodeURIComponent(tx.replace(new RegExp(' ','g'),'+')).replace(new RegExp('%2B','g'),'+')+'&sf='+f.sort+'&sd='+f.sd;
     }
 
-    function getFeed(feed) {
+    function getFeed(feed, id) {
         let req = new XMLHttpRequest();
         req.feed = feed;
-        req.onreadystatechange = readyHandler(req);
+        req.onreadystatechange = readyHandler(req, id);
         req.open('GET', compileURL(feed));
         req.send();
     }
@@ -333,10 +366,10 @@
         }
     }
 
-    function readyHandler(request) {
+    function readyHandler(request, id) {
         return function () {
             if (request.readyState === 4) {
-                if (request.status === 200) return parse(request);
+                if (request.status === 200) return parse(request, id);
                 else if (request.status === 0) {
                     console.log ('[YDB]: Server timeout');
                     return false;
@@ -349,7 +382,7 @@
         };
     }
 
-    function parse(r) {
+    function parse(r, id) {
         r.feed.temp.innerHTML = r.responseText;
         let votes =r.feed.temp.querySelector('.js-datastore').getAttribute('data-interactions');
         if (votes !== undefined) votes = JSON.parse(votes);
@@ -414,23 +447,23 @@
         }
 
         let date = new Date();
-        r.feed.cachedQuery = compileURL(r.feed);
-        r.feed.url.href = r.feed.cachedQuery;
+        feedzURLs[id] = compileURL(r.feed);
+        r.feed.url.href = feedzURLs[id];
         r.feed.temp.innerHTML = '';
         r.feed.loaded = true;
         r.feed.responsed = config.imagesInFeeds;
 
-        r.feed.cachedResp = c.innerHTML;
+        feedzCache[id] = c.innerHTML;
         r.feed.saved = parseInt(date.getTime() / 60000);
         for (let i=0; i<feedz.length; i++) if (feedz[i] != null) if (!feedz[i].loaded) return;
         postRun();
     }
 
-    function fillParsed(feed) {
+    function fillParsed(feed, id) {
         let c = feed.container;
-        if ((feed.cachedResp == null) || (feed.cachedResp == 'Empty feed')) c.innerHTML = 'Empty feed';
+        if ((feedzCache[id] == null) || (feedzCache[id]== 'Empty feed')) c.innerHTML = 'Empty feed';
         else {
-            c.innerHTML = feed.cachedResp;
+            c.innerHTML = feedzCache[id];
             for (let i=0; i<c.childNodes.length; i++) {
                 let elem = c.childNodes[i];
                 if (elem.querySelector('.media-box__content .image-container.thumb a img') !== null) elem.querySelector('.media-box__content--large .image-container.thumb a img').onload = spoiler;
@@ -449,13 +482,12 @@
         }
         feed.temp.innerHTML = '';
         feed.loaded = true;
-        feed.url.href = feed.cachedQuery;
+        feed.url.href = feedzURLs[id];
         for (let i=0; i<feedz.length; i++) if (feedz[i] != null) if (!feedz[i].loaded) return;
         postRun();
     }
 
-    function init()
-    {
+    function init() {
         register();
         let i;
         data.spoilerType = document.getElementsByClassName('js-datastore')[0].getAttribute('data-spoiler-type');
@@ -513,25 +545,26 @@
             ut2.innerHTML = ' Reload feed';
             f.reload.appendChild(ut2);
             head.appendChild(f.reload);
+            f.internalId = i;
             f.reload.addEventListener('click', function() {
-                f.cachedResp = undefined;
+                feedzCache[f.internalId] = undefined;
                 f.saved = 0;
                 f.container.innerHTML = '';
-                getFeed(f);
+                getFeed(f, f.internalId);
             });
 
-            if (f.cachedResp == undefined) getFeed(f);
-            else if (config.imagesInFeeds != feedz[i].responsed) getFeed(f);
+            if (feedzCache[i] == undefined) getFeed(f, i);
+            else if (config.imagesInFeeds != feedz[i].responsed) getFeed(f, i);
             else if (ptime > (f.saved+feedz[i].cache))
             {
                 if ((f.ccache !== undefined) && (f.ccache>0)) {
-                    if (parseInt(ptime/f.ccache) > parseInt(f.saved/f.ccache)) getFeed(f);
-                    else fillParsed(f);
+                    if (parseInt(ptime/f.ccache) > parseInt(f.saved/f.ccache)) getFeed(f, i);
+                    else fillParsed(f, i);
                 }
-                else getFeed(f);
+                else getFeed(f, i);
             }
-            else if (f.cachedQuery == undefined) getFeed(f);
-            else fillParsed(f);
+            else if (feedzURLs[i] == undefined) getFeed(f, i);
+            else fillParsed(f, i);
         }
 
         window.addEventListener("resize", resizeEverything);
