@@ -11,7 +11,7 @@
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @version      0.1.1
-// @description  Allows Next/Prev navigation with not id sorting
+// @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
 // @run-at       document-end
@@ -48,6 +48,54 @@
         };
     }
 
+    // These settings also may be edited via YourBooru:Settings
+    // https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
+
+    var settings = {
+        //Which sortings type should be fixed
+        score:true,
+        random:true,
+        sizes:true,
+        comments:true,
+
+        //Fix random button
+        randomButton:true,
+
+        //Blink on completion
+        blink:true,
+
+        //Change to true if you want to use these settings
+        override:false
+    };
+
+    function register() {
+        let date = new Date();
+        let x = localStorage._ydb_main;
+        if (x == undefined) x = {};
+        else x = JSON.parse(x);
+        x.searchSortingFixer = {};
+        x.searchSortingFixer.timestamp = date.getTime();
+        x.searchSortingFixer.version = GM_info.script.version;
+        localStorage._ydb_main = JSON.stringify(x);
+
+        if (window._YDB_public == undefined) window._YDB_public = {};
+        if (window._YDB_public.settings == undefined) window._YDB_public.settings = {};
+        window._YDB_public.settings.searchSortingFixer = {
+            name:'Search Sorting Fixer',
+            container:'_ssf',
+            s:[
+                {type:'checkbox', name:'Fix score sorting', parameter:'score'},
+                {type:'checkbox', name:'Fix random sorting', parameter:'random'},
+                {type:'checkbox', name:'Fix sizes sorting', parameter:'sizes'},
+                {type:'checkbox', name:'Fix comments sorting', parameter:'comments'},
+                {type:'breakline'},
+                {type:'checkbox', name:'Fix random button', parameter:'randomButton'},
+                {type:'checkbox', name:'Blink on completion', parameter:'blink'}
+            ]
+        };
+
+    }
+
     //////////////////////////////////////////////
     function unblink(e) {
         e.classList.remove('active');
@@ -55,6 +103,7 @@
     }
 
     function blink(e) {
+        if (!settings.blink) return;
         e.classList.add('active');
         e.classList.add('interaction--upvote');
         setTimeout(function() {unblink(e);},200);
@@ -144,18 +193,20 @@
                     else document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, u.search[x+1].id);
                 }
                 else document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, u.search[x].id);
-                if (u.total>3) {
-                    if (u.search[x+2].id == id) document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x+3].id);
-                    else document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x+2].id);
+                if (!settings.randomButton) {
+                    if (u.total>3) {
+                        if (u.search[x+2].id == id) document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x+3].id);
+                        else document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x+2].id);
+                    }
+                    else document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x].id);
                 }
-                else document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x].id);
             }
             else {
-                document.querySelectorAll('.js-rand')[0].href='#';
+                if (!settings.randomButton) document.querySelectorAll('.js-rand')[0].href='#';
                 document.querySelectorAll('.js-prev')[0].href='#';
                 document.querySelectorAll('.js-next')[0].href='#';
             }
-            blink(document.querySelectorAll('.js-rand')[0]);
+            if (!settings.randomButton) blink(document.querySelectorAll('.js-rand')[0]);
             blink(document.querySelectorAll('.js-prev')[0]);
             blink(document.querySelectorAll('.js-next')[0]);
         }
@@ -268,15 +319,30 @@
             req.send();
 
         }
-        url = compilePreQuery('random');
-        req = new XMLHttpRequest();
-        req.sel = '.js-rand';
-        req.level = 'post';
-        req.onreadystatechange = readyHandler(req, 'random');
-        req.open('GET', url);
-        req.send();
+        if (settings.randomButton || myURL.params.sf == "random") {
+            url = compilePreQuery('random');
+            req = new XMLHttpRequest();
+            req.sel = '.js-rand';
+            req.level = 'post';
+            req.onreadystatechange = readyHandler(req, 'random');
+            req.open('GET', url);
+            req.send();
+        }
     }
 
+    if (localStorage._ssf == undefined || settings.override) {
+        localStorage._ssf = JSON.stringify(settings);
+    }
+    else {
+        try {
+            var settings2 = JSON.parse(localStorage._ssf);
+            settings = settings2;
+        }
+        catch(e) {
+            localStorage._ssf = JSON.stringify(settings);
+        }
+    }
+    register();
     let myURL = parseURL(location.href);
     let id = parseInt(myURL.path.slice(1));
 
@@ -286,7 +352,18 @@
         id = parseInt(id[2]);
     }
 
-    if (!isNaN(id) && myURL.params.sf != undefined && myURL.params.sf != "" && myURL.params.sf != 'created_at' && myURL.params.sf != 'wilson' && myURL.params.sf != 'relevance') {
+    if (
+        !isNaN(id) &&
+        myURL.params.sf != undefined &&
+        myURL.params.sf != "" &&
+        myURL.params.sf != 'created_at' &&
+        myURL.params.sf != 'wilson' &&
+        myURL.params.sf != 'relevance' &&
+        !(myURL.params.sf == 'score' && !settings.score) &&
+        !(myURL.params.sf == 'comments' && !settings.comments) &&
+        !(myURL.params.sf == 'random' && !settings.random) &&
+        !((myURL.params.sf == 'width' || myURL.params.sf == 'height') && !settings.sizes)
+    ) {
         myURL.params.sf = myURL.params.sf.split('%')[0];
         execute();
     }
