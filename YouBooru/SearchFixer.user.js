@@ -9,8 +9,8 @@
 // @include      *://*.orzgs6djmvrg633souxg64th.*.*/*
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
-// @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.js
-// @version      0.1.0
+// @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
+// @version      0.1.0a
 // @description  Allows Next/Prev navigation with not id sorting
 // @author       stsyn
 // @grant        none
