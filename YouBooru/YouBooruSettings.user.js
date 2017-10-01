@@ -21,7 +21,7 @@
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/pages/yourbooru*
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.4.1
+// @version      0.4.1a
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -30,7 +30,7 @@
 
 (function() {
     'use strict';
-    var feedz;
+    var feedz, feedzCache, feedzURLS;
     var config;
     let svd = localStorage._ydb;
     if (svd === undefined) return;
@@ -42,6 +42,25 @@
             console.log('Cannot get cached feeds');
         }
     }
+    svd = localStorage._ydb_caches;
+    if (svd !== undefined) {
+        try {
+            feedzCache = JSON.parse(svd);
+        }
+        catch (e) {
+            console.log('Cannot get feeds cache');
+        }
+    }
+    svd = localStorage._ydb_cachesUrls;
+    if (svd !== undefined) {
+        try {
+            feedzURLS = JSON.parse(svd);
+        }
+        catch (e) {
+            console.log('Cannot get feeds cache');
+        }
+    }
+
     svd = localStorage._ydb_config;
     if (svd !== undefined) {
         try {
@@ -75,6 +94,8 @@
 
     function write() {
         localStorage._ydb = JSON.stringify(feedz);
+        localStorage._ydb_caches = JSON.stringify(feedzCache);
+        localStorage._ydb_cachesUrls = JSON.stringify(feedzURLS);
     }
 
     function writeConfig() {
@@ -175,6 +196,15 @@
                 var t = feedz[i];
                 feedz[i] = feedz[i-1];
                 feedz[i-1] = t;
+
+                t = feedzCache[i];
+                feedzCache[i] = feedzCache[i-1];
+                feedzCache[i-1] = t;
+
+                t = feedzURLS[i];
+                feedzURLS[i] = feedzURLS[i-1];
+                feedzURLS[i-1] = t;
+
                 write();
                 renderList(e);
             });
@@ -199,7 +229,7 @@
         x.style.overflow = 'hidden';
         x.addEventListener('input', function(e) {
             feedz[e.target.id].query = e.target.value;
-            feedz[e.target.id].cachedResp = undefined;
+            feedz[e.target.id].saved = 0;
             write();
         });
         x.addEventListener('focus', function(e) {
@@ -226,7 +256,7 @@
         x.id = i;
         x.addEventListener('click', function(e) {
             feedz[e.target.id].double = e.target.checked;
-            feedz[e.target.id].cachedResp = undefined;
+            feedz[e.target.id].saved = 0;
             write();
         });
         el2.appendChild(x);
@@ -239,7 +269,7 @@
         x.classList = 'button commission__category';
         x.innerHTML = 'Reset cache';
         x.addEventListener('click',function(e) {
-            feedz[e.target.id].cachedResp = undefined;
+            feedz[e.target.id].saved = 0;
             write();
         });
         l.appendChild(x);
@@ -252,6 +282,8 @@
         x.innerHTML = 'Delete';
         x.addEventListener('click',function(e) {
             feedz.splice(e.target.id, 1);
+            feedzCache.splice(e.target.id, 1);
+            feedzURLS.splice(e.target.id, 1);
             write();
             e.target.parentNode.style.display = 'none';
         });
@@ -267,6 +299,15 @@
                 var t = feedz[i];
                 feedz[i] = feedz[i+1];
                 feedz[i+1] = t;
+
+                t = feedzCache[i];
+                feedzCache[i] = feedzCache[i+1];
+                feedzCache[i+1] = t;
+
+                t = feedzURLS[i];
+                feedzURLS[i] = feedzURLS[i+1];
+                feedzURLS[i+1] = t;
+
                 write();
                 renderList(e);
             });
