@@ -21,7 +21,7 @@
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/pages/yourbooru*
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.4
+// @version      0.4.1
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -512,6 +512,12 @@
             }
             el.innerHTML =s;
             cont.appendChild(el);
+            el = document.createElement('a');
+            el.classList = 'button';
+            el.innerHTML = 'Backup';
+            el.target = '_blank';
+            el.href = '/pages/yourbooru?backup';
+            cont.appendChild(el);
         }
         let hh = function () {
             if (location.hash!='') {
@@ -595,6 +601,36 @@
         else c.innerHTML = 'Not enough parameters, impossible to add!';
     }
 
+    ///////////////////////////
+
+    function YB_backup() {
+        document.querySelector('#content h1').innerHTML = 'Backup';
+        var c = document.querySelector('#content .walloftext');
+
+        var s = '';
+        s = 'Copy content from that textbox and save it somewhere.';
+        s += '<textarea id="_yy_container" class="button" style="width:100%; height:20em" readonly="true"></textarea>';
+        s += '<br>If you want to "restore" backup:<br>1. Open developer console (usually F12) while using derpibooru;<br>2. Copypaste saved code inside;<br>3. Press Enter.';
+        c.innerHTML = s;
+        s = 'localStorage._ydb_config = \''+localStorage._ydb_config+'\';\n';
+        s += 'localStorage._ydb_main = \''+localStorage._ydb_main+'\';\n';
+        s += 'localStorage._ydb = \''+localStorage._ydb+'\';\n';
+        if (window._YDB_public != undefined) {
+            if (window._YDB_public.settings != undefined) {
+                for (let k in ax) {
+                    if (k!='feeds' && k!='settings') {
+                        if (window._YDB_public.settings[k] != undefined) {
+                            s += 'localStorage.'+k+' = \''+localStorage[k]+'";\n';
+                        }
+                    }
+                }
+            }
+        }
+        document.getElementById('_yy_container').value = s;
+
+
+    }
+
     function yourbooruPage() {
         let x = location.search.slice(1);
         if (location.search == "") YB_createEmpty();
@@ -602,6 +638,7 @@
         else {
             let u = x.split('?');
             if (u[0] == "addFeed") YB_addFeed(u);
+            else if (u[0] == "backup") YB_backup(u);
             else YB_createEmpty();
         }
     }
