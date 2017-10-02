@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.1.1
+// @version      0.1.2
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -193,7 +193,7 @@
                     else document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, u.search[x+1].id);
                 }
                 else document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, u.search[x].id);
-                if (!settings.randomButton) {
+                if (settings.randomButton) {
                     if (u.total>3) {
                         if (u.search[x+2].id == id) document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x+3].id);
                         else document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x+2].id);
@@ -202,11 +202,11 @@
                 }
             }
             else {
-                if (!settings.randomButton) document.querySelectorAll('.js-rand')[0].href='#';
+                if (settings.randomButton) document.querySelectorAll('.js-rand')[0].href='#';
                 document.querySelectorAll('.js-prev')[0].href='#';
                 document.querySelectorAll('.js-next')[0].href='#';
             }
-            if (!settings.randomButton) blink(document.querySelectorAll('.js-rand')[0]);
+            if (settings.randomButton) blink(document.querySelectorAll('.js-rand')[0]);
             blink(document.querySelectorAll('.js-prev')[0]);
             blink(document.querySelectorAll('.js-next')[0]);
         }
