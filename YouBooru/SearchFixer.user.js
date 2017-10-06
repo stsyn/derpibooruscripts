@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.2
+// @version      0.2a
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -39,7 +39,13 @@
         override:false,
 
         //If true, navigation will be fixed while page loading
-        preloading:true
+        preloading:true,
+
+        //Width which sortings type find button should be fixed
+        scoreUp:true,
+        sizesUp:true,
+        commentsUp:true,
+        everyUp:true
     };
 
 	var findTemp = 0, findIter = 0;
