@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Derpibooru Smart Navigation
+// @name         Derpibooru Search Fixer
 // @namespace    http://tampermonkey.net/
 // @include      *://trixiebooru.org/*
 // @include      *://derpibooru.org/*
@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.1.3
+// @version      0.2
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -19,6 +19,31 @@
 
 (function() {
     'use strict';
+    // These settings also may be edited via YourBooru:Settings
+    // https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
+
+    var settings = {
+        //Which sortings type should be fixed
+        score:true,
+        random:true,
+        sizes:true,
+        comments:true,
+
+        //Fix random button
+        randomButton:true,
+
+        //Blink on completion
+        blink:true,
+
+        //Change to true if you want to use these settings
+        override:false,
+
+        //If true, navigation will be fixed while page loading
+        preloading:true
+    };
+
+	var findTemp = 0, findIter = 0;
+
     //https://habrahabr.ru/post/177559/
     function parseURL(url) {
         var a = document.createElement('a');
@@ -48,29 +73,6 @@
         };
     }
 
-    // These settings also may be edited via YourBooru:Settings
-    // https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-
-    var settings = {
-        //Which sortings type should be fixed
-        score:true,
-        random:true,
-        sizes:true,
-        comments:true,
-
-        //Fix random button
-        randomButton:true,
-
-        //Blink on completion
-        blink:true,
-
-        //Change to true if you want to use these settings
-        override:false,
-
-        //If true, navigation will be fixed while page loading
-        preloading:false
-    };
-
     function register() {
         let date = new Date();
         let x = localStorage._ydb_main;
@@ -94,7 +96,12 @@
                 {type:'breakline'},
                 {type:'checkbox', name:'Fix random button', parameter:'randomButton'},
                 {type:'checkbox', name:'Blink on completion', parameter:'blink'},
-                {type:'checkbox', name:'Fix buttons on start', parameter:'preloading'}
+                {type:'checkbox', name:'Fix buttons on start (except "Find" button)', parameter:'preloading'},
+                {type:'breakline'},
+                {type:'checkbox', name:'Smart Find button at: score sorting', parameter:'scoreUp'},
+                {type:'checkbox', name:'; sizes sorting', parameter:'sizesUp'},
+                {type:'checkbox', name:'; comments sorting', parameter:'commentsUp'},
+                {type:'checkbox', name:'; unsupported sortings', parameter:'everyUp'}
             ]
         };
 
@@ -115,13 +122,63 @@
 
 	function complete (target, link) {
         blink(document.querySelectorAll(target)[0]);
-		if (settings.preloading) document.querySelectorAll(target)[0].href=link;
+		if (settings.preloading && target != '.js-up') document.querySelectorAll(target)[0].href=link;
 		else location.href=link;
 	}
 
     function parse(r, type) {
         let u = JSON.parse(r.responseText);
         let i;
+		if (type == 'find') {
+			let param;
+			if (myURL.params.sf == 'score') param = parseInt(document.getElementsByClassName('score')[0].innerHTML);
+			else if (myURL.params.sf == 'width') param = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[0];
+			else if (myURL.params.sf == 'height') param = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[1];
+			else if (myURL.params.sf == 'comments') param = document.querySelectorAll('.comments_count')[0].innerHTML;
+			if (r.level == 'act') {
+				findTemp = u.total;
+				findIter = parseInt(findTemp/50)+1;
+			}
+			if (r.level == 'act' && param !='') {
+
+				let req = new XMLHttpRequest();
+				req.sel = r.sel;
+				req.level = 'post';
+				req.onreadystatechange = readyHandler(req, 'find');
+				req.open('GET', location.href.replace(id, 'search.json')+'&perpage=50&page='+findIter);
+				req.send();
+				return;
+			}
+			else if (r.level == 'post') {
+				if (u.search.length > 0) for (let i=0; i<u.search.length; i++) {
+					if (u.search[i].id == id) {
+						findTemp = ((findIter-1)*50)+i;
+						let req = new XMLHttpRequest();
+						req.sel = r.sel;
+						req.level = 'pre';
+						req.onreadystatechange = readyHandler(req, 'find');
+						req.open('GET', '//'+myURL.host+'/search.json?q=%2A');
+						req.send();
+						return;
+					}
+				}
+				else {
+					return;
+				}
+				findIter++;
+				let req = new XMLHttpRequest();
+				req.sel = r.sel;
+				req.level = 'post';
+				req.onreadystatechange = readyHandler(req, 'find');
+				req.open('GET', location.href.replace(id, 'search.json')+'&perpage=50&page='+findIter);
+				req.send();
+				return;
+			}
+			else {
+				complete('.js-up', location.href.replace(id, 'search')+'&page='+parseInt(findTemp/u.search.length+1));
+				return;
+			}
+		}
         if (myURL.params.sf!= 'random') {
             if (r.level == 'pre') {
                 if (u.total == 0) {
@@ -153,6 +210,7 @@
                         else if (myURL.params.sf == 'width') param='width';
                         else if (myURL.params.sf == 'height') param='height';
                         else if (myURL.params.sf == 'comments') param='comment_count';
+						else param = '';
                         if (u.search[1][param] == u.search[0][param]) {
                             //мы чот нашли, но у соседней по тому же критерию то же самое, нужно уточнить, что ставить
                             let req = new XMLHttpRequest();
@@ -239,7 +297,7 @@
         };
     }
 
-    function compilePostQuery(type, v) {
+    function compilePostQuery(type, v, page) {
         //well, we should find first pic
         let prevUrl = '//'+myURL.host+'/search.json?q='+myURL.params.q;
         let dir = ((myURL.params.sd=='asc'^type=='prev')?'gte':'lte');
@@ -255,13 +313,15 @@
         else if (myURL.params.sf == "comments") {
             prevUrl += ',(comment_count:'+v+')';
         }
-        prevUrl+='&perpage=1&sf=created_at&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
-        return prevUrl;
+        prevUrl+=((type!='find')?('&perpage=1'):('&perpage=50&page='+page))+'&sf=created_at&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
+		return prevUrl;
     }
 
     function compilePreQuery(type) {
         //due to unpredictable sorting mechanism firstly gonna check by id
         if (type == 'random' || myURL.params.sf == "random") return compileQuery(type);
+		if (type == 'find') return compileLtQuery(1);
+
         let prevUrl = '//'+myURL.host+'/search.json?q='+myURL.params.q;
         let dir = ((myURL.params.sd=='asc'^type=='prev')?'gt':'lt');
         if (myURL.params.sf == "score") {
@@ -287,7 +347,7 @@
     function compileQuery(type) {
         let prevUrl = '//'+myURL.host+'/search.json?q='+myURL.params.q;
         if (type !='random' && myURL.params.sf != "random") {
-            let dir = ((myURL.params.sd=='asc'^type=='prev')?'gt':'lt');
+            let dir = ((myURL.params.sd=='asc'^(type=='prev' || type=='find'))?'gt':'lt');
             if (myURL.params.sf == "score") {
                 let cscore = parseInt(document.getElementsByClassName('score')[0].innerHTML);
                 prevUrl += ',((score:'+cscore+',id.'+dir+':'+id+')+||+(score.'+dir+':'+cscore+'))';
@@ -310,34 +370,52 @@
         return prevUrl;
     }
 
+    function compileLtQuery(page) {
+        let prevUrl = '//'+myURL.host+'/search.json?q='+myURL.params.q;
+		let dir = ((myURL.params.sd!='asc')?'gt':'lt');
+		if (myURL.params.sf == "score") {
+			let cscore = parseInt(document.getElementsByClassName('score')[0].innerHTML);
+			prevUrl += ',(score.'+dir+':'+cscore+')';
+		}
+		else if (myURL.params.sf == "width") {
+			let cscore = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[0];
+			prevUrl += ',(width.'+dir+':'+cscore+')';
+		}
+		else if (myURL.params.sf == "height") {
+			let cscore = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[1];
+			prevUrl += ',(height.'+dir+':'+cscore+')';
+		}
+		else if (myURL.params.sf == "comments") {
+			let cscore = document.querySelectorAll('.comments_count')[0].innerHTML;
+			prevUrl += ',(comment_count.'+dir+':'+cscore+')';
+		}
+		else {
+			prevUrl += ',(id_number.'+dir+':'+id+')';
+		}
+		prevUrl+='&page='+page+'&perpage=50&sf='+myURL.params.sf+'&sd='+((myURL.params.sd!='asc')?'asc':'desc');
+        return prevUrl;
+    }
+
+	function crLink(sel, level, type) {
+		let url, req;
+		url = compilePreQuery(type);
+		req = new XMLHttpRequest();
+		req.sel = sel;
+		req.level = level;
+		req.onreadystatechange = readyHandler(req, type);
+		req.open('GET', url);
+		req.send();
+	};
+
     function execute() {
         let url, req;
         if (myURL.params.sf != "random") {
-            url = compilePreQuery('prev');
-            req = new XMLHttpRequest();
-            req.sel = '.js-prev';
-            req.level = 'pre';
-            req.onreadystatechange = readyHandler(req, 'prev');
-            req.open('GET', url);
-            req.send();
-
-            url = compilePreQuery('next');
-            req = new XMLHttpRequest();
-            req.sel = '.js-next';
-            req.level = 'pre';
-            req.onreadystatechange = readyHandler(req, 'next');
-            req.open('GET', url);
-            req.send();
+			crLink('.js-prev', 'pre', 'prev');
+			crLink('.js-next', 'pre', 'next');
 
         }
         if (settings.randomButton || myURL.params.sf == "random") {
-            url = compilePreQuery('random');
-            req = new XMLHttpRequest();
-            req.sel = '.js-rand';
-            req.level = 'post';
-            req.onreadystatechange = readyHandler(req, 'random');
-            req.open('GET', url);
-            req.send();
+			crLink('.js-rand', 'post', 'random');
         }
     }
 
@@ -378,28 +456,31 @@
         myURL.params.sf = myURL.params.sf.split('%')[0];
         if (settings.preloading) execute();
         else {
-			let execute = function(sel, level, type) {
-				let url, req;
-				url = compilePreQuery(type);
-				req = new XMLHttpRequest();
-				req.sel = sel;
-				req.level = level;
-				req.onreadystatechange = readyHandler(req, type);
-				req.open('GET', url);
-				req.send();
-			};
 			document.querySelectorAll('.js-next')[0].addEventListener('click',function(e) {
 				e.preventDefault();
-				execute('.js-next', (myURL.params.sf=='random')?'post':'pre', 'next');
+				crLink('.js-next', (myURL.params.sf=='random')?'post':'pre', 'next');
 			});
 			document.querySelectorAll('.js-prev')[0].addEventListener('click',function(e) {
 				e.preventDefault();
-				execute('.js-prev', (myURL.params.sf=='random')?'post':'pre', 'prev');
+				crLink('.js-prev', (myURL.params.sf=='random')?'post':'pre', 'prev');
 			});
 			document.querySelectorAll('.js-rand')[0].addEventListener('click',function(e) {
 				e.preventDefault();
-				execute('.js-rand', 'post', 'random');
+				crLink('.js-rand', 'post', 'random');
 			});
         }
     }
+
+	if (!isNaN(id) && (
+		(myURL.params.sf == 'score' && settings.scoreUp) ||
+		(myURL.params.sf == 'comments' && settings.comments) ||
+		((myURL.params.sf == 'width' || myURL.params.sf == 'height') && settings.sizesUp)||
+		((myURL.params.sf == '' || myURL.params.sf == 'wilson' || myURL.params.sf == 'created_at' || myURL.params.sf == 'random' || myURL.params.sf == 'relevance') && settings.everyUp)
+
+	)) {
+		document.querySelectorAll('.js-up')[0].addEventListener('click',function(e) {
+			e.preventDefault();
+			crLink('.js-up', 'act', 'find');
+		});
+	}
 })();
