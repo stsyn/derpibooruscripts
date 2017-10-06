@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Derpibooru Search Fixer
+// @name         Derpibooru Smart Navigation
 // @namespace    http://tampermonkey.net/
 // @include      *://trixiebooru.org/*
 // @include      *://derpibooru.org/*
@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.1.2
+// @version      0.1.3
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -65,7 +65,10 @@
         blink:true,
 
         //Change to true if you want to use these settings
-        override:false
+        override:false,
+
+        //If true, navigation will be fixed while page loading
+        preloading:false
     };
 
     function register() {
@@ -90,7 +93,8 @@
                 {type:'checkbox', name:'Fix comments sorting', parameter:'comments'},
                 {type:'breakline'},
                 {type:'checkbox', name:'Fix random button', parameter:'randomButton'},
-                {type:'checkbox', name:'Blink on completion', parameter:'blink'}
+                {type:'checkbox', name:'Blink on completion', parameter:'blink'},
+                {type:'checkbox', name:'Fix buttons on start', parameter:'preloading'}
             ]
         };
 
@@ -109,6 +113,12 @@
         setTimeout(function() {unblink(e);},200);
     }
 
+	function complete (target, link) {
+        blink(document.querySelectorAll(target)[0]);
+		if (settings.preloading) document.querySelectorAll(target)[0].href=link;
+		else location.href=link;
+	}
+
     function parse(r, type) {
         let u = JSON.parse(r.responseText);
         let i;
@@ -126,8 +136,7 @@
                 }
                 else {
                     //нашли с тем же критерием, но другим очком
-                    document.querySelectorAll(r.sel)[0].href=location.href.replace(id, u.search[0].id);
-                    blink(document.querySelectorAll(r.sel)[0]);
+					complete(r.sel, location.href.replace(id, u.search[0].id));
                     return;
                 }
 
@@ -156,15 +165,13 @@
                         }
                         else {
                             //а все норм, она одна такая
-                            document.querySelectorAll(r.sel)[0].href=location.href.replace(id, u.search[0].id);
-                            blink(document.querySelectorAll(r.sel)[0]);
+							complete(r.sel, location.href.replace(id, u.search[0].id));
                             return;
                         }
                     }
                     else {
                         //в запросе ваще одна пихча
-                        document.querySelectorAll(r.sel)[0].href=location.href.replace(id, u.search[0].id);
-                        blink(document.querySelectorAll(r.sel)[0]);
+						complete(r.sel, location.href.replace(id, u.search[0].id));
                         return;
                     }
                 }
@@ -177,38 +184,42 @@
                     document.querySelectorAll(r.sel)[0].href='#';
                 }
                 //вот это точно должна идти
-                document.querySelectorAll(r.sel)[0].href=location.href.replace(id, u.search[i].id);
-                blink(document.querySelectorAll(r.sel)[0]);
+				complete(r.sel, location.href.replace(id, u.search[0].id));
                 return;
             }
         }
         else {
-            if (u.total>1)
-            {
-                let x = 0;
-                if (u.search[0].id == id) x = 1;
-                document.querySelectorAll('.js-next')[0].href=location.href.replace(id, u.search[x].id);
-                if (u.total>2) {
-                    if (u.search[x+1].id == id) document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, u.search[x+2].id);
-                    else document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, u.search[x+1].id);
-                }
-                else document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, u.search[x].id);
-                if (settings.randomButton) {
-                    if (u.total>3) {
-                        if (u.search[x+2].id == id) document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x+3].id);
-                        else document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x+2].id);
-                    }
-                    else document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x].id);
-                }
-            }
-            else {
-                if (settings.randomButton) document.querySelectorAll('.js-rand')[0].href='#';
-                document.querySelectorAll('.js-prev')[0].href='#';
-                document.querySelectorAll('.js-next')[0].href='#';
-            }
-            if (settings.randomButton) blink(document.querySelectorAll('.js-rand')[0]);
-            blink(document.querySelectorAll('.js-prev')[0]);
-            blink(document.querySelectorAll('.js-next')[0]);
+			if (settings.preload) {
+				if (u.total>1) {
+					let x = 0;
+					if (u.search[0].id == id) x = 1;
+					document.querySelectorAll('.js-next')[0].href=location.href.replace(id, u.search[x].id);
+					if (u.total>2) {
+						if (u.search[x+1].id == id) document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, u.search[x+2].id);
+						else document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, u.search[x+1].id);
+					}
+					else document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, u.search[x].id);
+					if (settings.randomButton) {
+						if (u.total>3) {
+							if (u.search[x+2].id == id) document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x+3].id);
+							else document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x+2].id);
+						}
+						else document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x].id);
+					}
+				}
+				else {
+					if (settings.randomButton) document.querySelectorAll('.js-rand')[0].href='#';
+					document.querySelectorAll('.js-prev')[0].href='#';
+					document.querySelectorAll('.js-next')[0].href='#';
+				}
+				if (settings.randomButton) blink(document.querySelectorAll('.js-rand')[0]);
+				blink(document.querySelectorAll('.js-prev')[0]);
+				blink(document.querySelectorAll('.js-next')[0]);
+			}
+			else {
+				if (u.total>1) complete(r.sel, location.href.replace(id, u.search[0].id));
+				else document.querySelectorAll(r.sel)[0].href='#';
+			}
         }
     }
 
@@ -365,6 +376,30 @@
         !((myURL.params.sf == 'width' || myURL.params.sf == 'height') && !settings.sizes)
     ) {
         myURL.params.sf = myURL.params.sf.split('%')[0];
-        execute();
+        if (settings.preloading) execute();
+        else {
+			let execute = function(sel, level, type) {
+				let url, req;
+				url = compilePreQuery(type);
+				req = new XMLHttpRequest();
+				req.sel = sel;
+				req.level = level;
+				req.onreadystatechange = readyHandler(req, type);
+				req.open('GET', url);
+				req.send();
+			};
+			document.querySelectorAll('.js-next')[0].addEventListener('click',function(e) {
+				e.preventDefault();
+				execute('.js-next', (myURL.params.sf=='random')?'post':'pre', 'next');
+			});
+			document.querySelectorAll('.js-prev')[0].addEventListener('click',function(e) {
+				e.preventDefault();
+				execute('.js-prev', (myURL.params.sf=='random')?'post':'pre', 'prev');
+			});
+			document.querySelectorAll('.js-rand')[0].addEventListener('click',function(e) {
+				e.preventDefault();
+				execute('.js-rand', 'post', 'random');
+			});
+        }
     }
 })();
