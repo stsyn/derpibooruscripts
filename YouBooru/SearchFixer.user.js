@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.2.2
+// @version      0.2.2a
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -506,7 +506,7 @@
         (myURL.params.sf == 'score' && settings.scoreUp) ||
         (myURL.params.sf == 'comments' && settings.comments) ||
         ((myURL.params.sf == 'width' || myURL.params.sf == 'height') && settings.sizesUp)||
-        ((myURL.params.sf == '' || myURL.params.sf == 'wilson' || myURL.params.sf == 'created_at' || myURL.params.sf == 'random' || myURL.params.sf == 'relevance') && settings.everyUp)
+        ((myURL.params.sf == undefined || myURL.params.sf == '' || myURL.params.sf == 'wilson' || myURL.params.sf == 'created_at' || myURL.params.sf == 'random' || myURL.params.sf == 'relevance') && settings.everyUp)
 
     )) {
         document.querySelectorAll('.js-up')[0].addEventListener('click',function(e) {
