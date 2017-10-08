@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.2.11
+// @version      0.2.12
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -194,7 +194,15 @@
 
     function postRun() {
         resizeEverything();
-        localStorage._ydb = JSON.stringify(feedz);
+        let tf = [];
+        for (let i=0; i<feedz.length; i++) {
+            tf.push({});
+            for (var key in feedz[i]) {
+                if (key=='loaded' || key=='container' || key=='temp' || key=='reload' || key=='internalId' || key=='url') continue;
+                tf[i][key] = feedz[i][key];
+            }
+        }
+        localStorage._ydb = JSON.stringify(tf);
         localStorage._ydb_caches = JSON.stringify(feedzCache);
         localStorage._ydb_cachesUrls = JSON.stringify(feedzURLs);
     }
@@ -553,11 +561,14 @@
                 getFeed(f, f.internalId);
             });
 
+            f.saved = parseInt(f.saved);
+            f.cache = parseInt(f.cache);
+            f.ccache = parseInt(f.ccache);
             if (feedzCache[i] == undefined) getFeed(f, i);
             else if (config.imagesInFeeds != feedz[i].responsed) getFeed(f, i);
-            else if (ptime > (f.saved+feedz[i].cache))
+            else if (ptime > (f.saved+f.cache))
             {
-                if ((f.ccache !== undefined) && (f.ccache>0)) {
+                if ((f.ccache !== undefined) && (parseInt(f.ccache)>0) && (!isNaN(parseInt(f.ccache)))) {
                     if (parseInt(ptime/f.ccache) > parseInt(f.saved/f.ccache)) getFeed(f, i);
                     else fillParsed(f, i);
                 }
