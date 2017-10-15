@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.2.12
+// @version      0.2.13
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -228,15 +228,17 @@
     }
 
     function getNotSeenYetQuery(f) {
-        let gc = f.saved;
+        let gc = parseInt(f.saved);
+        if (isNaN(gc)) gc = 0;
         if (gc == undefined) gc = 0;
         gc*=60000;
-        let t = new Date(gc);
+        let t = new Date(parseInt(gc));
         return '(created_at.gte:'+t.toISOString()+')';
     }
 
     function getNotSeenYetQueryNoNew(f) {
-        let gc = f.saved;
+        let gc = parseInt(f.saved);
+        if (isNaN(gc)) gc = 0;
         if (gc == undefined) gc = 0;
         gc*=60000;
         let t = new Date(gc);
