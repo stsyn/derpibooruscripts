@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.2.3
+// @version      0.2.4
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -298,10 +298,12 @@
                 if (request.status === 200) return parse(request, type);
                 else if (request.status === 0) {
                     console.log ('[YDB:SE]: Server timeout');
+                    fail(r.sel);
                     return false;
                 }
                 else {
                     console.log ('[YDB:SE]: Response '+request.status);
+                    fail(r.sel);
                     return false;
                 }
             }
@@ -310,7 +312,7 @@
 
     function compilePostQuery(type, v, page) {
         //well, we should find first pic
-        let prevUrl = '//'+myURL.host+'/search.json?q='+myURL.params.q;
+        let prevUrl = '//'+myURL.host+'/search.json?q=('+myURL.params.q+')';
         let dir = ((myURL.params.sd=='asc'^type=='prev')?'gte':'lte');
         if (myURL.params.sf == "score") {
             prevUrl += ',(score:'+v+')';
@@ -333,7 +335,7 @@
         if (type == 'find') return compileLtQuery(1);
         if (type == 'random' || myURL.params.sf == "random") return compileQuery(type);
 
-        let prevUrl = '//'+myURL.host+'/search.json?q='+myURL.params.q;
+        let prevUrl = '//'+myURL.host+'/search.json?q=('+myURL.params.q+')';
         let dir = ((myURL.params.sd=='asc'^type=='prev')?'gt':'lt');
         if (myURL.params.sf == "score") {
             let cscore = parseInt(document.getElementsByClassName('score')[0].innerHTML);
@@ -356,7 +358,7 @@
     }
 
     function compileQuery(type) {
-        let prevUrl = '//'+myURL.host+'/search.json?q='+myURL.params.q;
+        let prevUrl = '//'+myURL.host+'/search.json?q=('+myURL.params.q+')';
         if (type !='random' && myURL.params.sf != "random") {
             let dir = ((myURL.params.sd=='asc'^(type=='prev' || type=='find'))?'gt':'lt');
             if (myURL.params.sf == "score") {
@@ -382,7 +384,7 @@
     }
 
     function compileLtQuery(page) {
-        let prevUrl = '//'+myURL.host+'/search.json?q='+myURL.params.q;
+        let prevUrl = '//'+myURL.host+'/search.json?q=('+myURL.params.q+')';
         let dir = ((myURL.params.sd!='asc')?'gt':'lt');
         let sd = ((myURL.params.sd!='asc')?'asc':'desc');
         let sf = myURL.params.sf;
