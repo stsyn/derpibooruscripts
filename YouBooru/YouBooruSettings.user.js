@@ -1,28 +1,17 @@
 // ==UserScript==
-// @name         YourBooru:Settings
+// @name         Derpibooru Search Fixer
 // @namespace    http://tampermonkey.net/
-
-// @include      *://trixiebooru.org/settings
-// @include      *://derpibooru.org/settings
-// @include      *://www.trixiebooru.org/settings
-// @include      *://www.derpibooru.org/settings
-// @include      *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/settings
-// @include      *://*.orzgs6djmvrg633souxg64th.*.*/settings
-// @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/settings
-// @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/settings
-
-// @include      *://trixiebooru.org/pages/yourbooru*
-// @include      *://derpibooru.org/pages/yourbooru*
-// @include      *://www.trixiebooru.org/pages/yourbooru*
-// @include      *://www.derpibooru.org/pages/yourbooru*
-// @include      *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/pages/yourbooru*
-// @include      *://*.orzgs6djmvrg633souxg64th.*.*/pages/yourbooru*
-// @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/pages/yourbooru*
-// @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/pages/yourbooru*
-
-// @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.4.1a
-// @description  Global settings script for YourBooru script family
+// @include      *://trixiebooru.org/*
+// @include      *://derpibooru.org/*
+// @include      *://www.trixiebooru.org/*
+// @include      *://www.derpibooru.org/*
+// @include      *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/*
+// @include      *://*.orzgs6djmvrg633souxg64th.*.*/*
+// @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
+// @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
+// @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
+// @version      0.2.5
+// @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
 // @run-at       document-end
@@ -30,45 +19,64 @@
 
 (function() {
     'use strict';
-    var feedz, feedzCache, feedzURLS;
-    var config;
-    let svd = localStorage._ydb;
-    if (svd === undefined) return;
-    else {
-        try {
-            feedz = JSON.parse(svd);
-        }
-        catch (e) {
-            console.log('Cannot get cached feeds');
-        }
-    }
-    svd = localStorage._ydb_caches;
-    if (svd !== undefined) {
-        try {
-            feedzCache = JSON.parse(svd);
-        }
-        catch (e) {
-            console.log('Cannot get feeds cache');
-        }
-    }
-    svd = localStorage._ydb_cachesUrls;
-    if (svd !== undefined) {
-        try {
-            feedzURLS = JSON.parse(svd);
-        }
-        catch (e) {
-            console.log('Cannot get feeds cache');
-        }
-    }
+    // These settings also may be edited via YourBooru:Settings
+    // https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
 
-    svd = localStorage._ydb_config;
-    if (svd !== undefined) {
-        try {
-            config = JSON.parse(svd);
-        }
-        catch (e) {
-            console.log('Cannot get configs');
-        }
+    var settings = {
+        //Which sortings type should be fixed
+        score:true,
+        random:true,
+        sizes:true,
+        comments:true,
+
+        //Fix random button
+        randomButton:true,
+
+        //Blink on completion
+        blink:true,
+
+        //Change to true if you want to use these settings
+        override:false,
+
+        //If true, navigation will be fixed while page loading
+        preloading:true,
+
+        //With which sortings type find button should be fixed
+        scoreUp:true,
+        sizesUp:true,
+        commentsUp:true,
+        everyUp:true
+    };
+
+    var findTemp = 0, findIter = 1;
+
+    //https://habrahabr.ru/post/177559/
+    function parseURL(url) {
+        var a = document.createElement('a');
+        a.href = url;
+        return {
+            source: url,
+            protocol: a.protocol.replace(':',''),
+            host: a.hostname,
+            port: a.port,
+            query: a.search,
+            params: (function(){
+                var ret = {},
+                    seg = a.search.replace(/^\?/,'').split('&'),
+                    len = seg.length, i = 0, s;
+                for (;i<len;i++) {
+                    if (!seg[i]) { continue; }
+                    s = seg[i].split('=');
+                    ret[s[0]] = s[1];
+                }
+                return ret;
+            })(),
+            file: (a.pathname.match(/\/([^\/?#]+)$/i) || [,''])[1],
+            hash: a.hash.replace('#',''),
+            path: a.pathname.replace(/^([^\/])/,'/$1'),
+            relative: (a.href.match(/tps?:\/\/[^\/]+(.+)/) || [,''])[1],
+            segments: a.pathname.replace(/^\//,'').split('/')
+        };
     }
 
     function register() {
@@ -76,615 +84,442 @@
         let x = localStorage._ydb_main;
         if (x == undefined) x = {};
         else x = JSON.parse(x);
-        x.settings = {};
-        x.settings.timestamp = date.getTime();
-        x.settings.version = GM_info.script.version;
+        x.searchSortingFixer = {};
+        x.searchSortingFixer.timestamp = date.getTime();
+        x.searchSortingFixer.version = GM_info.script.version;
         localStorage._ydb_main = JSON.stringify(x);
-    }
 
-    function resetCaches() {
-        for (let i=0; i<feedz.length; i++) {
-            if (feedz[i] == undefined) continue;
-            feedz[i].cachedResp = '';
-            feedz[i].saved = 0;
-            feedz[i].responsed = 0;
-        }
-        localStorage._ydb = JSON.stringify(feedz);
-    }
-
-    function write() {
-        localStorage._ydb = JSON.stringify(feedz);
-        localStorage._ydb_caches = JSON.stringify(feedzCache);
-        localStorage._ydb_cachesUrls = JSON.stringify(feedzURLS);
-    }
-
-    function writeConfig() {
-        localStorage._ydb_config = JSON.stringify(config);
-    }
-
-    function putLine(e, f, i) {
-        let l = document.createElement('div');
-        if (f == undefined) {
-            l.style.display = 'none';
-            return;
-        }
-        let x = document.createElement('span');
-        l.style.marginBottom = '.5em';
-        x.innerHTML = 'Name ';
-        l.appendChild(x);
-
-        x = document.createElement('input');
-        x.type = 'text';
-        x.value = f.name;
-        x.style.width = '18.1em';
-        x.id = i;
-        x.className = 'input';
-        x.addEventListener('input', function(e) {feedz[e.target.id].name = e.target.value; write();});
-        l.appendChild(x);
-
-        x = document.createElement('span');
-        x.style.marginLeft = '.5em';
-        x.innerHTML = 'Sort ';
-        l.appendChild(x);
-
-        x = document.createElement('input');
-        x.type = 'text';
-        x.value = f.sort;
-        x.id = i;
-        x.style.width = '5em';
-        x.className = 'input';
-        x.addEventListener('input', function(e) {feedz[e.target.id].sort = e.target.value; write();});
-        l.appendChild(x);
-
-        x = document.createElement('span');
-        x.style.marginLeft = '.5em';
-        x.innerHTML = 'Direction';
-        l.appendChild(x);
-
-        x = document.createElement('input');
-        x.type = 'text';
-        x.value = f.sd;
-        x.id = i;
-        x.style.width = '4em';
-        x.className = 'input';
-        x.addEventListener('input', function(e) {feedz[e.target.id].sd = e.target.value; write();});
-        l.appendChild(x);
-
-        x = document.createElement('span');
-        x.style.marginLeft = '.5em';
-        x.innerHTML = 'Cache (minutes)';
-        l.appendChild(x);
-
-        x = document.createElement('input');
-        x.type = 'text';
-        x.value = f.cache;
-        x.id = i;
-        x.style.width = '3em';
-        x.className = 'input';
-        x.addEventListener('input', function(e) {feedz[e.target.id].cache = parseInt(e.target.value); write();});
-        l.appendChild(x);
-
-        x = document.createElement('span');
-        x.innerHTML = ' ... or update each';
-        l.appendChild(x);
-
-        x = document.createElement('input');
-        x.type = 'text';
-        x.value = f.ccache;
-        x.id = i;
-        x.style.width = '4em';
-        x.className = 'input';
-        x.addEventListener('input', function(e) {feedz[e.target.id].ccache = parseInt(e.target.ccache); write();});
-        l.appendChild(x);
-
-        x = document.createElement('a');
-        x.style.marginLeft = '.5em';
-        x.classList = 'button';
-        x.innerHTML = 'Share';
-        x.target = '_blank';
-        x.title = 'Copy this link and paste it somewhere to share that feed!';
-        x.href = '/pages/yourbooru?addFeed?'+f.name+'?'+encodeURIComponent(f.query).replace(/\(/,'%28').replace(/\)/,'%29')+'?'+f.sort+'?'+f.sd+'?'+f.cache+'?'+f.ccache;
-        l.appendChild(x);
-
-        if (i > 0) {
-            x = document.createElement('span');
-            x.style.marginLeft = '.5em';
-            x.style.float = 'right';
-            x.classList = 'button';
-            x.innerHTML = '<i class="fa fa-arrow-up"></i>';
-            x.addEventListener('click',function() {
-                var t = feedz[i];
-                feedz[i] = feedz[i-1];
-                feedz[i-1] = t;
-
-                t = feedzCache[i];
-                feedzCache[i] = feedzCache[i-1];
-                feedzCache[i-1] = t;
-
-                t = feedzURLS[i];
-                feedzURLS[i] = feedzURLS[i-1];
-                feedzURLS[i-1] = t;
-
-                write();
-                renderList(e);
-            });
-            l.appendChild(x);
-
-        }
-
-        /******************/
-
-        x = document.createElement('span');
-        x.innerHTML = '<br>Query ';
-        l.appendChild(x);
-
-        x = document.createElement('textarea');
-        x.value = f.query;
-        x.id = i;
-        x.className = 'input';
-        x.style.width = 'calc(100% - 26.2em)';
-        x.style.resize = 'none';
-        x.style.height = '2em';
-        x.style.verticalAlign = '-50%';
-        x.style.overflow = 'hidden';
-        x.addEventListener('input', function(e) {
-            feedz[e.target.id].query = e.target.value;
-            feedz[e.target.id].saved = 0;
-            write();
-        });
-        x.addEventListener('focus', function(e) {
-            e.target.style.height = '7em';
-            e.target.style.width = 'calc(100% - 4em)';
-            e.target.style.position = 'absolute';
-            e.target.style.overflowY = 'auto';
-        });
-        x.addEventListener('blur', function(e) {
-            e.target.style.height = '2em';
-            e.target.style.width = 'calc(100% - 26.2em)';
-            e.target.style.position = 'static';
-            e.target.style.overflowY = 'hidden';
-        });
-        l.appendChild(x);
-
-        let el2 = document.createElement('label');
-        el2.innerHTML = ' Double size ';
-        el2.id = i;
-        l.appendChild(el2);
-        x = document.createElement('input');
-        x.type = 'checkbox';
-        x.checked = f.double;
-        x.id = i;
-        x.addEventListener('click', function(e) {
-            feedz[e.target.id].double = e.target.checked;
-            feedz[e.target.id].saved = 0;
-            write();
-        });
-        el2.appendChild(x);
-
-
-        x = document.createElement('span');
-        x.style.marginLeft = '.5em';
-        x.style.marginRight = '0';
-        x.id = i;
-        x.classList = 'button commission__category';
-        x.innerHTML = 'Reset cache';
-        x.addEventListener('click',function(e) {
-            feedz[e.target.id].saved = 0;
-            write();
-        });
-        l.appendChild(x);
-
-        x = document.createElement('span');
-        x.style.marginLeft = '.5em';
-        x.style.marginRight = '0';
-        x.id = i;
-        x.classList = 'button commission__category';
-        x.innerHTML = 'Delete';
-        x.addEventListener('click',function(e) {
-            feedz.splice(e.target.id, 1);
-            feedzCache.splice(e.target.id, 1);
-            feedzURLS.splice(e.target.id, 1);
-            write();
-            e.target.parentNode.style.display = 'none';
-        });
-        l.appendChild(x);
-
-        if (i<feedz.length-1) {
-            x = document.createElement('span');
-            x.style.marginLeft = '.5em';
-            x.style.float = 'right';
-            x.classList = 'button';
-            x.innerHTML = '<i class="fa fa-arrow-down"></i>';
-            x.addEventListener('click',function() {
-                var t = feedz[i];
-                feedz[i] = feedz[i+1];
-                feedz[i+1] = t;
-
-                t = feedzCache[i];
-                feedzCache[i] = feedzCache[i+1];
-                feedzCache[i+1] = t;
-
-                t = feedzURLS[i];
-                feedzURLS[i] = feedzURLS[i+1];
-                feedzURLS[i+1] = t;
-
-                write();
-                renderList(e);
-            });
-            l.appendChild(x);
-        }
-
-        x = document.createElement('hr');
-        l.appendChild(x);
-        e.appendChild(l);
-    }
-
-    function renderList(fel) {
-        fel.innerHTML = '';
-        if (feedz != undefined) {
-            for (let i=0; i<feedz.length; i++) if (feedz[i] == undefined) {
-                feedz.splice(i,1);
-                i--;
-            };
-            for (let i=0; i<feedz.length; i++) putLine(fel, feedz[i], i);
-        }
-        else {
-            fel.classList.add('block--warning');
-            fel.classList.add('block');
-            fel.classList.add('block--fixed');
-            fel.innerHTML = 'Everything is lost! Please visit derpibooru mainpage to reload default feeds and make everything work again!';
-        }
-    }
-
-    function _YDB_feeds(cont) {
-        let el = document.createElement('h4');
-        el.innerHTML = 'Feeds';
-        cont.appendChild(el);
-
-        let el2 = document.createElement('label');
-        el2.innerHTML = 'Do not remove watchlist ';
-        cont.appendChild(el2);
-        el = document.createElement('input');
-        el.type = 'checkbox';
-        el.checked = config.feeds.doNotRemoveWatchList;
-        el.addEventListener('change', function() {config.feeds.doNotRemoveWatchList = this.checked; writeConfig();});
-        el2.appendChild(el);
-
-        el2 = document.createElement('p');
-        el2.innerHTML = 'Images in each feed: ';
-        cont.appendChild(el2);
-        el = document.createElement('input');
-        el.type = 'text';
-        el.value = config.feeds.imagesInFeeds;
-        el.style.width = '3em';
-        el.className = 'input';
-        el.addEventListener('input', function() {config.feeds.imagesInFeeds = parseInt(this.value); writeConfig();});
-        el2.appendChild(el);
-
-        el2 = document.createElement('label');
-        el2.innerHTML = 'Watch link on the right side ';
-        cont.appendChild(el2);
-        el = document.createElement('input');
-        el.type = 'checkbox';
-        el.checked = config.feeds.watchFeedLinkOnRightSide;
-        el.addEventListener('change', function() {config.feeds.watchFeedLinkOnRightSide = this.checked; writeConfig();});
-        el2.appendChild(el);
-
-        el2 = document.createElement('label');
-        el2.innerHTML = '<br>Remove unneeded content from HTML (disable if issues happens (but it will fill up your localStorage!))';
-        cont.appendChild(el2);
-        el = document.createElement('input');
-        el.type = 'checkbox';
-        el.checked = config.feeds.optimizeLS;
-        el.addEventListener('change', function() {config.feeds.optimizeLS = this.checked; writeConfig();});
-        el2.appendChild(el);
-
-        let fel = document.createElement('div');
-        cont.appendChild(fel);
-
-        el2 = document.createElement('span');
-        el2.classList = 'button';
-        el2.innerHTML = 'Add feed';
-        el2.addEventListener('click',function() {
-            if (feedz != undefined) for (let i=0; i<=feedz.length; i++) {
-                if (feedz[i] == undefined) {
-                    feedz[i] = {
-                        name:'New feed',
-                        query:'*',
-                        sort:'',
-                        sd:'desc',
-                        cache:30,
-                        double:false
-                    };
-                    write();
-                    break;
-                }
-            }
-            renderList(fel);
-        });
-        cont.appendChild(el2);
-
-        el2 = document.createElement('span');
-        el2.classList = 'button commission__category';
-        el2.innerHTML = 'Reset feeds cache';
-        el2.style.marginLeft = '1em';
-        el2.style.marginRight = '6em';
-        el2.addEventListener('click',resetCaches);
-        cont.appendChild(el2);
-
-        el2 = document.createElement('input');
-        el2.type = 'checkbox';
-        el2.id = 'ydb_reset';
-        cont.appendChild(el2);
-
-        el2 = document.createElement('span');
-        el2.classList = 'button commission__category';
-        el2.innerHTML = 'Reset everything';
-        el2.style.marginLeft = '.5em';
-        el2.style.marginRight = '6em';
-        el2.addEventListener('click', function() {
-            if (document.getElementById('ydb_reset').checked) {
-                feedz = undefined;
-                write();
-                location.href = '/';
-            }
-            else {
-                alert('Mark checkbox first!');
-            }
-        });
-        cont.appendChild(el2);
-
-        el2 = document.createElement('input');
-        el2.type = 'checkbox';
-        el2.id = 'ydb_feeds_del';
-        cont.appendChild(el2);
-
-        el2 = document.createElement('span');
-        el2.classList = 'button commission__category';
-        el2.innerHTML = 'I uninstalled YourBooru: Feeds.<br>';
-        el2.style.marginLeft = '.5em';
-        el2.href = '#';
-        el2.addEventListener('click', function() {
-            if (document.getElementById('ydb_feeds_del').checked) {
-                feedz = undefined;
-                write();
-                ax.feeds = undefined;
-                localStorage._ydb_main = JSON.stringify(ax);
-                location.reload();
-            }
-            else {
-                alert('Mark checkbox first!');
-            }
-        });
-        cont.appendChild(el2);
-
-        renderList(fel);
-    }
-
-    function renderCustom(e, cont) {
-        let el = document.createElement('h4');
-        let ss = {};
-        try {
-            ss = JSON.parse(localStorage[e.container]);
-        }
-        catch (ex) {
-        }
-        el.innerHTML = e.name;
-        cont.appendChild(el);
-
-        let l = document.createElement('div');
-
-        e.s.forEach(function (v,i,a) {
-            if (v.type == 'checkbox') {
-                let el2 = document.createElement('label');
-                el2.innerHTML = ' '+v.name+' ';
-                l.appendChild(el2);
-                let x = document.createElement('input');
-                x.type = 'checkbox';
-                x.checked = ss[v.parameter];
-                x.addEventListener('click', function(ev) {
-                    ss[v.parameter] = ev.target.checked;
-                    localStorage[e.container] = JSON.stringify(ss);
-                });
-                el2.appendChild(x);
-            }
-
-            else if (v.type == 'breakline') {
-                let x = document.createElement('br');
-                l.appendChild(x);
-            }
-
-        });
-        cont.appendChild(l);
-    }
-
-    function settingPage() {
-
-        let cont = document.createElement('div');
-        cont.className = 'block__tab hidden';
-        cont.setAttribute('data-tab','YourBooru');
-        cont.style.position = 'relative';
-        document.getElementById('js-setting-table').insertBefore(cont, document.querySelector('[data-tab="local"]').nextSibling);
-
-        let tab = document.createElement('a');
-        tab.href = '#';
-        tab.setAttribute('data-click-tab','YourBooru');
-        tab.innerHTML = 'YourBooru';
-        document.getElementsByClassName('block__header')[0].appendChild(tab);
-
-        let el;
-        let ax = JSON.parse(localStorage._ydb_main);
-
-        el = document.createElement('div');
-        el.className = 'block block--fixed block--warning';
-        el.innerHTML = 'Settings on this tab are saved in the current browser. They are independent of whether you are logged in or not.<br><b>Every setting will apply when you change anything.</b>';
-        cont.appendChild(el);
-        if (ax.feeds != undefined) {
-            _YDB_feeds(cont);
-        }
-        if (window._YDB_public != undefined) {
-            if (window._YDB_public.settings != undefined) {
-                for (let k in ax) {
-                    if (k!='feeds' && k!='settings') {
-                        if (window._YDB_public.settings[k] != undefined) {
-                            renderCustom(window._YDB_public.settings[k], cont);
-                        }
-                    }
-                }
-            }
-        }
-
-        if (ax.settings != undefined) {
-            el = document.createElement('h4');
-            el.innerHTML = '&nbsp';
-            cont.appendChild(el);
-            el = document.createElement('h4');
-            el.innerHTML = 'Installed plugins';
-            cont.appendChild(el);
-            let s = '';
-            el = document.createElement('p');
-            for (let key in ax) {
-                if (key == 'feeds') s+='YourBooru: Feeds ';
-                else if (key == 'settings') s+='YourBooru: Settings ';
-                else s+='id='+key+' ';
-
-                s+='ver. '+ax[key].version;
-                s+='<br>';
-            }
-            el.innerHTML =s;
-            cont.appendChild(el);
-            el = document.createElement('a');
-            el.classList = 'button';
-            el.innerHTML = 'Backup';
-            el.target = '_blank';
-            el.href = '/pages/yourbooru?backup';
-            cont.appendChild(el);
-        }
-        let hh = function () {
-            if (location.hash!='') {
-                let t = location.hash.slice(1);
-                if (document.querySelector('a[data-click-tab="'+t+'"]') != null) document.querySelector('a[data-click-tab="'+t+'"]').click();
-            }
+        if (window._YDB_public == undefined) window._YDB_public = {};
+        if (window._YDB_public.settings == undefined) window._YDB_public.settings = {};
+        window._YDB_public.settings.searchSortingFixer = {
+            name:'Search Sorting Fixer',
+            container:'_ssf',
+            s:[
+                {type:'checkbox', name:'Fix score sorting', parameter:'score'},
+                {type:'checkbox', name:'Fix random sorting', parameter:'random'},
+                {type:'checkbox', name:'Fix sizes sorting', parameter:'sizes'},
+                {type:'checkbox', name:'Fix comments sorting', parameter:'comments'},
+                {type:'breakline'},
+                {type:'checkbox', name:'Fix random button', parameter:'randomButton'},
+                {type:'checkbox', name:'Blink on completion', parameter:'blink'},
+                {type:'checkbox', name:'Fix buttons on start (except "Find" button)', parameter:'preloading'},
+                {type:'breakline'},
+                {type:'checkbox', name:'Smart Find button at: score sorting', parameter:'scoreUp'},
+                {type:'checkbox', name:'; sizes sorting', parameter:'sizesUp'},
+                {type:'checkbox', name:'; comments sorting', parameter:'commentsUp'},
+                {type:'checkbox', name:'; unsupported sortings', parameter:'everyUp'}
+            ]
         };
 
-        for (let i=0; i<document.getElementsByClassName('block__header')[0].childNodes.length; i++) {
-            document.getElementsByClassName('block__header')[0].childNodes[i].href = '#'+document.getElementsByClassName('block__header')[0].childNodes[i].getAttribute('data-click-tab');
-            document.getElementsByClassName('block__header')[0].childNodes[i].addEventListener('click', function(e) {location.hash = e.target.href.split('#')[1];});
-        }
-        setTimeout(hh, 500);
     }
 
-    ////////////////////////////
-
-    function YB_createEmpty() {
-        document.querySelector('#content h1').innerHTML = 'Ooops!';
-        document.querySelector('#content .walloftext').innerHTML = '<p>YourBooru cannot get what you want. Sorry :(</p><p>Try to check url you used. If you believe that you found a bug report to me please!</p>';
+    //////////////////////////////////////////////
+    function unblink(e) {
+        e.classList.remove('active');
+        e.classList.remove('interaction--upvote');
+        e.classList.remove('interaction--downvote');
     }
 
-    function YB_insertFeed(u) {
-        var f = {};
+    function blink(e) {
+        if (!settings.blink) return;
+        e.classList.add('active');
+        e.classList.add('interaction--upvote');
+        e.classList.remove('interaction--fave');
+        setTimeout(function() {unblink(e);},200);
+    }
+
+    function failBlink(e) {
+        if (!settings.blink) return;
+        e.classList.add('active');
+        e.classList.add('interaction--downvote');
+        e.classList.remove('interaction--fave');
+        setTimeout(function() {unblink(e);},200);
+    }
+
+    function complete (target, link) {
+        blink(document.querySelectorAll(target)[0]);
+        if (settings.preloading && target != '.js-up') document.querySelectorAll(target)[0].href=link;
+        else location.href=link;
+    }
+
+    function fail (target) {
+        failBlink(document.querySelectorAll(target)[0]);
+        if (settings.preloading && target != '.js-up') document.querySelectorAll(target)[0].href='#';
+    }
+
+    function request(link, elem, target, level) {
+        let req = new XMLHttpRequest();
+        console.log(link, target, level, findTemp);
+        req.sel = elem;
+        req.level = level;
+        req.onreadystatechange = readyHandler(req, target);
+        req.open('GET', link);
+        req.send();
+        return;
+    }
+
+    function parse(r, type) {
+        let u = JSON.parse(r.responseText);
+        console.log(u, type, r.responseUrl);
         let i;
-        for (i=0; i<feedz.length; i++) {
-            if (feedz[i].name == decodeURIComponent(u[1])) {
-                f = feedz[i];
-                break;
+        if (type == 'find') {
+            let param = '';
+            if (myURL.params.sf == 'score') param = parseInt(document.getElementsByClassName('score')[0].innerHTML);
+            else if (myURL.params.sf == 'width') param = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[0];
+            else if (myURL.params.sf == 'height') param = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[1];
+            else if (myURL.params.sf == 'comments') param = document.querySelectorAll('.comments_count')[0].innerHTML;
+
+            if (r.level == 'act' && param == '') {
+                findTemp = u.total;
+                request('//'+myURL.host+'/search.json?q=%2A', r.sel, 'find', 'pre');
+                return;
             }
-        }
-        f.loaded = false;
-        f.name = decodeURIComponent(u[1]);
-        f.query = decodeURIComponent(u[2]).replace(/\\+/g,' ');
-        f.sort = u[3];
-        f.sd = u[4];
-        f.cache = u[5];
-        f.ccache = u[6];
-        feedz[i] = f;
-        write();
-
-        if (history.length == 1) close();
-        else history.back();
-    }
-
-    function YB_addFeed(u) {
-        document.querySelector('#content h1').innerHTML = 'Add feed';
-        var c = document.querySelector('#content .walloftext');
-        if (u.length>6) {
-            c.innerHTML = 'Name: '+decodeURIComponent(u[1]);
-            c.innerHTML += '<br>Query: <a href="/search?q='+u[2]+'&sf='+u[3]+'&sd='+u[4]+'">'+decodeURIComponent(u[2]).replace(/\\+/g,' ')+'</a>';
-            c.innerHTML += '<br>Sorting type: '+u[3];
-            c.innerHTML += '<br>Sorting direction: '+u[4];
-            c.innerHTML += '<br>Update interval: '+(u[5]==0?'each'+u[6]:u[5])+' minutes';
-            let x = true;
-            for (let i=0; i<feedz.length; i++) {
-                if (feedz[i].name == decodeURIComponent(u[1])) {
-                    c.innerHTML += '<br><br><b>There is saved feed with that name!</b>';
-                    c.innerHTML += '<br><br><span id="yy_add" class="button">Replace</span> <span id="yy_include" class="button">Rename automatically</span> <span id="yy_cancel" class="button">Cancel</span>';
-                    x = false;
-                    break;
+            if (r.level == 'act' && param != '') {
+                findTemp = u.total;
+                findIter = parseInt(findTemp/50)+1;
+                request(compileXQuery(findIter, true), r.sel, 'find', 'post');
+                return;
+            }
+            else if (r.level == 'post') {
+                if (u.search.length > 0) for (let i=0; i<u.search.length; i++) {
+                    if (u.search[i].id == id) {
+                        findTemp = ((findIter-1)*50)+i;
+                        request('//'+myURL.host+'/search.json?q=%2A', r.sel, 'find', 'pre');
+                        return;
+                    }
                 }
+                else {
+                    return;
+                }
+                findIter++;
+                request(compileXQuery(findIter, true), r.sel, 'find', 'post');
+                return;
             }
-            if (x) c.innerHTML += '<br><br><span id="yy_add" class="button">Add feed</span> <span id="yy_cancel" class="button">Cancel</span> <span id="yy_include"></span>';
-
-
-            document.getElementById('yy_cancel').addEventListener('click', function() {
-                if (history.length == 1) close();
-                else history.back();
-            });
-
-            document.getElementById('yy_add').addEventListener('click', function() {
-                YB_insertFeed(u);
-            });
-
-            document.getElementById('yy_include').addEventListener('click', function() {
-                u[1] = decodeURIComponent(u[1])+'_'+parseInt(65536*Math.random());
-                YB_insertFeed(u);
-            });
+            else {
+                complete('.js-up', compileXQuery(parseInt(findTemp/u.search.length+1), false));
+                return;
+            }
         }
-        else c.innerHTML = 'Not enough parameters, impossible to add!';
-    }
+        if (myURL.params.sf!= 'random') {
+            if (r.level == 'pre') {
+                if (u.total == 0) {
+                    //не удалось найти следующую пикчу по номеру, пробуем теперь реально следующую
+                    request(compileQuery(type), r.sel, type, 'act');
+                    return;
+                }
+                else {
+                    //нашли с тем же критерием, но другим очком
+                    complete(r.sel, location.href.replace(id, u.search[0].id));
+                    return;
+                }
 
-    ///////////////////////////
-
-    function YB_backup() {
-        document.querySelector('#content h1').innerHTML = 'Backup';
-        var c = document.querySelector('#content .walloftext');
-
-        var s = '';
-        s = 'Copy content from that textbox and save it somewhere.';
-        s += '<textarea id="_yy_container" class="button" style="width:100%; height:20em" readonly="true"></textarea>';
-        s += '<br>If you want to "restore" backup:<br>1. Open developer console (usually F12) while using derpibooru;<br>2. Copypaste saved code inside;<br>3. Press Enter.';
-        c.innerHTML = s;
-        s = 'localStorage._ydb_config = \''+localStorage._ydb_config+'\';\n';
-        s += 'localStorage._ydb_main = \''+localStorage._ydb_main+'\';\n';
-        s += 'localStorage._ydb = \''+localStorage._ydb+'\';\n';
-        if (window._YDB_public != undefined) {
-            if (window._YDB_public.settings != undefined) {
-                for (let k in ax) {
-                    if (k!='feeds' && k!='settings') {
-                        if (window._YDB_public.settings[k] != undefined) {
-                            s += 'localStorage.'+k+' = \''+localStorage[k]+'";\n';
+            }
+            else if (r.level == 'act') {
+                if (u.total == 0) {
+                    //чот нихуя не нашли опять. Видимо, на сей раз реально ничего нет
+                    fail(r.sel);
+                }
+                else {
+                    if (u.total > 1) {
+                        let param;
+                        if (myURL.params.sf == 'score') param='score';
+                        else if (myURL.params.sf == 'width') param='width';
+                        else if (myURL.params.sf == 'height') param='height';
+                        else if (myURL.params.sf == 'comments') param='comment_count';
+                        else param = '';
+                        if (u.search[1][param] == u.search[0][param]) {
+                            //мы чот нашли, но у соседней по тому же критерию то же самое, нужно уточнить, что ставить
+                            request(compilePostQuery(type, u.search[1][param]), r.sel, type, 'post');
+                            return;
                         }
+                        else {
+                            //а все норм, она одна такая
+                            complete(r.sel, location.href.replace(id, u.search[0].id));
+                            return;
+                        }
+                    }
+                    else {
+                        //в запросе ваще одна пихча
+                        complete(r.sel, location.href.replace(id, u.search[0].id));
+                        return;
                     }
                 }
             }
+            else if (r.level == 'post') {
+                let i=0;
+                if (r.sel == '.js-rand' && u.search[0].id == id) i=1;
+                if (i==1 && u.total == 1) {
+                    //рандом высрал только эту пикчу
+                    fail(r.sel);
+                }
+                //вот это точно должна идти
+                complete(r.sel, location.href.replace(id, u.search[0].id));
+                return;
+            }
         }
-        document.getElementById('_yy_container').value = s;
-
-
-    }
-
-    function yourbooruPage() {
-        let x = location.search.slice(1);
-        if (location.search == "") YB_createEmpty();
-        else if (location.search == "?") YB_createEmpty();
         else {
-            let u = x.split('?');
-            if (u[0] == "addFeed") YB_addFeed(u);
-            else if (u[0] == "backup") YB_backup(u);
-            else YB_createEmpty();
+            if (settings.preload) {
+                if (u.total>1) {
+                    let x = 0;
+                    if (u.search[0].id == id) x = 1;
+                    document.querySelectorAll('.js-next')[0].href=location.href.replace(id, u.search[x].id);
+                    if (u.total>2) {
+                        if (u.search[x+1].id == id) document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, u.search[x+2].id);
+                        else document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, u.search[x+1].id);
+                    }
+                    else document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, u.search[x].id);
+                    if (settings.randomButton) {
+                        if (u.total>3) {
+                            if (u.search[x+2].id == id) document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x+3].id);
+                            else document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x+2].id);
+                        }
+                        else document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x].id);
+                    }
+                }
+                else {
+                    if (settings.randomButton) fail('.js-rand');
+                    fail('.js-prev');
+                    fail('.js-next');
+                }
+                if (settings.randomButton) blink(document.querySelectorAll('.js-rand')[0]);
+                blink(document.querySelectorAll('.js-prev')[0]);
+                blink(document.querySelectorAll('.js-next')[0]);
+            }
+            else {
+                if (u.total>1) complete(r.sel, location.href.replace(id, u.search[0].id));
+                else fail(r.sel);
+            }
         }
     }
 
-    if (location.pathname == "/settings") setTimeout(settingPage, 100);
-    if (location.pathname == "/pages/yourbooru") yourbooruPage();
+    function readyHandler(request, type) {
+        return function () {
+            if (request.readyState === 4) {
+                if (request.status === 200) return parse(request, type);
+                else if (request.status === 0) {
+                    console.log ('[YDB:SE]: Server timeout');
+                    fail(r.sel);
+                    return false;
+                }
+                else {
+                    console.log ('[YDB:SE]: Response '+request.status);
+                    fail(r.sel);
+                    return false;
+                }
+            }
+        };
+    }
+
+    function compilePostQuery(type, v, page) {
+        //well, we should find first pic
+        let prevUrl = '//'+myURL.host+'/search.json?q=('+myURL.params.q+')';
+        let dir = ((myURL.params.sd=='asc'^type=='prev')?'gte':'lte');
+        if (myURL.params.sf == "score") {
+            prevUrl += ',(score:'+v+')';
+        }
+        else if (myURL.params.sf == "width") {
+            prevUrl += ',(width:'+v+')';
+        }
+        else if (myURL.params.sf == "height") {
+            prevUrl += ',(height:'+v+')';
+        }
+        else if (myURL.params.sf == "comments") {
+            prevUrl += ',(comment_count:'+v+')';
+        }
+        prevUrl+=((type!='find')?('&perpage=1'):('&perpage=50&page='+page))+'&sf=created_at&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
+        return prevUrl;
+    }
+
+    function compilePreQuery(type) {
+        //due to unpredictable sorting mechanism firstly gonna check by id
+        if (type == 'find') return compileLtQuery(1);
+        if (type == 'random' || myURL.params.sf == "random") return compileQuery(type);
+
+        let prevUrl = '//'+myURL.host+'/search.json?q=('+myURL.params.q+')';
+        let dir = ((myURL.params.sd=='asc'^type=='prev')?'gt':'lt');
+        if (myURL.params.sf == "score") {
+            let cscore = parseInt(document.getElementsByClassName('score')[0].innerHTML);
+            prevUrl += ',(score:'+cscore+',id.'+dir+':'+id+')';
+        }
+        else if (myURL.params.sf == "width") {
+            let cscore = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[0];
+            prevUrl += ',(width:'+cscore+',id.'+dir+':'+id+')';
+        }
+        else if (myURL.params.sf == "height") {
+            let cscore = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[1];
+            prevUrl += ',(height:'+cscore+',id.'+dir+':'+id+')';
+        }
+        else if (myURL.params.sf == "comments") {
+            let cscore = document.querySelectorAll('.comments_count')[0].innerHTML;
+            prevUrl += ',(comment_count:'+cscore+',id.'+dir+':'+id+')';
+        }
+        prevUrl+='&perpage=1&sf=created_at&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
+        return prevUrl;
+    }
+
+    function compileQuery(type) {
+        let prevUrl = '//'+myURL.host+'/search.json?q=('+myURL.params.q+')';
+        if (type !='random' && myURL.params.sf != "random") {
+            let dir = ((myURL.params.sd=='asc'^(type=='prev' || type=='find'))?'gt':'lt');
+            if (myURL.params.sf == "score") {
+                let cscore = parseInt(document.getElementsByClassName('score')[0].innerHTML);
+                prevUrl += ',((score:'+cscore+',id.'+dir+':'+id+')+||+(score.'+dir+':'+cscore+'))';
+            }
+            else if (myURL.params.sf == "width") {
+                let cscore = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[0];
+                prevUrl += ',((width:'+cscore+',id.'+dir+':'+id+')+||+(width.'+dir+':'+cscore+'))';
+            }
+            else if (myURL.params.sf == "height") {
+                let cscore = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[1];
+                prevUrl += ',((height:'+cscore+',id.'+dir+':'+id+')+||+(height.'+dir+':'+cscore+'))';
+            }
+            else if (myURL.params.sf == "comments") {
+                let cscore = document.querySelectorAll('.comments_count')[0].innerHTML;
+                prevUrl += ',((comment_count:'+cscore+',id.'+dir+':'+id+')+||+(comment_count.'+dir+':'+cscore+'))';
+            }
+            prevUrl+='&perpage=2&sf='+myURL.params.sf+'&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
+        }
+        else prevUrl+='&perpage='+(myURL.params.sf=="random"?4:2)+'&sf=random';
+        return prevUrl;
+    }
+
+    function compileLtQuery(page) {
+        let prevUrl = '//'+myURL.host+'/search.json?q=('+myURL.params.q+')';
+        let dir = ((myURL.params.sd!='asc')?'gt':'lt');
+        let sd = ((myURL.params.sd!='asc')?'asc':'desc');
+        let sf = myURL.params.sf;
+        if (myURL.params.sf == "score") {
+            let cscore = parseInt(document.getElementsByClassName('score')[0].innerHTML);
+            prevUrl += ',(score.'+dir+':'+cscore+')';
+        }
+        else if (myURL.params.sf == "width") {
+            let cscore = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[0];
+            prevUrl += ',(width.'+dir+':'+cscore+')';
+        }
+        else if (myURL.params.sf == "height") {
+            let cscore = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[1];
+            prevUrl += ',(height.'+dir+':'+cscore+')';
+        }
+        else if (myURL.params.sf == "comments") {
+            let cscore = document.querySelectorAll('.comments_count')[0].innerHTML;
+            prevUrl += ',(comment_count.'+dir+':'+cscore+')';
+        }
+        else {
+            prevUrl += ',(id.'+dir+':'+id+')';
+            sf = 'created_at';
+        }
+        prevUrl+='&page='+page+'&perpage=50&sf='+sf+'&sd='+sd;
+        return prevUrl;
+    }
+
+    function compileXQuery(page, pp) {
+        let sf = myURL.params.sf;
+        if (myURL.params.sf == '' || myURL.params.sf == 'wilson' || myURL.params.sf == 'random' || myURL.params.sf == 'relevance') sf = 'created_at';
+        return '//'+myURL.host+'/search'+(pp?'.json':'')+'?q='+myURL.params.q+(pp?'&perpage=50':'')+'&sf='+(sf==undefined?'':sf)+'&sd='+(myURL.params.sd==undefined?'':myURL.params.sd)+'&page='+page;
+    }
+
+    function crLink(sel, level, type) {
+        request(compilePreQuery(type), sel, type, level);
+    };
+
+    function execute() {
+        let url, req;
+        if (myURL.params.sf != "random") {
+            crLink('.js-prev', 'pre', 'prev');
+            crLink('.js-next', 'pre', 'next');
+
+        }
+        if (settings.randomButton || myURL.params.sf == "random") {
+            crLink('.js-rand', 'post', 'random');
+        }
+    }
+
+    if (localStorage._ssf == undefined || settings.override) {
+        localStorage._ssf = JSON.stringify(settings);
+    }
+    else {
+        try {
+            var settings2 = JSON.parse(localStorage._ssf);
+            settings = settings2;
+        }
+        catch(e) {
+            localStorage._ssf = JSON.stringify(settings);
+        }
+    }
     register();
+    let myURL = parseURL(location.href);
+    let id = parseInt(myURL.path.slice(1));
+
+    if (isNaN(id)) {
+        id = myURL.path.split('/');
+        if (id[1] == 'images');
+        id = parseInt(id[2]);
+    }
+
+    if (
+        !isNaN(id) &&
+        myURL.params.sf != undefined &&
+        myURL.params.sf != "" &&
+        myURL.params.sf != 'created_at' &&
+        myURL.params.sf != 'wilson' &&
+        myURL.params.sf != 'relevance' &&
+        !(myURL.params.sf == 'score' && !settings.score) &&
+        !(myURL.params.sf == 'comments' && !settings.comments) &&
+        !(myURL.params.sf == 'random' && !settings.random) &&
+        !((myURL.params.sf == 'width' || myURL.params.sf == 'height') && !settings.sizes)
+    ) {
+        myURL.params.sf = myURL.params.sf.split('%')[0];
+        if (settings.preloading) execute();
+        else {
+            document.querySelectorAll('.js-next')[0].addEventListener('click',function(e) {
+                e.preventDefault();
+                if (settings.blink) {
+                    let elem = e.target;
+                    if (elem.classList.contains('fa')) elem = elem.parentNode;
+                    elem.classList.add('interaction--fave');
+                    elem.classList.add('active');
+                }
+                crLink('.js-next', (myURL.params.sf=='random')?'post':'pre', 'next');
+            });
+            document.querySelectorAll('.js-prev')[0].addEventListener('click',function(e) {
+                e.preventDefault();
+                if (settings.blink) {
+                    let elem = e.target;
+                    if (elem.classList.contains('fa')) elem = elem.parentNode;
+                    elem.classList.add('interaction--fave');
+                    elem.classList.add('active');
+                }
+                crLink('.js-prev', (myURL.params.sf=='random')?'post':'pre', 'prev');
+            });
+            document.querySelectorAll('.js-rand')[0].addEventListener('click',function(e) {
+                e.preventDefault();
+                if (settings.blink) {
+                    let elem = e.target;
+                    if (elem.classList.contains('fa')) elem = elem.parentNode;
+                    elem.classList.add('interaction--fave');
+                    elem.classList.add('active');
+                }
+                crLink('.js-rand', 'post', 'random');
+            });
+        }
+    }
+
+    if (!isNaN(id) && (
+        (myURL.params.sf == 'score' && settings.scoreUp) ||
+        (myURL.params.sf == 'comments' && settings.comments) ||
+        ((myURL.params.sf == 'width' || myURL.params.sf == 'height') && settings.sizesUp) ||
+        ((((myURL.params.sf == undefined || myURL.params.sf == '') && myURL.params.q != undefined && myURL.params.q != '' && myURL.params.q != '%2A') || myURL.params.sf == 'wilson' || myURL.params.sf == 'created_at' || myURL.params.sf == 'random' || myURL.params.sf == 'relevance') && settings.everyUp)
+
+    )) {
+        document.querySelectorAll('.js-up')[0].addEventListener('click',function(e) {
+            e.preventDefault();
+            if (settings.blink) {
+                let elem = e.target;
+                if (elem.classList.contains('fa')) elem = elem.parentNode;
+                elem.classList.add('interaction--fave');
+                elem.classList.add('active');
+            }
+            crLink('.js-up', 'act', 'find');
+        });
+    }
 })();
