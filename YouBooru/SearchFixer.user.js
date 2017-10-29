@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.2.4
+// @version      0.2.5
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -234,13 +234,16 @@
                         }
                         else {
                             //а все норм, она одна такая
-                            complete(r.sel, location.href.replace(id, u.search[0].id));
+                            if (u.search[0].id != id) complete(r.sel, location.href.replace(id, u.search[0].id));
+                            else complete(r.sel, location.href.replace(id, u.search[2].id));
                             return;
                         }
                     }
                     else {
                         //в запросе ваще одна пихча
-                        complete(r.sel, location.href.replace(id, u.search[0].id));
+                        if (u.search[0].id != id) complete(r.sel, location.href.replace(id, u.search[0].id));
+                        // и это наша пихча
+                        else fail(r.sel);
                         return;
                     }
                 }
