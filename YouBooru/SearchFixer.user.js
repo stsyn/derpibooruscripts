@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.2.5
+// @version      0.2.7
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -80,19 +80,11 @@
     }
 
     function register() {
-        let date = new Date();
-        let x = localStorage._ydb_main;
-        if (x == undefined) x = {};
-        else x = JSON.parse(x);
-        x.searchSortingFixer = {};
-        x.searchSortingFixer.timestamp = date.getTime();
-        x.searchSortingFixer.version = GM_info.script.version;
-        localStorage._ydb_main = JSON.stringify(x);
-
         if (window._YDB_public == undefined) window._YDB_public = {};
         if (window._YDB_public.settings == undefined) window._YDB_public.settings = {};
         window._YDB_public.settings.searchSortingFixer = {
             name:'Search Sorting Fixer',
+            version:GM_info.script.version,
             container:'_ssf',
             s:[
                 {type:'checkbox', name:'Fix score sorting', parameter:'score'},
@@ -234,16 +226,13 @@
                         }
                         else {
                             //а все норм, она одна такая
-                            if (u.search[0].id != id) complete(r.sel, location.href.replace(id, u.search[0].id));
-                            else complete(r.sel, location.href.replace(id, u.search[2].id));
+                            complete(r.sel, location.href.replace(id, u.search[0].id));
                             return;
                         }
                     }
                     else {
                         //в запросе ваще одна пихча
-                        if (u.search[0].id != id) complete(r.sel, location.href.replace(id, u.search[0].id));
-                        // и это наша пихча
-                        else fail(r.sel);
+                        complete(r.sel, location.href.replace(id, u.search[0].id));
                         return;
                     }
                 }
@@ -510,8 +499,8 @@
     if (!isNaN(id) && (
         (myURL.params.sf == 'score' && settings.scoreUp) ||
         (myURL.params.sf == 'comments' && settings.comments) ||
-        ((myURL.params.sf == 'width' || myURL.params.sf == 'height') && settings.sizesUp)||
-        ((myURL.params.sf == undefined || myURL.params.sf == '' || myURL.params.sf == 'wilson' || myURL.params.sf == 'created_at' || myURL.params.sf == 'random' || myURL.params.sf == 'relevance') && settings.everyUp)
+        ((myURL.params.sf == 'width' || myURL.params.sf == 'height') && settings.sizesUp) ||
+        ((((myURL.params.sf == undefined || myURL.params.sf == '') && myURL.params.q != undefined && myURL.params.q != '' && myURL.params.q != '%2A') || myURL.params.sf == 'wilson' || myURL.params.sf == 'created_at' || myURL.params.sf == 'random' || myURL.params.sf == 'relevance') && settings.everyUp)
 
     )) {
         document.querySelectorAll('.js-up')[0].addEventListener('click',function(e) {
