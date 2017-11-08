@@ -1,16 +1,16 @@
 // ==UserScript==
 // @name         YourBooru:Feeds
 // @namespace    http://tampermonkey.net/
-// @include      *://trixiebooru.org/
-// @include      *://derpibooru.org/
-// @include      *://www.trixiebooru.org/
-// @include      *://www.derpibooru.org/
-// @include      *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/
-// @include      *://*.orzgs6djmvrg633souxg64th.*.*/
-// @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/
-// @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/
+// @include      *://trixiebooru.org/*
+// @include      *://derpibooru.org/*
+// @include      *://www.trixiebooru.org/*
+// @include      *://www.derpibooru.org/*
+// @include      *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/*
+// @include      *://*.orzgs6djmvrg633souxg64th.*.*/*
+// @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
+// @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.2.13
+// @version      0.2.14
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -107,14 +107,13 @@
 	 ********************/
 
     function register() {
-        let date = new Date();
-        let x = localStorage._ydb_main;
-        if (x == undefined) x = {};
-        else x = JSON.parse(x);
-        x.feeds = {};
-        x.feeds.timestamp = date.getTime();
-        x.feeds.version = GM_info.script.version;
-        localStorage._ydb_main = JSON.stringify(x);
+        if (window._YDB_public == undefined) window._YDB_public = {};
+        if (window._YDB_public.settings == undefined) window._YDB_public.settings = {};
+        window._YDB_public.settings.feeds = {
+            name:'Feeds',
+            container:'_ydb_tools',
+            version:GM_info.script.version
+        };
     }
 
     function resizeEverything() {
@@ -584,5 +583,6 @@
         if (config.doNotRemoveWatchList && config.hasWatchList) cont.appendChild(cont.childNodes[1]);
     }
     var cont = document.getElementsByClassName('column-layout__main')[0];
-    setTimeout(init, 10);
+    if (location.pathname == '/' || location.pathname == '') setTimeout(init, 10);
+	else register();
 })();
