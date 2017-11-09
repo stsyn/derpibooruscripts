@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru: Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  Some UI tweaks
 // @author       stsyn
 // @include      *://trixiebooru.org/*
@@ -76,6 +76,18 @@
                 write();
             });
             e.appendChild(x);
+        }
+    }
+    //links at profile and other
+    for (let i=0; i<document.getElementsByClassName('block').length; i++) {
+        let e = document.getElementsByClassName('block')[i];
+        if (e.getElementsByClassName('block__header__title').length == 0) continue;
+        let h = e.getElementsByClassName('block__header__title')[0].innerHTML;
+        if (h == 'Recent Uploads' || h == 'Recent Favourites' || h == 'Recent Artwork' || h == 'Watched Images') {
+            for (let j=0; j<e.querySelectorAll('.image-container a').length; j++) {
+                let a = e.querySelectorAll('.image-container a')[j];
+                if (a.search == '' || a.search == '?') a.search = e.querySelector('.block__header a').search;
+            }
         }
     }
 })();
