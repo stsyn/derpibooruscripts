@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru: Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.2a
 // @description  Some UI tweaks
 // @author       stsyn
 // @include      *://trixiebooru.org/*
@@ -26,7 +26,7 @@
     function register() {
         if (window._YDB_public == undefined) window._YDB_public = {};
         if (window._YDB_public.settings == undefined) window._YDB_public.settings = {};
-        window._YDB_public.settings.feeds = {
+        window._YDB_public.settings.tools = {
             name:'Tools',
             container:'_ydb_tools',
             version:GM_info.script.version,
