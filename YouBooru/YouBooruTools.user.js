@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.2.1
+// @version      0.2.2
 // @description  Some UI tweaks
 // @author       stsyn
+
 // @include      *://trixiebooru.org/*
 // @include      *://derpibooru.org/*
 // @include      *://www.trixiebooru.org/*
@@ -12,6 +13,16 @@
 // @include      *://*.orzgs6djmvrg633souxg64th.*.*/*
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
+
+// @exclude      *://trixiebooru.org/adverts/*
+// @exclude      *://derpibooru.org/adverts/*
+// @exclude      *://www.trixiebooru.org/adverts/*
+// @exclude      *://www.derpibooru.org/adverts/*
+// @exclude      *://adverts/*.o53xo.orzgs6djmvrg633souxg64th.*.*/adverts/*
+// @exclude      *://adverts/*.orzgs6djmvrg633souxg64th.*.*/adverts/*
+// @exclude      *://adverts/*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
+// @exclude      *://adverts/*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
+
 // @require      https://raw.githubusercontent.com/blueimp/JavaScript-MD5/master/js/md5.min.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
 // @grant        none
@@ -116,7 +127,7 @@
         }
     }
     badge(document);
-    document.getElementById('comments').addEventListener("DOMNodeInserted",function(e) {
+    if (document.getElementById('comments') != undefined) document.getElementById('comments').addEventListener("DOMNodeInserted",function(e) {
         if (e.target.classList == undefined) return;
         if (!(e.target.id == 'image_comments' || (e.target.classList.contains('block') && e.target.classList.contains('communication')))) return;
         badge (e.target);});
