@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         YourBooru: Tools
+// @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.2a
+// @version      0.2.1
 // @description  Some UI tweaks
 // @author       stsyn
 // @include      *://trixiebooru.org/*
@@ -15,6 +15,7 @@
 // @require      https://raw.githubusercontent.com/blueimp/JavaScript-MD5/master/js/md5.min.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
 // @grant        none
+// @run-at       document-idle
 // ==/UserScript==
 
 (function() {
@@ -90,4 +91,33 @@
             }
         }
     }
+    //selfbadges
+    function badge(core) {
+        let x = [];
+        x = core.querySelectorAll('.communication__body__sender-name');
+        for (let i=0; i<x.length; i++) {
+            if (x[i].innerHTML.indexOf('St@SyaN') > -1) {
+                let b = document.createElement('div');
+                b.innerHTML = 'YourBooru dev';
+                b.className = 'label label--purple label--block label--small';
+                let p = x[i].parentNode;
+                p.insertBefore(b, p.getElementsByClassName('label')[0]);
+            }
+        }
+        if (core.querySelector('.profile-top__name-header') != null) {
+            x = core.querySelector('.profile-top__name-header');
+            if (x.innerHTML.indexOf('St@SyaN') > -1) {
+                let b = document.createElement('div');
+                b.innerHTML = 'YourBooru dev';
+                b.className = 'label label--purple label--block';
+                let p = x.parentNode;
+                p.insertBefore(b, p.getElementsByClassName('label')[0]);
+            }
+        }
+    }
+    badge(document);
+    document.getElementById('comments').addEventListener("DOMNodeInserted",function(e) {
+        if (e.target.classList == undefined) return;
+        if (!(e.target.id == 'image_comments' || (e.target.classList.contains('block') && e.target.classList.contains('communication')))) return;
+        badge (e.target);});
 })();
