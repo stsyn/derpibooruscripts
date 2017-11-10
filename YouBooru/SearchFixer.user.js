@@ -1,6 +1,7 @@
 // ==UserScript==
 // @name         Derpibooru Search Fixer
 // @namespace    http://tampermonkey.net/
+
 // @include      *://trixiebooru.org/*
 // @include      *://derpibooru.org/*
 // @include      *://www.trixiebooru.org/*
@@ -9,8 +10,18 @@
 // @include      *://*.orzgs6djmvrg633souxg64th.*.*/*
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
+
+// @exclude      *://trixiebooru.org/adverts/*
+// @exclude      *://derpibooru.org/adverts/*
+// @exclude      *://www.trixiebooru.org/adverts/*
+// @exclude      *://www.derpibooru.org/adverts/*
+// @exclude      *://adverts/*.o53xo.orzgs6djmvrg633souxg64th.*.*/adverts/*
+// @exclude      *://adverts/*.orzgs6djmvrg633souxg64th.*.*/adverts/*
+// @exclude      *://adverts/*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
+// @exclude      *://adverts/*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
+
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.2.7
+// @version      0.2.8
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
