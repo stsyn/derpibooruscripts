@@ -21,7 +21,8 @@
 // @exclude      *://adverts/*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.2.8
+// @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
+// @version      0.2.8a
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
