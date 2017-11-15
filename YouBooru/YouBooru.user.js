@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.2.14
+// @version      0.2.15
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -245,12 +245,23 @@
         return '(created_at.gte:'+t.toISOString()+', created_at.lte:'+t2.toISOString()+')';
     }
 
+    function spoileredQuery(f) {
+        let tl = JSON.parse(document.getElementsByClassName('js-datastore')[0].dataset.spoileredTagList);
+        let tags = tl.reduce(function(prev, cur, i, a) {
+            return prev + JSON.parse(localStorage['bor_tags_'+cur]).name+(i+1 == a.length?'':' || ');
+        }, '');
+        tags = '('+tags+')';
+        if (document.getElementsByClassName('js-datastore')[0].dataset.spoileredFilter != "") tags += ' || '+document.getElementsByClassName('js-datastore')[0].dataset.spoileredFilter;
+        return tags;
+    }
+
     function customQueries(f) {
         let tx = f.query;
         tx = tx.replace('__ydb_LastYearsAlt', getYearsAltQuery());
         tx = tx.replace('__ydb_LastYears', getYearsQuery());
         tx = tx.replace('__ydb_SinceLeavedNoNew', getNotSeenYetQueryNoNew(f));
         tx = tx.replace('__ydb_SinceLeaved', getNotSeenYetQuery(f));
+        tx = tx.replace('__ydb_Spoilered', spoileredQuery(f));
         return tx;
     }
 
