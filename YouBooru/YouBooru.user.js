@@ -10,7 +10,8 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.3.0
+// @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
+// @version      0.3.0a
 // @description  Feedz
 // @author       stsyn
 // @grant        none
