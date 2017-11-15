@@ -21,7 +21,8 @@
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/pages/yourbooru*
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.4.2
+// @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
+// @version      0.4.2a
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
