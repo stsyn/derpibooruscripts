@@ -10,7 +10,7 @@
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.2.15
+// @version      0.3.0
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -97,8 +97,8 @@
         }
     ];
 
-	var feedzCache = [];
-	var feedzURLs = [];
+    var feedzCache = [];
+    var feedzURLs = [];
 
     /********************
 
@@ -143,7 +143,7 @@
                 console.log('Cannot get feeds');
             }
         }
-		svd = localStorage._ydb_caches;
+        svd = localStorage._ydb_caches;
         if (svd !== undefined) {
             try {
                 feedzCache = JSON.parse(svd);
@@ -466,6 +466,19 @@
             c.appendChild(pc.childNodes[0]);
         }
 
+        r.feed.observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type == 'attributes') {
+                    let u = mutation.target.classList;
+                    if (u.contains('interaction--fave') || u.contains('interaction--upvote') || u.contains('interaction--downvote')) {
+                        feedzCache[id] = r.feed.container.innerHTML;
+                        localStorage._ydb_caches = JSON.stringify(feedzCache);
+                    }
+                }
+            });
+        });
+        r.feed.observer.observe(r.feed.container, {attributes: true, childList: true, characterData: true, subtree:true });
+
         let date = new Date();
         feedzURLs[id] = compileURL(r.feed);
         r.feed.url.href = feedzURLs[id];
@@ -500,6 +513,19 @@
                 }
             }
         }
+        feed.observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type == 'attributes') {
+                    let u = mutation.target.classList;
+                    if (u.contains('interaction--fave') || u.contains('interaction--upvote') || u.contains('interaction--downvote')) {
+                        feedzCache[id] = feed.container.innerHTML;
+                        localStorage._ydb_caches = JSON.stringify(feedzCache);
+                    }
+                }
+            });
+        });
+        feed.observer.observe(feed.container, {attributes: true, childList: true, characterData: true, subtree:true });
+
         feed.temp.innerHTML = '';
         feed.loaded = true;
         feed.url.href = feedzURLs[id];
@@ -595,5 +621,5 @@
     }
     var cont = document.getElementsByClassName('column-layout__main')[0];
     if (location.pathname == '/' || location.pathname == '') setTimeout(init, 10);
-	else register();
+    else register();
 })();
