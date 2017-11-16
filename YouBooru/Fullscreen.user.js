@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.3.1
+// @version      0.3.1b
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
+
 // @include      *://trixiebooru.org/*
 // @include      *://derpibooru.org/*
 // @include      *://www.trixiebooru.org/*
@@ -12,6 +13,16 @@
 // @include      *://*.orzgs6djmvrg633souxg64th.*.*/*
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
+
+// @exclude      *://trixiebooru.org/adverts/*
+// @exclude      *://derpibooru.org/adverts/*
+// @exclude      *://www.trixiebooru.org/adverts/*
+// @exclude      *://www.derpibooru.org/adverts/*
+// @exclude      *://adverts/*.o53xo.orzgs6djmvrg633souxg64th.*.*/adverts/*
+// @exclude      *://adverts/*.orzgs6djmvrg633souxg64th.*.*/adverts/*
+// @exclude      *://adverts/*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
+// @exclude      *://adverts/*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
+
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/Fullscreen.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/Fullscreen.user.js
 // @run-at       document-start
@@ -22,15 +33,23 @@
     'use strict';
     var styles = {};
     styles.general = `
-.header,#content>.block:first-child, #footer, h4 {
+.header,#content>.block:first-child, #footer, h4, .flash--site-notice {
 height:0;
 overflow-y:hidden;
 margin:0;
 padding:0;
 }
+#content>.block:first-child{
+z-index:201;
+position:fixed;
+}
+.image-show-container .block--warning {
+margin:auto;
+}
 #content {
 margin:0;
 padding:0;
+padding-left:0 !important;
 }
 .block__header a.js-rand,
 .block__header a.js-up,
@@ -43,7 +62,7 @@ display:none;
 position:fixed;
 top:0;
 height:100%;
-width:25%;
+width:10%;
 }
 .block__header a.js-prev {
 left:0;
@@ -81,19 +100,30 @@ display:block;
 }
 #_ydb_fs_disable {
 left:0;
-position:absolute;
+position:fixed;
 z-index:202;
 display:inline-block !important;
 opacity:0.3;
 }
+#_ydb_fs_disable:hover {
+opacity:.7
+}
+
+#content>.block:first-child>.block__header,
+#content>.block:first-child>.block__header a:not(.active){
+background:none;
+}
+
+#image_target {
+position:fixed;
+top:0;
+}
 `;
     styles.base = `
 #content>.block:first-child{
-position:fixed;
 top:0;
 height:auto;
 width:100%;
-z-index:201;
 }
 
 #content>.block:first-child>.block__header--sub {
@@ -102,12 +132,8 @@ width:auto;
 opacity:0.2;
 }
 
-#content>.block:first-child>.block__header,
-#content>.block:first-child>.block__header a:not(.active){
-background:none;
-}
-
 #content>.block:first-child>.block__header {
+text-align:center;
 font-size:150%;
 line-height:175%;
 }
@@ -117,6 +143,7 @@ font-size:100%;
 line-height:100%;
 transition-duration: 0.1s;
 transition-timing-function: ease-in-out;
+color:#e0e0e0;
 }
 
 #content>.block:first-child>.block__header>.block__header__title:hover {
@@ -131,7 +158,10 @@ transition-timing-function: ease-in-out;
 #content>.block:first-child>.block__header [href*="/related"],
 #content>.block:first-child>.block__header [href*="/view/"],
 #content>.block:first-child>.block__header [title*="with tags"],
-#content>.block:first-child>.block__header .block__header__dropdown-tab {
+#content>.block:first-child>.block__header .block__header__dropdown-tab,
+.interaction--fave .favourites,
+.interaction--upvote .upvotes,
+.interaction--downvote .downvotes{
 display:none;
 }
 
@@ -142,13 +172,17 @@ z-index:202;
 opacity:0.3;
 }
 
+#content>.block:first-child>.block__header [href*="/download/"]:hover {
+opacity:.7;
+}
+
 .block__header .stretched-mobile-links {
 width:0;
 }
 
 `;
 
-    var popUps = {};
+    let popUps = {};
     var objects = {};
     var pub = {};
     var settings;
@@ -187,8 +221,8 @@ width:0;
         try {
             if (values.events != undefined) values.events.forEach(function(v,i,a) {
                 t.addEventListener(v.t, v.f);
-            }
-        );}
+            });
+        }
         catch (e) {
         }
         parent.appendChild(t);
@@ -222,13 +256,25 @@ width:0;
                 console.log(objects);
                 objects.image.style.width = '100vw';
                 objects.image.style.height = 'auto';
-                objects.image.style.marginTop = (window.innerHeight - parseInt(getComputedStyle(objects.image).height))/2;
+                let aspectRatio = window.innerWidth / window.innerHeight;
+                let zoomRatio = objects.icontainer.dataset.width / window.innerWidth;
+
+                objects.image.style.marginTop = (window.innerHeight - (objects.icontainer.dataset.height / zoomRatio)) / 2+'px';
+                objects.image.style.width = '100vw';
+
             }
             else {
+                objects.image.style.marginTop = '0';
                 objects.image.style.height = '100vh';
                 objects.image.style.width = 'auto';
             }
         }
+    }
+
+    function unscale() {
+        objects.image.style.height = 'auto';
+        objects.image.style.width = 'auto';
+        objects.image.style.marginTop = '0';
     }
 
     function init() {
@@ -241,16 +287,19 @@ width:0;
         if (notInital) preenable();
         init();
 
+        window.addEventListener("resize", rescale);
+
         popUps.back = addElem('div', {id:'_ydb_fs_backSide', className:'_fs_popup_back'}, document.body);
         popUps.coms = addElem('div', {id:'_ydb_fs_commPopup', className:'_fs_popup _fs_popup_big'}, document.body);
         popUps.down = addElem('div', {id:'_fs_down', className:'_fs_down'}, document.body);
 
         document.querySelectorAll('#content>.layout--narrow')[1].appendChild(document.getElementById('image_options_area'));
-        popUps.coms.appendChild(document.querySelectorAll('#content>.layout--narrow')[2]);
-        popUps.down.appendChild(document.querySelectorAll('#content>.layout--narrow')[0]);
-        popUps.down.appendChild(document.querySelectorAll('#content>.layout--narrow')[0]);
+        popUps.coms.appendChild(document.querySelectorAll('#content>div')[4]);
+        popUps.down.appendChild(document.querySelectorAll('#content>div')[2]);
+        popUps.down.appendChild(document.querySelectorAll('#content>div')[2]);
 
         objects.image = document.getElementById('image-display');
+        objects.de = document.documentElement;
         objects.icontainer = document.getElementsByClassName('image-show-container')[0];
         objects.dcontainer = document.getElementById('image_target');
         if (objects.image == undefined) {
@@ -273,11 +322,14 @@ width:0;
     function disable() {
         remove('general');
         remove('base');
+        unscale();
 
-        document.getElementById('content').appendChild(popUps.down.querySelectorAll('.layout--narrow')[0]);
-        document.getElementById('content').appendChild(popUps.down.querySelectorAll('.layout--narrow')[0]);
-        document.getElementById('content').appendChild(popUps.coms.querySelectorAll('.layout--narrow')[0]);
-        document.querySelectorAll('#content>.layout--narrow')[2].insertBefore(document.getElementById('image_options_area'), document.querySelectorAll('#content>.layout--narrow')[2].childNodes[0]);
+        window.removeEventListener("resize", rescale);
+
+        document.getElementById('content').appendChild(popUps.down.getElementsByTagName('div')[0]);
+        document.getElementById('content').appendChild(popUps.down.getElementsByTagName('div')[0]);
+        document.getElementById('content').appendChild(popUps.coms.getElementsByTagName('div')[0]);
+        document.querySelectorAll('#content>div')[4].insertBefore(document.getElementById('image_options_area'), document.querySelectorAll('#content>div')[4].childNodes[0]);
         pub.enabled = false;
         settings.enabled = false;
 
