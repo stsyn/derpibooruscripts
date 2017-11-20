@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.2.2
+// @version      0.2.3
 // @description  Some UI tweaks
 // @author       stsyn
 
@@ -72,37 +72,52 @@
     }
     register();
 
-    //execute
-    for (let i=0; i<document.getElementsByClassName('flash--site-notice').length; i++) {
-        let e = document.getElementsByClassName('flash--site-notice')[i];
-        let z = md5(e.innerHTML);
-        if (fl[z] == '1' || ls.force)
-            e.style.display = 'none';
-        else {
-            let x = document.createElement('a');
-            x.style.float = 'right';
-            x.innerHTML = '[X]';
-            x.href = 'javascript://';
-            x.addEventListener('click', function(u) {
+
+    //flashes
+    function flashNotifies() {
+        for (let i=0; i<document.getElementsByClassName('flash--site-notice').length; i++) {
+            let e = document.getElementsByClassName('flash--site-notice')[i];
+            let z = md5(e.innerHTML);
+            if (fl[z] == '1' || ls.force)
                 e.style.display = 'none';
-                fl[z] = '1';
-                write();
-            });
-            e.appendChild(x);
-        }
-    }
-    //links at profile and other
-    for (let i=0; i<document.getElementsByClassName('block').length; i++) {
-        let e = document.getElementsByClassName('block')[i];
-        if (e.getElementsByClassName('block__header__title').length == 0) continue;
-        let h = e.getElementsByClassName('block__header__title')[0].innerHTML;
-        if (h == 'Recent Uploads' || h == 'Recent Favourites' || h == 'Recent Artwork' || h == 'Watched Images') {
-            for (let j=0; j<e.querySelectorAll('.image-container a').length; j++) {
-                let a = e.querySelectorAll('.image-container a')[j];
-                if (a.search == '' || a.search == '?') a.search = e.querySelector('.block__header a').search;
+            else {
+                let x = document.createElement('a');
+                x.style.float = 'right';
+                x.innerHTML = '[X]';
+                x.href = 'javascript://';
+                x.addEventListener('click', function(u) {
+                    e.style.display = 'none';
+                    fl[z] = '1';
+                    write();
+                });
+                e.appendChild(x);
             }
         }
     }
+
+    //links at profile and other
+    function profileLinks() {
+        for (let i=0; i<document.getElementsByClassName('block').length; i++) {
+            let e = document.getElementsByClassName('block')[i];
+            if (e.getElementsByClassName('block__header__title').length == 0) continue;
+            let h = e.getElementsByClassName('block__header__title')[0].innerHTML;
+            if (h == 'Recent Uploads' || h == 'Recent Favourites' || h == 'Recent Artwork' || h == 'Watched Images') {
+                for (let j=0; j<e.querySelectorAll('.image-container a').length; j++) {
+                    let a = e.querySelectorAll('.image-container a')[j];
+                    if (a.search == '' || a.search == '?') a.search = e.querySelector('.block__header a').search;
+                }
+            }
+        }
+    }
+
+    //target _blank
+    function linksPatch() {
+        let a = document.getElementsByTagName('a');
+        for (let i=0; i<a.length; i++) {
+            if (a[i].host != location.host) a[i].target = '_blank';
+        }
+    }
+
     //selfbadges
     function badge(core) {
         let x = [];
@@ -128,6 +143,10 @@
         }
     }
     badge(document);
+
+    flashNotifies();
+    profileLinks();
+    linksPatch();
     if (document.getElementById('comments') != undefined) document.getElementById('comments').addEventListener("DOMNodeInserted",function(e) {
         if (e.target.classList == undefined) return;
         if (!(e.target.id == 'image_comments' || (e.target.classList.contains('block') && e.target.classList.contains('communication')))) return;
