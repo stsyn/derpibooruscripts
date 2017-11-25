@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.3.1b
+// @version      0.3.2
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -247,13 +247,13 @@ width:0;
     }
 
     function rescale() {
+        console.log(objects.image);
         if (objects.icontainer.dataset.aspectRatio > window.innerWidth/window.innerHeight) pub.wide = false;
         else pub.wide = true;
 
         pub.scaled = objects.dcontainer.dataset.scaled;
         if (pub.scaled) {
             if (!pub.wide) {
-                console.log(objects);
                 objects.image.style.width = '100vw';
                 objects.image.style.height = 'auto';
                 let aspectRatio = window.innerWidth / window.innerHeight;
@@ -283,11 +283,14 @@ width:0;
         document.getElementsByClassName('flex-row__right')[0].insertBefore(objects.enable, document.getElementsByClassName('flex-row__right')[0].childNodes[0]);
     }
 
+    function loadedImgFetch() {
+        objects.image = document.getElementById('image-display');
+        rescale();
+    }
+
     function enable(notInital) {
         if (notInital) preenable();
         init();
-
-        window.addEventListener("resize", rescale);
 
         popUps.back = addElem('div', {id:'_ydb_fs_backSide', className:'_fs_popup_back'}, document.body);
         popUps.coms = addElem('div', {id:'_ydb_fs_commPopup', className:'_fs_popup _fs_popup_big'}, document.body);
@@ -302,17 +305,10 @@ width:0;
         objects.de = document.documentElement;
         objects.icontainer = document.getElementsByClassName('image-show-container')[0];
         objects.dcontainer = document.getElementById('image_target');
-        if (objects.image == undefined) {
-            objects.dcontainer.addEventListener("DOMNodeInserted",function(e) {
-                if (pub.loaded) return;
-                objects.image = document.getElementById('image-display');
-                rescale();
-            });
-        }
-        else {
-            pub.loaded = true;
-            rescale();
-        }
+
+        if (objects.image != undefined) loadedImgFetch();
+        objects.dcontainer.addEventListener("DOMNodeInserted",loadedImgFetch);
+
         pub.enabled = true;
         settings.enabled = true;
 
@@ -324,7 +320,7 @@ width:0;
         remove('base');
         unscale();
 
-        window.removeEventListener("resize", rescale);
+        objects.dcontainer.removeEventListener("DOMNodeInserted",loadedImgFetch);
 
         document.getElementById('content').appendChild(popUps.down.getElementsByTagName('div')[0]);
         document.getElementById('content').appendChild(popUps.down.getElementsByTagName('div')[0]);
