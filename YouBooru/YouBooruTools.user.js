@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.2.3
+// @version      0.2.4
 // @description  Some UI tweaks
 // @author       stsyn
 
@@ -111,9 +111,13 @@
     }
 
     //target _blank
-    function linksPatch() {
-        let a = document.getElementsByTagName('a');
+    //domain fixes
+    function linksPatch(doc) {
+        let a = doc.getElementsByTagName('a');
+        let domains = ['www.trixiebooru.org', 'trixiebooru.org', 'www.derpibooru.org', 'derpibooru.org', 'www.derpiboo.ru', 'derpiboo.ru'];
         for (let i=0; i<a.length; i++) {
+            for (let j=0; j<domains.length; j++)
+                if (a[i].host != location.host && a[i].host == domains[j]) a[i].host = location.host;
             if (a[i].host != location.host) a[i].target = '_blank';
         }
     }
@@ -146,9 +150,10 @@
 
     flashNotifies();
     profileLinks();
-    linksPatch();
+    linksPatch(document);
     if (document.getElementById('comments') != undefined) document.getElementById('comments').addEventListener("DOMNodeInserted",function(e) {
         if (e.target.classList == undefined) return;
         if (!(e.target.id == 'image_comments' || (e.target.classList.contains('block') && e.target.classList.contains('communication')))) return;
-        badge (e.target);});
+        badge(e.target);
+        linksPatch(e.target);});
 })();
