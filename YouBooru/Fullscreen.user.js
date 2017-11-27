@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.3.6
+// @version      0.3.7
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -155,6 +155,22 @@ background:none;
 position:fixed;
 top:0;
 }
+
+#_fs_scroll_bot,#_fs_scroll_rgt {
+background:none;
+border-radius:5px;
+display:block;
+position:fixed;
+z-index:201;
+}
+#_fs_scroll_bot {
+height:10px;
+bottom:3px
+}
+#_fs_scroll_rgt {
+width:10px;
+right:3px
+}
 `;
     styles.base = `
 #content>.block:first-child{
@@ -264,12 +280,27 @@ top:0;
 }
 `;
 
-styles.hider = `
+    styles.hider = `
 ._ydb_fs_static #content>.block:first-child>.block__header,
 ._ydb_fs_static #content>.block:first-child>.block__header--sub,
 ._ydb_fs_static ._fs_down{
 opacity:0;
 transition:.5s;
+}
+`;
+
+    styles.hideAll = `
+.block, ._fs_down  {
+display:none
+}
+#_fs_scroll_bot, #_fs_scroll_rgt {
+background:RGBA(192,192,192,0.5);
+transition:0.1s;
+transition-timing-function:linear;
+}
+#image-display {
+transition:0.1s;
+transition-timing-function:linear;
 }
 `;
 
@@ -289,9 +320,12 @@ transition:.5s;
     }
     catch (e) {
         settings = {};
-        settings.enabled = false;
         write();
     }
+
+    if (settings.enabled == undefined) settings.enabled = false;
+    if (settings.scrollSpeed == undefined) settings.scrollSpeed = 20;
+    if (settings.scrollMultiply == undefined) settings.scrollMultiply = 5;
 
     function register() {
         let fsData = {
@@ -300,7 +334,6 @@ transition:.5s;
             version:GM_info.script.version,
             s:[]
         };
-        console.log(JSON.stringify(fsData));
         document.addEventListener('DOMContentLoaded', function() {addElem('span', {style:'display:none', type:'text', dataset:{value:JSON.stringify(fsData)}, className:'_YDB_reserved_register'}, document.body);});
     }
 
@@ -323,13 +356,23 @@ transition:.5s;
         append('hider');
     }
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     function rescale() {
-        console.log(objects.image);
         if (objects.icontainer.dataset.aspectRatio > window.innerWidth/window.innerHeight) pub.wide = false;
         else pub.wide = true;
 
-        pub.scaled = objects.dcontainer.dataset.scaled;
-        if (pub.scaled) {
+        if (pub.scaled != objects.dcontainer.dataset.scaled) {
+            pub.scaled = objects.dcontainer.dataset.scaled;
+            if (pub.scaled != 'true') {
+                append('hideAll');
+                pub.zoom = 1;
+            }
+            else remove('hideAll');
+        }
+        if (pub.scaled != 'false') {
             if (!pub.wide) {
                 objects.image.style.width = '100vw';
                 objects.image.style.height = 'auto';
@@ -381,13 +424,103 @@ transition:.5s;
         callPopup('coms');
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     function tagEditor() {
         if (document.getElementsByClassName('autocomplete').length<=0) return;
-        var ac = document.getElementsByClassName('autocomplete')[0];
-        var orig = document.querySelector('.tagsinput input');
+        let ac = document.getElementsByClassName('autocomplete')[0];
+        let orig = document.querySelector('.tagsinput input');
 
         ac.style.zIndex = '301';
         ac.style.top = orig.getBoundingClientRect().bottom + 'px';
+    }
+
+    function checkMargin() {
+        let de = document.documentElement;
+        let scrWidth = de.clientWidth,scrHeight = de.clientHeight;
+        if (pub.dta === 0) return;
+        if (!isNaN(parseInt(objects.image.style.marginTop))) {
+            if (parseInt(objects.image.style.marginTop)<=0) {
+                objects.image.style.marginTop = -(pub.zoom*objects.icontainer.dataset.height*(scrHeight/2-parseInt(objects.image.style.marginTop))/(objects.icontainer.dataset.height*(pub.zoom-pub.dta))-scrHeight/2)+'px';
+            }
+        }
+        if (!isNaN(parseInt(objects.image.style.marginLeft))) {
+            if (parseInt(objects.image.style.marginLeft)<=0) {
+                objects.image.style.marginLeft = -(pub.zoom*objects.icontainer.dataset.width*(scrWidth/2-parseInt(objects.image.style.marginLeft))/(objects.icontainer.dataset.width*(pub.zoom-pub.dta))-scrWidth/2)+'px';
+            }
+        }
+        pub.dta=0;
+    }
+
+
+    function setMargin() {
+        if (pub.scaled != 'false') return;
+        let de = document.documentElement;
+        if (pub.zoom>10) pub.zoom =10;
+        if (pub.zoom<0.1) pub.zoom= 0.1;
+        addScrolls();
+        let xScale = de.clientWidth/(objects.icontainer.dataset.width*pub.zoom), yScale = de.clientHeight/(objects.icontainer.dataset.height*pub.zoom);
+        objects.image.style.height=objects.icontainer.dataset.height*pub.zoom+'px';
+        objects.image.style.width=objects.icontainer.dataset.width*pub.zoom+'px';
+        if (isNaN(parseInt(objects.image.style.marginTop))) objects.image.style.marginTop = -(objects.icontainer.dataset.height - de.clientHeight)/2 + 'px';
+        if (isNaN(parseInt(objects.image.style.marginLeft))) objects.image.style.marginLeft = -(objects.icontainer.dataset.width - de.clientWidth)/2 + 'px';
+
+        checkMargin();
+        if (objects.icontainer.dataset.height*pub.zoom < de.clientHeight) {
+            objects.image.style.marginTop = (de.clientHeight - objects.icontainer.dataset.height*pub.zoom) / 2+'px';
+            objects.scroll_rgt.style.display = 'none';
+        }
+        else {
+            objects.scroll_rgt.style.display = 'block';
+            if (pub.mouseY < de.clientHeight/5) {
+                objects.image.style.marginTop = (isNaN(parseInt(objects.image.style.marginTop))?0:parseInt(objects.image.style.marginTop))+settings.scrollSpeed+'px';
+                if (pub.mouseY < de.clientHeight/20) objects.image.style.marginTop = parseInt(objects.image.style.marginTop)+settings.scrollSpeed*(settings.scrollMultiply-1)+'px';
+            }
+            if (pub.mouseY > de.clientHeight*4/5) {
+                objects.image.style.marginTop = (isNaN(parseInt(objects.image.style.marginTop))?0:parseInt(objects.image.style.marginTop))-settings.scrollSpeed+'px';
+                if (pub.mouseY > de.clientHeight*19/20) objects.image.style.marginTop = parseInt(objects.image.style.marginTop)-settings.scrollSpeed*(settings.scrollMultiply-1)+'px';
+            }
+
+            if (parseInt(objects.image.style.marginTop)>0) objects.image.style.marginTop = '0px';
+            if (-parseInt(objects.image.style.marginTop)>=(objects.icontainer.dataset.height*pub.zoom-de.clientHeight)) objects.image.style.marginTop = -(objects.icontainer.dataset.height*pub.zoom-de.clientHeight)+1+'px';
+        }
+
+        if (objects.icontainer.dataset.width*pub.zoom > de.clientWidth) {
+            objects.scroll_bot.style.display = 'block';
+            if (pub.mouseX < de.clientWidth/5) {
+                objects.image.style.marginLeft = (isNaN(parseInt(objects.image.style.marginLeft))?0:parseInt(objects.image.style.marginLeft))+settings.scrollSpeed+'px';
+                if (pub.mouseX < de.clientWidth/20) objects.image.style.marginLeft = parseInt(objects.image.style.marginLeft)+settings.scrollSpeed*(settings.scrollMultiply-1)+'px';
+            }
+            if (pub.mouseX > de.clientWidth*4/5) {
+                objects.image.style.marginLeft = (isNaN(parseInt(objects.image.style.marginLeft))?0:parseInt(objects.image.style.marginLeft))-settings.scrollSpeed+'px';
+                if (pub.mouseX > de.clientWidth*19/20) objects.image.style.marginLeft = parseInt(objects.image.style.marginLeft)-settings.scrollSpeed*(settings.scrollMultiply-1)+'px';
+            }
+
+            if (parseInt(objects.image.style.marginLeft)>0) objects.image.style.marginLeft = '0px';
+            if (-parseInt(objects.image.style.marginLeft)>=(objects.icontainer.dataset.width*pub.zoom-de.clientWidth)) objects.image.style.marginLeft = -(objects.icontainer.dataset.width*pub.zoom-de.clientWidth)+1+'px';
+        }
+        else
+        {
+            objects.image.style.marginLeft = 'auto';
+            objects.scroll_bot.style.display = 'none';
+        }
+        objects.scroll_bot.style.left = -(isNaN(parseInt(objects.image.style.marginLeft))?0:parseInt(objects.image.style.marginLeft))*xScale+'px';
+        objects.scroll_rgt.style.top = -(isNaN(parseInt(objects.image.style.marginTop))?0:parseInt(objects.image.style.marginTop))*yScale+'px';
+    }
+
+    function addScrolls() {
+        if (pub.scaled != 'false') return;
+        let de = document.documentElement;
+        let scrWidth = de.clientWidth, xScale = de.clientWidth/(objects.icontainer.dataset.width*pub.zoom);
+        let scrHeight = de.clientHeight, yScale = de.clientHeight/(objects.icontainer.dataset.height*pub.zoom);
+
+        objects.scroll_bot = addElem('div', {id:'_fs_scroll_bot'}, document.body);
+        objects.scroll_bot.style.width = scrWidth*xScale+'px';
+
+        objects.scroll_rgt = addElem('div', {id:'_fs_scroll_rgt'}, document.body);
+        objects.scroll_rgt.style.height = scrHeight*yScale+'px';
     }
 
     function listener() {
@@ -395,6 +528,9 @@ transition:.5s;
         setTimeout(listener, 100);
 
         tagEditor();
+
+        if (pub.scaled == 'false') setMargin();
+
         if (pub.mouseY/window.innerHeight >= (popUps.down.classList.contains('active')?0.4:0.85) && !popUps.back.classList.contains('active')) popUps.down.classList.add('active');
         else popUps.down.classList.remove('active');
 
@@ -412,7 +548,7 @@ transition:.5s;
         }
 
         if ((pub.mouseY/window.innerHeight > 0.15 && pub.mouseY/window.innerHeight < 0.85) &&
-           !(popUps.down.classList.contains('active') || popUps.back.classList.contains('active')))  {
+            !(popUps.down.classList.contains('active') || popUps.back.classList.contains('active')))  {
             pub.static++;
             if (pub.static > 15 && !document.body.classList.contains('_ydb_fs_static')) {
                 settings.hidden = true;
@@ -432,6 +568,34 @@ transition:.5s;
         pub.mouseX = e.clientX;
         pub.mouseY = e.clientY;
     }
+
+    function wheelListener(e){
+        let delta = e.deltaY || e.detail || e.wheelDelta;
+        let dt;
+
+        if (pub.zoom<0.5) dt = 0.005*settings.scrollSpeed;
+        else if (pub.zoom<1) dt = 0.01*settings.scrollSpeed;
+        else if (pub.zoom<2.5) dt = 0.015*settings.scrollSpeed;
+        else if (pub.zoom<5) dt = 0.025*settings.scrollSpeed;
+        else dt = 0.05*settings.scrollSpeed;
+
+        if (delta>0 && pub.zoom<10) {
+            pub.zoom+=dt;
+            pub.dta+=dt;
+        }
+        else if (delta<0 && pub.zoom>0.1) {
+            pub.zoom-=dt;
+            pub.dta-=dt;
+        }
+
+        e.preventDefault();
+    }
+
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
     function enable(notInital) {
         if (notInital) preenable();
@@ -461,7 +625,7 @@ transition:.5s;
         ]);
 
         document.querySelector('#content>.block:first-child>.block__header').insertBefore(objects.mainButton,document.getElementsByClassName('interaction--fave')[0]);
-        document.querySelectorAll('#content>.layout--narrow')[1].appendChild(document.getElementById('image_options_area'));
+        document.querySelectorAll('#content>div')[3].appendChild(document.getElementById('image_options_area'));
         popUps.coms.appendChild(document.querySelectorAll('#content>div')[4]);
         popUps.downContainer.appendChild(document.querySelectorAll('#content>div')[2]);
         popUps.downContainer.appendChild(document.querySelectorAll('#content>div')[2]);
@@ -499,6 +663,7 @@ transition:.5s;
         objects.commButton.addEventListener('click',showComms);
         popUps.back.addEventListener('click',hidePopups);
         document.body.addEventListener('mousemove',mouseListener);
+        document.body.addEventListener("wheel", wheelListener);
 
         if (objects.image != undefined) loadedImgFetch();
         objects.dcontainer.addEventListener("DOMNodeInserted",loadedImgFetch);
