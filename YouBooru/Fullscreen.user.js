@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.3.7
+// @version      0.4.0
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -215,16 +215,17 @@ transition-timing-function: ease-in-out;
 #content>.block:first-child>.block__header [class*="js-notification-Image"],
 #content>.block:first-child>.block__header [href*="/related"],
 #content>.block:first-child>.block__header [href*="/view/"],
-#content>.block:first-child>.block__header [title*="with tags"],
+#content>.block:first-child>.block__header [href*="/download/"],
 #content>.block:first-child>.block__header .block__header__dropdown-tab {
 display:none;
 }
 
-#content>.block:first-child>.block__header [href*="/download/"] {
+#content>.block:first-child>.block__header a.ydb_top_right_link {
 right:0;
 position:absolute;
 z-index:202;
 opacity:0.3;
+display:inline
 }
 
 #content>.block:first-child>.block__header [href*="/download/"]:hover {
@@ -320,19 +321,48 @@ transition-timing-function:linear;
     }
     catch (e) {
         settings = {};
-        write();
     }
 
+    if (settings.extended == undefined) settings.extended = true;
     if (settings.enabled == undefined) settings.enabled = false;
     if (settings.scrollSpeed == undefined) settings.scrollSpeed = 20;
     if (settings.scrollMultiply == undefined) settings.scrollMultiply = 5;
+    if (settings.staticTime == undefined) settings.staticTime = 20;
+    if (settings.staticEnabled == undefined) settings.staticEnabled = true;
+    if (settings.style == undefined) settings.style = 'rating';
+    if (settings.button == undefined) settings.button = 'Download this image at full res with a short filename';
+    write();
 
     function register() {
         let fsData = {
             name:'Fullscreen',
             container:'_ydb_fs',
             version:GM_info.script.version,
-            s:[]
+            s:[
+                {type:'checkbox', name:'Show UI', parameter:'extended'},
+                {type:'input', name:'Scroll speed', parameter:'scrollSpeed'},
+                {type:'input', name:'Scroll multiplier', parameter:'scrollMultiply'},
+                {type:'breakline'},
+                {type:'checkbox', name:'Autohide UI', parameter:'staticEnabled'},
+                {type:'input', name:'Autohide timeout', parameter:'staticTime'},
+                {type:'breakline'},
+                {type:'select', name:'Panel color', parameter:'style', values:[
+                    {name:'Red', value:'error'},
+                    {name:'Orange', value:'spoiler'},
+                    {name:'Yellow', value:'episode'},
+                    {name:'Green', value:''},
+                    {name:'Cyan', value:'character'},
+                    {name:'Blue', value:'rating'},
+                    {name:'Violet', value:'artist'}
+                ]},
+                {type:'select', name:'Top right button', parameter:'button', values:[
+                    {name:'none', value:''},
+                    {name:'View', value:'View this image at full res'},
+                    {name:'VS', value:'View this image at full res with a short filename'},
+                    {name:'Download', value:'Download this image at full res with tags in the filename'},
+                    {name:'DS', value:'Download this image at full res with a short filename'}
+                ]}
+            ]
         };
         document.addEventListener('DOMContentLoaded', function() {addElem('span', {style:'display:none', type:'text', dataset:{value:JSON.stringify(fsData)}, className:'_YDB_reserved_register'}, document.body);});
     }
@@ -351,9 +381,11 @@ transition-timing-function:linear;
 
     function preenable() {
         append('general');
-        append('base');
-        append('ex');
-        append('hider');
+        if (settings.extended) {
+            append('base');
+            append('ex');
+        }
+        if (settings.staticEnabled) append('hider');
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -474,13 +506,15 @@ transition-timing-function:linear;
         }
         else {
             objects.scroll_rgt.style.display = 'block';
-            if (pub.mouseY < de.clientHeight/5) {
+            if (pub.mouseY < de.clientHeight*2/5) {
                 objects.image.style.marginTop = (isNaN(parseInt(objects.image.style.marginTop))?0:parseInt(objects.image.style.marginTop))+settings.scrollSpeed+'px';
-                if (pub.mouseY < de.clientHeight/20) objects.image.style.marginTop = parseInt(objects.image.style.marginTop)+settings.scrollSpeed*(settings.scrollMultiply-1)+'px';
+                if (pub.mouseY < de.clientHeight/5) objects.image.style.marginTop = parseInt(objects.image.style.marginTop)+settings.scrollSpeed*(settings.scrollMultiply-1)+'px';
+                if (pub.mouseY < de.clientHeight/10) objects.image.style.marginTop = parseInt(objects.image.style.marginTop)+settings.scrollSpeed*(settings.scrollMultiply*2)+'px';
             }
-            if (pub.mouseY > de.clientHeight*4/5) {
+            if (pub.mouseY > de.clientHeight*3/5) {
                 objects.image.style.marginTop = (isNaN(parseInt(objects.image.style.marginTop))?0:parseInt(objects.image.style.marginTop))-settings.scrollSpeed+'px';
-                if (pub.mouseY > de.clientHeight*19/20) objects.image.style.marginTop = parseInt(objects.image.style.marginTop)-settings.scrollSpeed*(settings.scrollMultiply-1)+'px';
+                if (pub.mouseY > de.clientHeight*4/5) objects.image.style.marginTop = parseInt(objects.image.style.marginTop)-settings.scrollSpeed*(settings.scrollMultiply-1)+'px';
+                if (pub.mouseY > de.clientHeight*9/10) objects.image.style.marginTop = parseInt(objects.image.style.marginTop)-settings.scrollSpeed*(settings.scrollMultiply*2)+'px';
             }
 
             if (parseInt(objects.image.style.marginTop)>0) objects.image.style.marginTop = '0px';
@@ -489,13 +523,15 @@ transition-timing-function:linear;
 
         if (objects.icontainer.dataset.width*pub.zoom > de.clientWidth) {
             objects.scroll_bot.style.display = 'block';
-            if (pub.mouseX < de.clientWidth/5) {
+            if (pub.mouseX < de.clientWidth*2/5) {
                 objects.image.style.marginLeft = (isNaN(parseInt(objects.image.style.marginLeft))?0:parseInt(objects.image.style.marginLeft))+settings.scrollSpeed+'px';
-                if (pub.mouseX < de.clientWidth/20) objects.image.style.marginLeft = parseInt(objects.image.style.marginLeft)+settings.scrollSpeed*(settings.scrollMultiply-1)+'px';
+                if (pub.mouseX < de.clientWidth/5) objects.image.style.marginLeft = parseInt(objects.image.style.marginLeft)+settings.scrollSpeed*(settings.scrollMultiply-1)+'px';
+                if (pub.mouseX < de.clientWidth/10) objects.image.style.marginLeft = parseInt(objects.image.style.marginLeft)+settings.scrollSpeed*(settings.scrollMultiply*2)+'px';
             }
-            if (pub.mouseX > de.clientWidth*4/5) {
+            if (pub.mouseX > de.clientWidth*3/5) {
                 objects.image.style.marginLeft = (isNaN(parseInt(objects.image.style.marginLeft))?0:parseInt(objects.image.style.marginLeft))-settings.scrollSpeed+'px';
-                if (pub.mouseX > de.clientWidth*19/20) objects.image.style.marginLeft = parseInt(objects.image.style.marginLeft)-settings.scrollSpeed*(settings.scrollMultiply-1)+'px';
+                if (pub.mouseX > de.clientWidth*4/5) objects.image.style.marginLeft = parseInt(objects.image.style.marginLeft)-settings.scrollSpeed*(settings.scrollMultiply-1)+'px';
+                if (pub.mouseX > de.clientWidth*9/10) objects.image.style.marginLeft = parseInt(objects.image.style.marginLeft)-settings.scrollSpeed*(settings.scrollMultiply*2)+'px';
             }
 
             if (parseInt(objects.image.style.marginLeft)>0) objects.image.style.marginLeft = '0px';
@@ -550,17 +586,21 @@ transition-timing-function:linear;
         if ((pub.mouseY/window.innerHeight > 0.15 && pub.mouseY/window.innerHeight < 0.85) &&
             !(popUps.down.classList.contains('active') || popUps.back.classList.contains('active')))  {
             pub.static++;
-            if (pub.static > 15 && !document.body.classList.contains('_ydb_fs_static')) {
-                settings.hidden = true;
-                write();
-                document.body.classList.add('_ydb_fs_static');
+            if (pub.static > settings.staticTime && !document.body.classList.contains('_ydb_fs_static')) {
+                if (!settings.hidden) {
+                    settings.hidden = true;
+                    write();
+                    document.body.classList.add('_ydb_fs_static');
+                }
             }
         }
         else {
-            pub.static =0;
-            settings.hidden = false;
-            write();
-            document.body.classList.remove('_ydb_fs_static');
+            if (pub.static>0) {
+                pub.static =0;
+                settings.hidden = false;
+                write();
+                document.body.classList.remove('_ydb_fs_static');
+            }
         }
     }
 
@@ -610,7 +650,7 @@ transition-timing-function:linear;
         popUps.coms = addElem('div', {id:'_ydb_fs_commPopup', className:'_fs_popup _fs_popup_big block__content'}, popUps.back);
         popUps.main = addElem('div', {id:'_ydb_fs_mainPopup', className:'_fs_popup _fs_popup_vbig block__content'}, popUps.back);
         popUps.down = addElem('div', {id:'_fs_down', className:'_fs_down'}, document.body);
-        popUps.downBack = addElem('div', {id:'_fs_down_back', className:'_fs_down_back tag', dataset:{tagCategory:'rating'}}, popUps.down);
+        popUps.downBack = addElem('div', {id:'_fs_down_back', className:'_fs_down_back tag', dataset:{tagCategory:settings.style}}, popUps.down);
         popUps.downContainer = addElem('div', {id:'_fs_down_container', className:'_fs_down_container'}, popUps.down);
         objects.mainButton = InfernoAddElem('a', {id:'_fs_main', events:[{
             t:'click',
@@ -629,6 +669,8 @@ transition-timing-function:linear;
         popUps.coms.appendChild(document.querySelectorAll('#content>div')[4]);
         popUps.downContainer.appendChild(document.querySelectorAll('#content>div')[2]);
         popUps.downContainer.appendChild(document.querySelectorAll('#content>div')[2]);
+
+        document.querySelector('a[title="'+settings.button+'"]').classList.add('ydb_top_right_link');
 
         popUps.main.appendChild(document.querySelector('header'));
         popUps.main.appendChild(document.querySelector('nav.header.header--secondary'));
@@ -694,6 +736,7 @@ transition-timing-function:linear;
         document.getElementById('content').appendChild(popUps.downContainer.getElementsByTagName('div')[0]);
         document.getElementById('content').appendChild(popUps.downContainer.getElementsByTagName('div')[0]);
         document.getElementById('content').appendChild(popUps.coms.getElementsByTagName('div')[0]);
+        document.querySelector('a[title="'+settings.button+'"]').classList.remove('ydb_top_right_link');
 
         document.getElementById('container').insertBefore(document.querySelector('nav.header.header--secondary'),document.getElementById('container').firstChild);
         document.getElementById('container').insertBefore(document.querySelector('header'),document.getElementById('container').firstChild);
