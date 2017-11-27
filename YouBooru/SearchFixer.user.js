@@ -22,7 +22,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.2.9
+// @version      0.2.9a
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -452,7 +452,7 @@
     }
     register();
     let myURL = parseURL(location.href);
-    if (myURL.params.sf.startsWith('gallery_id')) return;
+    if (myURL.sf != undefined) if (myURL.params.sf.startsWith('gallery_id')) return;
     let id = parseInt(myURL.path.slice(1));
 
     if (isNaN(id)) {
