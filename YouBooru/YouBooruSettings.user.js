@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.4.3
+// @version      0.4.4
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -533,6 +533,20 @@ function ChildsAddElem(tag, values,parent, childs) {
                     localStorage[e.container] = JSON.stringify(ss);
                 });
                 el2.appendChild(x);
+            }
+            else if (v.type == 'input') {
+                let x = document.createElement('spam');
+                x.innerHTML = ' '+v.name+' ';
+                l.appendChild(x);
+                x = document.createElement('input');
+                x.type = 'text';
+                x.className = 'input';
+                x.value = ss[v.parameter];
+                x.addEventListener('input', function(ev) {
+                    ss[v.parameter] = ev.target.value;
+                    localStorage[e.container] = JSON.stringify(ss);
+                });
+                l.appendChild(x);
             }
 
             else if (v.type == 'breakline') {
