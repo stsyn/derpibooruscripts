@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.4.0
+// @version      0.4.1
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -331,6 +331,9 @@ transition-timing-function:linear;
     if (settings.staticEnabled == undefined) settings.staticEnabled = true;
     if (settings.style == undefined) settings.style = 'rating';
     if (settings.button == undefined) settings.button = 'Download this image at full res with a short filename';
+    settings.scrollSpeed = parseInt(settings.scrollSpeed);
+    settings.scrollMultiply = parseInt(settings.scrollMultiply);
+    settings.staticEnabled = parseInt(settings.staticEnabled);
     write();
 
     function register() {
@@ -705,7 +708,7 @@ transition-timing-function:linear;
         objects.commButton.addEventListener('click',showComms);
         popUps.back.addEventListener('click',hidePopups);
         document.body.addEventListener('mousemove',mouseListener);
-        document.body.addEventListener("wheel", wheelListener);
+        objects.dcontainer.addEventListener("wheel", wheelListener);
 
         if (objects.image != undefined) loadedImgFetch();
         objects.dcontainer.addEventListener("DOMNodeInserted",loadedImgFetch);
@@ -730,6 +733,7 @@ transition-timing-function:linear;
         objects.commButton.removeEventListener('click',showComms);
         popUps.back.removeEventListener('click',hidePopups);
         document.body.removeEventListener('mousemove',mouseListener);
+        objects.dcontainer.removeEventListener("wheel", wheelListener);
 
         document.querySelector('#content>.block:first-child>.block__header').removeChild(objects.mainButton);
 
@@ -754,7 +758,7 @@ transition-timing-function:linear;
     }
 
     register();
-    if (parseInt(location.pathname.slice(1))>=0 || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0)) {
+    if (parseInt(location.pathname.slice(1))>=0 || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && parseInt(location.pathname.split('/')[3]) == undefined)) {
         if (settings.enabled) {
             preenable();
             if (document.readyState !== 'loading') enable();
