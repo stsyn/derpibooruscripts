@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.4.1
+// @version      0.4.2
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -758,7 +758,7 @@ transition-timing-function:linear;
     }
 
     register();
-    if (parseInt(location.pathname.slice(1))>=0 || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && parseInt(location.pathname.split('/')[3]) == undefined)) {
+    if ((parseInt(location.pathname.slice(1))>=0 && location.pathname.split('/')[2] == undefined) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && location.pathname.split('/')[3] == undefined)) {
         if (settings.enabled) {
             preenable();
             if (document.readyState !== 'loading') enable();
