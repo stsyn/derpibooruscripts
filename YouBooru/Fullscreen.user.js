@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.4.4
+// @version      0.4.5
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -305,6 +305,48 @@ transition-timing-function:linear;
 }
 `;
 
+    styles.colorAccent = `
+.block__header--light a, .block__header--js-tabbed a, a.block__header--single-item,
+.block__header a:not(.interaction--fave):not(.interaction--upvote):not(.interaction--downvote):not(.interaction--comments):not(.interaction--hide),
+.block__header--sub a, .block__header--single-item a,
+.source_url a, #footer_content a, .button--link, .communication__body a, .comment_backlinks a, .communication__options a, a.interaction-user-list-item {
+color:_fs_color;
+}
+.header, a.header__link, span.header__link-user__dropdown-arrow, .add-to-gallery-list ::-webkit-scrollbar-thumb {
+background:_fs_color;
+}
+.image-description, #imagespns, .block__content:last-child, .block__tab:not(.hidden), .block__header--js-tabbed, .block__header--js-tabbed a.selected, .block__header--js-tabbed a.selected:hover,
+.button, .toggle-box+label, .block__list a.block__list__link, .block__list, .block__content, .block__tab, .input, .communication__toolbar__button, .block__content:first-child,
+.block__header--js-tabbed a, .block__header--js-tabbed a:last-child, .block__header--js-tabbed a:first-child  {
+border-color:_fs_background;
+}
+#container, .image-description, #imagespns, .block__content, .block__tab, .block__header--js-tabbed a.selected, .block__header--js-tabbed a.selected:hover, .button, .toggle-box+label,
+a.header__search__button:hover, button.header__search__button:hover, .input, .communication__toolbar__button, .tag__dropdown__link:hover   {
+background:_fs_component;
+}
+.header--secondary a:hover, .header--secondary .header__dropdown:hover>a, .block__header, .block__header--sub, .block__header--single-item,
+.block__header a, .block__header--sub a, .block__header--single-item a, .block__list a.block__list__link, .input:focus, .communication__toolbar__button:hover, .tag__dropdown__link,
+.communication__options {
+background:_fs_2component;
+}
+.input:focus, .communication__toolbar__button:focus, .communication__toolbar__button:hover, .communication__toolbar__button:active, .communication__toolbar__button:visited {
+border-color:_fs_color;
+}
+a:not(.header__link):hover{
+color:_fs_icomponent;
+}
+.block__header--light a, .button:hover, .toggle-box+label:hover, .header--secondary, .header--secondary a,
+
+a.block__header--single-item:hover, .block__header a:hover, .block__header--sub a:hover, .block__header--single-item a:hover, .block__list a.block__list__link.primary, select.header__input:hover, select.header__input:focus:hover {
+background:_fs_background;
+border-color:_fs_color;
+}
+.header__input, .header__input:focus, select.header__input, select.header__input:focus, a.header__search__button, button.header__search__button, a.header__link:hover, .header__dropdown:hover>a,
+select.header__input:hover, select.header__input:focus:hover  {
+background:_fs_icomponent;
+}
+`;
+
     let popUps = {};
     var objects = {};
     var pub = {};
@@ -330,6 +372,7 @@ transition-timing-function:linear;
     if (settings.staticTime == undefined) settings.staticTime = 20;
     if (settings.staticEnabled == undefined) settings.staticEnabled = true;
     if (settings.commentLink == undefined) settings.commentLink = false;
+    if (settings.colorAccent == undefined) settings.colorAccent = false;
     if (settings.style == undefined) settings.style = 'rating';
     if (settings.button == undefined) settings.button = 'Download this image at full res with a short filename';
     settings.scrollSpeed = parseInt(settings.scrollSpeed);
@@ -352,6 +395,7 @@ transition-timing-function:linear;
                 {type:'input', name:'Autohide timeout', parameter:'staticTime'},
                 {type:'breakline'},
                 {type:'select', name:'Panel color', parameter:'style', values:[
+                    {name:'Pink', value:'oc'},
                     {name:'Red', value:'error'},
                     {name:'Orange', value:'spoiler'},
                     {name:'Yellow', value:'episode'},
@@ -360,6 +404,7 @@ transition-timing-function:linear;
                     {name:'Blue', value:'rating'},
                     {name:'Violet', value:'origin'}
                 ]},
+                {type:'checkbox', name:'Match site palette', parameter:'colorAccent'},
                 {type:'select', name:'Top right button', parameter:'button', values:[
                     {name:'none', value:''},
                     {name:'View', value:'View this image at full res'},
@@ -669,6 +714,22 @@ transition-timing-function:linear;
                 objects.mainButtonNotify = InfernoAddElem('span', {}, [])
             ])
         ]);
+        if (settings.colorAccent) {
+            let c2 = getComputedStyle(document.body).backgroundColor;
+            let isDark = parseInt(c2.substring(4, c2.length - 1).split(',')[0]) <128;
+            console.log(isDark);
+            objects.colorAccent = addElem('div', {id:'_fs_colorAccent', className:'tag hidden', dataset:{tagCategory:settings.style}}, document.body);
+            styles.colorAccent = styles.colorAccent.replace(/_fs_color/g,getComputedStyle(objects.colorAccent).color);
+            styles.colorAccent = styles.colorAccent.replace(/_fs_background/g,getComputedStyle(objects.colorAccent).backgroundColor);
+            let c = getComputedStyle(objects.colorAccent).backgroundColor;
+            let color = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return parseInt(parseInt(v)/(isDark?3:1/1.6));});
+            let color2 = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return parseInt(parseInt(v)/(isDark?1.7:1/1.15));});
+            let color3 = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return parseInt(parseInt(v)/(!isDark?3:1/1.12));});
+            styles.colorAccent = styles.colorAccent.replace(/_fs_component/g,'rgb('+color[0]+','+color[1]+','+color[2]+')');
+            styles.colorAccent = styles.colorAccent.replace(/_fs_2component/g,'rgb('+color2[0]+','+color2[1]+','+color2[2]+')');
+            styles.colorAccent = styles.colorAccent.replace(/_fs_icomponent/g,'rgb('+color3[0]+','+color3[1]+','+color3[2]+')');
+            append('colorAccent');
+        }
 
         document.querySelector('#content>.block:first-child>.block__header').insertBefore(objects.mainButton,document.getElementsByClassName('interaction--fave')[0]);
         document.querySelectorAll('#content>div')[3].appendChild(document.getElementById('image_options_area'));
@@ -731,6 +792,7 @@ transition-timing-function:linear;
         remove('base');
         remove('ex');
         remove('hider');
+        remove('colorAccent');
         unscale();
 
         objects.dcontainer.removeEventListener("DOMNodeInserted",loadedImgFetch);
