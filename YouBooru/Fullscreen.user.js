@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.4.3
+// @version      0.4.4
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -358,7 +358,7 @@ transition-timing-function:linear;
                     {name:'Green', value:''},
                     {name:'Cyan', value:'character'},
                     {name:'Blue', value:'rating'},
-                    {name:'Violet', value:'artist'}
+                    {name:'Violet', value:'origin'}
                 ]},
                 {type:'select', name:'Top right button', parameter:'button', values:[
                     {name:'none', value:''},
