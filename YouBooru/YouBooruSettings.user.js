@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.4.4
+// @version      0.4.5
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -74,36 +74,36 @@
     }
 
 
-function ChildsAddElem(tag, values,parent, childs) {
-	var t;
-	if (values != undefined && values.id != undefined && document.getElementById(values.id) != undefined) {
-		if (document.querySelectorAll(tag+'#'+values.id).length == 0) {
-			t = document.getElementById(values.id);
-			t.parentNode.removeChild(t);
-			t = document.createElement(tag);
-		}
-		else {
-			t = document.getElementById(values.id);
-			while (t.firstChild) {
-			  t.removeChild(t.firstChild);
-			}
-		}
-	}
-	else t = document.createElement(tag);
+    function ChildsAddElem(tag, values,parent, childs) {
+        var t;
+        if (values != undefined && values.id != undefined && document.getElementById(values.id) != undefined) {
+            if (document.querySelectorAll(tag+'#'+values.id).length == 0) {
+                t = document.getElementById(values.id);
+                t.parentNode.removeChild(t);
+                t = document.createElement(tag);
+            }
+            else {
+                t = document.getElementById(values.id);
+                while (t.firstChild) {
+                    t.removeChild(t.firstChild);
+                }
+            }
+        }
+        else t = document.createElement(tag);
 
-	for (var i in values) if (i!='events' && i!='dataset') t[i] = values[i];
-	if (values.dataset != undefined) for (var i in values.dataset) t.dataset[i] = values.dataset[i];
-	if (values.events != undefined) values.events.forEach(function(v,i,a) {
-		t.addEventListener(v.t, v.f);
-	});
+        for (var i in values) if (i!='events' && i!='dataset') t[i] = values[i];
+        if (values.dataset != undefined) for (var i in values.dataset) t.dataset[i] = values.dataset[i];
+        if (values.events != undefined) values.events.forEach(function(v,i,a) {
+            t.addEventListener(v.t, v.f);
+        });
 
-	if (childs != undefined && childs.length != undefined) childs.forEach(function(c,i,a) {
-		t.appendChild(c);
-	});
+        if (childs != undefined && childs.length != undefined) childs.forEach(function(c,i,a) {
+            t.appendChild(c);
+        });
 
-	parent.appendChild(t);
-	return t;
-}
+        parent.appendChild(t);
+        return t;
+    }
 
     function register() {
         if (window._YDB_public == undefined) window._YDB_public = {};
@@ -135,219 +135,228 @@ function ChildsAddElem(tag, values,parent, childs) {
         localStorage._ydb_config = JSON.stringify(config);
     }
 
+    function hideBlock(e) {
+        console.log('huy');
+        let u = e.target;
+        while (!u.classList.contains('block__header')) u = u.parentNode;
+        let x = u.nextSibling;
+        x.classList.toggle('hidden');
+        u.getElementsByClassName('fa')[0].innerHTML = (x.classList.contains('hidden')?'\uF061':'\uF063');
+    }
+
     function putLine(e, f, i) {
-		let l = addElem('div', {classList:'block__content alternating-color',style:(f == undefined?'display:none;':'')+'marginBottom:.5em'}, e);
+        let l = addElem('div', {classList:'block__content alternating-color',style:(f == undefined?'display:none;':'')+'marginBottom:.5em'}, e);
 
-		addElem('span', {innerHTML:'Name '}, l);
-		addElem('input', {
-			type:'text',
-			value:f.name,
-			style:'width:16em',
-			dataset:{id:i},
-			className:'input',
-			events:[{
-				t:'input',
-				f:function(e) {feedz[e.target.dataset.id].name = e.target.value; write();}
-			}]
-		}, l);
+        addElem('span', {innerHTML:'Name '}, l);
+        addElem('input', {
+            type:'text',
+            value:f.name,
+            style:'width:16em',
+            dataset:{id:i},
+            className:'input',
+            events:[{
+                t:'input',
+                f:function(e) {feedz[e.target.dataset.id].name = e.target.value; write();}
+            }]
+        }, l);
 
-		addElem('span', {innerHTML:'Sort ',style:'margin-left:.5em'}, l);
-		addElem('input', {
-			type:'text',
-			value:f.sort,
-			style:'width:5em',
-			dataset:{id:i},
-			className:'input',
-			events:[{
-				t:'input',
-				f:function(e) {feedz[e.target.dataset.id].sort = e.target.value; write();}
-			}]
-		}, l);
+        addElem('span', {innerHTML:'Sort ',style:'margin-left:.5em'}, l);
+        addElem('input', {
+            type:'text',
+            value:f.sort,
+            style:'width:5em',
+            dataset:{id:i},
+            className:'input',
+            events:[{
+                t:'input',
+                f:function(e) {feedz[e.target.dataset.id].sort = e.target.value; write();}
+            }]
+        }, l);
 
-		addElem('span', {innerHTML:'Direction ',style:'margin-left:.5em'}, l);
-		addElem('input', {
-			type:'text',
-			value:f.sd,
-			style:'width:4em',
-			dataset:{id:i},
-			className:'input',
-			events:[{
-				t:'input',
-				f:function(e) {feedz[e.target.dataset.id].sd = e.target.value; write();}
-			}]
-		}, l);
+        addElem('span', {innerHTML:'Direction ',style:'margin-left:.5em'}, l);
+        addElem('input', {
+            type:'text',
+            value:f.sd,
+            style:'width:4em',
+            dataset:{id:i},
+            className:'input',
+            events:[{
+                t:'input',
+                f:function(e) {feedz[e.target.dataset.id].sd = e.target.value; write();}
+            }]
+        }, l);
 
-		addElem('span', {innerHTML:'Cache (minutes) ',style:'margin-left:.5em'}, l);
-		addElem('input', {
-			type:'text',
-			value:f.cache,
-			style:'width:3em',
-			dataset:{id:i},
-			className:'input',
-			events:[{
-				t:'input',
-				f:function(e) {feedz[e.target.dataset.id].cache = parseInt(e.target.value); write();}
-			}]
-		}, l);
+        addElem('span', {innerHTML:'Cache (minutes) ',style:'margin-left:.5em'}, l);
+        addElem('input', {
+            type:'text',
+            value:f.cache,
+            style:'width:3em',
+            dataset:{id:i},
+            className:'input',
+            events:[{
+                t:'input',
+                f:function(e) {feedz[e.target.dataset.id].cache = parseInt(e.target.value); write();}
+            }]
+        }, l);
 
-		addElem('span', {innerHTML:'... or update each ',style:'margin-left:.5em'}, l);
-		addElem('input', {
-			type:'text',
-			value:f.ccache,
-			style:'width:4em',
-			dataset:{id:i},
-			className:'input',
-			events:[{
-				t:'input',
-				f:function(e) {feedz[e.target.dataset.id].ccache = parseInt(e.target.value); write();}
-			}]
-		}, l);
+        addElem('span', {innerHTML:'... or update each ',style:'margin-left:.5em'}, l);
+        addElem('input', {
+            type:'text',
+            value:f.ccache,
+            style:'width:4em',
+            dataset:{id:i},
+            className:'input',
+            events:[{
+                t:'input',
+                f:function(e) {feedz[e.target.dataset.id].ccache = parseInt(e.target.value); write();}
+            }]
+        }, l);
 
-		addElem('a', {
-			type:'text',
-			style:'margin-left:.5em',
-			innerHTML:'Share',
-			className:'button',
-			target:'_blank',
-			title:'Copy this link and paste it somewhere to share that feed!',
-			href:'/pages/yourbooru?addFeed?'+f.name+'?'+encodeURIComponent(f.query).replace(/\(/,'%28').replace(/\)/,'%29')+'?'+f.sort+'?'+f.sd+'?'+f.cache+'?'+f.ccache
-		}, l);
+        addElem('a', {
+            type:'text',
+            style:'margin-left:.5em',
+            innerHTML:'Share',
+            className:'button',
+            target:'_blank',
+            title:'Copy this link and paste it somewhere to share that feed!',
+            href:'/pages/yourbooru?addFeed?'+f.name+'?'+encodeURIComponent(f.query).replace(/\(/,'%28').replace(/\)/,'%29')+'?'+f.sort+'?'+f.sd+'?'+f.cache+'?'+f.ccache
+        }, l);
 
 
         if (i > 0) {
-			addElem('span', {
-				type:'text',
-				style:'margin-left:.5em; float:right',
-				className:'button',
-				innerHTML:'<i class="fa fa-arrow-up"></i>',
-				events:[{
-					t:'click',
-					f:function() {
-						var t = feedz[i];
-						feedz[i] = feedz[i-1];
-						feedz[i-1] = t;
+            addElem('span', {
+                type:'text',
+                style:'margin-left:.5em; float:right',
+                className:'button',
+                innerHTML:'<i class="fa fa-arrow-up"></i>',
+                events:[{
+                    t:'click',
+                    f:function() {
+                        var t = feedz[i];
+                        feedz[i] = feedz[i-1];
+                        feedz[i-1] = t;
 
-						t = feedzCache[i];
-						feedzCache[i] = feedzCache[i-1];
-						feedzCache[i-1] = t;
+                        t = feedzCache[i];
+                        feedzCache[i] = feedzCache[i-1];
+                        feedzCache[i-1] = t;
 
-						t = feedzURLS[i];
-						feedzURLS[i] = feedzURLS[i-1];
-						feedzURLS[i-1] = t;
+                        t = feedzURLS[i];
+                        feedzURLS[i] = feedzURLS[i-1];
+                        feedzURLS[i-1] = t;
 
-						write();
-						renderList(e);
-					}
-				}]
-			}, l);
+                        write();
+                        renderList(e);
+                    }
+                }]
+            }, l);
         }
 
         /******************/
 
-		addElem('span', {innerHTML:'<br>Query '}, l);
-		addElem('textarea', {
-			type:'text',
-			value:f.query,
-			style:'width:calc(100% - 26.2em);resize:none;height:2em;vertical-align:-50%;overflow:hidden',
-			dataset:{id:i},
-			className:'input',
-			events:[{
-				t:'input',
-				f:function(e) {
-					feedz[e.target.dataset.id].query = e.target.value;
-					feedz[e.target.dataset.id].saved = 0;
-					write();
-				}},{
-				t:'focus',
-				f:function(e) {
-					e.target.style.height = '7em';
-					e.target.style.width = 'calc(100% - 4em)';
-					e.target.style.position = 'absolute';
-					e.target.style.overflowY = 'auto';
-				}},{
-				t:'blur',
-				f:function(e) {
-					e.target.style.height = '2em';
-					e.target.style.width = 'calc(100% - 26.2em)';
-					e.target.style.position = 'static';
-					e.target.style.overflowY = 'hidden';
-				}
-			}]
-		}, l);
+        addElem('span', {innerHTML:'<br>Query '}, l);
+        addElem('textarea', {
+            type:'text',
+            value:f.query,
+            style:'width:calc(100% - 26.2em);resize:none;height:2em;vertical-align:-50%;overflow:hidden',
+            dataset:{id:i},
+            className:'input',
+            events:[{
+                t:'input',
+                f:function(e) {
+                    feedz[e.target.dataset.id].query = e.target.value;
+                    feedz[e.target.dataset.id].saved = 0;
+                    write();
+                }},{
+                    t:'focus',
+                    f:function(e) {
+                        e.target.style.height = '7em';
+                        e.target.style.width = 'calc(100% - 4em)';
+                        e.target.style.position = 'absolute';
+                        e.target.style.overflowY = 'auto';
+                    }},{
+                        t:'blur',
+                        f:function(e) {
+                            e.target.style.height = '2em';
+                            e.target.style.width = 'calc(100% - 26.2em)';
+                            e.target.style.position = 'static';
+                            e.target.style.overflowY = 'hidden';
+                        }
+                    }]
+        }, l);
 
-		ChildsAddElem('label', {innerHTML:' Double size '}, l, [
-			InfernoAddElem('input', {
-				type:'checkbox',
-				checked:f.double,
-				dataset:{id:i},
-				events:[{
-					t:'click',
-					f:function(e) {
-						feedz[e.target.dataset.id].double = e.target.checked;
-						feedz[e.target.dataset.id].saved = 0;
-						write();
-					}
-				}]
-			})]
-		);
+        ChildsAddElem('label', {innerHTML:' Double size '}, l, [
+            InfernoAddElem('input', {
+                type:'checkbox',
+                checked:f.double,
+                dataset:{id:i},
+                events:[{
+                    t:'click',
+                    f:function(e) {
+                        feedz[e.target.dataset.id].double = e.target.checked;
+                        feedz[e.target.dataset.id].saved = 0;
+                        write();
+                    }
+                }]
+            })]
+                     );
 
-		addElem('span', {
-			style:'margin-left:.5em;margin-right:0',
-			dataset:{id:i},
-			classList:'button commission__category',
-			innerHTML:'Reset cache',
-			events:[{
-				t:'click',
-				f:function(e) {
-					feedz[e.target.dataset.id].saved = 0;
-					write();
-				}
-			}]
-		}, l);
+        addElem('span', {
+            style:'margin-left:.5em;margin-right:0',
+            dataset:{id:i},
+            classList:'button commission__category',
+            innerHTML:'Reset cache',
+            events:[{
+                t:'click',
+                f:function(e) {
+                    feedz[e.target.dataset.id].saved = 0;
+                    write();
+                }
+            }]
+        }, l);
 
-		addElem('span', {
-			style:'margin-left:.5em;margin-right:0',
-			dataset:{id:i},
-			classList:'button commission__category',
-			innerHTML:'Delete',
-			events:[{
-				t:'click',
-				f:function(e) {
-					feedz.splice(e.target.dataset.id, 1);
-					feedzCache.splice(e.target.dataset.id, 1);
-					feedzURLS.splice(e.target.dataset.id, 1);
-					write();
-				}
-			}]
-		}, l);
+        addElem('span', {
+            style:'margin-left:.5em;margin-right:0',
+            dataset:{id:i},
+            classList:'button commission__category',
+            innerHTML:'Delete',
+            events:[{
+                t:'click',
+                f:function(e) {
+                    feedz.splice(e.target.dataset.id, 1);
+                    feedzCache.splice(e.target.dataset.id, 1);
+                    feedzURLS.splice(e.target.dataset.id, 1);
+                    write();
+                }
+            }]
+        }, l);
 
 
         if (i<feedz.length-1) {
-			addElem('span', {
-				type:'text',
-				style:'margin-left:.5em; float:right',
-				className:'button',
-				innerHTML:'<i class="fa fa-arrow-down"></i>',
-				events:[{
-					t:'click',
-					f:function() {
-						var t = feedz[i];
-						feedz[i] = feedz[i+1];
-						feedz[i+1] = t;
+            addElem('span', {
+                type:'text',
+                style:'margin-left:.5em; float:right',
+                className:'button',
+                innerHTML:'<i class="fa fa-arrow-down"></i>',
+                events:[{
+                    t:'click',
+                    f:function() {
+                        var t = feedz[i];
+                        feedz[i] = feedz[i+1];
+                        feedz[i+1] = t;
 
-						t = feedzCache[i];
-						feedzCache[i] = feedzCache[i+1];
-						feedzCache[i+1] = t;
+                        t = feedzCache[i];
+                        feedzCache[i] = feedzCache[i+1];
+                        feedzCache[i+1] = t;
 
-						t = feedzURLS[i];
-						feedzURLS[i] = feedzURLS[i+1];
-						feedzURLS[i+1] = t;
+                        t = feedzURLS[i];
+                        feedzURLS[i] = feedzURLS[i+1];
+                        feedzURLS[i+1] = t;
 
-						write();
-						renderList(e);
-					}
-				}]
-			}, l);
+                        write();
+                        renderList(e);
+                    }
+                }]
+            }, l);
         }
     }
 
@@ -369,133 +378,133 @@ function ChildsAddElem(tag, values,parent, childs) {
     }
 
     function _YDB_feeds(cont2) {
-		ChildsAddElem('div', {className:'block__header'}, cont2, [
-			InfernoAddElem('a', {}, [
-				InfernoAddElem('i', {className:'fa', innerHTML:'\uF061'}),
-				InfernoAddElem('span', {innerHTML:' Feeds'})
-			])
-		]);
+        ChildsAddElem('div', {className:'block__header'}, cont2, [
+            InfernoAddElem('a', {events:[{t:'click',f:hideBlock}]}, [
+                InfernoAddElem('i', {className:'fa', innerHTML:'\uF061'}),
+                InfernoAddElem('span', {innerHTML:' Feeds'})
+            ])
+        ]);
 
-		let cont = addElem('div', {className:'block__content'}, cont2);
+        let cont = addElem('div', {className:'block__content hidden'}, cont2);
 
-		ChildsAddElem('label', {innerHTML:'Do not remove watchlist '}, cont, [
-			InfernoAddElem('input', {
-				type:'checkbox',
-				checked:config.feeds.doNotRemoveWatchList,
-				events:[{
-					t:'change',
-					f:function(e) {
-						config.feeds.doNotRemoveWatchList = this.checked;
-						writeConfig();
-					}
-				}]
-			})]
-		);
+        ChildsAddElem('label', {innerHTML:'Do not remove watchlist '}, cont, [
+            InfernoAddElem('input', {
+                type:'checkbox',
+                checked:config.feeds.doNotRemoveWatchList,
+                events:[{
+                    t:'change',
+                    f:function(e) {
+                        config.feeds.doNotRemoveWatchList = this.checked;
+                        writeConfig();
+                    }
+                }]
+            })]
+                     );
 
-		ChildsAddElem('p', {innerHTML:'Images in each feed: '}, cont, [
-			InfernoAddElem('input', {
-				type:'text',
-				value:config.feeds.imagesInFeeds,
-				style:'width:3em',
-				className:'input',
-				events:[{
-					t:'input',
-					f:function(e) {
-						config.feeds.imagesInFeeds = parseInt(this.value);
-						writeConfig();
-					}
-				}]
-			})]
-		);
+        ChildsAddElem('p', {innerHTML:'Images in each feed: '}, cont, [
+            InfernoAddElem('input', {
+                type:'text',
+                value:config.feeds.imagesInFeeds,
+                style:'width:3em',
+                className:'input',
+                events:[{
+                    t:'input',
+                    f:function(e) {
+                        config.feeds.imagesInFeeds = parseInt(this.value);
+                        writeConfig();
+                    }
+                }]
+            })]
+                     );
 
-		ChildsAddElem('label', {innerHTML:'Watch link on the right side '}, cont, [
-			InfernoAddElem('input', {
-				type:'checkbox',
-				checked:config.feeds.watchFeedLinkOnRightSide,
-				events:[{
-					t:'change',
-					f:function(e) {
-						config.feeds.watchFeedLinkOnRightSide = this.checked;
-						writeConfig();
-					}
-				}]
-			})]
-		);
+        ChildsAddElem('label', {innerHTML:'Watch link on the right side '}, cont, [
+            InfernoAddElem('input', {
+                type:'checkbox',
+                checked:config.feeds.watchFeedLinkOnRightSide,
+                events:[{
+                    t:'change',
+                    f:function(e) {
+                        config.feeds.watchFeedLinkOnRightSide = this.checked;
+                        writeConfig();
+                    }
+                }]
+            })]
+                     );
 
-		ChildsAddElem('label', {innerHTML:'Remove unneeded content from HTML '}, cont, [
-			InfernoAddElem('input', {
-				type:'checkbox',
-				checked:config.feeds.optimizeLS,
-				events:[{
-					t:'change',
-					f:function(e) {
-						config.feeds.optimizeLS = this.checked;
-						writeConfig();
-					}
-				}]
-			})]
-		);
+        ChildsAddElem('label', {innerHTML:'Remove unneeded content from HTML '}, cont, [
+            InfernoAddElem('input', {
+                type:'checkbox',
+                checked:config.feeds.optimizeLS,
+                events:[{
+                    t:'change',
+                    f:function(e) {
+                        config.feeds.optimizeLS = this.checked;
+                        writeConfig();
+                    }
+                }]
+            })]
+                     );
 
-		let fel = addElem('div', {className:'block'}, cont);
+        let fel = addElem('div', {className:'block'}, cont);
 
-		addElem('span', {
-				type:'text',
-				className:'button',
-				innerHTML:'Add feed',
-				events:[{
-					t:'click',
-					f:function(e) {
-						if (feedz != undefined) for (let i=0; i<=feedz.length; i++) {
-							if (feedz[i] == undefined) {
-								feedz[i] = {
-									name:'New feed',
-									query:'*',
-									sort:'',
-									sd:'desc',
-									cache:30,
-									double:false
-								};
-								write();
-								break;
-							}
-						}
-						renderList(fel);
-					}
-				}]
-			}, cont);
+        addElem('span', {
+            type:'text',
+            className:'button',
+            innerHTML:'Add feed',
+            events:[{
+                t:'click',
+                f:function(e) {
+                    if (feedz != undefined) for (let i=0; i<=feedz.length; i++) {
+                        if (feedz[i] == undefined) {
+                            feedz[i] = {
+                                name:'New feed',
+                                query:'*',
+                                sort:'',
+                                sd:'desc',
+                                cache:30,
+                                double:false
+                            };
+                            write();
+                            break;
+                        }
+                    }
+                    renderList(fel);
+                }
+            }]
+        }, cont);
 
-		addElem('span', {
-				type:'text',
-				classList:'button commission__category',
-				innerHTML:'Reset feeds cache',
-				style:'margin-left:1em; margin-right:6em',
-				events:[{
-					t:'click',
-					f:resetCaches
-				}]
-			}, cont);
+        addElem('span', {
+            type:'text',
+            classList:'button commission__category',
+            innerHTML:'Reset feeds cache',
+            style:'margin-left:1em; margin-right:6em',
+            events:[{
+                t:'click',
+                f:resetCaches
+            }]
+        }, cont);
 
-		addElem('input', {type:'checkbox',id:'ydb_reset'}, cont);
+        addElem('input', {type:'checkbox',id:'ydb_reset'}, cont);
 
-		addElem('span', {
-				type:'text',
-				classList:'button commission__category',
-				innerHTML:'Reset everything',
-				style:'margin-left:.5em; margin-right:6em',
-				events:[{
-					t:'click',
-					f:function() {
-						if (document.getElementById('ydb_reset').checked) {
-							feedz = undefined;
-							write();
-							location.href = '/';
-						}
-						else {
-							alert('Mark checkbox first!');
-						}
-					}
-				}]
-			}, cont);
+        addElem('span', {
+            type:'text',
+            classList:'button commission__category',
+            innerHTML:'Reset everything',
+            style:'margin-left:.5em; margin-right:6em',
+            events:[{
+                t:'click',
+                f:function() {
+                    if (document.getElementById('ydb_reset').checked) {
+                        feedz = undefined;
+                        write();
+                        location.href = '/';
+                    }
+                    else {
+                        alert('Mark checkbox first!');
+                    }
+                }
+            }]
+        }, cont);
 
         renderList(fel);
     }
@@ -509,49 +518,46 @@ function ChildsAddElem(tag, values,parent, childs) {
         catch (ex) {
         }
 
-		ChildsAddElem('div', {className:'block__header'}, cont2, [
-			InfernoAddElem('a', {}, [
-				InfernoAddElem('i', {className:'fa', innerHTML:'\uF061'}),
-				InfernoAddElem('span', {innerHTML:' '+e.name})
-			])
-		]);
+        ChildsAddElem('div', {className:'block__header'}, cont2, [
+            InfernoAddElem('a', {events:[{t:'click',f:hideBlock}]}, [
+                InfernoAddElem('i', {className:'fa', innerHTML:'\uF061'}),
+                InfernoAddElem('span', {innerHTML:' '+e.name})
+            ])
+        ]);
 
-		let cont = addElem('div', {className:'block__content'}, cont2);
+        let cont = addElem('div', {className:'block__content hidden'}, cont2);
 
         let l = document.createElement('div');
 
         e.s.forEach(function (v,i,a) {
             if (v.type == 'checkbox') {
-                let el2 = document.createElement('label');
-                el2.innerHTML = ' '+v.name+' ';
-                l.appendChild(el2);
-                let x = document.createElement('input');
-                x.type = 'checkbox';
-                x.checked = ss[v.parameter];
-                x.addEventListener('click', function(ev) {
-                    ss[v.parameter] = ev.target.checked;
-                    localStorage[e.container] = JSON.stringify(ss);
-                });
-                el2.appendChild(x);
+                ChildsAddElem('label', {innerHTML:' '+v.name+' '}, l, [
+                    InfernoAddElem('input',{type:'checkbox',checked:ss[v.parameter], events:[{t:'click', f:function(ev) {
+                        ss[v.parameter] = ev.target.checked;
+                        localStorage[e.container] = JSON.stringify(ss);
+                    }}]})
+                ]);
             }
             else if (v.type == 'input') {
-                let x = document.createElement('spam');
-                x.innerHTML = ' '+v.name+' ';
-                l.appendChild(x);
-                x = document.createElement('input');
-                x.type = 'text';
-                x.className = 'input';
-                x.value = ss[v.parameter];
-                x.addEventListener('input', function(ev) {
+                addElem('span', {innerHTML:' '+v.name+' '},l);
+                addElem('input', {type:'text',className:'input',value:ss[v.parameter], events:[{t:'input',f:function(ev) {
                     ss[v.parameter] = ev.target.value;
                     localStorage[e.container] = JSON.stringify(ss);
+                }}]},l);
+            }
+            else if (v.type == 'select') {
+                addElem('span', {innerHTML:' '+v.name+' '},l);
+                let elems = v.values.map(function (vv,i,a) {
+                    return InfernoAddElem('option',{innerHTML:vv.name, value:vv.value, selected:(vv.value == ss[v.parameter])});
                 });
-                l.appendChild(x);
+                ChildsAddElem('select', {size:1, className:'input', events:[{t:'change', f:function(ev){
+                    ss[v.parameter] = ev.target.value;
+                    localStorage[e.container] = JSON.stringify(ss);
+                }}]}, l, elems);
             }
 
             else if (v.type == 'breakline') {
-                let x = document.createElement('br');
-                l.appendChild(x);
+                addElem('br', {},l);
             }
 
         });
@@ -559,18 +565,10 @@ function ChildsAddElem(tag, values,parent, childs) {
     }
 
     function settingPage() {
+        let cont;
+        document.getElementById('js-setting-table').insertBefore(cont = InfernoAddElem('div',{className:'block__tab hidden',dataset:{tab:'YourBooru'},style:'position:relative'}), document.querySelector('[data-tab="local"]').nextSibling);
 
-        let cont = document.createElement('div');
-        cont.className = 'block__tab hidden';
-        cont.setAttribute('data-tab','YourBooru');
-        cont.style.position = 'relative';
-        document.getElementById('js-setting-table').insertBefore(cont, document.querySelector('[data-tab="local"]').nextSibling);
-
-        let tab = document.createElement('a');
-        tab.href = '#';
-        tab.setAttribute('data-click-tab','YourBooru');
-        tab.innerHTML = 'YourBooru';
-        document.getElementsByClassName('block__header')[0].appendChild(tab);
+        addElem('a',{href:'#',innerHTML:'YourBooru',dataset:{clickTab:'YourBooru'}},document.getElementsByClassName('block__header')[0]);
 
         let el;
 
@@ -603,27 +601,27 @@ function ChildsAddElem(tag, values,parent, childs) {
             }
         }
 
-		ChildsAddElem('div', {className:'block__header'}, cont, [
-			InfernoAddElem('span', {innerHTML:'Installed plugins', style:'margin-left:12px'})
-		]);
+        ChildsAddElem('div', {className:'block__header'}, cont, [
+            InfernoAddElem('span', {innerHTML:'Installed plugins', style:'margin-left:12px'})
+        ]);
 
         let s = '';
         for (let key in window._YDB_public.settings) {
-			let ax = window._YDB_public.settings[key];
-			addElem('div', {classList:'block__content alternating-color', innerHTML:ax.name+' ver. '+ax.version}, cont);
+            let ax = window._YDB_public.settings[key];
+            addElem('div', {classList:'block__content alternating-color', innerHTML:ax.name+' ver. '+ax.version}, cont);
         }
         for (let i=0; i<document.getElementsByClassName('_YDB_reserved_register').length; i++) {
             try {
                 let ax = JSON.parse(document.getElementsByClassName('_YDB_reserved_register')[i].dataset.value);
-				addElem('div', {classList:'block__content alternating-color', innerHTML:ax.name+' ver. '+ax.version}, cont);
+                addElem('div', {classList:'block__content alternating-color', innerHTML:ax.name+' ver. '+ax.version}, cont);
             }
             catch (e) {
             }
         }
 
         ChildsAddElem('div', {className:'block__header'}, cont, [
-			InfernoAddElem('a', {innerHTML:'Backup', target:'_blank', href:'/pages/yourbooru?backup'})
-		]);
+            InfernoAddElem('a', {innerHTML:'Backup', target:'_blank', href:'/pages/yourbooru?backup'})
+        ]);
 
         let hh = function () {
             if (location.hash!='') {
