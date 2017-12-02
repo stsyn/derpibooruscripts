@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.4.6
+// @version      0.4.7
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -335,14 +335,14 @@ a.header__search__button:hover, button.header__search__button:hover, .input, .co
 background:_fs_component;
 }
 
-.alternating-color:nth-child(even), .table>tbody>tr:nth-child(even) {
+#footer, .alternating-color:nth-child(even), .table>tbody>tr:nth-child(even) {
 background:_fs_4component;
 }
 
 .header--secondary a.header__link:hover, .header--secondary .header__dropdown:hover>a, .input:focus, .communication__toolbar__button:hover, .tag__dropdown__link,
 .block__header, .block__header--sub, .block__header--single-item,
 .block__header a, .block__header--sub a, .block__header--single-item a, .block__list a.block__list__link,
-.communication__options, #footer, .button, a.media-box__header--link:hover,
+.communication__options, .button, a.media-box__header--link:hover,
 .interaction--downvote.disabled, .interaction--downvote.disabled:hover{
 background:_fs_2component;
 }
@@ -355,8 +355,7 @@ border-color:_fs_2component;
 border-color:_fs_color;
 }
 
-a:not(.header__link):not(.button):not(.block__header):not(.block__header--single-item):not(.tag__name):not(.interaction--fave):not(.interaction--comments)
-:not(.interaction--upvote):not(.interaction--downvote):not(.media-box__header--link):hover{
+a:not(.header__link):not(.button):not(.block__header):not(.block__header--single-item):not(.tag__name):not(.interaction--fave):not(.interaction--comments):not(.interaction--upvote):not(.interaction--downvote):not(.media-box__header--link):hover{
 color:_fs_icomponent !important;
 }
 
