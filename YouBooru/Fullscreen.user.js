@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.4.2
+// @version      0.4.3
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -329,6 +329,7 @@ transition-timing-function:linear;
     if (settings.scrollMultiply == undefined) settings.scrollMultiply = 5;
     if (settings.staticTime == undefined) settings.staticTime = 20;
     if (settings.staticEnabled == undefined) settings.staticEnabled = true;
+    if (settings.commentLink == undefined) settings.commentLink = false;
     if (settings.style == undefined) settings.style = 'rating';
     if (settings.button == undefined) settings.button = 'Download this image at full res with a short filename';
     settings.scrollSpeed = parseInt(settings.scrollSpeed);
@@ -345,6 +346,7 @@ transition-timing-function:linear;
                 {type:'checkbox', name:'Show UI', parameter:'extended'},
                 {type:'input', name:'Scroll speed', parameter:'scrollSpeed'},
                 {type:'input', name:'Scroll multiplier', parameter:'scrollMultiply'},
+                {type:'checkbox', name:'Remove href from comments link', parameter:'commentLink'},
                 {type:'breakline'},
                 {type:'checkbox', name:'Autohide UI', parameter:'staticEnabled'},
                 {type:'input', name:'Autohide timeout', parameter:'staticTime'},
@@ -455,8 +457,9 @@ transition-timing-function:linear;
         location.hash = '';
     }
 
-    function showComms() {
+    function showComms(e) {
         callPopup('coms');
+        if (!settings.commentsLink) e.preventDefault();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -509,12 +512,12 @@ transition-timing-function:linear;
         }
         else {
             objects.scroll_rgt.style.display = 'block';
-            if (pub.mouseY < de.clientHeight*2/5) {
+            if (pub.mouseY < de.clientHeight*3/10) {
                 objects.image.style.marginTop = (isNaN(parseInt(objects.image.style.marginTop))?0:parseInt(objects.image.style.marginTop))+settings.scrollSpeed+'px';
                 if (pub.mouseY < de.clientHeight/5) objects.image.style.marginTop = parseInt(objects.image.style.marginTop)+settings.scrollSpeed*(settings.scrollMultiply-1)+'px';
                 if (pub.mouseY < de.clientHeight/10) objects.image.style.marginTop = parseInt(objects.image.style.marginTop)+settings.scrollSpeed*(settings.scrollMultiply*2)+'px';
             }
-            if (pub.mouseY > de.clientHeight*3/5) {
+            if (pub.mouseY > de.clientHeight*7/10) {
                 objects.image.style.marginTop = (isNaN(parseInt(objects.image.style.marginTop))?0:parseInt(objects.image.style.marginTop))-settings.scrollSpeed+'px';
                 if (pub.mouseY > de.clientHeight*4/5) objects.image.style.marginTop = parseInt(objects.image.style.marginTop)-settings.scrollSpeed*(settings.scrollMultiply-1)+'px';
                 if (pub.mouseY > de.clientHeight*9/10) objects.image.style.marginTop = parseInt(objects.image.style.marginTop)-settings.scrollSpeed*(settings.scrollMultiply*2)+'px';
@@ -526,12 +529,12 @@ transition-timing-function:linear;
 
         if (objects.icontainer.dataset.width*pub.zoom > de.clientWidth) {
             objects.scroll_bot.style.display = 'block';
-            if (pub.mouseX < de.clientWidth*2/5) {
+            if (pub.mouseX < de.clientWidth*3/10) {
                 objects.image.style.marginLeft = (isNaN(parseInt(objects.image.style.marginLeft))?0:parseInt(objects.image.style.marginLeft))+settings.scrollSpeed+'px';
                 if (pub.mouseX < de.clientWidth/5) objects.image.style.marginLeft = parseInt(objects.image.style.marginLeft)+settings.scrollSpeed*(settings.scrollMultiply-1)+'px';
                 if (pub.mouseX < de.clientWidth/10) objects.image.style.marginLeft = parseInt(objects.image.style.marginLeft)+settings.scrollSpeed*(settings.scrollMultiply*2)+'px';
             }
-            if (pub.mouseX > de.clientWidth*3/5) {
+            if (pub.mouseX > de.clientWidth*7/10) {
                 objects.image.style.marginLeft = (isNaN(parseInt(objects.image.style.marginLeft))?0:parseInt(objects.image.style.marginLeft))-settings.scrollSpeed+'px';
                 if (pub.mouseX > de.clientWidth*4/5) objects.image.style.marginLeft = parseInt(objects.image.style.marginLeft)-settings.scrollSpeed*(settings.scrollMultiply-1)+'px';
                 if (pub.mouseX > de.clientWidth*9/10) objects.image.style.marginLeft = parseInt(objects.image.style.marginLeft)-settings.scrollSpeed*(settings.scrollMultiply*2)+'px';
@@ -704,6 +707,7 @@ transition-timing-function:linear;
         objects.icontainer = document.getElementsByClassName('image-show-container')[0];
         objects.dcontainer = document.getElementById('image_target');
         objects.commButton = document.getElementsByClassName('interaction--comments')[0];
+        if (settings.commentLink) objects.commButton.href = 'javascript://';
 
         objects.commButton.addEventListener('click',showComms);
         popUps.back.addEventListener('click',hidePopups);
@@ -731,6 +735,7 @@ transition-timing-function:linear;
 
         objects.dcontainer.removeEventListener("DOMNodeInserted",loadedImgFetch);
         objects.commButton.removeEventListener('click',showComms);
+        objects.commButton.href = '#comments';
         popUps.back.removeEventListener('click',hidePopups);
         document.body.removeEventListener('mousemove',mouseListener);
         objects.dcontainer.removeEventListener("wheel", wheelListener);
