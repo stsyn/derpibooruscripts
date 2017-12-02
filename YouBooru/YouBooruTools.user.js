@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.2.4
+// @version      0.2.5
 // @description  Some UI tweaks
 // @author       stsyn
 
@@ -118,7 +118,7 @@
         for (let i=0; i<a.length; i++) {
             for (let j=0; j<domains.length; j++)
                 if (a[i].host != location.host && a[i].host == domains[j]) a[i].host = location.host;
-            if (a[i].host != location.host) a[i].target = '_blank';
+            if (a[i].host != location.host && a[i].host != '') a[i].target = '_blank';
         }
     }
 
