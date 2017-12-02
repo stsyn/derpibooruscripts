@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.4.5
+// @version      0.4.6
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -308,42 +308,81 @@ transition-timing-function:linear;
     styles.colorAccent = `
 .block__header--light a, .block__header--js-tabbed a, a.block__header--single-item,
 .block__header a:not(.interaction--fave):not(.interaction--upvote):not(.interaction--downvote):not(.interaction--comments):not(.interaction--hide),
-.block__header--sub a, .block__header--single-item a,
-.source_url a, #footer_content a, .button--link, .communication__body a, .comment_backlinks a, .communication__options a, a.interaction-user-list-item {
+.block__header--sub a, .block__header--single-item a, .block__content:not(._fs_popup)>*:not(.media-box) a:not(.tag__name), .block__content>a, .profile-top__name-and-links a,
+.source_url a, #footer_content a, .button--link, .communication__body a, .comment_backlinks a, .communication__options a, a.interaction-user-list-item, .pagination a,
+a.block__header--single-item:hover, .block__header:not(.center--layout) a:hover, .block__header--sub a:hover, .block__header--single-item a:hover,
+.block--fixed a, .rule a, a.togglable-faq-item, .field a, a.media-box__header--link, a.media-box__header--link:hover{
 color:_fs_color;
 }
-.header, a.header__link, span.header__link-user__dropdown-arrow, .add-to-gallery-list ::-webkit-scrollbar-thumb {
-background:_fs_color;
+p>a {
+color:_fs_color !important;
 }
-.image-description, #imagespns, .block__content:last-child, .block__tab:not(.hidden), .block__header--js-tabbed, .block__header--js-tabbed a.selected, .block__header--js-tabbed a.selected:hover,
-.button, .toggle-box+label, .block__list a.block__list__link, .block__list, .block__content, .block__tab, .input, .communication__toolbar__button, .block__content:first-child,
-.block__header--js-tabbed a, .block__header--js-tabbed a:last-child, .block__header--js-tabbed a:first-child  {
+
+.header, a.header__link, span.header__link-user__dropdown-arrow, .add-to-gallery-list ::-webkit-scrollbar-thumb,
+span.header__link-user__dropdown-arrow:hover, .header__dropdown:hover span.header__link-user__dropdown-arrow, .sparkline .bar {
+background:_fs_ccomponent;
+}
+
+.image-description, #imagespns, .block__header--js-tabbed, .block__header--js-tabbed a.selected, .block__header--js-tabbed a.selected:hover,
+.button, .toggle-box+label, .block__list a.block__list__link, .block__list, .input, .communication__toolbar__button, 
+.block__header--js-tabbed a, .block__header--js-tabbed a:last-child, .block__header--js-tabbed a:first-child, .block--fixed:not(.block--success), .media-box, .filter {
 border-color:_fs_background;
 }
-#container, .image-description, #imagespns, .block__content, .block__tab, .block__header--js-tabbed a.selected, .block__header--js-tabbed a.selected:hover, .button, .toggle-box+label,
-a.header__search__button:hover, button.header__search__button:hover, .input, .communication__toolbar__button, .tag__dropdown__link:hover   {
+
+#container, .image-description, #imagespns, .block__content, .block__tab, .block__header--js-tabbed a.selected, .block__header--js-tabbed a.selected:hover, .toggle-box+label,
+a.header__search__button:hover, button.header__search__button:hover, .input, .communication__toolbar__button, .tag__dropdown__link:hover, .block--fixed:not(.block--success), .filter,
+.alternating-color:nth-child(odd), .table>thead>tr, .table>tbody>tr:nth-child(odd) {
 background:_fs_component;
 }
-.header--secondary a:hover, .header--secondary .header__dropdown:hover>a, .block__header, .block__header--sub, .block__header--single-item,
-.block__header a, .block__header--sub a, .block__header--single-item a, .block__list a.block__list__link, .input:focus, .communication__toolbar__button:hover, .tag__dropdown__link,
-.communication__options {
+
+.alternating-color:nth-child(even), .table>tbody>tr:nth-child(even) {
+background:_fs_4component;
+}
+
+.header--secondary a.header__link:hover, .header--secondary .header__dropdown:hover>a, .input:focus, .communication__toolbar__button:hover, .tag__dropdown__link,
+.block__header, .block__header--sub, .block__header--single-item,
+.block__header a, .block__header--sub a, .block__header--single-item a, .block__list a.block__list__link,
+.communication__options, #footer, .button, a.media-box__header--link:hover,
+.interaction--downvote.disabled, .interaction--downvote.disabled:hover{
 background:_fs_2component;
 }
-.input:focus, .communication__toolbar__button:focus, .communication__toolbar__button:hover, .communication__toolbar__button:active, .communication__toolbar__button:visited {
+
+.rule h2 {
+border-color:_fs_2component;
+}
+
+.input:focus, .communication__toolbar__button:focus, .communication__toolbar__button:hover, .communication__toolbar__button:active, .communication__toolbar__button:visited, .sparkline {
 border-color:_fs_color;
 }
-a:not(.header__link):hover{
-color:_fs_icomponent;
-}
-.block__header--light a, .button:hover, .toggle-box+label:hover, .header--secondary, .header--secondary a,
 
-a.block__header--single-item:hover, .block__header a:hover, .block__header--sub a:hover, .block__header--single-item a:hover, .block__list a.block__list__link.primary, select.header__input:hover, select.header__input:focus:hover {
+a:not(.header__link):not(.button):not(.block__header):not(.block__header--single-item):not(.tag__name):not(.interaction--fave):not(.interaction--comments)
+:not(.interaction--upvote):not(.interaction--downvote):not(.media-box__header--link):hover{
+color:_fs_icomponent !important;
+}
+
+.media-box__header, .button:hover, .toggle-box+label:hover, .header--secondary, .header--secondary a,
+.block__list a.block__list__link.primary, select.header__input:hover, select.header__input:focus:hover {
 background:_fs_background;
 border-color:_fs_color;
 }
-.header__input, .header__input:focus, select.header__input, select.header__input:focus, a.header__search__button, button.header__search__button, a.header__link:hover, .header__dropdown:hover>a,
+
+ a.header__link:hover, .header__dropdown:hover>a {
+background:_fs_color;
+}
+
+a.block__header--single-item:hover, .block__header a:hover, .block__header--sub a:hover, .block__header--single-item a:hover, .rule h2 {
+background:_fs_3component;
+}
+
+.header__input, .header__input:focus, select.header__input, select.header__input:focus, a.header__search__button, button.header__search__button,
 select.header__input:hover, select.header__input:focus:hover  {
 background:_fs_icomponent;
+}
+.block__content, .block__content:last-child, .block__content:first-child, .table, .table>tbody, .block__tab, .block__tab:not(.hidden){
+border-color:_fs_2component;
+}
+.block__header--js-tabbed  {
+background:none
 }
 `;
 
@@ -688,6 +727,36 @@ background:_fs_icomponent;
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 
+    function transformColor(v, x1, x2, d) {
+        if (d) return parseInt(v/x1);
+        else return parseInt(255-(255-v)/x2);
+    }
+
+    function enableColor() {
+        if (settings.colorAccent) {
+            let c2 = getComputedStyle(document.body).backgroundColor;
+            let isDark = parseInt(c2.substring(4, c2.length - 1).split(',')[0]) <128;
+            objects.colorAccent = addElem('div', {id:'_fs_colorAccent', className:'tag hidden', dataset:{tagCategory:settings.style}}, document.body);
+            styles.colorAccent = styles.colorAccent.replace(/_fs_color/g,getComputedStyle(objects.colorAccent).color);
+            styles.colorAccent = styles.colorAccent.replace(/_fs_background/g,getComputedStyle(objects.colorAccent).backgroundColor);
+            let c = getComputedStyle(objects.colorAccent)[isDark?'backgroundColor':'color'];
+            let c3 = getComputedStyle(objects.colorAccent)['color'];
+            let color = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 5, 35, isDark);});
+            let color2 = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.5, 5, isDark);});
+            let color3 = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.2, 0.95, !isDark);});
+            let color4 = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 2.5, 3, isDark);});
+            let color5 = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 3, 10, isDark);});
+            let color6 = c3.substring(4, c3.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.2, 1.3, isDark);});
+            styles.colorAccent = styles.colorAccent.replace(/_fs_component/g,'rgb('+color[0]+','+color[1]+','+color[2]+')');
+            styles.colorAccent = styles.colorAccent.replace(/_fs_2component/g,'rgb('+color2[0]+','+color2[1]+','+color2[2]+')');
+            styles.colorAccent = styles.colorAccent.replace(/_fs_3component/g,'rgb('+color4[0]+','+color4[1]+','+color4[2]+')');
+            styles.colorAccent = styles.colorAccent.replace(/_fs_4component/g,'rgb('+color5[0]+','+color5[1]+','+color5[2]+')');
+            styles.colorAccent = styles.colorAccent.replace(/_fs_icomponent/g,'rgb('+color3[0]+','+color3[1]+','+color3[2]+')');
+            styles.colorAccent = styles.colorAccent.replace(/_fs_ccomponent/g,'rgb('+color6[0]+','+color6[1]+','+color6[2]+')');
+            append('colorAccent');
+        }
+    }
+
     function enable(notInital) {
         if (notInital) preenable();
         init();
@@ -714,22 +783,7 @@ background:_fs_icomponent;
                 objects.mainButtonNotify = InfernoAddElem('span', {}, [])
             ])
         ]);
-        if (settings.colorAccent) {
-            let c2 = getComputedStyle(document.body).backgroundColor;
-            let isDark = parseInt(c2.substring(4, c2.length - 1).split(',')[0]) <128;
-            console.log(isDark);
-            objects.colorAccent = addElem('div', {id:'_fs_colorAccent', className:'tag hidden', dataset:{tagCategory:settings.style}}, document.body);
-            styles.colorAccent = styles.colorAccent.replace(/_fs_color/g,getComputedStyle(objects.colorAccent).color);
-            styles.colorAccent = styles.colorAccent.replace(/_fs_background/g,getComputedStyle(objects.colorAccent).backgroundColor);
-            let c = getComputedStyle(objects.colorAccent).backgroundColor;
-            let color = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return parseInt(parseInt(v)/(isDark?3:1/1.6));});
-            let color2 = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return parseInt(parseInt(v)/(isDark?1.7:1/1.15));});
-            let color3 = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return parseInt(parseInt(v)/(!isDark?3:1/1.12));});
-            styles.colorAccent = styles.colorAccent.replace(/_fs_component/g,'rgb('+color[0]+','+color[1]+','+color[2]+')');
-            styles.colorAccent = styles.colorAccent.replace(/_fs_2component/g,'rgb('+color2[0]+','+color2[1]+','+color2[2]+')');
-            styles.colorAccent = styles.colorAccent.replace(/_fs_icomponent/g,'rgb('+color3[0]+','+color3[1]+','+color3[2]+')');
-            append('colorAccent');
-        }
+        if (notInital) enableColor();
 
         document.querySelector('#content>.block:first-child>.block__header').insertBefore(objects.mainButton,document.getElementsByClassName('interaction--fave')[0]);
         document.querySelectorAll('#content>div')[3].appendChild(document.getElementById('image_options_area'));
@@ -792,7 +846,6 @@ background:_fs_icomponent;
         remove('base');
         remove('ex');
         remove('hider');
-        remove('colorAccent');
         unscale();
 
         objects.dcontainer.removeEventListener("DOMNodeInserted",loadedImgFetch);
@@ -828,9 +881,13 @@ background:_fs_icomponent;
     if ((parseInt(location.pathname.slice(1))>=0 && location.pathname.split('/')[2] == undefined) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && location.pathname.split('/')[3] == undefined)) {
         if (settings.enabled) {
             preenable();
-            if (document.readyState !== 'loading') enable();
+            if (document.readyState !== 'loading') {
+                enable();
+                enableColor();
+            }
             else document.addEventListener('DOMContentLoaded', function() {
                 enable();
+                enableColor();
                 if (location.hash == '#comments') showComms();
             });
         }
@@ -838,5 +895,8 @@ background:_fs_icomponent;
             if (document.readyState !== 'loading') init();
             else document.addEventListener('DOMContentLoaded', init);
         }
+    }
+    else {
+        document.addEventListener('DOMContentLoaded',enableColor);
     }
 }());
