@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.4.7
+// @version      0.4.8
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -311,7 +311,7 @@ transition-timing-function:linear;
 .block__header--sub a, .block__header--single-item a, .block__content:not(._fs_popup)>*:not(.media-box) a:not(.tag__name), .block__content>a, .profile-top__name-and-links a,
 .source_url a, #footer_content a, .button--link, .communication__body a, .comment_backlinks a, .communication__options a, a.interaction-user-list-item, .pagination a,
 a.block__header--single-item:hover, .block__header:not(.center--layout) a:hover, .block__header--sub a:hover, .block__header--single-item a:hover,
-.block--fixed a, .rule a, a.togglable-faq-item, .field a, a.media-box__header--link, a.media-box__header--link:hover{
+.block--fixed a, .rule a, a.togglable-faq-item, .field a, a.media-box__header--link, a.media-box__header--link:hover, h1 a{
 color:_fs_color;
 }
 p>a {
@@ -325,24 +325,24 @@ background:_fs_ccomponent;
 
 .image-description, #imagespns, .block__header--js-tabbed, .block__header--js-tabbed a.selected, .block__header--js-tabbed a.selected:hover,
 .button, .toggle-box+label, .block__list a.block__list__link, .block__list, .input, .communication__toolbar__button, 
-.block__header--js-tabbed a, .block__header--js-tabbed a:last-child, .block__header--js-tabbed a:first-child, .block--fixed:not(.block--success), .media-box, .filter {
+.block__header--js-tabbed a, .block__header--js-tabbed a:last-child, .block__header--js-tabbed a:first-child, .block--fixed:not(.block--success):not(.block--warning), .media-box, .filter {
 border-color:_fs_background;
 }
 
 #container, .image-description, #imagespns, .block__content, .block__tab, .block__header--js-tabbed a.selected, .block__header--js-tabbed a.selected:hover, .toggle-box+label,
-a.header__search__button:hover, button.header__search__button:hover, .input, .communication__toolbar__button, .tag__dropdown__link:hover, .block--fixed:not(.block--success), .filter,
+a.header__search__button:hover, button.header__search__button:hover, .input, .communication__toolbar__button, .tag__dropdown__link:hover, .block--fixed:not(.block--success):not(.block--warning), .filter,
 .alternating-color:nth-child(odd), .table>thead>tr, .table>tbody>tr:nth-child(odd) {
 background:_fs_component;
 }
 
-#footer, .alternating-color:nth-child(even), .table>tbody>tr:nth-child(even) {
+#footer, .alternating-color:nth-child(even), .table>tbody>tr:nth-child(even), .block__header--sub, .block__header--sub a {
 background:_fs_4component;
 }
 
 .header--secondary a.header__link:hover, .header--secondary .header__dropdown:hover>a, .input:focus, .communication__toolbar__button:hover, .tag__dropdown__link,
-.block__header, .block__header--sub, .block__header--single-item,
-.block__header a, .block__header--sub a, .block__header--single-item a, .block__list a.block__list__link,
-.communication__options, .button, a.media-box__header--link:hover,
+.block__header, .block__header--single-item,
+.block__header a, .block__header--single-item a, .block__list a.block__list__link,
+.communication__options, .button, a.media-box__header--link:hover, .header--secondary span.header__counter,
 .interaction--downvote.disabled, .interaction--downvote.disabled:hover{
 background:_fs_2component;
 }
@@ -360,7 +360,7 @@ color:_fs_icomponent !important;
 }
 
 .media-box__header, .button:hover, .toggle-box+label:hover, .header--secondary, .header--secondary a,
-.block__list a.block__list__link.primary, select.header__input:hover, select.header__input:focus:hover {
+.block__list a.block__list__link.primary, select.header__input:hover, select.header__input:focus:hover, span.header__counter {
 background:_fs_background;
 border-color:_fs_color;
 }
@@ -787,6 +787,7 @@ background:none
         document.querySelector('#content>.block:first-child>.block__header').insertBefore(objects.mainButton,document.getElementsByClassName('interaction--fave')[0]);
         document.querySelectorAll('#content>div')[3].appendChild(document.getElementById('image_options_area'));
         popUps.coms.appendChild(document.querySelectorAll('#content>div')[4]);
+        popUps.downContainer.appendChild(document.querySelector('#content>.block:first-child .block__header--sub').cloneNode(true));
         popUps.downContainer.appendChild(document.querySelectorAll('#content>div')[2]);
         popUps.downContainer.appendChild(document.querySelectorAll('#content>div')[2]);
 
@@ -856,8 +857,8 @@ background:none
 
         document.querySelector('#content>.block:first-child>.block__header').removeChild(objects.mainButton);
 
-        document.getElementById('content').appendChild(popUps.downContainer.getElementsByTagName('div')[0]);
-        document.getElementById('content').appendChild(popUps.downContainer.getElementsByTagName('div')[0]);
+        document.getElementById('content').appendChild(popUps.downContainer.childNodes[1]);
+        document.getElementById('content').appendChild(popUps.downContainer.childNodes[1]);
         document.getElementById('content').appendChild(popUps.coms.getElementsByTagName('div')[0]);
         document.querySelector('a[title="'+settings.button+'"]').classList.remove('ydb_top_right_link');
 
@@ -891,6 +892,7 @@ background:none
             });
         }
         else {
+            document.addEventListener('DOMContentLoaded',enableColor);
             if (document.readyState !== 'loading') init();
             else document.addEventListener('DOMContentLoaded', init);
         }
