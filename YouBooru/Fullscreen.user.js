@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.4.8
+// @version      0.4.9
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -365,7 +365,7 @@ background:_fs_background;
 border-color:_fs_color;
 }
 
- a.header__link:hover, .header__dropdown:hover>a {
+a.header__link:hover, .header__dropdown:hover>a {
 background:_fs_color;
 }
 
@@ -388,11 +388,11 @@ background:none
     let popUps = {};
     var objects = {};
     var pub = {};
-    var settings;
+    var settings, state;
 
 
     function write() {
-        localStorage._ydb_fs = JSON.stringify(settings);
+        localStorage._ydb_fs_state = JSON.stringify(state);
     }
 
     var svd = localStorage._ydb_fs;
@@ -403,8 +403,17 @@ background:none
         settings = {};
     }
 
+    svd = localStorage._ydb_fs_state;
+    try {
+        state = JSON.parse(svd);
+    }
+    catch (e) {
+        state = {};
+    }
+
+    if (state.enabled == undefined) state.enabled = false;
+
     if (settings.extended == undefined) settings.extended = true;
-    if (settings.enabled == undefined) settings.enabled = false;
     if (settings.scrollSpeed == undefined) settings.scrollSpeed = 20;
     if (settings.scrollMultiply == undefined) settings.scrollMultiply = 5;
     if (settings.staticTime == undefined) settings.staticTime = 20;
@@ -415,7 +424,7 @@ background:none
     if (settings.button == undefined) settings.button = 'Download this image at full res with a short filename';
     settings.scrollSpeed = parseInt(settings.scrollSpeed);
     settings.scrollMultiply = parseInt(settings.scrollMultiply);
-    settings.staticEnabled = parseInt(settings.staticEnabled);
+    settings.staticTime = parseInt(settings.staticTime);
     write();
 
     function register() {
@@ -675,20 +684,23 @@ background:none
         if ((pub.mouseY/window.innerHeight > 0.15 && pub.mouseY/window.innerHeight < 0.85) &&
             !(popUps.down.classList.contains('active') || popUps.back.classList.contains('active')))  {
             pub.static++;
-            if (pub.static > settings.staticTime && !document.body.classList.contains('_ydb_fs_static')) {
-                if (!settings.hidden) {
-                    settings.hidden = true;
-                    write();
-                    document.body.classList.add('_ydb_fs_static');
-                }
-            }
         }
         else {
             if (pub.static>0) {
                 pub.static =0;
-                settings.hidden = false;
+                state.hidden = false;
+                pub.hidden = false;
                 write();
                 document.body.classList.remove('_ydb_fs_static');
+            }
+        }
+
+        if (pub.static > settings.staticTime && !document.body.classList.contains('_ydb_fs_static')) {
+            if (!pub.hidden) {
+                state.hidden = true;
+                pub.hidden = true;
+                write();
+                document.body.classList.add('_ydb_fs_static');
             }
         }
     }
@@ -762,7 +774,7 @@ background:none
 
         pub.mouseX = window.innerWidth/2;
         pub.mouseY = window.innerHeight/2;
-        if (settings.hidden) pub.static = 100;
+        if (state.hidden) pub.static = 100000;
         else pub.static = 0;
 
         popUps.back = addElem('div', {id:'_ydb_fs_backSide', className:'_fs_popup_back'}, document.body);
@@ -835,7 +847,7 @@ background:none
         document.body.classList.add('_fs');
 
         pub.enabled = true;
-        settings.enabled = true;
+        state.enabled = true;
 
         write();
         listener();
@@ -868,7 +880,7 @@ background:none
 
         document.querySelectorAll('#content>div')[4].insertBefore(document.getElementById('image_options_area'), document.querySelectorAll('#content>div')[4].childNodes[0]);
         pub.enabled = false;
-        settings.enabled = false;
+        state.enabled = false;
 
         document.body.classList.remove('_fs');
         document.body.removeChild(popUps.back);
@@ -879,7 +891,7 @@ background:none
 
     register();
     if ((parseInt(location.pathname.slice(1))>=0 && location.pathname.split('/')[2] == undefined) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && location.pathname.split('/')[3] == undefined)) {
-        if (settings.enabled) {
+        if (state.enabled) {
             preenable();
             if (document.readyState !== 'loading') {
                 enable();
