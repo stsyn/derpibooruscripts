@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.4.9
+// @version      0.4.10
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -449,7 +449,8 @@ background:none
                     {name:'Green', value:''},
                     {name:'Cyan', value:'character'},
                     {name:'Blue', value:'rating'},
-                    {name:'Violet', value:'origin'}
+                    {name:'Violet', value:'origin'},
+                    {name:'Grey', value:'none'}
                 ]},
                 {type:'checkbox', name:'Match site palette', parameter:'colorAccent'},
                 {type:'select', name:'Top right button', parameter:'button', values:[
@@ -745,13 +746,17 @@ background:none
 
     function enableColor() {
         if (settings.colorAccent) {
-            let c2 = getComputedStyle(document.body).backgroundColor;
-            let isDark = parseInt(c2.substring(4, c2.length - 1).split(',')[0]) <128;
             objects.colorAccent = addElem('div', {id:'_fs_colorAccent', className:'tag hidden', dataset:{tagCategory:settings.style}}, document.body);
-            styles.colorAccent = styles.colorAccent.replace(/_fs_color/g,getComputedStyle(objects.colorAccent).color);
-            styles.colorAccent = styles.colorAccent.replace(/_fs_background/g,getComputedStyle(objects.colorAccent).backgroundColor);
-            let c = getComputedStyle(objects.colorAccent)[isDark?'backgroundColor':'color'];
-            let c3 = getComputedStyle(objects.colorAccent)['color'];
+            let c2 = getComputedStyle(document.body).backgroundColor;
+            let c3 = getComputedStyle(objects.colorAccent).color;
+            let c4 = getComputedStyle(objects.colorAccent).backgroundColor;
+            let isDark = parseInt(c2.substring(4, c2.length - 1).split(',')[0]) <128;
+            if (settings.style == 'none') c4 = (isDark?'rgb(56,56,56)':'rgb(156,156,156)');
+            if (settings.style == 'none') c3 = (isDark?'rgb(156,156,156)':'rgb(56,56,56)');
+
+            styles.colorAccent = styles.colorAccent.replace(/_fs_color/g,c3);
+            styles.colorAccent = styles.colorAccent.replace(/_fs_background/g,c4);
+            let c = isDark?c4:c3;
             let color = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 5, 35, isDark);});
             let color2 = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.5, 5, isDark);});
             let color3 = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.2, 0.95, !isDark);});
