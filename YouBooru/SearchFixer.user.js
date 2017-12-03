@@ -22,7 +22,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.2.9a
+// @version      0.2.10
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -226,25 +226,32 @@
                 else {
                     if (u.total > 1) {
                         let param;
+                        let s = 0;
+                        if (u.search[s].id == id) s++;
                         if (myURL.params.sf == 'score') param='score';
                         else if (myURL.params.sf == 'width') param='width';
                         else if (myURL.params.sf == 'height') param='height';
                         else if (myURL.params.sf == 'comments') param='comment_count';
                         else param = '';
-                        if (u.search[1][param] == u.search[0][param]) {
+                        if (u.search[s+1][param] == u.search[s][param]) {
                             //мы чот нашли, но у соседней по тому же критерию то же самое, нужно уточнить, что ставить
-                            request(compilePostQuery(type, u.search[1][param]), r.sel, type, 'post');
+                            request(compilePostQuery(type, u.search[s+1][param]), r.sel, type, 'post');
                             return;
                         }
                         else {
                             //а все норм, она одна такая
-                            complete(r.sel, location.href.replace(id, u.search[0].id));
+                            complete(r.sel, location.href.replace(id, u.search[s].id));
                             return;
                         }
                     }
                     else {
                         //в запросе ваще одна пихча
-                        complete(r.sel, location.href.replace(id, u.search[0].id));
+                        if (u.search[s].id == id) {
+                            request(compileQuery(type, 1), r.sel, type, 'act');
+                        }
+                        else {
+                            complete(r.sel, location.href.replace(id, u.search[0].id));
+                        }
                         return;
                     }
                 }
@@ -361,29 +368,31 @@
         return prevUrl;
     }
 
-    function compileQuery(type) {
+    function compileQuery(type, delta) {
+        let d = 0;
+        if (delta != undefined) d = delta*((myURL.params.sd=='asc'^type=='prev')?-1:1);
         let prevUrl = '//'+myURL.host+'/search.json?q=('+myURL.params.q+')';
         if (type !='random' && myURL.params.sf != "random") {
             let dir = ((myURL.params.sd=='asc'^(type=='prev' || type=='find'))?'gt':'lt');
             if (myURL.params.sf == "score") {
                 let cscore = parseInt(document.getElementsByClassName('score')[0].innerHTML);
-                prevUrl += ',((score:'+cscore+',id.'+dir+':'+id+')+||+(score.'+dir+':'+cscore+'))';
+                prevUrl += ',((score:'+(cscore+d)+',id.'+dir+':'+id+')+||+(score.'+dir+':'+(cscore+d)+'))';
             }
             else if (myURL.params.sf == "width") {
                 let cscore = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[0];
-                prevUrl += ',((width:'+cscore+',id.'+dir+':'+id+')+||+(width.'+dir+':'+cscore+'))';
+                prevUrl += ',((width:'+(cscore+d)+',id.'+dir+':'+id+')+||+(width.'+dir+':'+(cscore+d)+'))';
             }
             else if (myURL.params.sf == "height") {
                 let cscore = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[1];
-                prevUrl += ',((height:'+cscore+',id.'+dir+':'+id+')+||+(height.'+dir+':'+cscore+'))';
+                prevUrl += ',((height:'+(cscore+d)+',id.'+dir+':'+id+')+||+(height.'+dir+':'+(cscore+d)+'))';
             }
             else if (myURL.params.sf == "comments") {
                 let cscore = document.querySelectorAll('.comments_count')[0].innerHTML;
-                prevUrl += ',((comment_count:'+cscore+',id.'+dir+':'+id+')+||+(comment_count.'+dir+':'+cscore+'))';
+                prevUrl += ',((comment_count:'+(cscore+d)+',id.'+dir+':'+id+')+||+(comment_count.'+dir+':'+(cscore+d)+'))';
             }
-            prevUrl+='&perpage=2&sf='+myURL.params.sf+'&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
+            prevUrl+='&perpage=3&sf='+myURL.params.sf+'&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
         }
-        else prevUrl+='&perpage='+(myURL.params.sf=="random"?4:2)+'&sf=random';
+        else prevUrl+='&perpage='+(myURL.params.sf=="random"?4:3)+'&sf=random';
         return prevUrl;
     }
 
