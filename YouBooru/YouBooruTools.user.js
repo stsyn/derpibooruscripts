@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.2.5
+// @version      0.2.6
 // @description  Some UI tweaks
 // @author       stsyn
 
@@ -18,10 +18,10 @@
 // @exclude      *://derpibooru.org/adverts/*
 // @exclude      *://www.trixiebooru.org/adverts/*
 // @exclude      *://www.derpibooru.org/adverts/*
-// @exclude      *://adverts/*.o53xo.orzgs6djmvrg633souxg64th.*.*/adverts/*
-// @exclude      *://adverts/*.orzgs6djmvrg633souxg64th.*.*/adverts/*
-// @exclude      *://adverts/*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
-// @exclude      *://adverts/*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
+// @exclude      *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/adverts/*
+// @exclude      *://*.orzgs6djmvrg633souxg64th.*.*/adverts/*
+// @exclude      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
+// @exclude      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
 
 // @require      https://raw.githubusercontent.com/blueimp/JavaScript-MD5/master/js/md5.min.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
