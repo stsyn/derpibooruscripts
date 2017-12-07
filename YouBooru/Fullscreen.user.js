@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.0
+// @version      0.5.1
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -985,10 +985,12 @@ color: #555;
 
     register();
     append('noneTag');
-    let c2 = getComputedStyle(document.body).backgroundColor;
-    colors.isDark = parseInt(c2.substring(4, c2.length - 1).split(',')[0]) <128;
-    if (colors.isDark) document.body.classList.add('_fs_dark');
-    else document.body.classList.remove('_fs_dark');
+    document.addEventListener('DOMContentLoaded', function() {
+        let c2 = getComputedStyle(document.body).backgroundColor;
+        colors.isDark = parseInt(c2.substring(4, c2.length - 1).split(',')[0]) <128;
+        if (colors.isDark) document.body.classList.add('_fs_dark');
+        else document.body.classList.remove('_fs_dark');
+    });
 
     prePreColor();
     if ((parseInt(location.pathname.slice(1))>=0 && location.pathname.split('/')[2] == undefined) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && location.pathname.split('/')[3] == undefined)) {
