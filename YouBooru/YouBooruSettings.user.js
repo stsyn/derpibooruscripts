@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.4.5
+// @version      0.4.6
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -136,7 +136,6 @@
     }
 
     function hideBlock(e) {
-        console.log('huy');
         let u = e.target;
         while (!u.classList.contains('block__header')) u = u.parentNode;
         let x = u.nextSibling;
@@ -530,35 +529,39 @@
         let l = document.createElement('div');
 
         e.s.forEach(function (v,i,a) {
+            let x, y;
             if (v.type == 'checkbox') {
-                ChildsAddElem('label', {innerHTML:' '+v.name+' '}, l, [
-                    InfernoAddElem('input',{type:'checkbox',checked:ss[v.parameter], events:[{t:'click', f:function(ev) {
+                y = ChildsAddElem('label', {innerHTML:' '+v.name+' '}, l, [
+                    x = InfernoAddElem('input',{type:'checkbox',checked:ss[v.parameter], events:[{t:'click', f:function(ev) {
                         ss[v.parameter] = ev.target.checked;
                         localStorage[e.container] = JSON.stringify(ss);
                     }}]})
                 ]);
             }
             else if (v.type == 'input') {
-                addElem('span', {innerHTML:' '+v.name+' '},l);
-                addElem('input', {type:'text',className:'input',value:ss[v.parameter], events:[{t:'input',f:function(ev) {
+                y = addElem('span', {innerHTML:' '+v.name+' '},l);
+                x = addElem('input', {type:'text',className:'input',value:ss[v.parameter], events:[{t:'input',f:function(ev) {
                     ss[v.parameter] = ev.target.value;
                     localStorage[e.container] = JSON.stringify(ss);
                 }}]},l);
             }
             else if (v.type == 'select') {
-                addElem('span', {innerHTML:' '+v.name+' '},l);
+                y = addElem('span', {innerHTML:' '+v.name+' '},l);
                 let elems = v.values.map(function (vv,i,a) {
                     return InfernoAddElem('option',{innerHTML:vv.name, value:vv.value, selected:(vv.value == ss[v.parameter])});
                 });
-                ChildsAddElem('select', {size:1, className:'input', events:[{t:'change', f:function(ev){
+                x = ChildsAddElem('select', {size:1, className:'input', events:[{t:'change', f:function(ev){
                     ss[v.parameter] = ev.target.value;
                     localStorage[e.container] = JSON.stringify(ss);
                 }}]}, l, elems);
             }
 
             else if (v.type == 'breakline') {
-                addElem('br', {},l);
+                y = addElem('br', {},l);
             }
+
+            if (v.attrI != undefined) for (let s in v.attrI) x[s] = v.attrI[s];
+            if (v.attrS != undefined) for (let s in v.attrS) y[s] = v.attrS[s];
 
         });
         cont.appendChild(l);
