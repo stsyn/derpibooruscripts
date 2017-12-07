@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.4.11
+// @version      0.5.0
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -305,13 +305,14 @@ transition-timing-function:linear;
 }
 `;
 
-    styles.colorAccent = `
+    styles.colorAccentTemplate = `
 .block__header--light a, .block__header--js-tabbed a, a.block__header--single-item,
-.block__header a:not(.interaction--fave):not(.interaction--upvote):not(.interaction--downvote):not(.interaction--comments):not(.interaction--hide),
+.block__header a:not(.interaction--fave):not(.interaction--upvote):not(.interaction--downvote):not(.interaction--comments):not(.interaction--hide), .image-description a,
 .block__header--sub a, .block__header--single-item a, .block__content:not(._fs_popup)>*:not(.media-box) a:not(.tag__name), .block__content>a, .profile-top__name-and-links a,
 .source_url a, #footer_content a, .button--link, .communication__body a, .comment_backlinks a, .communication__options a, a.interaction-user-list-item, .pagination a,
-a.block__header--single-item:hover, .block__header:not(.center--layout) a:hover, .block__header--sub a:hover, .block__header--single-item a:hover,
-.block--fixed a, .rule a, a.togglable-faq-item, .field a, a.media-box__header--link, a.media-box__header--link:hover, h1 a{
+a.block__header--single-item:hover, .block__header:not(.center--layout) a:hover, .block__header--sub a:hover, .block__header--single-item a:hover, .autocomplete__item--selected,
+.block--fixed a, .rule a, a.togglable-faq-item, .field a:not([data-tag-name]), a.media-box__header--link, a.media-box__header--link:hover, h1 a, #content h3 a, .flash a, p strong a,
+.quick-tag-table__tab a {
 color:_fs_color;
 }
 p>a {
@@ -365,7 +366,7 @@ background:_fs_background;
 border-color:_fs_color;
 }
 
-a.header__link:hover, .header__dropdown:hover>a {
+a.header__link:hover, .header__dropdown:hover>a, .autocomplete__item:not(.autocomplete__item--selected) {
 background:_fs_color;
 }
 
@@ -385,17 +386,39 @@ background:none
 }
 `;
 
+    styles.adc_pixel = `
+#image_target {
+image-rendering: pixelated;
+}
+`;
+
+    styles.noneTag = `
+._fs_dark .tag[data-tag-category="none"] {
+background: #444;
+border-color: #888;
+color: #888;
+}
+
+.tag[data-tag-category="none"] {
+background: #bbb;
+border-color: #555;
+color: #555;
+}
+`;
+
     let popUps = {};
-    var objects = {};
-    var pub = {};
-    var settings, state;
+    let objects = {};
+    let pub = {};
+    let adc = {};
+    let settings, state;
+    let colors = {};
 
 
     function write() {
         localStorage._ydb_fs_state = JSON.stringify(state);
     }
 
-    var svd = localStorage._ydb_fs;
+    let svd = localStorage._ydb_fs;
     try {
         settings = JSON.parse(svd);
     }
@@ -418,7 +441,7 @@ background:none
     if (settings.scrollMultiply == undefined) settings.scrollMultiply = 5;
     if (settings.staticTime == undefined) settings.staticTime = 20;
     if (settings.staticEnabled == undefined) settings.staticEnabled = true;
-    if (settings.commentLink == undefined) settings.commentLink = false;
+    if (settings.commentLink == undefined) settings.commentLink = true;
     if (settings.colorAccent == undefined) settings.colorAccent = false;
     if (settings.style == undefined) settings.style = 'rating';
     if (settings.button == undefined) settings.button = 'Download this image at full res with a short filename';
@@ -451,7 +474,7 @@ background:none
                     {name:'Blue', value:'rating'},
                     {name:'Violet', value:'origin'},
                     {name:'Grey', value:'none'}
-                ]},
+                ], attrI:{id:'_fs_color_setting'}},
                 {type:'checkbox', name:'Match site palette', parameter:'colorAccent'},
                 {type:'select', name:'Top right button', parameter:'button', values:[
                     {name:'none', value:''},
@@ -547,7 +570,7 @@ background:none
         if (!e.target.classList.contains('_fs_popup_back')) return;
         for (let i=0; i<popUps.back.childNodes.length; i++) popUps.back.childNodes[i].classList.remove('active');
         popUps.back.classList.remove('active');
-        location.hash = '';
+        if (!settings.commentLink) location.hash = '';
     }
 
     function showComms(e) {
@@ -595,8 +618,14 @@ background:none
         let xScale = de.clientWidth/(objects.icontainer.dataset.width*pub.zoom), yScale = de.clientHeight/(objects.icontainer.dataset.height*pub.zoom);
         objects.image.style.height=objects.icontainer.dataset.height*pub.zoom+'px';
         objects.image.style.width=objects.icontainer.dataset.width*pub.zoom+'px';
-        if (isNaN(parseInt(objects.image.style.marginTop))) objects.image.style.marginTop = -(objects.icontainer.dataset.height - de.clientHeight)/2 + 'px';
-        if (isNaN(parseInt(objects.image.style.marginLeft))) objects.image.style.marginLeft = -(objects.icontainer.dataset.width - de.clientWidth)/2 + 'px';
+        if (isNaN(parseInt(objects.image.style.marginTop))) {
+            if (adc.comic) objects.image.style.marginTop = 0;
+            else objects.image.style.marginTop = -(objects.icontainer.dataset.height - de.clientHeight)/2 + 'px';
+        }
+        if (isNaN(parseInt(objects.image.style.marginLeft))) {
+            if (adc.comic) objects.image.style.marginLeft = 0;
+            else objects.image.style.marginLeft = -(objects.icontainer.dataset.width - de.clientWidth)/2 + 'px';
+        }
 
         checkMargin();
         if (objects.icontainer.dataset.height*pub.zoom < de.clientHeight) {
@@ -734,6 +763,18 @@ background:none
     }
 
 
+    function advancedTagTools() {
+        //
+        let t = JSON.parse(objects.icontainer.dataset.imageTags);
+        if (t.indexOf(37875)>0) {
+            console.log(t);
+            append('adc_pixel');
+        }
+        if (t.indexOf(23531)>0) {
+            adc.comic = true;
+        }
+    }
+
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -744,33 +785,80 @@ background:none
         else return parseInt(255-(255-v)/x2);
     }
 
-    function enableColor() {
+    function prePreColor() {
+        try {
+            colors = JSON.parse(state.colors);
+            applyColor();
+        }
+        catch(e) {
+        }
+    }
+
+    function preEnableColor() {
         if (settings.colorAccent) {
             objects.colorAccent = addElem('div', {id:'_fs_colorAccent', className:'tag hidden', dataset:{tagCategory:settings.style}}, document.body);
-            let c2 = getComputedStyle(document.body).backgroundColor;
-            let c3 = getComputedStyle(objects.colorAccent).color;
-            let c4 = getComputedStyle(objects.colorAccent).backgroundColor;
-            let isDark = parseInt(c2.substring(4, c2.length - 1).split(',')[0]) <128;
-            if (settings.style == 'none') c4 = (isDark?'rgb(56,56,56)':'rgb(156,156,156)');
-            if (settings.style == 'none') c3 = (isDark?'rgb(156,156,156)':'rgb(56,56,56)');
 
-            styles.colorAccent = styles.colorAccent.replace(/_fs_color/g,c3);
-            styles.colorAccent = styles.colorAccent.replace(/_fs_background/g,c4);
-            let c = isDark?c4:c3;
-            let color = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 5, 35, isDark);});
-            let color2 = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.5, 5, isDark);});
-            let color3 = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.2, 0.95, !isDark);});
-            let color4 = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 2.5, 3, isDark);});
-            let color5 = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 3, 10, isDark);});
-            let color6 = c3.substring(4, c3.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.2, 1.3, isDark);});
-            styles.colorAccent = styles.colorAccent.replace(/_fs_component/g,'rgb('+color[0]+','+color[1]+','+color[2]+')');
-            styles.colorAccent = styles.colorAccent.replace(/_fs_2component/g,'rgb('+color2[0]+','+color2[1]+','+color2[2]+')');
-            styles.colorAccent = styles.colorAccent.replace(/_fs_3component/g,'rgb('+color4[0]+','+color4[1]+','+color4[2]+')');
-            styles.colorAccent = styles.colorAccent.replace(/_fs_4component/g,'rgb('+color5[0]+','+color5[1]+','+color5[2]+')');
-            styles.colorAccent = styles.colorAccent.replace(/_fs_icomponent/g,'rgb('+color3[0]+','+color3[1]+','+color3[2]+')');
-            styles.colorAccent = styles.colorAccent.replace(/_fs_ccomponent/g,'rgb('+color6[0]+','+color6[1]+','+color6[2]+')');
-            append('colorAccent');
+            let c2 = getComputedStyle(document.body).backgroundColor;
+            let isDark = parseInt(c2.substring(4, c2.length - 1).split(',')[0]) <128;
+            if (settings.style != colors.value || isDark != colors.isDark) remove('colorAccent');
+            setTimeout(enableColor, 1);
         }
+    }
+
+    function applyColor() {
+        let r = function(x) {
+            styles.colorAccent = styles.colorAccent.replace(new RegExp(x,'g'), 'rgb('+colors[x][0]+','+colors[x][1]+','+colors[x][2]+')');
+        };
+        let rx = function(x) {
+            styles.colorAccent = styles.colorAccent.replace(new RegExp(x,'g'), colors[x]);
+        };
+        styles.colorAccent = styles.colorAccentTemplate;
+        rx('_fs_color');
+        rx('_fs_background');
+        r('_fs_component');
+        r('_fs_2component');
+        r('_fs_3component');
+        r('_fs_4component');
+        r('_fs_icomponent');
+        r('_fs_ccomponent');
+        append('colorAccent');
+    }
+
+    function enableColor(nrw) {
+        let c2 = getComputedStyle(document.body).backgroundColor;
+        colors.isDark = parseInt(c2.substring(4, c2.length - 1).split(',')[0]) <128;
+        if (colors.isDark) document.body.classList.add('_fs_dark');
+        else document.body.classList.remove('_fs_dark');
+
+        colors._fs_color = getComputedStyle(objects.colorAccent).color;
+        colors._fs_background = getComputedStyle(objects.colorAccent).backgroundColor;
+        /*if (settings.style == 'none') colors._fs_background = (colors.isDark?'rgb(56,56,56)':'rgb(156,156,156)');
+        if (settings.style == 'none') colors._fs_color = (colors.isDark?'rgb(156,156,156)':'rgb(56,56,56)');*/
+
+        let c = colors.isDark?colors._fs_background:colors._fs_color;
+        colors.value = settings.style;
+        colors._fs_component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 5, 35, colors.isDark);});
+        colors._fs_2component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.5, 5, colors.isDark);});
+        colors._fs_icomponent = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.2, 0.95, !colors.isDark);});
+        colors._fs_3component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 2.5, 3, colors.isDark);});
+        colors._fs_4component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 3, 10, colors.isDark);});
+        colors._fs_ccomponent = colors._fs_color.substring(4, colors._fs_color.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.2, 1.3, colors.isDark);});
+
+        state.colors = JSON.stringify(colors);
+        if (!nrw) {
+            write();
+            if (document.getElementById('user_theme') != undefined) document.getElementById('user_theme').addEventListener('change',function() {
+                remove('colorAccent');
+                setTimeout(function() {enableColor(true);},300);
+            });
+            setTimeout(function() {if (document.getElementById('_fs_color_setting') != undefined) document.getElementById('_fs_color_setting').addEventListener('change',function(e) {
+                remove('colorAccent');
+                objects.colorAccent.dataset.tagCategory = e.target.value;
+                enableColor(true);
+            });},1000);
+        }
+        applyColor();
+
     }
 
     function enable(notInital) {
@@ -799,7 +887,6 @@ background:none
                 objects.mainButtonNotify = InfernoAddElem('span', {}, [])
             ])
         ]);
-        if (notInital) enableColor();
 
         document.querySelector('#content>.block:first-child>.block__header').insertBefore(objects.mainButton,document.getElementsByClassName('interaction--fave')[0]);
         document.querySelectorAll('#content>div')[3].appendChild(document.getElementById('image_options_area'));
@@ -850,6 +937,7 @@ background:none
         objects.dcontainer.addEventListener("DOMNodeInserted",loadedImgFetch);
 
         document.body.classList.add('_fs');
+        advancedTagTools();
 
         pub.enabled = true;
         state.enabled = true;
@@ -863,6 +951,7 @@ background:none
         remove('base');
         remove('ex');
         remove('hider');
+        remove('colorAccent');
         unscale();
 
         objects.dcontainer.removeEventListener("DOMNodeInserted",loadedImgFetch);
@@ -895,26 +984,33 @@ background:none
     }
 
     register();
+    append('noneTag');
+    let c2 = getComputedStyle(document.body).backgroundColor;
+    colors.isDark = parseInt(c2.substring(4, c2.length - 1).split(',')[0]) <128;
+    if (colors.isDark) document.body.classList.add('_fs_dark');
+    else document.body.classList.remove('_fs_dark');
+
+    prePreColor();
     if ((parseInt(location.pathname.slice(1))>=0 && location.pathname.split('/')[2] == undefined) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && location.pathname.split('/')[3] == undefined)) {
         if (state.enabled) {
             preenable();
             if (document.readyState !== 'loading') {
                 enable();
-                enableColor();
+                preEnableColor();
             }
             else document.addEventListener('DOMContentLoaded', function() {
                 enable();
-                enableColor();
+                preEnableColor();
                 if (location.hash == '#comments') showComms();
             });
         }
         else {
-            document.addEventListener('DOMContentLoaded',enableColor);
+            document.addEventListener('DOMContentLoaded',preEnableColor);
             if (document.readyState !== 'loading') init();
             else document.addEventListener('DOMContentLoaded', init);
         }
     }
     else {
-        document.addEventListener('DOMContentLoaded',enableColor);
+        document.addEventListener('DOMContentLoaded',preEnableColor);
     }
 }());
