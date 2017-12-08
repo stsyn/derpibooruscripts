@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.1
+// @version      0.5.2
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -356,7 +356,7 @@ border-color:_fs_2component;
 border-color:_fs_color;
 }
 
-a:not(.header__link):not(.button):not(.block__header):not(.block__header--single-item):not(.tag__name):not(.interaction--fave):not(.interaction--comments):not(.interaction--upvote):not(.interaction--downvote):not(.media-box__header--link):hover{
+a:not(.header__link):not([rel=dc:source]):not(.button):not(.block__header):not(.block__header--single-item):not(.tag__name):not(.interaction--fave):not(.interaction--comments):not(.interaction--upvote):not(.interaction--downvote):not(.media-box__header--link):hover{
 color:_fs_icomponent !important;
 }
 
@@ -366,12 +366,17 @@ background:_fs_background;
 border-color:_fs_color;
 }
 
-a.header__link:hover, .header__dropdown:hover>a, .autocomplete__item:not(.autocomplete__item--selected) {
+a.header__link:hover, .header__dropdown:hover>a, .autocomplete__item:not(.autocomplete__item--selected), ::selection {
 background:_fs_color;
 }
 
 a.block__header--single-item:hover, .block__header a:hover, .block__header--sub a:hover, .block__header--single-item a:hover, .rule h2 {
 background:_fs_3component;
+}
+
+.button--link:hover,
+div.tag-list span.source_url a:not(.header__link):hover{
+color:_fs_ccomponent !important;
 }
 
 .header__input, .header__input:focus, select.header__input, select.header__input:focus, a.header__search__button, button.header__search__button,
@@ -695,7 +700,7 @@ color: #555;
 
         if (pub.scaled == 'false') setMargin();
 
-        if (pub.mouseY/window.innerHeight >= (popUps.down.classList.contains('active')?0.4:0.85) && !popUps.back.classList.contains('active')) popUps.down.classList.add('active');
+        if (pub.scaled == 'true' && pub.mouseY/window.innerHeight >= (popUps.down.classList.contains('active')?0.4:0.85) && !popUps.back.classList.contains('active')) popUps.down.classList.add('active');
         else popUps.down.classList.remove('active');
 
         let s = '';
@@ -711,26 +716,28 @@ color: #555;
             objects.mainButton.style.background = '';
         }
 
-        if ((pub.mouseY/window.innerHeight > 0.15 && pub.mouseY/window.innerHeight < 0.85) &&
-            !(popUps.down.classList.contains('active') || popUps.back.classList.contains('active')))  {
-            pub.static++;
-        }
-        else {
-            if (pub.static>0) {
-                pub.static =0;
-                state.hidden = false;
-                pub.hidden = false;
-                write();
-                document.body.classList.remove('_ydb_fs_static');
+        if (pub.scaled == 'true') {
+            if ((pub.mouseY/window.innerHeight > 0.15 && pub.mouseY/window.innerHeight < 0.85) &&
+                !(popUps.down.classList.contains('active') || popUps.back.classList.contains('active')))  {
+                pub.static++;
             }
-        }
+            else {
+                if (pub.static>0) {
+                    pub.static =0;
+                    state.hidden = false;
+                    pub.hidden = false;
+                    write();
+                    document.body.classList.remove('_ydb_fs_static');
+                }
+            }
 
-        if (pub.static > settings.staticTime && !document.body.classList.contains('_ydb_fs_static')) {
-            if (!pub.hidden) {
-                state.hidden = true;
-                pub.hidden = true;
-                write();
-                document.body.classList.add('_ydb_fs_static');
+            if (pub.static > settings.staticTime && !document.body.classList.contains('_ydb_fs_static')) {
+                if (!pub.hidden) {
+                    state.hidden = true;
+                    pub.hidden = true;
+                    write();
+                    document.body.classList.add('_ydb_fs_static');
+                }
             }
         }
     }
@@ -767,7 +774,6 @@ color: #555;
         //
         let t = JSON.parse(objects.icontainer.dataset.imageTags);
         if (t.indexOf(37875)>0) {
-            console.log(t);
             append('adc_pixel');
         }
         if (t.indexOf(23531)>0) {
@@ -785,27 +791,34 @@ color: #555;
         else return parseInt(255-(255-v)/x2);
     }
 
+    function isDarkF() {
+        let c2 = document.head.querySelector('link[rel=stylesheet][media=all]').href;
+        return c2.split('/')[5].startsWith('dark');
+    }
+
     function prePreColor() {
-        try {
+        if (state.colors != undefined) {
             colors = JSON.parse(state.colors);
+            pub.isDark = isDarkF();
             applyColor();
-        }
-        catch(e) {
         }
     }
 
     function preEnableColor() {
         if (settings.colorAccent) {
             objects.colorAccent = addElem('div', {id:'_fs_colorAccent', className:'tag hidden', dataset:{tagCategory:settings.style}}, document.body);
+            pub.isDark = isDarkF();
 
-            let c2 = getComputedStyle(document.body).backgroundColor;
-            let isDark = parseInt(c2.substring(4, c2.length - 1).split(',')[0]) <128;
-            if (settings.style != colors.value || isDark != colors.isDark) remove('colorAccent');
-            setTimeout(enableColor, 1);
+            if (settings.style != colors.value || pub.isDark != colors.isDark) {
+                remove('colorAccent');
+                setTimeout(enableColor, 1);
+            }
         }
     }
 
     function applyColor() {
+        if (colors.isDark) document.body.classList.add('_fs_dark');
+        else document.body.classList.remove('_fs_dark');
         let r = function(x) {
             styles.colorAccent = styles.colorAccent.replace(new RegExp(x,'g'), 'rgb('+colors[x][0]+','+colors[x][1]+','+colors[x][2]+')');
         };
@@ -825,15 +838,10 @@ color: #555;
     }
 
     function enableColor(nrw) {
-        let c2 = getComputedStyle(document.body).backgroundColor;
-        colors.isDark = parseInt(c2.substring(4, c2.length - 1).split(',')[0]) <128;
-        if (colors.isDark) document.body.classList.add('_fs_dark');
-        else document.body.classList.remove('_fs_dark');
+        colors.isDark = isDarkF();
 
         colors._fs_color = getComputedStyle(objects.colorAccent).color;
         colors._fs_background = getComputedStyle(objects.colorAccent).backgroundColor;
-        /*if (settings.style == 'none') colors._fs_background = (colors.isDark?'rgb(56,56,56)':'rgb(156,156,156)');
-        if (settings.style == 'none') colors._fs_color = (colors.isDark?'rgb(156,156,156)':'rgb(56,56,56)');*/
 
         let c = colors.isDark?colors._fs_background:colors._fs_color;
         colors.value = settings.style;
@@ -842,20 +850,11 @@ color: #555;
         colors._fs_icomponent = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.2, 0.95, !colors.isDark);});
         colors._fs_3component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 2.5, 3, colors.isDark);});
         colors._fs_4component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 3, 10, colors.isDark);});
-        colors._fs_ccomponent = colors._fs_color.substring(4, colors._fs_color.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.2, 1.3, colors.isDark);});
+        colors._fs_ccomponent = colors._fs_color.substring(4, colors._fs_color.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.4, 1.3, colors.isDark);});
 
         state.colors = JSON.stringify(colors);
         if (!nrw) {
             write();
-            if (document.getElementById('user_theme') != undefined) document.getElementById('user_theme').addEventListener('change',function() {
-                remove('colorAccent');
-                setTimeout(function() {enableColor(true);},300);
-            });
-            setTimeout(function() {if (document.getElementById('_fs_color_setting') != undefined) document.getElementById('_fs_color_setting').addEventListener('change',function(e) {
-                remove('colorAccent');
-                objects.colorAccent.dataset.tagCategory = e.target.value;
-                enableColor(true);
-            });},1000);
         }
         applyColor();
 
@@ -892,6 +891,8 @@ color: #555;
         document.querySelectorAll('#content>div')[3].appendChild(document.getElementById('image_options_area'));
         popUps.coms.appendChild(document.querySelectorAll('#content>div')[4]);
         popUps.downContainer.appendChild(document.querySelector('#content>.block:first-child .block__header--sub').cloneNode(true));
+        if (popUps.downContainer.childNodes[0].classList.contains('center--layout')) popUps.downContainer.childNodes[0].style.textAlign='center';
+        popUps.downContainer.childNodes[0].classList.add('layout--narrow');
         popUps.downContainer.appendChild(document.querySelectorAll('#content>div')[2]);
         popUps.downContainer.appendChild(document.querySelectorAll('#content>div')[2]);
 
@@ -986,10 +987,16 @@ color: #555;
     register();
     append('noneTag');
     document.addEventListener('DOMContentLoaded', function() {
-        let c2 = getComputedStyle(document.body).backgroundColor;
-        colors.isDark = parseInt(c2.substring(4, c2.length - 1).split(',')[0]) <128;
-        if (colors.isDark) document.body.classList.add('_fs_dark');
-        else document.body.classList.remove('_fs_dark');
+
+        if (document.getElementById('user_theme') != undefined) document.getElementById('user_theme').addEventListener('change',function() {
+            remove('colorAccent');
+            setTimeout(function() {enableColor(true);},300);
+        });
+        setTimeout(function() {if (document.getElementById('_fs_color_setting') != undefined) document.getElementById('_fs_color_setting').addEventListener('change',function(e) {
+            remove('colorAccent');
+            objects.colorAccent.dataset.tagCategory = e.target.value;
+            enableColor(true);
+        });},1000);
     });
 
     prePreColor();
