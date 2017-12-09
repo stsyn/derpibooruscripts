@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.2
+// @version      0.5.3
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -46,7 +46,7 @@ width:calc(100% - 12px);
 ._fs #footer {
 background:none
 }
-#content>.block:first-child, h4, .flash--site-notice, ._fs #_ydb_fs_enable {
+#content>.block:first-child, .flash--site-notice, ._fs #_ydb_fs_enable {
 height:0;
 overflow-y:hidden;
 margin:0;
