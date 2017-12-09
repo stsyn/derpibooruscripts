@@ -11,7 +11,7 @@
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.3.0a
+// @version      0.3.1
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -575,6 +575,13 @@
             container.className = 'block__content js-resizable-media-container';
             f.container = container;
             elem.appendChild(container);
+
+            let mwidth = parseInt(cont.clientWidth) - 14;
+            let twidth = parseInt(mwidth/config.imagesInFeeds-8);
+            let s = twidth+22+7;
+            if (f.double) s*=2;
+            container.style.height = s+'px';
+
             let shitcontainer = document.createElement('div');
             shitcontainer.style.display = 'none';
             feedz[i].temp = shitcontainer;
