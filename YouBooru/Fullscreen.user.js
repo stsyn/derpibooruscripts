@@ -356,7 +356,7 @@ border-color:_fs_2component;
 border-color:_fs_color;
 }
 
-a:not(.header__link):not([rel=dc:source]):not(.button):not(.block__header):not(.block__header--single-item):not(.tag__name):not(.interaction--fave):not(.interaction--comments):not(.interaction--upvote):not(.interaction--downvote):not(.media-box__header--link):hover{
+a:not(.header__link):not([rel="dc:source"]):not(.button):not(.block__header):not(.block__header--single-item):not(.tag__name):not(.interaction--fave):not(.interaction--comments):not(.interaction--upvote):not(.interaction--downvote):not(.media-box__header--link):hover{
 color:_fs_icomponent !important;
 }
 
