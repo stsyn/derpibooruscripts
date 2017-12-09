@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.3
+// @version      0.5.4
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -319,13 +319,13 @@ p>a {
 color:_fs_color !important;
 }
 
-.header, a.header__link, span.header__link-user__dropdown-arrow, .add-to-gallery-list ::-webkit-scrollbar-thumb,
+.autocomplete__item:not(.autocomplete__item--selected), .header, a.header__link, span.header__link-user__dropdown-arrow, .add-to-gallery-list ::-webkit-scrollbar-thumb,
 span.header__link-user__dropdown-arrow:hover, .header__dropdown:hover span.header__link-user__dropdown-arrow, .sparkline .bar {
 background:_fs_ccomponent;
 }
 
 .image-description, #imagespns, .block__header--js-tabbed, .block__header--js-tabbed a.selected, .block__header--js-tabbed a.selected:hover,
-.button, .toggle-box+label, .block__list a.block__list__link, .block__list, .input, .communication__toolbar__button, 
+.button:not(.commission__category), .toggle-box+label, .block__list a.block__list__link, .block__list, .input, .communication__toolbar__button,
 .block__header--js-tabbed a, .block__header--js-tabbed a:last-child, .block__header--js-tabbed a:first-child, .block--fixed:not(.block--success):not(.block--warning), .media-box, .filter {
 border-color:_fs_background;
 }
@@ -343,7 +343,7 @@ background:_fs_4component;
 .header--secondary a.header__link:hover, .header--secondary .header__dropdown:hover>a, .input:focus, .communication__toolbar__button:hover, .tag__dropdown__link,
 .block__header, .block__header--single-item,
 .block__header a, .block__header--single-item a, .block__list a.block__list__link,
-.communication__options, .button, a.media-box__header--link:hover, .header--secondary span.header__counter,
+.communication__options, .button:not(.commission__category), a.media-box__header--link:hover, .header--secondary span.header__counter,
 .interaction--downvote.disabled, .interaction--downvote.disabled:hover{
 background:_fs_2component;
 }
@@ -366,7 +366,7 @@ background:_fs_background;
 border-color:_fs_color;
 }
 
-a.header__link:hover, .header__dropdown:hover>a, .autocomplete__item:not(.autocomplete__item--selected), ::selection {
+a.header__link:hover, .header__dropdown:hover>a, ::selection {
 background:_fs_color;
 }
 
@@ -700,8 +700,10 @@ color: #555;
 
         if (pub.scaled == 'false') setMargin();
 
-        if (pub.scaled == 'true' && pub.mouseY/window.innerHeight >= (popUps.down.classList.contains('active')?0.4:0.85) && !popUps.back.classList.contains('active')) popUps.down.classList.add('active');
-        else popUps.down.classList.remove('active');
+        if (objects.dcontainer != undefined) {
+            if (pub.scaled == 'true' && pub.mouseY/window.innerHeight >= (popUps.down.classList.contains('active')?0.4:0.85) && !popUps.back.classList.contains('active')) popUps.down.classList.add('active');
+            else popUps.down.classList.remove('active');
+        }
 
         let s = '';
         if (parseInt(document.getElementsByClassName('js-notification-ticker')[0].innerHTML) > 0) s += ' '+parseInt(document.getElementsByClassName('js-notification-ticker')[0].innerHTML);
@@ -932,19 +934,26 @@ color: #555;
         objects.commButton.addEventListener('click',showComms);
         popUps.back.addEventListener('click',hidePopups);
         document.body.addEventListener('mousemove',mouseListener);
-        objects.dcontainer.addEventListener("wheel", wheelListener);
 
         if (objects.image != undefined) loadedImgFetch();
-        objects.dcontainer.addEventListener("DOMNodeInserted",loadedImgFetch);
 
         document.body.classList.add('_fs');
-        advancedTagTools();
 
         pub.enabled = true;
         state.enabled = true;
 
         write();
         listener();
+
+        //to avoid bugs on unloaded images
+        if (objects.dcontainer != undefined) {
+            objects.dcontainer.addEventListener("DOMNodeInserted",loadedImgFetch);
+            objects.dcontainer.addEventListener("wheel", wheelListener);
+            advancedTagTools();
+        }
+        else {
+            popUps.down.classList.add('active');
+        }
     }
 
     function disable() {
