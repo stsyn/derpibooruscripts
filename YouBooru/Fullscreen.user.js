@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.4
+// @version      0.5.5
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -303,6 +303,13 @@ transition-timing-function:linear;
 transition:0.1s;
 transition-timing-function:linear;
 }
+#image_target>video {
+min-height: 0;
+min-width: 0;
+max-height: none;
+max-width: none;
+margin:auto;
+}
 `;
 
     styles.colorAccentTemplate = `
@@ -522,6 +529,7 @@ color: #555;
         if (objects.icontainer.dataset.aspectRatio > window.innerWidth/window.innerHeight) pub.wide = false;
         else pub.wide = true;
 
+        console.log(pub.scaled, objects.dcontainer.dataset.scaled);
         if (pub.scaled != objects.dcontainer.dataset.scaled) {
             pub.scaled = objects.dcontainer.dataset.scaled;
             if (pub.scaled != 'true') {
@@ -531,6 +539,8 @@ color: #555;
             else remove('hideAll');
         }
         if (pub.scaled != 'false') {
+            objects.image.style.marginLeft = 'auto';
+            objects.image.style.marginTop = 'auto';
             if (!pub.wide) {
                 objects.image.style.width = '100vw';
                 objects.image.style.height = 'auto';
@@ -559,6 +569,10 @@ color: #555;
         objects.disable = addElem('a', {id:'_ydb_fs_disable', className:'', style:'display:none', innerHTML:'Disable', events:[{t:'click',f:function() {disable();}}]}, document.querySelector('#content>.block:first-child>.block__header'));
         objects.enable = addElem('a', {id:'_ydb_fs_enable', className:'header__link', innerHTML:'Fullscreen', events:[{t:'click',f:function() {enable(true);}}]}, document.body);
         document.getElementsByClassName('flex-row__right')[0].insertBefore(objects.enable, document.getElementsByClassName('flex-row__right')[0].childNodes[0]);
+    }
+
+    function disgustingLoadedImgFetch() {
+        setTimeout(loadedImgFetch, 1);
     }
 
     function loadedImgFetch() {
@@ -615,7 +629,9 @@ color: #555;
 
 
     function setMargin() {
-        if (pub.scaled != 'false') return;
+        if (pub.scaled != 'false') {
+            return;
+        }
         let de = document.documentElement;
         if (pub.zoom>10) pub.zoom =10;
         if (pub.zoom<0.1) pub.zoom= 0.1;
@@ -948,6 +964,7 @@ color: #555;
         //to avoid bugs on unloaded images
         if (objects.dcontainer != undefined) {
             objects.dcontainer.addEventListener("DOMNodeInserted",loadedImgFetch);
+            objects.dcontainer.addEventListener("click",disgustingLoadedImgFetch);
             objects.dcontainer.addEventListener("wheel", wheelListener);
             advancedTagTools();
         }
@@ -965,6 +982,7 @@ color: #555;
         unscale();
 
         objects.dcontainer.removeEventListener("DOMNodeInserted",loadedImgFetch);
+        objects.dcontainer.removeEventListener("click",disgustingLoadedImgFetch);
         objects.commButton.removeEventListener('click',showComms);
         objects.commButton.href = '#comments';
         popUps.back.removeEventListener('click',hidePopups);
