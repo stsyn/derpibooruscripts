@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.5
+// @version      0.5.6
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -834,9 +834,16 @@ color: #555;
         }
     }
 
+    function putDark() {
+        if (document.body != undefined) {
+            if (colors.isDark) document.body.classList.add('_fs_dark');
+            else document.body.classList.remove('_fs_dark');
+        }
+        else setTimeout(putDark,10);
+    }
+
     function applyColor() {
-        if (colors.isDark) document.body.classList.add('_fs_dark');
-        else document.body.classList.remove('_fs_dark');
+        putDark();
         let r = function(x) {
             styles.colorAccent = styles.colorAccent.replace(new RegExp(x,'g'), 'rgb('+colors[x][0]+','+colors[x][1]+','+colors[x][2]+')');
         };
