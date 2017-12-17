@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.6
+// @version      0.5.7
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -33,6 +33,7 @@
 
 (function() {
     'use strict';
+    var currentColorApi = 1;
     var styles = {};
     styles.general = `
 #_ydb_fs_mainPopup {
@@ -318,7 +319,7 @@ margin:auto;
 .block__header--sub a, .block__header--single-item a, .block__content:not(._fs_popup)>*:not(.media-box) a:not(.tag__name), .block__content>a, .profile-top__name-and-links a,
 .source_url a, #footer_content a, .button--link, .communication__body a, .comment_backlinks a, .communication__options a, a.interaction-user-list-item, .pagination a,
 a.block__header--single-item:hover, .block__header:not(.center--layout) a:hover, .block__header--sub a:hover, .block__header--single-item a:hover, .autocomplete__item--selected,
-.block--fixed a, .rule a, a.togglable-faq-item, .field a:not([data-tag-name]), a.media-box__header--link, a.media-box__header--link:hover, h1 a, #content h3 a, .flash a, p strong a,
+.block--fixed a, .rule a, a.togglable-faq-item, .field a:not([data-tag-name]), a.media-box__header--link, a.media-box__header--link:hover, #content h1 a, #content h3 a, .flash a, p strong a,
 .quick-tag-table__tab a {
 color:_fs_color;
 }
@@ -364,7 +365,11 @@ border-color:_fs_color;
 }
 
 a:not(.header__link):not([rel="dc:source"]):not(.button):not(.block__header):not(.block__header--single-item):not(.tag__name):not(.interaction--fave):not(.interaction--comments):not(.interaction--upvote):not(.interaction--downvote):not(.media-box__header--link):hover{
-color:_fs_icomponent !important;
+color:#aaa !important;
+}
+
+._fs_dark a:not(.header__link):not([rel="dc:source"]):not(.button):not(.block__header):not(.block__header--single-item):not(.tag__name):not(.interaction--fave):not(.interaction--comments):not(.interaction--upvote):not(.interaction--downvote):not(.media-box__header--link):hover{
+color:#aaa !important;
 }
 
 .media-box__header, .button:hover, .toggle-box+label:hover, .header--secondary, .header--secondary a,
@@ -529,7 +534,6 @@ color: #555;
         if (objects.icontainer.dataset.aspectRatio > window.innerWidth/window.innerHeight) pub.wide = false;
         else pub.wide = true;
 
-        console.log(pub.scaled, objects.dcontainer.dataset.scaled);
         if (pub.scaled != objects.dcontainer.dataset.scaled) {
             pub.scaled = objects.dcontainer.dataset.scaled;
             if (pub.scaled != 'true') {
@@ -827,7 +831,9 @@ color: #555;
             objects.colorAccent = addElem('div', {id:'_fs_colorAccent', className:'tag hidden', dataset:{tagCategory:settings.style}}, document.body);
             pub.isDark = isDarkF();
 
-            if (settings.style != colors.value || pub.isDark != colors.isDark) {
+            if (settings.style != colors.value || pub.isDark != colors.isDark || settings.colorApi == undefined || state.colorApi < currentColorApi) {
+                state.colorApi = currentColorApi;
+                write();
                 remove('colorAccent');
                 setTimeout(enableColor, 1);
             }
@@ -870,11 +876,11 @@ color: #555;
 
         let c = colors.isDark?colors._fs_background:colors._fs_color;
         colors.value = settings.style;
-        colors._fs_component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 5, 35, colors.isDark);});
+        colors._fs_component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 3, 35, colors.isDark);});
         colors._fs_2component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.5, 5, colors.isDark);});
-        colors._fs_icomponent = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.2, 0.95, !colors.isDark);});
-        colors._fs_3component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 2.5, 3, colors.isDark);});
-        colors._fs_4component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 3, 10, colors.isDark);});
+        colors._fs_icomponent = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.2, 0.9, !colors.isDark);});
+        colors._fs_3component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 2, 3, colors.isDark);});
+        colors._fs_4component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.4, 10, colors.isDark);});
         colors._fs_ccomponent = colors._fs_color.substring(4, colors._fs_color.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.4, 1.3, colors.isDark);});
 
         state.colors = JSON.stringify(colors);
@@ -1033,7 +1039,7 @@ color: #555;
         });},1000);
     });
 
-    prePreColor();
+    if (settings.colorAccent) prePreColor();
     if ((parseInt(location.pathname.slice(1))>=0 && location.pathname.split('/')[2] == undefined) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && location.pathname.split('/')[3] == undefined)) {
         if (state.enabled) {
             preenable();
