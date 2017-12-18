@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.2.6
+// @version      0.2.7
 // @description  Some UI tweaks
 // @author       stsyn
 
@@ -24,6 +24,7 @@
 // @exclude      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
 
 // @require      https://raw.githubusercontent.com/blueimp/JavaScript-MD5/master/js/md5.min.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
 // @grant        none
@@ -45,7 +46,9 @@
             version:GM_info.script.version,
             s:[
                 {type:'checkbox', name:'Reset', parameter:'reset'},
-                {type:'checkbox', name:'Force hiding', parameter:'force'}
+                {type:'checkbox', name:'Force hiding (Ignorantia non est argumentum!)', parameter:'force'},
+                {type:'breakline'},
+                {type:'checkbox', name:'Bigger search fields', parameter:'patchSearch'}
             ]
         };
     }
@@ -71,6 +74,10 @@
         fl = ls.hidden;
     }
     register();
+    if (ls.patchSearch == undefined) {
+        ls.patchSearch = true;
+        write();
+    }
 
 
     //flashes
@@ -107,6 +114,35 @@
                     if (a.search == '' || a.search == '?') a.search = e.querySelector('.block__header a').search;
                 }
             }
+        }
+    }
+
+    //bigger search fields
+    function bigSearch() {
+        let css = 'header ._ydb_t_textarea {resize: none; overflow:hidden;line-height:2em}'+
+            'header ._ydb_t_textarea:focus {max-width:calc(100vw - 350px);overflow:auto;position:absolute;width:calc(100vw - 350px);height:5em;z-index:5}'+
+            '#searchform textarea {min-width:100%;max-width:100%;min-height:2.4em;line-height:1.5em;height:7em}';
+        addElem('style',{type:'text/css',innerHTML:css},document.head);
+        let x = [document.getElementsByClassName('header__input--search')[0], document.querySelector('.js-search-form input')];
+        let x2 = [document.getElementsByClassName('header__search__button')[0], document.querySelector('input[type="submit"][value="Search"]')];
+        let y = [];
+        for (let i=0; i<x.length; i++) {
+            if (x[i] == null) return;
+            y[i] = document.createElement('textarea');
+            y[i].value = x[i].value;
+            y[i].className = x[i].className+' _ydb_t_textarea';
+            y[i].name = x[i].name;
+            y[i].id = x[i].id;
+            y[i].placeholder = x[i].placeholder;
+            y[i].autocapitalize = x[i].autocapitalize;
+            y[i].addEventListener('keypress',function(e) {
+                if (e.keyCode == 13) {
+                    e.preventDefault();
+                    x2[i].click();
+                }
+            });
+            x[i].parentNode.insertBefore(y[i],x[i]);
+            x[i].parentNode.removeChild(x[i]);
         }
     }
 
@@ -150,6 +186,7 @@
 
     flashNotifies();
     profileLinks();
+    if (ls.patchSearch) bigSearch();
     linksPatch(document);
     if (document.getElementById('comments') != undefined) document.getElementById('comments').addEventListener("DOMNodeInserted",function(e) {
         if (e.target.classList == undefined) return;
