@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.7
+// @version      0.5.8
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -831,7 +831,8 @@ color: #555;
             objects.colorAccent = addElem('div', {id:'_fs_colorAccent', className:'tag hidden', dataset:{tagCategory:settings.style}}, document.body);
             pub.isDark = isDarkF();
 
-            if (settings.style != colors.value || pub.isDark != colors.isDark || settings.colorApi == undefined || state.colorApi < currentColorApi) {
+            if (settings.style != colors.value || pub.isDark != colors.isDark || state.colorApi == undefined || state.colorApi < currentColorApi) {
+                console.log('sss');
                 state.colorApi = currentColorApi;
                 write();
                 remove('colorAccent');
@@ -877,10 +878,10 @@ color: #555;
         let c = colors.isDark?colors._fs_background:colors._fs_color;
         colors.value = settings.style;
         colors._fs_component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 3, 35, colors.isDark);});
-        colors._fs_2component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.5, 5, colors.isDark);});
-        colors._fs_icomponent = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.2, 0.9, !colors.isDark);});
+        colors._fs_2component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.2, 5, colors.isDark);});
+        colors._fs_icomponent = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1, 0.9, !colors.isDark);});
         colors._fs_3component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 2, 3, colors.isDark);});
-        colors._fs_4component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.4, 10, colors.isDark);});
+        colors._fs_4component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.75, 10, colors.isDark);});
         colors._fs_ccomponent = colors._fs_color.substring(4, colors._fs_color.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.4, 1.3, colors.isDark);});
 
         state.colors = JSON.stringify(colors);
