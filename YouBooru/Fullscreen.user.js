@@ -33,7 +33,7 @@
 
 (function() {
     'use strict';
-    var currentColorApi = 1;
+    var currentColorApi = 2;
     var styles = {};
     styles.general = `
 #_ydb_fs_mainPopup {
@@ -878,7 +878,7 @@ color: #555;
         let c = colors.isDark?colors._fs_background:colors._fs_color;
         colors.value = settings.style;
         colors._fs_component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 3, 35, colors.isDark);});
-        colors._fs_2component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.2, 5, colors.isDark);});
+        colors._fs_2component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.5, 5, colors.isDark);});
         colors._fs_icomponent = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1, 0.9, !colors.isDark);});
         colors._fs_3component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 2, 3, colors.isDark);});
         colors._fs_4component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.75, 10, colors.isDark);});
