@@ -11,7 +11,7 @@
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.3.1
+// @version      0.4.0
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -31,7 +31,8 @@
 
     var config = {
         /* Enable if you need to override YourBooru:Settings */
-        forceScriptConfig:false,
+        /* Deprecated since 0.4 */
+        //forceScriptConfig:false,
         /* How many images are showing in the each feed on the derpibooru main page */
         imagesInFeeds:6,
         /* Keep vanilla watchlist on the top of the page */
@@ -100,6 +101,7 @@
 
     var feedzCache = [];
     var feedzURLs = [];
+    var f_s_c;
 
     /********************
 
@@ -107,13 +109,74 @@
 
 	 ********************/
 
+    function resetCache(module, element) {
+        let id = element.parentNode.dataset.id;
+        let svd = localStorage._ydb_caches;
+        if (svd !== undefined) {
+            try {
+                let cache = JSON.parse(svd);
+                cache[id] = undefined;
+                localStorage._ydb_caches = JSON.stringify(cache);
+            }
+            catch (e) {}
+        }
+    }
+
     function register() {
         if (window._YDB_public == undefined) window._YDB_public = {};
         if (window._YDB_public.settings == undefined) window._YDB_public.settings = {};
         window._YDB_public.settings.feeds = {
             name:'Feeds',
-            container:'_ydb_tools',
-            version:GM_info.script.version
+            container:'_ydb_feeds',
+            version:GM_info.script.version,
+            s:[
+                {type:'checkbox', name:'Do not remove watchlist', parameter:'doNotRemoveWatchList'},
+                {type:'breakline'},
+                {type:'input', name:'Images in each feed:', parameter:'imagesInFeeds'},
+                {type:'breakline'},
+                {type:'checkbox', name:'Watch link on the right side', parameter:'watchFeedLinkOnRightSide'},
+                {type:'breakline'},
+                {type:'checkbox', name:'Remove unneeded content from HTML', parameter:'optimizeLS'},
+                {type:'array', parameter:'feedz', addText:'Add feed', customOrder:true, s:[
+                    [
+                        {type:'input', name:'Name', parameter:'name',styleI:{width:'33.5em', marginRight:'.5em'}},
+                        {type:'select', name:'Sorting', parameter:'sort',styleI:{marginRight:'.5em'}, values:[
+                            {name:'Creation date', value:'created_at'},
+                            {name:'Score', value:'score'},
+                            {name:'Wilson score', value:'wilson'},
+                            {name:'Relevance', value:'relevance'},
+                            {name:'Width', value:'width'},
+                            {name:'Height', value:'height'},
+                            {name:'Comments', value:'comments'},
+                            {name:'Random', value:'random'}
+                        ]},
+                        {type:'select', name:'Direction', parameter:'sd',styleI:{marginRight:'.5em'}, values:[
+                            {name:'Descending', value:'desc'},
+                            {name:'Ascending', value:'asc'}
+                        ]}
+                    ],
+                    [
+                        {type:'input', name:'Cache (minutes)', parameter:'cache',styleI:{width:'6em', marginRight:'.5em'}},
+                        {type:'input', name:'... or update each (minutes, used if previous is 0)', parameter:'ccache',styleI:{width:'6em', marginRight:'.5em'}},
+                        {type:'checkbox', name:'Double size', parameter:'double',styleI:{marginRight:'.5em'}},
+                        {type:'buttonLink', attrI:{title:'Copy this link and paste it somewhere to share that feed!',target:'_blank'},styleI:{marginRight:'.5em'}, name:'Share', i:function(module,elem) {
+                            let f = module.saved.feedz[elem.parentNode.dataset.id];
+                            elem.href = '/pages/yourbooru?addFeed?'+f.name+'?'+encodeURIComponent(f.query).replace(/\(/,'%28').replace(/\)/,'%29')+'?'+f.sort+'?'+f.sd+'?'+f.cache+'?'+f.ccache;
+                        }},
+                        {type:'button', name:'Reset cache', action:resetCache}
+                    ],[
+                        {type:'input', name:'Query', parameter:'query',styleI:{width:'calc(100% - 11em)'}}
+                    ]
+                ], template:{name:'New feed',sort:'',sd:'',cache:'30',ccache:'',query:'*',double:false}}
+            ],
+            o:{
+                feedz:{
+                    sort:resetCache,
+                    sd:resetCache,
+                    query:resetCache,
+                    double:resetCache
+                }
+            }
         };
     }
 
@@ -135,16 +198,25 @@
     }
 
     function preRun() {
-        let svd = localStorage._ydb;
-        if (svd !== undefined) {
-            try {
-                feedz = JSON.parse(svd);
-            }
-            catch (e) {
-                console.log('Cannot get feeds');
-            }
+        f_s_c = localStorage._ydb_feeds;
+        if (f_s_c == undefined) {
+            legacyPreRun();
+            f_s_c = {};
+            for (let k in config) f_s_c[k] = config[k];
+            f_s_c.feedz = feedz;
+            localStorage.removeItem('_ydb');
+            localStorage.removeItem('_ydb_config');
+            console.log(JSON.stringify(f_s_c));
+            localStorage._ydb_feeds = JSON.stringify(f_s_c);
         }
-        svd = localStorage._ydb_caches;
+        else f_s_c = JSON.parse(f_s_c);
+
+        //conversion
+        feedz = f_s_c.feedz;
+        config = f_s_c;
+
+        //caches
+        let svd = localStorage._ydb_caches;
         if (svd !== undefined) {
             try {
                 feedzCache = JSON.parse(svd);
@@ -160,6 +232,30 @@
             }
             catch (e) {
                 console.log('Cannot get feeds cache');
+            }
+        }
+
+        for (let i=0; i<feedz.length; i++) {
+            if (feedz[i] != null) feedz[i].loaded = false;
+            if (feedz[i].cachedResp != undefined) {
+                feedzCache[i] = feedz[i].cachedResp;
+                delete feedz[i].cachedResp;
+            }
+            if (feedz[i].cachedQuery != undefined) {
+                feedzURLs[i] = feedz[i].cachedQuery;
+                delete feedz[i].cachedQuery;
+            }
+        }
+    }
+
+    function legacyPreRun() {
+        let svd = localStorage._ydb;
+        if (svd !== undefined) {
+            try {
+                feedz = JSON.parse(svd);
+            }
+            catch (e) {
+                console.log('Cannot get feeds');
             }
         }
         for (let i=0; i<feedz.length; i++) {
@@ -192,6 +288,12 @@
         }
     }
 
+    function write() {
+        localStorage._ydb_feeds = JSON.stringify(f_s_c);
+        localStorage._ydb_caches = JSON.stringify(feedzCache);
+        localStorage._ydb_cachesUrls = JSON.stringify(feedzURLs);
+    }
+
     function postRun() {
         resizeEverything();
         let tf = [];
@@ -202,9 +304,7 @@
                 tf[i][key] = feedz[i][key];
             }
         }
-        localStorage._ydb = JSON.stringify(tf);
-        localStorage._ydb_caches = JSON.stringify(feedzCache);
-        localStorage._ydb_cachesUrls = JSON.stringify(feedzURLs);
+        write();
     }
 
     /*********************************/
@@ -467,7 +567,7 @@
             c.appendChild(pc.childNodes[0]);
         }
 
-        r.feed.observer = new MutationObserver(function(mutations) {
+        /*r.feed.observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
                 if (mutation.type == 'attributes') {
                     let u = mutation.target.classList;
@@ -478,7 +578,7 @@
                 }
             });
         });
-        r.feed.observer.observe(r.feed.container, {attributes: true, childList: true, characterData: true, subtree:true });
+        r.feed.observer.observe(r.feed.container, {attributes: true, childList: true, characterData: true, subtree:true });*/
 
         let date = new Date();
         feedzURLs[id] = compileURL(r.feed);
@@ -514,7 +614,7 @@
                 }
             }
         }
-        feed.observer = new MutationObserver(function(mutations) {
+        /*feed.observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
                 if (mutation.type == 'attributes') {
                     let u = mutation.target.classList;
@@ -525,7 +625,7 @@
                 }
             });
         });
-        feed.observer.observe(feed.container, {attributes: true, childList: true, characterData: true, subtree:true });
+        feed.observer.observe(feed.container, {attributes: true, childList: true, characterData: true, subtree:true });*/
 
         feed.temp.innerHTML = '';
         feed.loaded = true;
@@ -627,7 +727,87 @@
         window.addEventListener("resize", resizeEverything);
         if (config.doNotRemoveWatchList && config.hasWatchList) cont.appendChild(cont.childNodes[1]);
     }
+
+    /*********************************/
+
+    function YB_insertFeed(u) {
+        var f = {};
+        let i;
+        for (i=0; i<feedz.length; i++) {
+            if (feedz[i].name == decodeURIComponent(u[1])) {
+                f = feedz[i];
+                break;
+            }
+        }
+        f.loaded = false;
+        f.name = decodeURIComponent(u[1]);
+        f.query = decodeURIComponent(u[2]).replace(/\\+/g,' ');
+        f.sort = u[3];
+        f.sd = u[4];
+        f.cache = u[5];
+        f.ccache = u[6];
+        feedz[i] = f;
+        write();
+
+        if (history.length == 1) close();
+        else history.back();
+    }
+
+    function YB_addFeed(u) {
+        document.querySelector('#content h1').innerHTML = 'Add feed';
+        var c = document.querySelector('#content .walloftext');
+        if (u.length>6) {
+            c.innerHTML = 'Name: '+decodeURIComponent(u[1]);
+            c.innerHTML += '<br>Query: <a href="/search?q='+u[2]+'&sf='+u[3]+'&sd='+u[4]+'">'+decodeURIComponent(u[2]).replace(/\\+/g,' ')+'</a>';
+            c.innerHTML += '<br>Sorting type: '+u[3];
+            c.innerHTML += '<br>Sorting direction: '+u[4];
+            c.innerHTML += '<br>Update interval: '+(u[5]==0?'each'+u[6]:u[5])+' minutes';
+            let x = true;
+            for (let i=0; i<feedz.length; i++) {
+                if (feedz[i].name == decodeURIComponent(u[1])) {
+                    c.innerHTML += '<br><br><b>There is saved feed with that name!</b>';
+                    c.innerHTML += '<br><br><span id="yy_add" class="button">Replace</span> <span id="yy_include" class="button">Rename automatically</span> <span id="yy_cancel" class="button">Cancel</span>';
+                    x = false;
+                    break;
+                }
+            }
+            if (x) c.innerHTML += '<br><br><span id="yy_add" class="button">Add feed</span> <span id="yy_cancel" class="button">Cancel</span> <span id="yy_include"></span>';
+
+
+            document.getElementById('yy_cancel').addEventListener('click', function() {
+                if (history.length == 1) close();
+                else history.back();
+            });
+
+            document.getElementById('yy_add').addEventListener('click', function() {
+                YB_insertFeed(u);
+            });
+
+            document.getElementById('yy_include').addEventListener('click', function() {
+                u[1] = decodeURIComponent(u[1])+'_'+parseInt(65536*Math.random());
+                YB_insertFeed(u);
+            });
+        }
+        else c.innerHTML = 'Not enough parameters, impossible to add!';
+    }
+
+    function YDB() {
+        let x = location.search.slice(1);
+        if (location.search == "") YB_createEmpty();
+        else if (location.search == "?") YB_createEmpty();
+        else {
+            let u = x.split('?');
+            if (u[0] == "addFeed") YB_addFeed(u);
+        }
+    }
+
     var cont = document.getElementsByClassName('column-layout__main')[0];
     if (location.pathname == '/' || location.pathname == '') setTimeout(init, 10);
-    else register();
+    else {
+        if (location.pathname == "/pages/yourbooru") {
+            preRun();
+            YDB();
+        }
+        register();
+    }
 })();
