@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.2.7
+// @version      0.2.8
 // @description  Some UI tweaks
 // @author       stsyn
 
@@ -45,10 +45,20 @@
             container:'_ydb_tools',
             version:GM_info.script.version,
             s:[
+                {type:'header', name:'Notifications'},
                 {type:'checkbox', name:'Reset', parameter:'reset'},
                 {type:'checkbox', name:'Force hiding (Ignorantia non est argumentum!)', parameter:'force'},
-                {type:'breakline'},
-                {type:'checkbox', name:'Bigger search fields', parameter:'patchSearch'}
+                {type:'header', name:'UI'},
+                {type:'checkbox', name:'Bigger search fields', parameter:'patchSearch'},
+                {type:'header', name:'Tag aliases'},
+                {type:'text', name:'Aliase', styleS:{width:'30%', textAlign:'center',display:'inline-block'}},
+                {type:'text', name:'Original tag', styleS:{width:'70%', textAlign:'center',display:'inline-block'}},
+                {type:'array', parameter:'aliases', addText:'Add', customOrder:false, s:[
+                    [
+                        {type:'input', name:'', parameter:'a',styleI:{width:'calc(35% - 10px - 6em)'}},
+                        {type:'input', name:'', parameter:'b',styleI:{width:'65%'}}
+                    ]
+                ], template:{a:'',b:''}}
             ]
         };
     }
