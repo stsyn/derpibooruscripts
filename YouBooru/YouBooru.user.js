@@ -11,7 +11,7 @@
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.0
+// @version      0.4.1
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -165,11 +165,11 @@
                         }},
                         {type:'button', name:'Reset cache', action:resetCache}
                     ],[
-                        {type:'input', name:'Query', parameter:'query',styleI:{width:'calc(100% - 11em)'}}
+                        {type:'textarea', name:'Query', parameter:'query',styleI:{width:'calc(100% - 11em)'}}
                     ]
                 ], template:{name:'New feed',sort:'',sd:'',cache:'30',ccache:'',query:'*',double:false}}
             ],
-            o:{
+            onChanges:{
                 feedz:{
                     sort:resetCache,
                     sd:resetCache,
