@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.3.1
-// @description  Some UI tweaks
+// @version      0.3.2
+// @description  Some UI tweaks and more
 // @author       stsyn
 
 // @include      *://trixiebooru.org/*
@@ -82,12 +82,13 @@
                         }
                     },
                     b:function(m, el) {
-                        console.log('kek?');
                         m.changed = true;
                     }
                 }
             }
         };
+        if (window._YDB_public.funcs == undefined) window._YDB_public.funcs = {};
+        window._YDB_public.funcs.tagAliases = tagAliases;
     }
 
     //reader
@@ -202,6 +203,7 @@
         let yx = {};
         yx.orig = x;
         x = x.replace(/\|\|/g, ', ');
+        x = x.replace(/\&\&/g, ', ');
         x = x.replace(/^\(/g, ' ');
         while (x.indexOf('(') >= 0) x = x.replace(/[^\\\(]\(/g, function(str){return str[0]+' ';});
         while (x.indexOf(')') >= 0) x = x.replace(/[^\\\)]\)/g, function(str){return str[0]+' ';});
@@ -270,6 +272,93 @@
         return parseInt(Date.now()/1000);
     }
 
+    function checkAliases() {
+        let data = readTagTools();
+        for (let i in data) {
+            if (data[i].t == null) data[i].t = getTimestamp();
+            if (data[i].t+3600<getTimestamp()) {
+                delete data[i];
+                continue;
+            }
+        }
+        writeTagTools(data);
+    }
+
+    function legacyTagAliases(original) {
+        let getYearsQuery = function() {
+            let date = new Date();
+            let c = '(';
+            let cc = 'created_at:';
+            for (let i = date.getFullYear() - 1; i>2011; i--)
+                c+=(c==='('?'':' || ')+cc+i+'-'+((date.getMonth()+1)<10?('0'+(date.getMonth()+1)):(date.getMonth()+1))+'-'+(date.getDate()<10?('0'+date.getDate()):date.getDate());
+            return c+')';
+        };
+
+        let getYearsAltQuery = function() {
+            let date = new Date();
+            let c = '(';
+            let cc = 'first_seen_at:';
+            for (let i = date.getFullYear() - 1; i>2011; i--)
+                c+=(c==='('?'':' || ')+cc+i+'-'+((date.getMonth()+1)<10?('0'+(date.getMonth()+1)):(date.getMonth()+1))+'-'+(date.getDate()<10?('0'+date.getDate()):date.getDate());
+            return c+')';
+        };
+
+        let spoileredQuery = function() {
+            let tl = JSON.parse(document.getElementsByClassName('js-datastore')[0].dataset.spoileredTagList);
+            let tags = tl.reduce(function(prev, cur, i, a) {
+                return prev + JSON.parse(localStorage['bor_tags_'+cur]).name+(i+1 == a.length?'':' || ');
+            }, '');
+            tags = '('+tags+')';
+            if (document.getElementsByClassName('js-datastore')[0].dataset.spoileredFilter != "") tags += ' || '+document.getElementsByClassName('js-datastore')[0].dataset.spoileredFilter;
+            return tags;
+        };
+
+
+        original = original.replace('__ydb_LastYearsAlt', getYearsAltQuery());
+        original = original.replace('__ydb_LastYears', getYearsQuery());
+        original = original.replace('__ydb_Spoilered', spoileredQuery());
+        return original;
+    }
+
+    function tagAliases(original, opt) {
+        checkAliases();
+        let udata = readTagTools();
+
+        let als = {};
+        for (let i=0; i<ls.aliases.length; i++) als[ls.aliases[i].a] = ls.aliases[i].b;
+        let changed = false;
+        let rq = original;
+        let iterations = 0;
+
+        let cycledParse = function(orig) {
+            let changed = false;
+            let tags = goodParse(orig);
+            for (let i=0; i<tags.tags.length; i++) {
+                if (als[tags.tags[i].v] != undefined) {
+                    tags.tags[i].v = '('+als[tags.tags[i].v]+')';
+                    changed = true;
+                }
+            }
+            let q2 = goodCombine(tags);
+            iterations++;
+            if (changed && iterations < 16) q2 = cycledParse(q2);
+            return q2;
+        };
+
+        let q = cycledParse(original);
+        if (opt.legacy) q = legacyTagAliases(q);
+        if (q!=original) {
+            changed = true;
+            rq = q;
+        }
+
+        if (changed) {
+            udata[md5(rq)] = {q:original, t:getTimestamp()};
+            writeTagTools(udata);
+        };
+        return rq;
+    }
+
     function aliases() {
         let data = readTagTools();
         let s = md5(document.getElementsByClassName('header__input--search')[0].value);
@@ -284,50 +373,9 @@
 
             data[s].t = getTimestamp();
         }
-        for (let i in data) {
-            if (data[i].t == null) data[i].t = getTimestamp();
-            if (data[i].t+3600<getTimestamp()) {
-                delete data[i];
-                continue;
-            }
-        }
-        writeTagTools(data);
-
         if (ls.aliases != undefined && ls.aliases.length>0) {
             let aliaseParse = function(el) {
-                let udata = readTagTools();
-                let orig = el.value;
-
-                let als = {};
-                for (let i=0; i<ls.aliases.length; i++) als[ls.aliases[i].a] = ls.aliases[i].b;
-                let changed = false;
-
-                let cycledParse = function(orig) {
-                    let changed = false;
-                    console.log(orig);
-                    let tags = goodParse(orig);
-                    for (let i=0; i<tags.tags.length; i++) {
-                        if (als[tags.tags[i].v] != undefined) {
-                            tags.tags[i].v = '('+als[tags.tags[i].v]+')';
-                            changed = true;
-                        }
-                    }
-                    let q2 = goodCombine(tags);
-                    if (changed) q2 = cycledParse(q2);
-                    return q2;
-                };
-
-                let q = cycledParse(orig);
-                if (q!=el.value) {
-                    changed = true;
-                    el.value = q;
-                }
-
-                if (changed) {
-                    udata[md5(el.value)] = {q:orig, t:getTimestamp()};
-                    console.log(udata);
-                    writeTagTools(udata);
-                };
+                el.value = tagAliases(el.value, {legacy:true});
             };
 
             document.getElementsByClassName('header__search__button')[0].addEventListener('click',function() {aliaseParse(document.getElementsByClassName('header__input--search')[0]);});
