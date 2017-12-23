@@ -11,7 +11,7 @@
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.1
+// @version      0.4.2
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -161,7 +161,9 @@
                         {type:'checkbox', name:'Double size', parameter:'double',styleI:{marginRight:'.5em'}},
                         {type:'buttonLink', attrI:{title:'Copy this link and paste it somewhere to share that feed!',target:'_blank'},styleI:{marginRight:'.5em'}, name:'Share', i:function(module,elem) {
                             let f = module.saved.feedz[elem.parentNode.dataset.id];
-                            elem.href = '/pages/yourbooru?addFeed?'+f.name+'?'+encodeURIComponent(f.query).replace(/\(/,'%28').replace(/\)/,'%29')+'?'+f.sort+'?'+f.sd+'?'+f.cache+'?'+f.ccache;
+                            elem.href = '/pages/yourbooru?addFeed?'+f.name+'?'+
+                                encodeURIComponent(window._YDB_public.funcs.tagAliases(f.query, {legacy:false})).replace(/\(/,'%28').replace(/\)/,'%29')+
+                                '?'+f.sort+'?'+f.sd+'?'+f.cache+'?'+f.ccache;
                         }},
                         {type:'button', name:'Reset cache', action:resetCache}
                     ],[
@@ -346,7 +348,7 @@
         return '(created_at.gte:'+t.toISOString()+', created_at.lte:'+t2.toISOString()+')';
     }
 
-    function spoileredQuery(f) {
+    function spoileredQuery() {
         let tl = JSON.parse(document.getElementsByClassName('js-datastore')[0].dataset.spoileredTagList);
         let tags = tl.reduce(function(prev, cur, i, a) {
             return prev + JSON.parse(localStorage['bor_tags_'+cur]).name+(i+1 == a.length?'':' || ');
@@ -358,11 +360,15 @@
 
     function customQueries(f) {
         let tx = f.query;
-        tx = tx.replace('__ydb_LastYearsAlt', getYearsAltQuery());
-        tx = tx.replace('__ydb_LastYears', getYearsQuery());
+        if (window._YDB_public.funcs.tagAliases == undefined) {
+            tx = tx.replace('__ydb_LastYearsAlt', getYearsAltQuery());
+            tx = tx.replace('__ydb_LastYears', getYearsQuery());
+            tx = tx.replace('__ydb_Spoilered', spoileredQuery());
+        }
+        else tx = window._YDB_public.funcs.tagAliases(tx, {legacy:true});
+
         tx = tx.replace('__ydb_SinceLeavedNoNew', getNotSeenYetQueryNoNew(f));
         tx = tx.replace('__ydb_SinceLeaved', getNotSeenYetQuery(f));
-        tx = tx.replace('__ydb_Spoilered', spoileredQuery(f));
         return tx;
     }
 
@@ -711,6 +717,7 @@
             f.cache = parseInt(f.cache);
             f.ccache = parseInt(f.ccache);
             if (feedzCache[i] == undefined) getFeed(f, i);
+            else if (compileURL(f) != feedzURLs[i]) getFeed(f, i);
             else if (config.imagesInFeeds != feedz[i].responsed) getFeed(f, i);
             else if (ptime > (f.saved+f.cache))
             {
