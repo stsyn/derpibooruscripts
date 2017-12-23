@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.5.0
+// @version      0.5.2
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -32,7 +32,7 @@
 
 (function() {
     'use strict';
-    var config;
+    let config;
     let modules = [];
 
     function register() {
@@ -64,6 +64,10 @@
             else if (v.type == 'input') {
                 y = addElem('span', {innerHTML:' '+v.name+' '},l);
                 x = addElem('input', {dataset:{parent:e.container, parameter:v.parameter},type:'text',className:'input _ydb_s_valuecont',value:ss[v.parameter]},l);
+            }
+            else if (v.type == 'textarea') {
+                y = addElem('span', {innerHTML:' '+v.name+' '},l);
+                x = addElem('textarea', {dataset:{parent:e.container, parameter:v.parameter},type:'text',className:'input _ydb_s_valuecont _ydb_s_bigtextarea',value:ss[v.parameter]},l);
             }
             else if (v.type == 'select') {
                 y = addElem('span', {innerHTML:' '+v.name+' '},l);
@@ -226,14 +230,14 @@
                     }
                 }
                 else if (el.classList.contains('_ydb_array')) {
+                    let inChanged = false;
                     let k = 0;
                     if (m[el.dataset.parameter] == undefined || m[el.dataset.parameter].length == undefined) m[el.dataset.parameter] = [];
                     if (el.childNodes != undefined) for (let j=0; j<el.childNodes.length; j++) {
                         if (el.childNodes[j].classList.contains('_ydb_inArray')) {
                             if (typeof m[el.dataset.parameter][k] != 'object') m[el.dataset.parameter][k] = {};
                             if (exploreChilds(el.childNodes[j], m[el.dataset.parameter][k], (o != undefined?o[el.dataset.parameter]:undefined))) {
-                                changed = true;
-                                if (o != undefined && o[el.dataset.parameter]._ != undefined) o[el.dataset.parameter]._(m, el, j);
+                                inChanged = true;
                             }
                             k++;
                         }
@@ -241,8 +245,11 @@
 
                     if (k<m[el.dataset.parameter].length) {
                         m[el.dataset.parameter].splice(k);
-                        changed = true;
+                        inChanged = true;
                     }
+
+                    if (inChanged) changed = true;
+                    if (inChanged && o != undefined && o[el.dataset.parameter]._ != undefined) o[el.dataset.parameter]._(m, m[el.dataset.parameter]);
                 }
             }
             return changed;
@@ -262,8 +269,10 @@
         //preparing
         document.getElementById('js-setting-table').insertBefore(cont = InfernoAddElem('div',{className:'block__tab hidden',dataset:{tab:'YourBooru'},style:'position:relative'}), document.querySelector('[data-tab="local"]').nextSibling);
 
+        let style = '._ydb_s_bigtextarea {resize:none;overflow:hidden;line-height:1.25em;white-space:pre;height:2.25em;vertical-align:top;}'+
+            '._ydb_s_bigtextarea:focus {overflow:auto;position:absolute;width:900px !important;height:10em;z-index:5;white-space:pre-wrap}';
+        addElem('style',{type:'text/css',innerHTML:style},document.head);
         addElem('a',{href:'#',innerHTML:'YourBooru',dataset:{clickTab:'YourBooru'}},document.getElementsByClassName('block__header')[0]);
-
 
         let el;
         el = document.createElement('div');
@@ -281,7 +290,7 @@
                             let s2 = window._YDB_public.settings[k];
                             try {ss = JSON.parse(localStorage[window._YDB_public.settings[k].container]);}
                             catch (ex) {console.log('Warning: '+k+' has empty storage!');}
-                            modules[s2.container] = {name:k, container:s2.container, changed:false, saved:ss, options:s2.s, onChanges:s2.onChange};
+                            modules[s2.container] = {name:k, container:s2.container, changed:false, saved:ss, options:s2.s, onChanges:s2.onChanges};
                             renderCustom(s2, cont, modules[s2.container]);
                         }
                     }
@@ -296,7 +305,7 @@
                 let ss = {};
                 try {ss = JSON.parse(localStorage[k.container]);}
                 catch (ex) {console.log('Warning: '+k.name+' has empty storage!');}
-                modules[k.container] = {name:k.name, container:k.container, changed:false, saved:ss, options:k.s, onChanges:k.onChange};
+                modules[k.container] = {name:k.name, container:k.container, changed:false, saved:ss, options:k.s, onChanges:k.onChanges};
                 renderCustom(k, cont, modules[k.container]);
             }
             catch (e) {
@@ -402,7 +411,9 @@
         else if (location.search == "?") YB_createEmpty();
         else {
             let u = x.split('?');
+            //if (u[0] == "addFeed") YB_addFeed(u);
             if (u[0] == "backup") setTimeout(YB_backup, 100);
+            //else YB_createEmpty();
         }
     }
 
