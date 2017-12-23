@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.3.2
+// @version      0.3.3
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -475,10 +475,15 @@
         c.innerHTML += y.length+' tags detected.<br>';
 
         let parse = function (request) {
-            t.innerHTML = request.responseText;
-            y[request.id] = t.getElementsByClassName('tag')[0].dataset.tagName;
-            c.innerHTML += y[request.id]+'<br>';
-            t.innerHTML = '';
+            try {
+                t.innerHTML = request.responseText;
+                y[request.id] = t.getElementsByClassName('tag')[0].dataset.tagName;
+                c.innerHTML += y[request.id]+'<br>';
+                t.innerHTML = '';
+            }
+            catch (e) {
+                c.innerHTML += '[PARSE ERROR] '+e+'<br>';
+            }
             if (request.id < y.length) get(request.id+1);
             return;
         };
@@ -510,7 +515,7 @@
             let req = new XMLHttpRequest();
             req.id = i;
             req.onreadystatechange = readyHandler(req);
-            req.open('GET', '/tags/'+encodeURIComponent(y[i]));
+            req.open('GET', '/tags/'+encodeURIComponent(y[i].replace(/\-/g,'-dash-').replace(/ /g,'+').replace(/\:/g,'-colon-')));
             req.send();
         };
 
