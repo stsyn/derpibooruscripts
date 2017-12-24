@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.6.2
+// @version      0.6.3
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -318,7 +318,7 @@
         for (let i=0; i<x.length; i++) container.value += x[i] + (i<x.length-1?'\n':'');
     }
 
-    function backgroundBackup() {
+    function backgroundBackup(callback) {
         if (!settings.synch) return;
         window._YDB_public.bgCalled = true;
         let t = window.open('/settings#backup', 'backup', 'width=10,height=10');
@@ -331,6 +331,7 @@
             }
         };
         checker();
+        if (callback != undefined) callback();
     }
 
     function backup() {
