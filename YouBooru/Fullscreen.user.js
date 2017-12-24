@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.8
+// @version      0.5.9
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -33,7 +33,7 @@
 
 (function() {
     'use strict';
-    var currentColorApi = 2;
+    var currentColorApi = 3;
     var styles = {};
     styles.general = `
 #_ydb_fs_mainPopup {
@@ -320,11 +320,19 @@ margin:auto;
 .source_url a, #footer_content a, .button--link, .communication__body a, .comment_backlinks a, .communication__options a, a.interaction-user-list-item, .pagination a,
 a.block__header--single-item:hover, .block__header:not(.center--layout) a:hover, .block__header--sub a:hover, .block__header--single-item a:hover, .autocomplete__item--selected,
 .block--fixed a, .rule a, a.togglable-faq-item, .field a:not([data-tag-name]), a.media-box__header--link, a.media-box__header--link:hover, #content h1 a, #content h3 a, .flash a, p strong a,
-.quick-tag-table__tab a {
+.quick-tag-table__tab a, .flash--site-notice.flash a {
 color:_fs_color;
 }
 p>a {
 color:_fs_color !important;
+}
+
+#content .block__content .communication__body .spoiler:not(:hover) a {
+color:#e88585
+}
+
+._fs_dark #content .block__content .communication__body .spoiler:not(:hover) a {
+color:#782c21
 }
 
 .autocomplete__item:not(.autocomplete__item--selected), .header, a.header__link, span.header__link-user__dropdown-arrow, .add-to-gallery-list ::-webkit-scrollbar-thumb,
@@ -881,7 +889,7 @@ color: #555;
         colors._fs_2component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.5, 5, colors.isDark);});
         colors._fs_icomponent = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1, 0.9, !colors.isDark);});
         colors._fs_3component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 2, 3, colors.isDark);});
-        colors._fs_4component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.75, 10, colors.isDark);});
+        colors._fs_4component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.85, 10, colors.isDark);});
         colors._fs_ccomponent = colors._fs_color.substring(4, colors._fs_color.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.4, 1.3, colors.isDark);});
 
         state.colors = JSON.stringify(colors);
@@ -992,7 +1000,6 @@ color: #555;
         remove('base');
         remove('ex');
         remove('hider');
-        remove('colorAccent');
         unscale();
 
         objects.dcontainer.removeEventListener("DOMNodeInserted",loadedImgFetch);
