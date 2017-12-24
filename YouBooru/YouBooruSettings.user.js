@@ -2,28 +2,29 @@
 // @name         YourBooru:Settings
 // @namespace    http://tampermonkey.net/
 
-// @include      *://trixiebooru.org/settings
-// @include      *://derpibooru.org/settings
-// @include      *://www.trixiebooru.org/settings
-// @include      *://www.derpibooru.org/settings
-// @include      *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/settings
-// @include      *://*.orzgs6djmvrg633souxg64th.*.*/settings
-// @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/settings
-// @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/settings
+// @include      *://trixiebooru.org/*
+// @include      *://derpibooru.org/*
+// @include      *://www.trixiebooru.org/*
+// @include      *://www.derpibooru.org/*
+// @include      *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/*
+// @include      *://*.orzgs6djmvrg633souxg64th.*.*/*
+// @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
+// @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 
-// @include      *://trixiebooru.org/pages/yourbooru*
-// @include      *://derpibooru.org/pages/yourbooru*
-// @include      *://www.trixiebooru.org/pages/yourbooru*
-// @include      *://www.derpibooru.org/pages/yourbooru*
-// @include      *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/pages/yourbooru*
-// @include      *://*.orzgs6djmvrg633souxg64th.*.*/pages/yourbooru*
-// @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/pages/yourbooru*
-// @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/pages/yourbooru*
+// @exclude      *://trixiebooru.org/adverts/*
+// @exclude      *://derpibooru.org/adverts/*
+// @exclude      *://www.trixiebooru.org/adverts/*
+// @exclude      *://www.derpibooru.org/adverts/*
+// @exclude      *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/adverts/*
+// @exclude      *://*.orzgs6djmvrg633souxg64th.*.*/adverts/*
+// @exclude      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
+// @exclude      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
 
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
+// @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.5.2
+// @version      0.6.0
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -34,6 +35,30 @@
     'use strict';
     let config;
     let modules = [];
+    let settings;
+    let resaved = false;
+    let windows = '._ydb_window {position:fixed;width:80vw;height:80vh;top:10vh;left:10vw}';
+    const warningText = 'These two lines are used by YourBooru to save data in your account. Do not split or edit them.';
+    const backupVersion = 1;
+
+    function read() {
+        let svd = localStorage._ydb;
+        try {
+            settings = JSON.parse(svd);
+        }
+        catch (e) {
+            settings = {};
+        }
+    }
+    read();
+
+    function write() {
+        localStorage._ydb = JSON.stringify(settings);
+    }
+
+    function callWindow(inside) {
+        return ChildsAddElem('div',{className:'_ydb_window block__content'},document.body,inside);
+    }
 
     function register() {
         if (window._YDB_public == undefined) window._YDB_public = {};
@@ -41,8 +66,16 @@
         window._YDB_public.settings.settings = {
             name:'Settings',
             container:'_ydb',
-            version:GM_info.script.version
+            version:GM_info.script.version,
+            s:[
+                {type:'checkbox', name:'Synchronize (settings will be duplicated at watchlist string filter, this will not affect watchlist)', parameter:'synch'},
+                {type:'breakline'},
+                {type:'text', name:'Newer settings from backup will be loaded even if synchronizing is disabled. So, first enabling of this option should be done when all the settings is actual.', styleS:{fontStyle:'italic'}}
+            ]
         };
+        if (window._YDB_public.funcs == undefined) window._YDB_public.funcs = {};
+        window._YDB_public.funcs.callWindow = callWindow;
+        window._YDB_public.funcs.backgroundBackup = backgroundBackup;
     }
 
     function hideBlock(e) {
@@ -191,14 +224,14 @@
         catch (ex) {
         }
 
-        ChildsAddElem('div', {className:'block__header'}, cont2, [
+        if (e.name != 'Settings') ChildsAddElem('div', {className:'block__header'}, cont2, [
             InfernoAddElem('a', {events:[{t:'click',f:hideBlock}]}, [
                 InfernoAddElem('i', {className:'fa', innerHTML:'\uF061'}),
                 InfernoAddElem('span', {innerHTML:' '+e.name})
             ])
         ]);
 
-        let cont = addElem('div', {className:'block__content hidden'}, cont2);
+        let cont = addElem('div', {className:'block__content '+(e.name!='Settings'?'hidden':'')}, cont2);
 
         let l = document.createElement('div');
         l.dataset.parent = e.container;
@@ -208,7 +241,146 @@
 
     }
 
-    function save() {
+    function getData() {
+        let t = addElem('div',{id:'_ydb_dataArrive', style:'display:none'}, document.getElementById('content'));
+        let parse = function (request) {
+            try {
+                t.innerHTML = request.responseText;
+                let x = document.getElementById('user_watched_images_exclude_str').value.split('\n');
+                t.innerHTML = '';
+                for (let i=0; i<x.length; i++) {
+                    if (x[i].startsWith('$')) {
+                        x[i] = atob(x[i].slice(1));
+                        let r = [];
+                        for (let j=0; j<x[i].length; j++) {
+                            let x2 = x[i].charCodeAt(j);
+                            if (x2>127) x2-=256;
+                            r.push(x2);
+                        }
+                        let s = JSON.parse(LZMA.decompress(r));
+                        if (settings.timestamp < s.timestamp) {
+                            for (let y in s.vs) {
+                                localStorage[y] = s.vs[y];
+                            }
+                        }
+                        settings.timestamp = parseInt(Date.now()/1000);
+                        write();
+                        location.reload();
+                        return;
+                    }
+                }
+            }
+            catch (e) {
+                settings.timestamp = parseInt(Date.now()/1000);
+                write();
+            }
+            return;
+        };
+
+        let readyHandler = function(request) {
+            return function () {
+                if (request.readyState === 4) {
+                    if (request.status === 200) return parse(request);
+                    else if (request.status === 0) {
+                        return false;
+                    }
+                    else {
+                        return false;
+                    }
+                }
+            };
+        };
+
+        let get = function() {
+            let req = new XMLHttpRequest();
+            req.onreadystatechange = readyHandler(req);
+            req.open('GET', '/settings');
+            req.send();
+        };
+        get();
+    }
+
+    function removeBackup() {
+        let container = document.getElementById('user_watched_images_exclude_str');
+        let x = container.value.split('\n');
+        for (let i=0; i<x.length; i++) {
+            if (x[i].startsWith('$') || x[i] == warningText) {
+                x.splice(i,1);
+                i--;
+            }
+        }
+        container.value = '';
+        for (let i=0; i<x.length; i++) container.value += x[i] + (i<x.length-1?'\n':'');
+    }
+
+    function backgroundBackup() {
+        if (!settings.synch) return;
+        window._YDB_public.bgCalled = true;
+        let t = window.open('/settings#backup', 'backup', 'width=10,height=10');
+        let checker = function() {
+            read();
+            if (Date.now()/1000 > parseInt(settings.timestamp)+1) setTimeout(checker, 100);
+            else {
+                window._YDB_public.bgCalled = false;
+                t.close();
+            }
+        };
+        checker();
+    }
+
+    function backup() {
+        read();
+        if (!settings.synch) {
+            removeBackup();
+            return;
+        }
+        let container = document.getElementById('user_watched_images_exclude_str');
+        let x = container.value.split('\n');
+        let inserted;
+
+        let content = {};
+        content.timestamp = parseInt(Date.now()/1000);
+        content.version = backupVersion;
+        content.vs = {};
+
+        for (let m in modules) {
+            content.vs[modules[m].container] = localStorage[modules[m].container];
+        }
+
+        let r2 = LZMA.compress(JSON.stringify(content),9);
+        let r = '';
+        for (let i=0; i<r2.length; i++) {
+            if (r2[i] < 0) r2[i] = 256+r2[i];
+            r+=String.fromCharCode(r2[i]);
+        }
+        r = '$'+btoa(r);
+
+        for (let i=0; i<x.length; i++) {
+            if (x[i].startsWith('$')) {
+                if (i==0 || x[i-1] != warningText) x.splice(i,0,warningText);
+                x[i] = r;
+                inserted = true;
+            }
+        }
+        if (!inserted) {
+            x.push(warningText);
+            x.push(r);
+        }
+        container.value = '';
+        for (let i=0; i<x.length; i++) container.value += x[i] + (i<x.length-1?'\n':'');
+    }
+
+    function afterSave() {
+        backup();
+    }
+
+    function save(e) {
+        if (resaved) {
+            afterSave();
+            return;
+        }
+        window._YDB_public.handled = 0;
+        let changed = false;
         let exploreChilds = function(c, m, o) {
             let changed = false;
             for (let i=0; i<c.childNodes.length; i++) {
@@ -258,10 +430,25 @@
         for (let i=0; i<containers.length; i++) {
             let mx = modules[containers[i].dataset.parent];
             if (exploreChilds(containers[i], mx.saved, mx.onChanges)) {
+                changed = true;
                 if (mx.onChanges != undefined && mx.onChanges._ != undefined) mx.onChanges._(mx);
                 localStorage[mx.container] = JSON.stringify(mx.saved);
             }
         }
+        settings.timestamp = parseInt(Date.now()/1000);
+        if (window._YDB_public.handled != 0) {
+            e.preventDefault();
+            let checker = function() {
+                if (window._YDB_public.handled != 0) setTimeout(checker, 100);
+                else {
+                    resaved = true;
+                    document.querySelector('.edit_user input.button[type=submit]').removeAttribute('disabled');
+                    document.querySelector('.edit_user input.button[type=submit]').click();
+                }
+            };
+            setTimeout(checker, 100);
+        }
+        else if (changed) backup();
     }
 
     function settingPage() {
@@ -275,24 +462,24 @@
         addElem('a',{href:'#',innerHTML:'YourBooru',dataset:{clickTab:'YourBooru'}},document.getElementsByClassName('block__header')[0]);
 
         let el;
-        el = document.createElement('div');
-        el.className = 'block block--fixed block--warning';
-        el.innerHTML = 'Settings on this tab are saved in the current browser. They are independent of whether you are logged in or not.';
-        cont.appendChild(el);
+        if (!settings.synch) {
+            el = document.createElement('div');
+            el.className = 'block block--fixed block--warning';
+            el.innerHTML = 'Settings on this tab are saved in the current browser. They are independent of whether you are logged in or not.';
+            cont.appendChild(el);
+        }
 
         //loading, stage 1
         if (window._YDB_public != undefined) {
             if (window._YDB_public.settings != undefined) {
                 for (let k in window._YDB_public.settings) {
-                    if (k!='settings') {
-                        if (window._YDB_public.settings[k] != undefined && window._YDB_public.settings[k].s != undefined) {
-                            let ss = {};
-                            let s2 = window._YDB_public.settings[k];
-                            try {ss = JSON.parse(localStorage[window._YDB_public.settings[k].container]);}
-                            catch (ex) {console.log('Warning: '+k+' has empty storage!');}
-                            modules[s2.container] = {name:k, container:s2.container, changed:false, saved:ss, options:s2.s, onChanges:s2.onChanges};
-                            renderCustom(s2, cont, modules[s2.container]);
-                        }
+                    if (window._YDB_public.settings[k] != undefined && window._YDB_public.settings[k].s != undefined) {
+                        let ss = {};
+                        let s2 = window._YDB_public.settings[k];
+                        try {ss = JSON.parse(localStorage[window._YDB_public.settings[k].container]);}
+                        catch (ex) {console.log('Warning: '+k+' has empty storage!');}
+                        modules[s2.container] = {name:k, container:s2.container, changed:false, saved:ss, options:s2.s, onChanges:s2.onChanges};
+                        renderCustom(s2, cont, modules[s2.container]);
                     }
                 }
             }
@@ -350,6 +537,11 @@
 
         document.querySelector('.edit_user input.button[type=submit]').addEventListener('click', save);
         setTimeout(hh, 500);
+        if (location.hash.slice(1) == 'backup') {
+            settings.timestamp = parseInt(Date.now()/1000);
+            write();
+            document.querySelector('.edit_user input.button[type=submit]').click();
+        }
     }
 
     ////////////////////////////
@@ -411,12 +603,21 @@
         else if (location.search == "?") YB_createEmpty();
         else {
             let u = x.split('?');
-            //if (u[0] == "addFeed") YB_addFeed(u);
             if (u[0] == "backup") setTimeout(YB_backup, 100);
-            //else YB_createEmpty();
         }
     }
 
+    window.onbeforeunload = function(e) {
+        if (window._YDB_public.bgCalled) {
+            let checker = function() {
+                if (window._YDB_public.bgCalled) setTimeout(checker, 100);
+            };
+            callWindow(addElem('h1',{innerHTML:'Background copy in process...'},[]));
+        }
+    };
+
+    addElem('style',{type:'text/css',innerHTML:windows},document.head);
+    if (settings.timestamp+21600 < parseInt(Date.now()/1000) && location.pathname != "/settings") getData();
     if (location.pathname == "/settings") setTimeout(settingPage, 100);
     if (location.pathname == "/pages/yourbooru") yourbooruPage();
     register();
