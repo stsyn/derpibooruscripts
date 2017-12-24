@@ -319,7 +319,10 @@
     }
 
     function backgroundBackup(callback) {
-        if (!settings.synch) return;
+        if (!settings.synch) {
+            callback();
+            return;
+        }
         window._YDB_public.bgCalled = true;
         let t = window.open('/settings#backup', 'backup', 'width=10,height=10');
         let checker = function() {
