@@ -11,7 +11,7 @@
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.2
+// @version      0.4.3
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -208,7 +208,6 @@
             f_s_c.feedz = feedz;
             localStorage.removeItem('_ydb');
             localStorage.removeItem('_ydb_config');
-            console.log(JSON.stringify(f_s_c));
             localStorage._ydb_feeds = JSON.stringify(f_s_c);
         }
         else f_s_c = JSON.parse(f_s_c);
@@ -349,8 +348,10 @@
     }
 
     function spoileredQuery() {
+        if (document.getElementsByClassName('js-datastore')[0].dataset.spoileredTagList == undefined) return;
         let tl = JSON.parse(document.getElementsByClassName('js-datastore')[0].dataset.spoileredTagList);
         let tags = tl.reduce(function(prev, cur, i, a) {
+            if (localStorage['bor_tags_'+cur] == undefined) return '[Unknown]';
             return prev + JSON.parse(localStorage['bor_tags_'+cur]).name+(i+1 == a.length?'':' || ');
         }, '');
         tags = '('+tags+')';
