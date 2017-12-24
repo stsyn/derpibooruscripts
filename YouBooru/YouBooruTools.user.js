@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.3.3
+// @version      0.3.4
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -33,6 +33,8 @@
 
 (function() {
     'use strict';
+    let processing = false;
+    let result;
 
     function write(ls2) {
         localStorage._ydb_tools = JSON.stringify(ls2);
@@ -53,6 +55,9 @@
                 {type:'checkbox', name:'Bigger search fields', parameter:'patchSearch'},
                 {type:'header', name:'Tag aliases'},
                 {type:'checkbox', name:'Do not parse page name', parameter:'oldName'},
+                {type:'breakline'},
+                {type:'text', name:'If synchronizing enabled, adding and removing tags from watchlist via tag dropdown will cause small popup window until synchronizing done.'},
+                {type:'breakline'},
                 {type:'breakline'},
                 {type:'text', name:'Aliase', styleS:{width:'30%', textAlign:'center',display:'inline-block'}},
                 {type:'text', name:'Original tag', styleS:{width:'70%', textAlign:'center',display:'inline-block'}},
@@ -76,7 +81,23 @@
                             if (data[i].changed) {
                                 data[i].changed = false;
                                 if (data[i].w) {
-                                    window.open('/pages/yourbooru?checklist?'+i);
+                                    window._YDB_public.handled++;
+                                    let t = InfernoAddElem('div',{},[
+                                        InfernoAddElem('h1',{},[]),
+                                        InfernoAddElem('div',{className:'walloftext'},[])
+                                    ]);
+                                    t = window._YDB_public.funcs.callWindow([t]);
+                                    processing = true;
+                                    YB_checkList(data[i], t);
+                                    let process = function() {
+                                        if (!processing) {
+                                            data[i] = result;
+                                            window._YDB_public.handled--;
+                                            t.classList.add('hidden');
+                                        }
+                                        else setTimeout(process, 100);
+                                    };
+                                    process();
                                 }
                             }
                         }
@@ -304,8 +325,10 @@
         };
 
         let spoileredQuery = function() {
+            if (document.getElementsByClassName('js-datastore')[0].dataset.spoileredTagList == undefined) return;
             let tl = JSON.parse(document.getElementsByClassName('js-datastore')[0].dataset.spoileredTagList);
             let tags = tl.reduce(function(prev, cur, i, a) {
+                if (localStorage['bor_tags_'+cur] == undefined) return '[Unknown]';
                 return prev + JSON.parse(localStorage['bor_tags_'+cur]).name+(i+1 == a.length?'':' || ');
             }, '');
             tags = '('+tags+')';
@@ -325,7 +348,7 @@
         let udata = readTagTools();
 
         let als = {};
-        for (let i=0; i<ls.aliases.length; i++) als[ls.aliases[i].a] = ls.aliases[i].b;
+        if (ls.aliases != undefined) for (let i=0; i<ls.aliases.length; i++) als[ls.aliases[i].a] = ls.aliases[i].b;
         let changed = false;
         let rq = original;
         let iterations = 0;
@@ -385,7 +408,7 @@
     }
 
     function asWatchlist() {
-        for (let i=0; i<ls.aliases.length; i++) {
+        if (ls.aliases != undefined) for (let i=0; i<ls.aliases.length; i++) {
             if (ls.aliases[i].w) {
                 let s = simpleParse(ls.aliases[i].b);
                 let ts = {};
@@ -408,6 +431,7 @@
                                         l.aliases[k].b = simpleCombine(s);
                                         write(l);
                                         e.target.innerHTML = d.a+' (+)';
+                                        if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup();
                                         return;
                                     }
                                 }
@@ -415,6 +439,7 @@
                                 l.aliases[k].b = simpleCombine(s);
                                 write(l);
                                 e.target.innerHTML = d.a+' (-)';
+                                if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup();
                                 return;
                             }
                         }
@@ -463,13 +488,12 @@
     }
 
     //fixing watchlist
-    function YB_checkList(u) {
-        document.querySelector('#content h1').innerHTML = 'Checking watchlist tags...';
-        let c = document.querySelector('#content .walloftext');
+    function YB_checkList(o, elems) {
+        elems.querySelector('h1').innerHTML = 'Checking watchlist tags...';
+        let c = elems.querySelector('.walloftext');
         let t = addElem('div',{id:'_ydb_temp', style:'display:none'}, document.getElementById('content'));
         c.innerHTML = 'This may take few seconds. Do not close this page until finished<br><br>';
 
-        let o = ls.aliases[u[1]];
         let y = simpleParse(o.b);
         for (let i=0; i<y.length; i++) y[i] = y[i].trim();
         c.innerHTML += y.length+' tags detected.<br>';
@@ -521,10 +545,11 @@
 
         let finish = function() {
             o.b = simpleCombine(y);
-            write(ls);
-            console.log('kek');
-            if (history.length == 1) close();
-            else history.back();
+            //write(ls);
+            result = o;
+            processing = false;
+            /*if (history.length == 1) close();
+            else history.back();*/
         };
         if (y.length>0) get(0);
     }
@@ -535,7 +560,7 @@
         else if (location.search == "?") YB_createEmpty();
         else {
             let u = x.split('?');
-            if (u[0] == "checklist") YB_checkList(u);
+            //if (u[0] == "checklist") YB_checkList(u);
         }
     }
 
