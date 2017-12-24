@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.6.1
+// @version      0.6.2
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -37,6 +37,7 @@
     let modules = [];
     let settings;
     let resaved = false;
+    let errorCode = 0;
     let windows = '._ydb_window {position:fixed;width:80vw;height:80vh;top:10vh;left:10vw}';
     const warningText = 'These two lines are used by YourBooru to save data in your account. Do not split or edit them.';
     const backupVersion = 1;
@@ -271,6 +272,8 @@
                         return;
                     }
                 }
+                errorCode = 2;
+                return;
             }
             catch (e) {
                 settings.timestamp = parseInt(Date.now()/1000);
@@ -611,7 +614,16 @@
                 document.querySelector('#content .walloftext').innerHTML = '';
                 getData(true);
                 let c = function() {
-                    if (settings.timestamp+1 >= parseInt(Date.now()/1000)) {
+                    if (errorCode>0) {
+                        if (errorCode == 2) {
+                            document.querySelector('#content .walloftext').innerHTML = 'No backup found.';
+                            setTimeout(function() {
+                                if (history.length == 1) close();
+                                else history.back();
+                            },5000);
+                        }
+                    }
+                    else if (settings.timestamp+1 >= parseInt(Date.now()/1000)) {
                         if (history.length == 1) close();
                         else history.back();
                     }
