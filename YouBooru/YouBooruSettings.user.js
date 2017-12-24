@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.6.0
+// @version      0.6.1
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -70,7 +70,9 @@
             s:[
                 {type:'checkbox', name:'Synchronize (settings will be duplicated at watchlist string filter, this will not affect watchlist)', parameter:'synch'},
                 {type:'breakline'},
-                {type:'text', name:'Newer settings from backup will be loaded even if synchronizing is disabled. So, first enabling of this option should be done when all the settings is actual.', styleS:{fontStyle:'italic'}}
+                {type:'text', name:'Newer settings from backup will be loaded even if synchronizing is disabled. So, first enabling of this option should be done when all the settings is actual.', styleS:{fontStyle:'italic'}},
+                {type:'breakline'},
+                {type:'buttonLink', name:'Synch now', href:'/pages/yourbooru?synch'}
             ]
         };
         if (window._YDB_public.funcs == undefined) window._YDB_public.funcs = {};
@@ -241,7 +243,7 @@
 
     }
 
-    function getData() {
+    function getData(force) {
         let t = addElem('div',{id:'_ydb_dataArrive', style:'display:none'}, document.getElementById('content'));
         let parse = function (request) {
             try {
@@ -258,14 +260,14 @@
                             r.push(x2);
                         }
                         let s = JSON.parse(LZMA.decompress(r));
-                        if (settings.timestamp < s.timestamp) {
+                        if (settings.timestamp < s.timestamp || force) {
                             for (let y in s.vs) {
                                 localStorage[y] = s.vs[y];
                             }
                         }
                         settings.timestamp = parseInt(Date.now()/1000);
                         write();
-                        location.reload();
+                        if (location.pathname != "/pages/yourbooru" && location.search != '?synch') location.reload();
                         return;
                     }
                 }
@@ -604,6 +606,19 @@
         else {
             let u = x.split('?');
             if (u[0] == "backup") setTimeout(YB_backup, 100);
+            else if (u[0] == "synch") setTimeout(function() {
+                document.querySelector('#content h1').innerHTML = 'Synchronizing...';
+                document.querySelector('#content .walloftext').innerHTML = '';
+                getData(true);
+                let c = function() {
+                    if (settings.timestamp+1 >= parseInt(Date.now()/1000)) {
+                        if (history.length == 1) close();
+                        else history.back();
+                    }
+                    else setTimeout(c, 100);
+                };
+                c();
+            }, 100);
         }
     }
 
