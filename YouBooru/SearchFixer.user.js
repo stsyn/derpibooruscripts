@@ -20,9 +20,11 @@
 // @exclude      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
 // @exclude      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
 
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
+
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.2.11
+// @version      0.2.13
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -435,6 +437,74 @@
         request(compilePreQuery(type), sel, type, level);
     };
 
+
+
+    //adding a button, pushes query in header search
+    function pushQuery() {
+        document.querySelector('form.header__search').insertBefore(
+            InfernoAddElem('div',{className:'header__search__button dropdown', style:'height: 28px;'},[
+                InfernoAddElem('a',{id:'_ydb_s_qpusher',title:'Push search query to url bar', style:'height:28px;padding:0', href:location.href, className:'header__link header__search__button'}, [
+                    InfernoAddElem('i',{className:'fa fa-arrow-up',style:'color:#fff; width:28px; line-height:28px; text-align:center; font-size:110%'}, [])
+                ]),
+                InfernoAddElem('div',{className:'dropdown__content'},[
+                    InfernoAddElem('select',{id:'_ydb_s_qpusher_sf',className:'input header__link', size:1},[
+                        InfernoAddElem('option',{value:'created_at', innerHTML:'created_at'},[]),
+                        InfernoAddElem('option',{value:'score', innerHTML:'score'},[]),
+                        InfernoAddElem('option',{value:'wilson', innerHTML:'wilson'},[]),
+                        InfernoAddElem('option',{value:'relevance', innerHTML:'relevance'},[]),
+                        InfernoAddElem('option',{value:'width', innerHTML:'width'},[]),
+                        InfernoAddElem('option',{value:'height', innerHTML:'height'},[]),
+                        InfernoAddElem('option',{value:'comments', innerHTML:'comments'},[]),
+                        InfernoAddElem('option',{value:'random', innerHTML:'random'},[])
+                    ]),
+                    InfernoAddElem('select',{id:'_ydb_s_qpusher_sd',className:'input header__link', size:1},[
+                        InfernoAddElem('option',{value:'desc', innerHTML:'desc'},[]),
+                        InfernoAddElem('option',{value:'asc', innerHTML:'asc'},[])
+                    ])
+                ])
+            ]),document.querySelector('form.header__search>a.header__search__button'));
+
+        if (myURL.params.sf != undefined && document.querySelector('#_ydb_s_qpusher_sf *[value='+myURL.params.sf+']') != undefined) document.querySelector('#_ydb_s_qpusher_sf *[value='+myURL.params.sf+']').selected = 'selected';
+        if (myURL.params.sd != undefined && document.querySelector('#_ydb_s_qpusher_sd *[value='+myURL.params.sd+']') != undefined) document.querySelector('#_ydb_s_qpusher_sd *[value='+myURL.params.sd+']').selected = 'selected';
+
+        let ch = function(e,arg) {
+            let s = location.search;
+            let t = e.target.value.replace(/\-/g,'-dash-').replace(/ /g,'+').replace(/\:/g,'-colon-');
+            if (myURL.params[arg] == "" || myURL.params[arg] == undefined) s += '?'+arg+'='+e.target.value;
+            else s = s.replace(arg+'='+myURL.params[arg], arg+'='+t);
+            document.getElementById('_ydb_s_qpusher').search = s;
+        };
+
+        let chall =function() {
+            ch({target:document.querySelector('form.header__search .input')},'q');
+            ch({target:document.querySelector('#_ydb_s_qpusher_sf')},'sf');
+            ch({target:document.querySelector('#_ydb_s_qpusher_sd')},'sd');
+        };
+
+        setTimeout(function() {
+            document.querySelector('form.header__search .input').addEventListener('input', function(e) {ch(e,'q');});
+            document.querySelector('#_ydb_s_qpusher_sf').addEventListener('input', function(e) {ch(e,'sf');});
+            document.querySelector('#_ydb_s_qpusher_sd').addEventListener('input', function(e) {ch(e,'sd');});
+        }, 200);
+
+        //fetching tags
+        let t = document.querySelectorAll('.tag.dropdown');
+        for (let j=0; j<t.length; j++) {
+            ChildsAddElem('span',{dataset:{tag:t[j].dataset.tagName}, className:'tag__dropdown__link'}, t[j].getElementsByClassName('dropdown__content')[0],[
+                InfernoAddElem('a',{style:'cursor:pointer', innerHTML:'Set query ', events:[{t:'click',f:function(e){
+                    document.querySelector('form.header__search .input').value=e.target.parentNode.dataset.tag;
+                    ch({target:document.querySelector('form.header__search .input')},'q');
+                }}]},[]),
+                InfernoAddElem('a',{style:'cursor:pointer', innerHTML:'[+]', events:[{t:'click',f:function(e){
+                    document.querySelector('form.header__search .input').value+=(document.querySelector('form.header__search .input').value.trim == ''?'':',')+e.target.parentNode.dataset.tag;
+                    ch({target:document.querySelector('form.header__search .input')},'q');
+                }}]},[])
+            ]);
+        }
+    }
+
+    ////////////////////////////////
+
     function execute() {
         let url, req;
         if (myURL.params.sf != "random") {
@@ -468,6 +538,10 @@
         id = myURL.path.split('/');
         if (id[1] == 'images');
         id = parseInt(id[2]);
+    }
+
+    if (!isNaN(id)) {
+        pushQuery();
     }
 
     if (
