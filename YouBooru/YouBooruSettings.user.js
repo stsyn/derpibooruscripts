@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.6.3
+// @version      0.6.4
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -71,7 +71,8 @@
             s:[
                 {type:'checkbox', name:'Synchronize (settings will be duplicated at watchlist string filter, this will not affect watchlist)', parameter:'synch'},
                 {type:'breakline'},
-                {type:'text', name:'Newer settings from backup will be loaded even if synchronizing is disabled. So, first enabling of this option should be done when all the settings is actual.', styleS:{fontStyle:'italic'}},
+                {type:'text', name:'Newer settings from backup will be loaded even if synchronizing is disabled. So, first enabling of this option should be done when all the settings is actual.<br>', styleS:{fontStyle:'italic'}},
+                {type:'text', name:'If you don\'t need backup anymore, remove added text in "Watch list filter string" at the "Watch list" tab.', styleS:{fontStyle:'italic'}},
                 {type:'breakline'},
                 {type:'buttonLink', name:'Synch now', href:'/pages/yourbooru?synch'}
             ]
@@ -340,7 +341,7 @@
     function backup() {
         read();
         if (!settings.synch) {
-            removeBackup();
+            //removeBackup();
             return;
         }
         let container = document.getElementById('user_watched_images_exclude_str');
