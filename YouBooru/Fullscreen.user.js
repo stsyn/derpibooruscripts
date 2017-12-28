@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.9
+// @version      0.5.10
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -461,6 +461,7 @@ color: #555;
 
     if (state.enabled == undefined) state.enabled = false;
 
+
     if (settings.extended == undefined) settings.extended = true;
     if (settings.scrollSpeed == undefined) settings.scrollSpeed = 20;
     if (settings.scrollMultiply == undefined) settings.scrollMultiply = 5;
@@ -473,7 +474,7 @@ color: #555;
     settings.scrollSpeed = parseInt(settings.scrollSpeed);
     settings.scrollMultiply = parseInt(settings.scrollMultiply);
     settings.staticTime = parseInt(settings.staticTime);
-    write();
+    localStorage._ydb_fs = JSON.stringify(settings);
 
     function register() {
         let fsData = {
