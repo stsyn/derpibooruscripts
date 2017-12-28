@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.6.4
+// @version      0.6.5
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -324,18 +324,22 @@
             callback();
             return;
         }
+
+        read();
+        settings.bgBackupflag = true;
+        write();
         window._YDB_public.bgCalled = true;
-        let t = window.open('/settings#backup', 'backup', 'width=10,height=10');
+        let t = window.open('/settings#backup', 'backup', 'width=1,height=1');
         let checker = function() {
             read();
-            if (Date.now()/1000 > parseInt(settings.timestamp)+1) setTimeout(checker, 100);
+            if (settings.bgBackupflag) setTimeout(checker, 100);
             else {
                 window._YDB_public.bgCalled = false;
                 t.close();
+                if (callback != undefined) callback();
             }
         };
         checker();
-        if (callback != undefined) callback();
     }
 
     function backup() {
@@ -445,7 +449,10 @@
                 localStorage[mx.container] = JSON.stringify(mx.saved);
             }
         }
+        read();
         settings.timestamp = parseInt(Date.now()/1000);
+        settings.bgBackupflag = false;
+        write();
         if (window._YDB_public.handled != 0) {
             e.preventDefault();
             let checker = function() {
@@ -548,8 +555,6 @@
         document.querySelector('.edit_user input.button[type=submit]').addEventListener('click', save);
         setTimeout(hh, 500);
         if (location.hash.slice(1) == 'backup') {
-            settings.timestamp = parseInt(Date.now()/1000);
-            write();
             document.querySelector('.edit_user input.button[type=submit]').click();
         }
     }
