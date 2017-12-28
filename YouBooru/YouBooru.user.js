@@ -9,9 +9,10 @@
 // @include      *://*.orzgs6djmvrg633souxg64th.*.*/*
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.4
+// @version      0.4.5
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -20,6 +21,7 @@
 
 (function() {
     'use strict';
+    let privated = false;
     var data={};
 
     /*
@@ -156,9 +158,10 @@
                         ]}
                     ],
                     [
-                        {type:'input', name:'Cache (minutes)', parameter:'cache',styleI:{width:'6em', marginRight:'.5em'}},
-                        {type:'input', name:'... or update each (minutes, used if previous is 0)', parameter:'ccache',styleI:{width:'6em', marginRight:'.5em'}},
-                        {type:'checkbox', name:'Double size', parameter:'double',styleI:{marginRight:'.5em'}},
+                        {type:'input', name:'Cache (minutes)', parameter:'cache',styleI:{width:'3em', marginRight:'.4em'}},
+                        {type:'input', name:'... or update each (used if previous is 0)', parameter:'ccache',styleI:{width:'3.2em', marginRight:'.4em'}},
+                        {type:'checkbox', name:'Double size', parameter:'double',styleI:{marginRight:'.4em'}},
+                        {type:'checkbox', name:'Show on mainpage', parameter:'mainPage',styleI:{marginRight:'.4em'}},
                         {type:'buttonLink', attrI:{title:'Copy this link and paste it somewhere to share that feed!',target:'_blank'},styleI:{marginRight:'.5em'}, name:'Share', i:function(module,elem) {
                             let f = module.saved.feedz[elem.parentNode.dataset.id];
                             if (f == undefined) {
@@ -661,6 +664,8 @@
         for (i=0; i<feedz.length; i++) {
             let f = feedz[i];
             if (f == null) continue;
+            if (f.mainPage == undefined) f.mainPage = true;
+            if (!(privated || f.mainPage)) continue;
             let elem = document.createElement('div');
             elem.className = 'block';
             let head = document.createElement('div');
@@ -767,6 +772,15 @@
         });
     }
 
+    function YB_feedsPage() {
+        cont = document.getElementById('content');
+        cont.className = 'column-layout__main';
+        addElem('span',{},cont);
+        addElem('span',{},cont);
+        privated = true;
+        setTimeout(init, 10);
+    }
+
     function YB_addFeed(u) {
         document.querySelector('#content h1').innerHTML = 'Add feed';
         var c = document.querySelector('#content .walloftext');
@@ -812,9 +826,11 @@
         else {
             let u = x.split('?');
             if (u[0] == "addFeed") YB_addFeed(u);
+            else if (u[0] == "feeds") YB_feedsPage();
         }
     }
 
+    addElem('a',{className:'header__link',href:'/yourbooru?feeds', innerHTML:'Feeds'},document.querySelector('.header--secondary .header__dropdown .dropdown__content'));
     var cont = document.getElementsByClassName('column-layout__main')[0];
     if (location.pathname == '/' || location.pathname == '') setTimeout(init, 10);
     else {
