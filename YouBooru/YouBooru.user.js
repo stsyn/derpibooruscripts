@@ -11,7 +11,7 @@
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.3
+// @version      0.4.4
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -161,6 +161,10 @@
                         {type:'checkbox', name:'Double size', parameter:'double',styleI:{marginRight:'.5em'}},
                         {type:'buttonLink', attrI:{title:'Copy this link and paste it somewhere to share that feed!',target:'_blank'},styleI:{marginRight:'.5em'}, name:'Share', i:function(module,elem) {
                             let f = module.saved.feedz[elem.parentNode.dataset.id];
+                            if (f == undefined) {
+                                elem.innerHTML = '------';
+                                return;
+                            }
                             elem.href = '/pages/yourbooru?addFeed?'+f.name+'?'+
                                 encodeURIComponent(window._YDB_public.funcs.tagAliases(f.query, {legacy:false})).replace(/\(/,'%28').replace(/\)/,'%29')+
                                 '?'+f.sort+'?'+f.sd+'?'+f.cache+'?'+f.ccache;
@@ -757,8 +761,10 @@
         feedz[i] = f;
         write();
 
-        if (history.length == 1) close();
-        else history.back();
+        if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup(function() {
+            if (history.length == 1) close();
+            else history.back();
+        });
     }
 
     function YB_addFeed(u) {
