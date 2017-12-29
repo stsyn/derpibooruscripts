@@ -12,7 +12,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.5
+// @version      0.4.6
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -176,7 +176,7 @@
                     ],[
                         {type:'textarea', name:'Query', parameter:'query',styleI:{width:'calc(100% - 11em)'}}
                     ]
-                ], template:{name:'New feed',sort:'',sd:'',cache:'30',ccache:'',query:'*',double:false}}
+                ], template:{name:'New feed',sort:'',sd:'',cache:'30',ccache:'',query:'*',double:false,mainPage:true}}
             ],
             onChanges:{
                 feedz:{
@@ -830,7 +830,7 @@
         }
     }
 
-    addElem('a',{className:'header__link',href:'/yourbooru?feeds', innerHTML:'Feeds'},document.querySelector('.header--secondary .header__dropdown .dropdown__content'));
+    addElem('a',{className:'header__link',href:'/pages/yourbooru?feeds', innerHTML:'Feeds'},document.querySelector('.header--secondary .header__dropdown .dropdown__content'));
     var cont = document.getElementsByClassName('column-layout__main')[0];
     if (location.pathname == '/' || location.pathname == '') setTimeout(init, 10);
     else {
