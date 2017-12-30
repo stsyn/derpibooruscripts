@@ -24,7 +24,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.2.13
+// @version      0.2.14
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -469,7 +469,7 @@
 
         let ch = function(e,arg) {
             let s = location.search;
-            let t = e.target.value.replace(/\-/g,'-dash-').replace(/ /g,'+').replace(/\:/g,'-colon-');
+            let t = e.target.value.replace(/ /g,'+');
             if (myURL.params[arg] == "" || myURL.params[arg] == undefined) s += '?'+arg+'='+e.target.value;
             else s = s.replace(arg+'='+myURL.params[arg], arg+'='+t);
             document.getElementById('_ydb_s_qpusher').search = s;
