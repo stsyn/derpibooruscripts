@@ -2,14 +2,13 @@
 // @name        Tag Suggestions
 // @namespace   rene_zeidler
 // @description Adds suggestions when editing tags on Derpibooru
-// @include     /https?://(www\.)?derpiboo.ru/.*/
 // @include     /https?://(www\.)?trixiebooru.org/.*/
 // @include     /https?://(www\.)?derpibooru.org/.*/
 // @require     https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
-// @downloadURL https://gist.github.com/ReneZeidler/477fa635b2bdabd71b449df56c03b0ab/raw/Tag_Suggestions.user.js
-// @installURL  https://gist.github.com/ReneZeidler/477fa635b2bdabd71b449df56c03b0ab/raw/Tag_Suggestions.user.js
-// @updateURL   https://gist.github.com/ReneZeidler/477fa635b2bdabd71b449df56c03b0ab/raw/Tag_Suggestions.meta.js
-// @version     1.0.1
+// @downloadURL https://github.com/stsyn/derpibooruscripts/raw/master/other/Tag_Suggestions.user.js
+// @installURL  https://github.com/stsyn/derpibooruscripts/raw/master/other/Tag_Suggestions.user.js
+// @updateURL   https://github.com/stsyn/derpibooruscripts/raw/master/other/Tag_Suggestions.user.js
+// @version     1.0.2
 // @grant       none
 // ==/UserScript==
 
