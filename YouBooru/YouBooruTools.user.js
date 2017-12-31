@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.3.4
+// @version      0.3.5
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -25,6 +25,7 @@
 
 // @require      https://raw.githubusercontent.com/blueimp/JavaScript-MD5/master/js/md5.min.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagDB0.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
 // @grant        none
@@ -35,6 +36,8 @@
     'use strict';
     let processing = false;
     let result;
+
+    var tagDB = getTagDB();
 
     function write(ls2) {
         localStorage._ydb_tools = JSON.stringify(ls2);
@@ -450,6 +453,47 @@
         }
     }
 
+    //colored tags
+    function colorTags() {
+        let checker = function (target, method) {
+            if (document.querySelectorAll(target).length>0) {
+                let x = document.querySelectorAll(target)[0];
+                for (let i=0; i<x.getElementsByClassName('tag').length; i++) {
+                    let gotten = false;
+                    let y = x.getElementsByClassName('tag')[i];
+                    let z;
+                    if (method == 'standart') z = y.getElementsByTagName('a')[0].dataset.tagName;
+                    else if (method == 'suggested') {
+                        z = '';
+                        let t = y.getElementsByTagName('span')[0].innerHTML;
+                        for (let j=0; j<t.split(' ').length-1; j++) z+=t.split(' ')[j];
+                    }
+                    for (let tcat in tagDB.regulars) {
+                        if (tagDB.regulars[tcat].test(z)) {
+                            y.dataset.tagCategory = tcat;
+                            gotten = true;
+                            break;
+                        }
+                    }
+                    if (gotten) continue;
+                    for (let tcat in tagDB.normal) {
+                        for (let j=0; j<tagDB.normal[tcat].length; j++) {
+                            if (tagDB.normal[tcat][j] == z) {
+                                y.dataset.tagCategory = tcat;
+                                gotten = true;
+                                break;
+                            }
+                        }
+                        if (gotten) continue;
+                    }
+                }
+            }
+        }
+        checker('.js-taginput-fancy-tag_input', 'standart');
+        checker('.suggested_tags', 'suggested');
+        setTimeout(colorTags,500);
+    }
+
     //target _blank
     //domain fixes
     function linksPatch(doc) {
@@ -572,6 +616,7 @@
     aliases();
     asWatchlist();
     linksPatch(document);
+    colorTags();
     if (location.pathname == "/pages/yourbooru") {
         YDB();
     }
