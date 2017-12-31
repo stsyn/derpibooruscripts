@@ -39,7 +39,7 @@ var config = {
 	ASCENDING_ORDER: false,
 
 	/* Output debug info in console. */
-	DEBUG: true
+	DEBUG: false
 };
 
 /////////////////////////////////////
