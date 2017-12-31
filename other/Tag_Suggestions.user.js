@@ -8,11 +8,12 @@
 // @downloadURL https://github.com/stsyn/derpibooruscripts/raw/master/other/Tag_Suggestions.user.js
 // @installURL  https://github.com/stsyn/derpibooruscripts/raw/master/other/Tag_Suggestions.user.js
 // @updateURL   https://github.com/stsyn/derpibooruscripts/raw/master/other/Tag_Suggestions.user.js
-// @version     1.0.2
+// @version     1.1.0
 // @grant       none
 // ==/UserScript==
 
 // source: https://www.derpibooru.org/meta/userscript-tag-suggestions/post/2388828#post_2388828
+// actualized by stsyn
 
 "use strict";
 var config = {
@@ -38,14 +39,16 @@ var config = {
 	ASCENDING_ORDER: false,
 
 	/* Output debug info in console. */
-	DEBUG: false
+	DEBUG: true
 };
 
 /////////////////////////////////////
 
-window.addTag = function(a,b,c) {
+window.addTag = function(a,b,c, that) {
+    console.log(a,b,c);
     a.value+=', '+b;
     c.getElementsByClassName('js-taginput-show-tag_input')[0].click();
+    //that.updateTags(that);
 }
 
 /////////////////////////////////////
@@ -302,7 +305,7 @@ window.tagSuggestions = {
 			$button.data("tag-slug", tag.replace(" ", "+")); //Not entirely accurate, but enough for colored tags
 
 			var $tag = $('<span>' + this.suggestions[i].tag + (p != 200 ? ' (' + p + '%)' : '') + '</span>')
-			.on('click', function(tag) { return function() { that.addTag(tag); } }(tag));
+			.on('click', function(tag) { return function() { that.addTag(tag); that.tagAdded (tag);} }(tag));
 			$button.append($tag);
 
 			var $exclude = $(' <a class="exclude">&nbspx</a>')
@@ -319,7 +322,7 @@ window.tagSuggestions = {
 	},
 
 	addTag: function(tag) {
-		window.addTag(this.tagsinput, tag, this.tagscontainer);
+		window.addTag(this.tagsinput, tag, this.tagscontainer, this);
 	},
 
 	excludeTag: function(tag) {
@@ -390,12 +393,16 @@ window.tagSuggestions = {
 	run: function(config) {
 		this.config = config;
 
+        console.log('check');
 		/* Add styles */
 		$("head").append('<style type="text/css">' + this.styles.replace("%MAX_HEIGHT%", this.config.MAX_DISPLAY_ROWS * 35) + '</style>');
 
 		/* Setup DOM/events */
         if (document.getElementsByClassName('fancy-tag-edit').length > 0) {
             this.tagscontainer = document.getElementsByClassName('fancy-tag-edit')[0].parentNode;
+        }
+        if (document.getElementById('new_image') != undefined) {
+            this.tagscontainer = document.getElementById('new_image');
         }
 		this.tagsinput = document.querySelector('textarea.tagsinput');
 		if(!this.tagsinput) {
@@ -426,13 +433,14 @@ window.tagSuggestions = {
 					//Toggling the editor removes every node and adds
 					//it back, so we just ignore all bulk changes
 					var mutation = mutations[0];
-					if(mutations.length == 3 && mutation.addedNodes  .length == 1) {
-						var addedSpan   = mutation.addedNodes[0]  .firstChild;
-						if(addedSpan.tagName   == "SPAN") that.tagAdded  (addedSpan  .innerHTML);
+                    console.log(mutations);
+					if(mutations.length == 1 && mutation.addedNodes  .length == 1) {
+						var addedSpan   = mutation.addedNodes[0];
+						if(addedSpan.tagName   == "SPAN") that.tagAdded  (addedSpan.getElementsByTagName('a')[0].dataset.tagName);
 					}
 					if(mutations.length == 1 && mutation.removedNodes.length == 1) {
-						var removedSpan = mutation.removedNodes[0].firstChild;
-						if(removedSpan.tagName == "SPAN") that.tagRemoved(removedSpan.innerHTML);
+						var removedSpan = mutation.removedNodes[0];
+						if(removedSpan.tagName == "SPAN") that.tagRemoved(removedSpan.getElementsByTagName('a')[0].dataset.tagName);
 					}
 				});
 				observer.observe(tagsinputdiv, { childList: true, attributes: true });
