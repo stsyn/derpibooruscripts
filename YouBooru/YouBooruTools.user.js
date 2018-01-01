@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.3.5
+// @version      0.3.6
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -466,10 +466,11 @@
                     else if (method == 'suggested') {
                         z = '';
                         let t = y.getElementsByTagName('span')[0].innerHTML;
-                        for (let j=0; j<t.split(' ').length-1; j++) z+=t.split(' ')[j];
+                        for (let j=0; j<t.split(' ').length-1; j++) z+=(j==0?'':' ')+t.split(' ')[j];
                     }
                     for (let tcat in tagDB.regulars) {
                         if (tagDB.regulars[tcat].test(z)) {
+                            tagDB.regulars[tcat].test(z); //DON'T ASK ME WHY, BUT WITHOUT IT THIS THING DOESN'T WORK
                             y.dataset.tagCategory = tcat;
                             gotten = true;
                             break;
@@ -488,7 +489,7 @@
                     }
                 }
             }
-        }
+        };
         checker('.js-taginput-fancy-tag_input', 'standart');
         checker('.suggested_tags', 'suggested');
         setTimeout(colorTags,500);
