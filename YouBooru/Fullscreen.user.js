@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.10
+// @version      0.5.11
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -319,8 +319,8 @@ margin:auto;
 .block__header--sub a, .block__header--single-item a, .block__content:not(._fs_popup)>*:not(.media-box) a:not(.tag__name), .block__content>a, .profile-top__name-and-links a,
 .source_url a, #footer_content a, .button--link, .communication__body a, .comment_backlinks a, .communication__options a, a.interaction-user-list-item, .pagination a,
 a.block__header--single-item:hover, .block__header:not(.center--layout) a:hover, .block__header--sub a:hover, .block__header--single-item a:hover, .autocomplete__item--selected,
-.block--fixed a, .rule a, a.togglable-faq-item, .field a:not([data-tag-name]), a.media-box__header--link, a.media-box__header--link:hover, #content h1 a, #content h3 a, .flash a, p strong a,
-.quick-tag-table__tab a, .flash--site-notice.flash a {
+.block--fixed a, .rule a, a.togglable-faq-item, .field a:not([data-tag-name]), a.media-box__header--link, a.media-box__header--link:hover, #content h1 a, #content h3 a, .flash a,
+#content p strong a, .quick-tag-table__tab a, .flash--site-notice.flash a {
 color:_fs_color;
 }
 p>a {
@@ -337,7 +337,7 @@ color:#782c21
 
 .autocomplete__item:not(.autocomplete__item--selected), .header, a.header__link, span.header__link-user__dropdown-arrow, .add-to-gallery-list ::-webkit-scrollbar-thumb,
 span.header__link-user__dropdown-arrow:hover, .header__dropdown:hover span.header__link-user__dropdown-arrow, .sparkline .bar {
-background:_fs_ccomponent;
+background-color:_fs_ccomponent;
 }
 
 .image-description, #imagespns, .block__header--js-tabbed, .block__header--js-tabbed a.selected, .block__header--js-tabbed a.selected:hover,
@@ -382,7 +382,7 @@ color:#aaa !important;
 
 .media-box__header, .button:hover, .toggle-box+label:hover, .header--secondary, .header--secondary a,
 .block__list a.block__list__link.primary, select.header__input:hover, select.header__input:focus:hover, span.header__counter {
-background:_fs_background;
+background-color:_fs_background;
 border-color:_fs_color;
 }
 
@@ -401,7 +401,7 @@ color:_fs_ccomponent !important;
 
 .header__input, .header__input:focus, select.header__input, select.header__input:focus, a.header__search__button, button.header__search__button,
 select.header__input:hover, select.header__input:focus:hover  {
-background:_fs_icomponent;
+background-color:_fs_icomponent;
 }
 .block__content, .block__content:last-child, .block__content:first-child, .table, .table>tbody, .block__tab, .block__tab:not(.hidden){
 border-color:_fs_2component;
@@ -736,7 +736,7 @@ color: #555;
 
         let s = '';
         if (parseInt(document.getElementsByClassName('js-notification-ticker')[0].innerHTML) > 0) s += ' '+parseInt(document.getElementsByClassName('js-notification-ticker')[0].innerHTML);
-        if (parseInt(document.querySelector('a[href="/messages"] .fa-embedded__text').innerHTML) > 0) s += (s.length>0?'+':'')+'M'+parseInt(document.querySelector('a[href="/messages"] .fa-embedded__text').innerHTML);
+        if (parseInt(document.querySelector('a[href*="/messages"] .fa-embedded__text').innerHTML) > 0) s += (s.length>0?'+':' ')+'M'+parseInt(document.querySelector('a[href*="/messages"] .fa-embedded__text').innerHTML);
 
         if (s.length>0) {
             objects.mainButtonNotify.innerHTML = s;
@@ -1059,7 +1059,7 @@ color: #555;
             else document.addEventListener('DOMContentLoaded', function() {
                 enable();
                 preEnableColor();
-                if (location.hash == '#comments') showComms();
+                if (location.hash.indexOf('#comment') == 0) showComms();
             });
         }
         else {
