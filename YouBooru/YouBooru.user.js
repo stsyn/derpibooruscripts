@@ -12,7 +12,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.6
+// @version      0.4.7
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -193,16 +193,21 @@
         let ccont = document.getElementsByClassName('column-layout__main')[0];
         let mwidth = parseInt(ccont.clientWidth) - 14;
         let twidth = parseInt(mwidth/config.imagesInFeeds-8);
-        for (let i=0; i<document.getElementsByClassName('_ydb_resizible').length; i++) {
-            document.getElementsByClassName('_ydb_resizible')[i].getElementsByClassName('media-box__header')[0].style.width = twidth+'px';
-            document.getElementsByClassName('_ydb_resizible')[i].getElementsByClassName('media-box__content--large')[0].style.width = twidth+'px';
-            document.getElementsByClassName('_ydb_resizible')[i].getElementsByClassName('media-box__content--large')[0].style.height = twidth+'px';
+        for (let i=0; i<document.getElementsByClassName('_ydb_resizable').length; i++) {
+            document.getElementsByClassName('_ydb_resizable')[i].getElementsByClassName('media-box__header')[0].style.width = twidth+'px';
+            document.getElementsByClassName('_ydb_resizable')[i].getElementsByClassName('media-box__content--large')[0].style.width = twidth+'px';
+            document.getElementsByClassName('_ydb_resizable')[i].getElementsByClassName('media-box__content--large')[0].style.height = twidth+'px';
             if (twidth < 240) {
-                document.getElementsByClassName('_ydb_resizible')[i].getElementsByClassName('media-box__header')[0].classList.add('media-box__header--small');
+                document.getElementsByClassName('_ydb_resizable')[i].getElementsByClassName('media-box__header')[0].classList.add('media-box__header--small');
             }
             else {
-                document.getElementsByClassName('_ydb_resizible')[i].getElementsByClassName('media-box__header')[0].classList.remove('media-box__header--small');
+                document.getElementsByClassName('_ydb_resizable')[i].getElementsByClassName('media-box__header')[0].classList.remove('media-box__header--small');
             }
+        }
+        for (let i=0; i<document.getElementsByClassName('_ydb_resizable_cont').length; i++) {
+            let s = twidth+22+7;
+            if (document.getElementsByClassName('_ydb_resizable_cont')[i].dataset.double == 'true') s*=2;
+            document.getElementsByClassName('_ydb_resizable_cont')[i].style.height = s+'px';
         }
     }
 
@@ -573,7 +578,7 @@
                 elem.getElementsByClassName('media-box__header')[0].classList.remove('media-box__header--small');
             }
 
-            elem.classList.add('_ydb_resizible');
+            elem.classList.add('_ydb_resizable');
             if (elem.querySelector('.media-box__content .image-container.thumb a img') !== null) elem.querySelector('.media-box__content--large .image-container.thumb a img').onload = spoiler;
             if (twidth < 240) {
                 elem.getElementsByClassName('media-box__header')[0].classList.add('media-box__header--small');
@@ -688,7 +693,8 @@
 
             elem.appendChild(head);
             let container = document.createElement('div');
-            container.className = 'block__content js-resizable-media-container';
+            container.className = 'block__content js-resizable-media-container _ydb_resizable_cont';
+            container.dataset.double = f.double;
             f.container = container;
             elem.appendChild(container);
 
