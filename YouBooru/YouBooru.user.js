@@ -12,7 +12,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.8
+// @version      0.4.9
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -520,14 +520,14 @@
 				if (request.status === 200) return parse(request, id);
 				else if (request.status === 0) {
 					debug('YDB:F','Server timeout',2);
-					request.feed.container = 'Server timeout. Retry?';
+					request.feed.container.innerHTML = 'Server timeout. Retry?';
 					feedAfterload(request,'Server timeout. Retry?',id);
 					return false;
 				}
 				else {
 					debug('YDB:FS','Request failed. Response '+request.status,2);
-					request.feed.container = 'Request failed. Retry?';
-					feedAfterload(request,'Request failed. Retry?',id);
+					request.feed.container.innerHTML = 'Request failed ('+request.status+'). Retry?';
+					feedAfterload(request,'Request failed ('+request.status+'). Retry?',id);
 					return false;
 				}
 			}
