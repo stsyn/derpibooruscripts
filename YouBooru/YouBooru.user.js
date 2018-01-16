@@ -12,7 +12,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.9
+// @version      0.4.10
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -535,7 +535,6 @@
 	}
 
 	function feedAfterload(r,cc,id) {
-		let date = new Date();
 		feedzURLs[id] = compileURL(r.feed);
 		r.feed.url.href = feedzURLs[id];
 		r.feed.temp.innerHTML = '';
@@ -543,8 +542,13 @@
 		r.feed.responsed = config.imagesInFeeds;
 
 		feedzCache[id] = cc;
-		r.feed.saved = parseInt(date.getTime() / 60000);
-		for (let i=0; i<feedz.length; i++) if (feedz[i] != null) if (!feedz[i].loaded) return;
+		r.feed.saved = parseInt(Date.now() / 60000);
+		let left=0;
+		for (let i=0; i<feedz.length; i++) if (feedz[i] != null) if (feedz.mainPage) if (!feedz[i].loaded) {
+			left++;
+		};
+		console.log(left);
+		if (left>0) return;
 		postRun();
 	}
 
@@ -668,7 +672,7 @@
 		feed.temp.innerHTML = '';
 		feed.loaded = true;
 		feed.url.href = feedzURLs[id];
-		for (let i=0; i<feedz.length; i++) if (feedz[i] != null) if (!feedz[i].loaded) return;
+		for (let i=0; i<feedz.length; i++) if (feedz[i] != null) if (feedz.mainPage) if (!feedz[i].loaded) return;
 		postRun();
 	}
 
@@ -764,7 +768,7 @@
 			}
 			else if (ptime > (f.saved+f.cache))
 			{
-				if ((f.ccache !== undefined) && (parseInt(f.ccache)>0) && (!isNaN(parseInt(f.ccache)))) {
+				if ((f.ccache !== undefined) && (f.ccache>0) && (!isNaN(f.ccache))) {
 					if (parseInt(ptime/f.ccache) > parseInt(f.saved/f.ccache)) {
 						getFeed(f, i);
 						debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Scheduled update"', '1');
