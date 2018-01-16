@@ -547,7 +547,6 @@
 		for (let i=0; i<feedz.length; i++) if (feedz[i] != null) if (feedz.mainPage) if (!feedz[i].loaded) {
 			left++;
 		};
-		console.log(left);
 		if (left>0) return;
 		postRun();
 	}
