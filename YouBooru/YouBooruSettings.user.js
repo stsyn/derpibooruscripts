@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.6.7
+// @version      0.7.0
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -38,7 +38,7 @@
 	let settings;
 	let resaved = false;
 	let errorCode = 0;
-	let windows = '._ydb_window {position:fixed;width:80vw;height:80vh;top:10vh;left:10vw}';
+	let windows = '._ydb_window {position:fixed;width:80vw;height:80vh;top:10vh;left:10vw} ._ydb_warn{background:#f00 !important}';
 	const warningText = 'These two lines are used by YourBooru to save data in your account. Do not split or edit them.';
 	const backupVersion = 1;
 
@@ -93,7 +93,7 @@
 				{type:'buttonLink', name:'Synch now', href:'/pages/yourbooru?synch'},
 				{type:'breakline'},
 				{type:'breakline'},
-				{type:'input', name:'Debug log length:', parameter:'debugLength'}
+				{type:'input', name:'Debug log length:', parameter:'debugLength', validation:{type:'int',min:0,max:500}}
 			]
 		};
 		if (window._YDB_public.funcs == undefined) window._YDB_public.funcs = {};
@@ -256,6 +256,7 @@
 		]);
 
 		let cont = addElem('div', {className:'block__content '+(e.name!='Settings'?'hidden':'')}, cont2);
+		if (e.name == 'Settings') cont2.insertBefore(cont, cont2.childNodes[0]);
 
 		let l = document.createElement('div');
 		l.dataset.parent = e.container;
@@ -410,12 +411,91 @@
 		backup();
 	}
 
+	function validate(e) {
+		let ec = document.getElementById('_ydb_error_cont');
+		ec.innerHTML = '';
+		let errorlevel = 0;
+		let validateChilds = function(c, m, mm) {
+			let errorlevel = 0;
+			for (let i=0; i<c.childNodes.length; i++) {
+				let el = c.childNodes[i];
+				let x;
+				for (let j=0; j<m.length; j++) {
+					if (m[j].length>0) for (let k=0; k<m[j].length; k++) {
+						if (m[j][k].parameter == el.dataset.parameter) {
+							x = m[j][k];
+							break;
+						}
+					}
+					else if (m[j].parameter == el.dataset.parameter) {
+						x = m[j];
+						break;
+					}
+				}
+				if (el.classList == null) continue;
+				else if (el.classList.contains('_ydb_s_valuecont')) {
+					if (x.validation != undefined) {
+						let v = x.validation;
+						if (v.type == 'int') {
+							if (el.value == '') el.value= 0;
+							if (el.value != parseInt(el.value) || el.value<v.min || el.value>v.max) {
+								let reason = '';
+								if (el.value != parseInt(el.value)) reason = ' should be valid integer number!';
+								else if (el.value<v.min) reason = ' is too small! Should be at least '+v.min;
+								else if (el.value>v.max) reason = ' is too big! Should be at most '+v.max;
+								addElem('div',{className:'flash flash--warning', innerHTML:'>'+mm.name+': '+x.name+reason}, ec);
+								errorlevel++;
+								el.classList.add('_ydb_warn');
+							}
+						}
+						else if (v.type == 'float') {
+							if (el.value == '') el.value= 0;
+							if (el.value != parseFloat(el.value) || el.value<v.min || el.value>v.max) {
+								let reason = '';
+								if (el.value != parseInt(el.value)) reason = ' should be valid real number!';
+								else if (el.value<v.min) reason = ' is too small! Should be at least '+v.min;
+								else if (el.value>v.max) reason = ' is too big! Should be at most '+v.max;
+								addElem('div',{className:'flash flash--warning', innerHTML:'>'+mm.name+': '+x.name+reason}, ec);
+								errorlevel++;
+								el.classList.add('_ydb_warn');
+							}
+						}
+						continue;
+					}
+				}
+				else if (el.classList.contains('_ydb_array')) {
+					if (el.childNodes != undefined) for (let j=0; j<el.childNodes.length; j++) {
+						if (el.childNodes[j].classList.contains('_ydb_inArray')) {
+							errorlevel+=validateChilds(el.childNodes[j], x.s, mm);
+						}
+					}
+				}
+			}
+			return errorlevel;
+		};
+		let containers = document.getElementsByClassName('_ydb_settings_container');
+		for (let i=0; i<containers.length; i++) {
+			let mx = modules[containers[i].dataset.parent];
+			errorlevel += (validateChilds(containers[i], mx.options, mx));
+		}
+		if (errorlevel>0) {
+			let x = addElem('div',{className:'flash flash--warning', style:'font-weight:500', innerHTML:'There is '+errorlevel+' errors preventing settings to be saved:'}, ec);
+			ec.insertBefore(x,ec.childNodes[0]);
+		}
+		return errorlevel;
+	}
+
 	function save(e) {
 		if (resaved) {
 			afterSave();
 			return;
 		}
 		window._YDB_public.handled = 0;
+		if (validate(e) >0) {
+			e.preventDefault();
+			setTimeout(function() {document.querySelector('.edit_user input.button[type=submit]').removeAttribute('disabled');},500);
+			return;
+		}
 		let changed = false;
 		let exploreChilds = function(c, m, o) {
 			let changed = false;
@@ -563,6 +643,7 @@
 			InfernoAddElem('a', {innerHTML:'Backup', target:'_blank', href:'/pages/yourbooru?backup'}),
 			InfernoAddElem('a', {innerHTML:'Logs', target:'_blank', href:'/pages/yourbooru?logs'})
 		]);
+		addElem('div', {className:'block', id:'_ydb_error_cont'}, cont);
 
 		let hh = function () {
 			if (location.hash!='') {
@@ -581,6 +662,7 @@
 		if (location.hash.slice(1) == 'backup') {
 			document.querySelector('.edit_user input.button[type=submit]').click();
 		}
+		validate();
 	}
 
 	////////////////////////////
@@ -611,11 +693,11 @@
 		for (let i=x.length-1; i>=0; i--) {
 			let d = new Date(x[i].ts);
 			u.push(InfernoAddElem('div',{className:levelsClasses[x[i].level]},[
-					InfernoAddElem('strong',{innerHTML:'['+levels[x[i].level]+'] '},[]),
-					InfernoAddElem('strong',{innerHTML:' ['+x[i].id+'] '},[]),
-					InfernoAddElem('span',{innerHTML:d.getDate()+'.'+(d.getMonth()+1)+'.'+d.getFullYear()+'@'+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds()},[]),
-					InfernoAddElem('span',{innerHTML:' '+x[i].val},[])
-				]));
+				InfernoAddElem('strong',{innerHTML:'['+levels[x[i].level]+'] '},[]),
+				InfernoAddElem('strong',{innerHTML:' ['+x[i].id+'] '},[]),
+				InfernoAddElem('span',{innerHTML:d.getDate()+'.'+(d.getMonth()+1)+'.'+d.getFullYear()+'@'+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds()},[]),
+				InfernoAddElem('span',{innerHTML:' '+x[i].val},[])
+			]));
 		}
 
 		ChildsAddElem('div',{className:'block',style:'width:100%'}, c, u);
