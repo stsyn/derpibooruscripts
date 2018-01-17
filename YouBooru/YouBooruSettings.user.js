@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.6.6
+// @version      0.6.7
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -43,7 +43,8 @@
 	const backupVersion = 1;
 
 	function read() {
-		let svd = localStorage._ydb;
+		if (localStorage._ydb_config == undefined) localStorage._ydb_config = localStorage._ydb;
+		let svd = localStorage._ydb_config;
 		try {
 			settings = JSON.parse(svd);
 		}
@@ -56,7 +57,7 @@
 	read();
 
 	function write() {
-		localStorage._ydb = JSON.stringify(settings);
+		localStorage._ydb_config = JSON.stringify(settings);
 	}
 
 	function callWindow(inside) {
@@ -81,7 +82,7 @@
 		if (window._YDB_public.settings == undefined) window._YDB_public.settings = {};
 		window._YDB_public.settings.settings = {
 			name:'Settings',
-			container:'_ydb',
+			container:'_ydb_config',
 			version:GM_info.script.version,
 			s:[
 				{type:'checkbox', name:'Synchronize (settings will be duplicated at watchlist string filter, this will not affect watchlist)', parameter:'synch'},
