@@ -12,7 +12,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.11
+// @version      0.4.12
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -135,7 +135,7 @@
 			s:[
 				{type:'checkbox', name:'Do not remove watchlist', parameter:'doNotRemoveWatchList'},
 				{type:'breakline'},
-				{type:'input', name:'Images in each feed:', parameter:'imagesInFeeds'},
+				{type:'input', name:'Images in each feed:', parameter:'imagesInFeeds', validation:{type:'int',min:1,max:50}},
 				{type:'breakline'},
 				{type:'checkbox', name:'Watch link on the right side', parameter:'watchFeedLinkOnRightSide'},
 				{type:'breakline'},
@@ -159,8 +159,8 @@
 						]}
 					],
 					[
-						{type:'input', name:'Cache (minutes)', parameter:'cache',styleI:{width:'3em', marginRight:'.4em'}},
-						{type:'input', name:'... or update each (used if previous is 0)', parameter:'ccache',styleI:{width:'3.2em', marginRight:'.4em'}},
+						{type:'input', name:'Cache (minutes)', parameter:'cache',styleI:{width:'3em', marginRight:'.4em'}, validation:{type:'int',min:0,max:99999}},
+						{type:'input', name:'... or update each (used if previous is 0)', parameter:'ccache',styleI:{width:'3.2em', marginRight:'.4em'}, validation:{type:'int',min:0,max:99999}},
 						{type:'checkbox', name:'Double size', parameter:'double',styleI:{marginRight:'.4em'}},
 						{type:'checkbox', name:'Show on mainpage', parameter:'mainPage',styleI:{marginRight:'.4em'}},
 						{type:'buttonLink', attrI:{title:'Copy this link and paste it somewhere to share that feed!',target:'_blank'},styleI:{marginRight:'.5em'}, name:'Share', i:function(module,elem) {
