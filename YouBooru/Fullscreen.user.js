@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.11
+// @version      0.5.12
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -320,7 +320,7 @@ margin:auto;
 .source_url a, #footer_content a, .button--link, .communication__body a, .comment_backlinks a, .communication__options a, a.interaction-user-list-item, .pagination a,
 a.block__header--single-item:hover, .block__header:not(.center--layout) a:hover, .block__header--sub a:hover, .block__header--single-item a:hover, .autocomplete__item--selected,
 .block--fixed a, .rule a, a.togglable-faq-item, .field a:not([data-tag-name]), a.media-box__header--link, a.media-box__header--link:hover, #content h1 a, #content h3 a, .flash a,
-#content p strong a, .quick-tag-table__tab a, .flash--site-notice.flash a {
+#content p strong a, #content li a, .quick-tag-table__tab a, .flash--site-notice.flash a, #content code a {
 color:_fs_color;
 }
 p>a {
@@ -483,12 +483,12 @@ color: #555;
             version:GM_info.script.version,
             s:[
                 {type:'checkbox', name:'Show UI', parameter:'extended'},
-                {type:'input', name:'Scroll speed', parameter:'scrollSpeed'},
-                {type:'input', name:'Scroll multiplier', parameter:'scrollMultiply'},
+                {type:'input', name:'Scroll speed', parameter:'scrollSpeed', validation:{type:'int',min:5, max:100, default:20}},
+                {type:'input', name:'Scroll multiplier', parameter:'scrollMultiply', validation:{type:'float',min:1, max:10, default:2}},
                 {type:'checkbox', name:'Remove href from comments link', parameter:'commentLink'},
                 {type:'breakline'},
                 {type:'checkbox', name:'Autohide UI', parameter:'staticEnabled'},
-                {type:'input', name:'Autohide timeout', parameter:'staticTime'},
+                {type:'input', name:'Autohide timeout', parameter:'staticTime', validation:{type:'int',min:0, max:600, default:50}},
                 {type:'breakline'},
                 {type:'select', name:'Panel color', parameter:'style', values:[
                     {name:'Pink', value:'oc'},
