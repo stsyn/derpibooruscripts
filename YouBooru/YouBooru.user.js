@@ -12,7 +12,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.10
+// @version      0.4.11
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -222,7 +222,7 @@
 		f_s_c = localStorage._ydb_feeds;
 		if (f_s_c == undefined) {
 			legacyPreRun();
-			debug('YDB:F','Data conversion to 0.4.5+ format done', '0');
+			debug('YDB:F','Data conversion to 0.4.5+ format done', 0);
 			f_s_c = {};
 			for (let k in config) f_s_c[k] = config[k];
 			f_s_c.feedz = feedz;
@@ -243,7 +243,7 @@
 				feedzCache = JSON.parse(svd);
 			}
 			catch (e) {
-				console.log('Cannot get feeds cache');
+				debug('YDB:F','Cannot get feeds cache', 1);
 			}
 		}
 		svd = localStorage._ydb_cachesUrls;
@@ -252,7 +252,7 @@
 				feedzURLs = JSON.parse(svd);
 			}
 			catch (e) {
-				console.log('Cannot get feeds cache');
+				debug('YDB:F','Cannot get feeds URLCache', 1);
 			}
 		}
 
@@ -272,11 +272,16 @@
 	function legacyPreRun() {
 		let svd = localStorage._ydb;
 		if (svd !== undefined) {
-			try {
-				feedz = JSON.parse(svd);
+			if (JSON.parse(svd).length !== undefined) {
+				try {
+					feedz = JSON.parse(svd);
+				}
+				catch (e) {
+					debug('YDB:F','Cannot get feeds. Should be loaded default', 1);
+				}
 			}
-			catch (e) {
-				console.log('Cannot get feeds');
+			else {
+				debug('YDB:F','Cannot get feeds. Should be loaded default', 1);
 			}
 		}
 		for (let i=0; i<feedz.length; i++) {
@@ -291,8 +296,7 @@
 			}
 		}
 
-		if (!config.forceScriptConfig)
-		{
+		if (!config.forceScriptConfig) {
 			svd = localStorage._ydb_config;
 			if (svd !== undefined) {
 				try {
@@ -300,7 +304,7 @@
 					if (svd2.feeds !== undefined) config = svd2.feeds;
 				}
 				catch (e) {
-					console.log('Cannot get config');
+				debug('YDB:F','Cannot get configs', 1);
 				}
 			}
 			let c2 = {};
