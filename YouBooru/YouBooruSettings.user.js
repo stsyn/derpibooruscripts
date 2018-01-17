@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.7.0
+// @version      0.7.1
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -93,7 +93,7 @@
 				{type:'buttonLink', name:'Synch now', href:'/pages/yourbooru?synch'},
 				{type:'breakline'},
 				{type:'breakline'},
-				{type:'input', name:'Debug log length:', parameter:'debugLength', validation:{type:'int',min:0,max:500}}
+				{type:'input', name:'Debug log length:', parameter:'debugLength', validation:{type:'int',min:0,max:500, default:200}}
 			]
 		};
 		if (window._YDB_public.funcs == undefined) window._YDB_public.funcs = {};
@@ -437,7 +437,11 @@
 					if (x.validation != undefined) {
 						let v = x.validation;
 						if (v.type == 'int') {
-							if (el.value == '') el.value= 0;
+							if (el.value == '') {
+                                if (x.default != undefined) el.value = x.default;
+                                else if (el.min != undefined) el.value = x.min;
+                                else el.value=0;
+                            }
 							if (el.value != parseInt(el.value) || el.value<v.min || el.value>v.max) {
 								let reason = '';
 								if (el.value != parseInt(el.value)) reason = ' should be valid integer number!';
@@ -449,7 +453,11 @@
 							}
 						}
 						else if (v.type == 'float') {
-							if (el.value == '') el.value= 0;
+							if (el.value == '') {
+                                if (x.default != undefined) el.value = x.default;
+                                else if (el.min != undefined) el.value = x.min;
+                                else el.value=0;
+                            }
 							if (el.value != parseFloat(el.value) || el.value<v.min || el.value>v.max) {
 								let reason = '';
 								if (el.value != parseInt(el.value)) reason = ' should be valid real number!';
