@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.3.6
+// @version      0.3.7
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -113,6 +113,10 @@
         };
         if (window._YDB_public.funcs == undefined) window._YDB_public.funcs = {};
         window._YDB_public.funcs.tagAliases = tagAliases;
+        window._YDB_public.funcs.tagComplexParser = goodParse;
+        window._YDB_public.funcs.tagSimpleParser = simpleParse;
+		window._YDB_public.funcs.tagComplexCombine = goodCombine;
+		window._YDB_public.funcs.tagSimpleCombine = simpleCombine;
     }
 
     //reader
@@ -235,6 +239,7 @@
         x = x.replace(/[ ,\(]!/g, function(str){return str[0]+' ';});
         x = x.replace(/\*/g, ' ');
         x = x.replace(/\?/g, ' ');
+        x = x.replace(/\"/g, ' ');
         x = x.replace(/\~/g, ',');
         x = x.replace(/\^/g, ',');
         x = x.replace(new RegExp(' OR ','g'), ' ,  ');
@@ -271,9 +276,10 @@
         return ns;
     }
 
-    function simpleCombine(y) {
+    function simpleCombine(y,separator) {
+		if (separator == undefined) separator = '||';
         let s = '';
-        for (let i=0; i<y.length; i++) s += y[i] + (i<y.length-1?' OR ':'');
+        for (let i=0; i<y.length; i++) s += y[i] + (i<y.length-1?separator:'');
         return s;
     }
 
