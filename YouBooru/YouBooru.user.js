@@ -12,7 +12,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.12
+// @version      0.4.13
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -525,7 +525,7 @@
 				else if (request.status === 0) {
 					debug('YDB:F','Server timeout',2);
 					request.feed.container.innerHTML = 'Server timeout. Retry?';
-					feedAfterload(request,'Server timeout. Retry?',id);
+					feedAfterload(request,'Server timeout. Retry?',id, true);
 					return false;
 				}
 				else {
@@ -538,7 +538,7 @@
 		};
 	}
 
-	function feedAfterload(r,cc,id) {
+	function feedAfterload(r,cc,id,notcache) {
 		feedzURLs[id] = compileURL(r.feed);
 		r.feed.url.href = feedzURLs[id];
 		r.feed.temp.innerHTML = '';
@@ -546,7 +546,9 @@
 		r.feed.responsed = config.imagesInFeeds;
 
 		feedzCache[id] = cc;
-		r.feed.saved = parseInt(Date.now() / 60000);
+		if (!notcache) {
+			r.feed.saved = parseInt(Date.now() / 60000);
+		}
 		let left=0;
 		for (let i=0; i<feedz.length; i++) if (feedz[i] != null) if (feedz.mainPage) if (!feedz[i].loaded) {
 			left++;
@@ -760,6 +762,10 @@
 			if (feedzCache[i] == undefined) {
 				getFeed(f, i);
 				debug('YDB:F','Requested update to feed "'+f.name+'". Reason "No cache found"', '1');
+			}
+			else if (feedzCache[i].startsWith('Server timeout.')) {
+				getFeed(f, i);
+				debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Not finished loading"', '1');
 			}
 			else if (compileURL(f) != feedzURLs[i]) {
 				getFeed(f, i);
