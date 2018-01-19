@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.3.7
+// @version      0.3.8
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -36,6 +36,7 @@
     'use strict';
     let processing = false;
     let result;
+	let version = 0;
 
     var tagDB = getTagDB();
 
@@ -58,6 +59,7 @@
                 {type:'checkbox', name:'Bigger search fields', parameter:'patchSearch'},
                 {type:'header', name:'Tag aliases'},
                 {type:'checkbox', name:'Do not parse page name', parameter:'oldName'},
+                {type:'checkbox', name:'As short queries as possible', parameter:'compress', styleS:{display:'none'}},
                 {type:'breakline'},
                 {type:'text', name:'If synchronizing enabled, adding and removing tags from watchlist via tag dropdown will cause small popup window until synchronizing done.'},
                 {type:'breakline'},
@@ -68,6 +70,7 @@
                     [
                         {type:'input', name:'', parameter:'a',styleI:{width:'calc(40% - 10px - 12.5em)'}},
                         {type:'textarea', name:'', parameter:'b',styleI:{width:'60%'}},
+                        {type:'input', name:'', parameter:'c',styleI:{display:'none'}},
                         {type:'checkbox', name:'As watchlist', parameter:'w'}
                     ]
                 ], template:{a:'',b:'', w:false}}
@@ -137,6 +140,7 @@
         ls.hidden = {};
         ls.force = false;
         ls.reset = false;
+		ls.version = version;
         fl = ls.hidden;
     }
     register();
@@ -144,6 +148,10 @@
         ls.patchSearch = true;
         write(ls);
     }
+	if (ls.version == undefined) {
+		ls.version = version;
+        write(ls);
+	}
 
     if (ls.aliases != undefined && ls.aliases.length>0) {
         ls.aliases.sort(function(a, b){
@@ -380,6 +388,23 @@
         let q = cycledParse(original);
         if (opt.legacy) q = legacyTagAliases(q);
         if (q!=original) {
+            changed = true;
+            rq = q;
+        }
+
+		let artists = function(orig) {
+            let tags = goodParse(orig);
+            for (let i=0; i<tags.tags.length; i++) {
+                if (tags.tags[i].v.startsWith('@')) {
+                    tags.tags[i].v = tags.tags[i].v.replace('@','artist:');
+                }
+            }
+            let q2 = goodCombine(tags);
+            return q2;
+        };
+
+		q = artists(rq);
+        if (q!=rq) {
             changed = true;
             rq = q;
         }
