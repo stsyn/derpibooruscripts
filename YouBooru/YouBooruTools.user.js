@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.3.8
+// @version      0.4.0
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -26,6 +26,8 @@
 // @require      https://raw.githubusercontent.com/blueimp/JavaScript-MD5/master/js/md5.min.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagDB0.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagShortAliases0.js
+
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
 // @grant        none
@@ -77,7 +79,7 @@
             ],
             onChanges:{
                 aliases:{
-                    _:function(module,data) {
+                    _:function(module,data, cb) {
                         if (data != undefined && data.length>0) {
                             data.sort(function(a, b){
                                 return b.a.length - a.a.length;
@@ -100,6 +102,7 @@
                                             data[i] = result;
                                             window._YDB_public.handled--;
                                             t.classList.add('hidden');
+                                            //cb(module,data, result);
                                         }
                                         else setTimeout(process, 100);
                                     };
@@ -108,8 +111,12 @@
                             }
                         }
                     },
-                    b:function(m, el) {
+                    b:function(m, el, cb) {
                         m.changed = true;
+                    },
+                    w:function(m, el, cb) {
+                        console.log(el.checked);
+                        if (el.checked) m.changed = true;
                     }
                 }
             }
@@ -245,7 +252,7 @@
         while (x.indexOf(')') >= 0) x = x.replace(/[^\\\)]\)/g, function(str){return str[0]+' ';});
         x = x.replace(/[ ,\(]\-/g, function(str){return str[0]+' ';});
         x = x.replace(/[ ,\(]!/g, function(str){return str[0]+' ';});
-        x = x.replace(/\*/g, ' ');
+        x = x.replace(/[ ,\(]\*/g, function(str){return str[0]+' ';});
         x = x.replace(/\?/g, ' ');
         x = x.replace(/\"/g, ' ');
         x = x.replace(/\~/g, ',');
@@ -285,7 +292,7 @@
     }
 
     function simpleCombine(y,separator) {
-		if (separator == undefined) separator = '||';
+		if (separator == undefined) separator = ' || ';
         let s = '';
         for (let i=0; i<y.length; i++) s += y[i] + (i<y.length-1?separator:'');
         return s;
@@ -361,6 +368,7 @@
     }
 
     function tagAliases(original, opt) {
+        let limit = 900;
         checkAliases();
         let udata = readTagTools();
 
@@ -407,6 +415,43 @@
         if (q!=rq) {
             changed = true;
             rq = q;
+        }
+
+        let compressAliases = function (orig) {
+            let tags = goodParse(orig);
+            let tt = getTagShortAliases();
+            for (let i=0; i<tags.tags.length; i++) {
+                if (tt[tags.tags[i].v] != undefined) {
+                    tags.tags[i].v = tt[tags.tags[i].v];
+                }
+            }
+            let q2 = goodCombine(tags);
+            return q2;
+        };
+        if (rq.length > limit) {
+            q = compressAliases(rq);
+            if (q!=rq) {
+                changed = true;
+                rq = q;
+            }
+        }
+
+        let compressArtists = function (orig) {
+            let tags = goodParse(orig);
+            for (let i=0; i<tags.tags.length; i++) {
+                if (tags.tags[i].v.startsWith('artist:')) {
+                    tags.tags[i].v = tags.tags[i].v.replace('artist:','ar*:');
+                }
+            }
+            let q2 = goodCombine(tags);
+            return q2;
+        };
+        if (rq.length > limit) {
+            q = compressArtists(rq);
+            if (q!=rq) {
+                changed = true;
+                rq = q;
+            }
         }
 
         if (changed) {
@@ -522,6 +567,7 @@
             }
         };
         checker('.js-taginput-fancy-tag_input', 'standart');
+        checker('.js-taginput-fancy-watched_tag_list', 'standart');
         checker('.suggested_tags', 'suggested');
         setTimeout(colorTags,500);
     }
@@ -615,7 +661,7 @@
             let req = new XMLHttpRequest();
             req.id = i;
             req.onreadystatechange = readyHandler(req);
-            req.open('GET', '/tags/'+encodeURIComponent(y[i].replace(/\-/g,'-dash-').replace(/ /g,'+').replace(/\:/g,'-colon-')));
+            req.open('GET', '/tags/'+encodeURIComponent(y[i].replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/ /g,'+').replace(/\:/g,'-colon-')));
             req.send();
         };
 
