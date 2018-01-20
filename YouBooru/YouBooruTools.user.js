@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.0
+// @version      0.4.1
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -250,6 +250,8 @@
         x = x.replace(/^\(/g, ' ');
         while (x.indexOf('(') >= 0) x = x.replace(/[^\\\(]\(/g, function(str){return str[0]+' ';});
         while (x.indexOf(')') >= 0) x = x.replace(/[^\\\)]\)/g, function(str){return str[0]+' ';});
+        x = x.replace(/^\-/g, ' ');
+        x = x.replace(/^\!/g, ' ');
         x = x.replace(/[ ,\(]\-/g, function(str){return str[0]+' ';});
         x = x.replace(/[ ,\(]!/g, function(str){return str[0]+' ';});
         x = x.replace(/[ ,\(]\*/g, function(str){return str[0]+' ';});
@@ -260,6 +262,7 @@
         x = x.replace(new RegExp(' OR ','g'), ' ,  ');
         x = x.replace(new RegExp(' AND ','g'), ',   ');
         x = x.replace(new RegExp(' NOT ','g'), ',   ');
+        x = x.replace(new RegExp('^NOT ','g'), '   ');
         let y = x.split(',');
         let afix = 0;
         for (let i=0; i<y.length; i++) {
@@ -368,7 +371,7 @@
     }
 
     function tagAliases(original, opt) {
-        let limit = 900;
+        let limit = 100;
         checkAliases();
         let udata = readTagTools();
 
@@ -403,6 +406,7 @@
 		let artists = function(orig) {
             let tags = goodParse(orig);
             for (let i=0; i<tags.tags.length; i++) {
+                console.log(tags.tags[i]);
                 if (tags.tags[i].v.startsWith('@')) {
                     tags.tags[i].v = tags.tags[i].v.replace('@','artist:');
                 }
