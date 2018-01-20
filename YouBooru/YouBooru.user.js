@@ -12,7 +12,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.13
+// @version      0.4.14
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -202,9 +202,10 @@
 	}
 
 	function resizeEverything() {
+        console.log('rs');
 		let ccont = document.getElementsByClassName('column-layout__main')[0];
 		let mwidth = parseInt(ccont.clientWidth) - 14;
-		let twidth = parseInt(mwidth/config.imagesInFeeds-8);
+		let twidth = parseInt(mwidth/parseInt(config.imagesInFeeds*(privated?1.2:1))-8);
 		for (let i=0; i<document.getElementsByClassName('_ydb_resizible').length; i++) {
 			document.getElementsByClassName('_ydb_resizible')[i].getElementsByClassName('media-box__header')[0].style.width = twidth+'px';
 			document.getElementsByClassName('_ydb_resizible')[i].getElementsByClassName('media-box__content--large')[0].style.width = twidth+'px';
@@ -216,6 +217,13 @@
 				document.getElementsByClassName('_ydb_resizible')[i].getElementsByClassName('media-box__header')[0].classList.remove('media-box__header--small');
 			}
 		}
+
+		for (let i=0; i<document.getElementsByClassName('_ydb_row_resizable').length; i++) {
+            let c = document.getElementsByClassName('_ydb_row_resizable')[i];
+            let s = twidth+22+7;
+			if (c.classList.contains('_ydb_row_double')) s*=2;
+			c.style.height = s+'px';
+        }
 	}
 
 	function preRun() {
@@ -543,7 +551,7 @@
 		r.feed.url.href = feedzURLs[id];
 		r.feed.temp.innerHTML = '';
 		r.feed.loaded = true;
-		r.feed.responsed = config.imagesInFeeds;
+		r.feed.responsed = parseInt(config.imagesInFeeds*1.2);
 
 		feedzCache[id] = cc;
 		if (!notcache) {
@@ -565,10 +573,10 @@
 		let pc = r.feed.temp.querySelector('.block__content.js-resizable-media-container');
 		let c = r.feed.container;
 		let mwidth = parseInt(cont.clientWidth) - 14;
-		let twidth = parseInt(mwidth/config.imagesInFeeds-8);
+		let twidth = parseInt(mwidth/parseInt(config.imagesInFeeds*(privated?1.2:1))-8);
 
 		if (pc === null) c.innerHTML = 'Empty feed';
-		else for (let i=0; i<config.imagesInFeeds*(r.feed.double?2:1); i++) {
+		else for (let i=0; i<parseInt(config.imagesInFeeds*(r.feed.double?2:1)*1.2); i++) {
 			let elem = pc.childNodes[0];
 			if (elem == null) break;
 			if (!config.doNotRemoveControls) elem.getElementsByClassName('media-box__header')[0].style.display = 'none';
@@ -618,6 +626,7 @@
 			if (twidth < 240) {
 				elem.getElementsByClassName('media-box__header')[0].classList.add('media-box__header--small');
 			}
+            if (i>=parseInt(config.imagesInFeeds*(privated?1.2:1)*(r.feed.double?2:1))) elem.classList.add('hidden');
 			c.appendChild(pc.childNodes[0]);
 		}
 
@@ -645,11 +654,11 @@
 		}
 		else {
 			c.innerHTML = feedzCache[id];
-			for (let i=0; i<c.childNodes.length; i++) {
+			for (let i=0; i<parseInt(config.imagesInFeeds*1.2)*(feed.double?2:1); i++) {
 				let elem = c.childNodes[i];
 				if (elem.querySelector('.media-box__content .image-container.thumb a img') !== null) elem.querySelector('.media-box__content--large .image-container.thumb a img').onload = spoiler;
 				let mwidth = parseInt(cont.clientWidth) - 14;
-				let twidth = parseInt(mwidth/config.imagesInFeeds-8);
+				let twidth = parseInt(mwidth/parseInt(config.imagesInFeeds*(privated?1.2:1))-8);
 				elem.getElementsByClassName('media-box__header')[0].style.width = twidth+'px';
 				elem.getElementsByClassName('media-box__content--large')[0].style.width = twidth+'px';
 				elem.getElementsByClassName('media-box__content--large')[0].style.height = twidth+'px';
@@ -659,6 +668,8 @@
 				else {
 					elem.getElementsByClassName('media-box__header')[0].classList.remove('media-box__header--small');
 				}
+                if (i>=parseInt(config.imagesInFeeds*(privated?1.2:1)*(feed.double?2:1))) elem.classList.add('hidden');
+                else elem.classList.remove('hidden');
 			}
 		}
 		/*feed.observer = new MutationObserver(function(mutations) {
@@ -726,10 +737,12 @@
 			elem.appendChild(container);
 
 			let mwidth = parseInt(cont.clientWidth) - 14;
-			let twidth = parseInt(mwidth/config.imagesInFeeds-8);
+			let twidth = parseInt(mwidth/parseInt(config.imagesInFeeds*(privated?1.2:1))-8);
 			let s = twidth+22+7;
 			if (f.double) s*=2;
 			container.style.height = s+'px';
+            container.classList.add('_ydb_row_resizable');
+            if (f.double) container.classList.add('_ydb_row_double');
 
 			let shitcontainer = document.createElement('div');
 			shitcontainer.style.display = 'none';
@@ -771,7 +784,7 @@
 				getFeed(f, i);
 				debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Feed url changed"', '1');
 			}
-			else if (config.imagesInFeeds != feedz[i].responsed) {
+			else if (parseInt(config.imagesInFeeds*1.2) != feedz[i].responsed) {
 				getFeed(f, i);
 				debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Changed setting imageInFeeds"', '1');
 			}
