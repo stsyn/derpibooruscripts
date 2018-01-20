@@ -12,7 +12,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.14
+// @version      0.4.15
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -112,6 +112,34 @@
 
 	 ********************/
 
+    function parseURL(url) {
+		var a = document.createElement('a');
+		a.href = url;
+		return {
+			source: url,
+			protocol: a.protocol.replace(':',''),
+			host: a.hostname,
+			port: a.port,
+			query: a.search,
+			params: (function(){
+				var ret = {},
+					seg = a.search.replace(/^\?/,'').split('&'),
+					len = seg.length, i = 0, s;
+				for (;i<len;i++) {
+					if (!seg[i]) { continue; }
+					s = seg[i].split('=');
+					ret[s[0]] = s[1];
+				}
+				return ret;
+			})(),
+			file: (a.pathname.match(/\/([^\/?#]+)$/i) || [,''])[1],
+			hash: a.hash.replace('#',''),
+			path: a.pathname.replace(/^([^\/])/,'/$1'),
+			relative: (a.href.match(/tps?:\/\/[^\/]+(.+)/) || [,''])[1],
+			segments: a.pathname.replace(/^\//,'').split('/')
+		};
+	}
+
 	function resetCache(module, element) {
 		let id = element.parentNode.dataset.id;
 		let svd = localStorage._ydb_caches;
@@ -169,9 +197,9 @@
 								elem.innerHTML = '------';
 								return;
 							}
-							elem.href = '/pages/yourbooru?addFeed?'+f.name+'?'+
-								encodeURIComponent(window._YDB_public.funcs.tagAliases(f.query, {legacy:false})).replace(/\(/,'%28').replace(/\)/,'%29')+
-								'?'+f.sort+'?'+f.sd+'?'+f.cache+'?'+f.ccache;
+							elem.href = '/search?name='+encodeURIComponent(f.name)+'&q='+
+								encodeURIComponent(window._YDB_public.funcs.tagAliases(f.query, {legacy:false})).replace(/\%20/g,'+')+
+								'&sf='+f.sort+'&sd='+f.sd+'&cache='+f.cache+'&ccache='+f.ccache;
 						}},
 						{type:'button', name:'Reset cache', action:resetCache}
 					],[
@@ -202,7 +230,6 @@
 	}
 
 	function resizeEverything() {
-        console.log('rs');
 		let ccont = document.getElementsByClassName('column-layout__main')[0];
 		let mwidth = parseInt(ccont.clientWidth) - 14;
 		let twidth = parseInt(mwidth/parseInt(config.imagesInFeeds*(privated?1.2:1))-8);
@@ -823,11 +850,37 @@
 		}
 		f.loaded = false;
 		f.name = decodeURIComponent(u[1]);
-		f.query = decodeURIComponent(u[2]).replace(/\\+/g,' ');
+		f.query = decodeURIComponent(u[2]).replace(/\+/g,' ');
 		f.sort = u[3];
 		f.sd = u[4];
 		f.cache = u[5];
 		f.ccache = u[6];
+		feedz[i] = f;
+		write();
+
+		if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup(function() {
+			if (history.length == 1) close();
+			else history.back();
+		});
+	}
+
+
+	function YB_insertFeed2(u) {
+		var f = {};
+		let i;
+		for (i=0; i<feedz.length; i++) {
+			if (feedz[i].name == decodeURIComponent(u.params.name)) {
+				f = feedz[i];
+				break;
+			}
+		}
+		f.loaded = false;
+		f.name = decodeURIComponent(u.params.name);
+		f.query = decodeURIComponent(u.params.q).replace(/\+/g,' ');
+		f.sort = u.params.sf;
+		f.sd = u.params.sd;
+		f.cache = u.params.cache;
+		f.ccache = u.params.ccache;
 		feedz[i] = f;
 		write();
 
@@ -884,6 +937,52 @@
 		else c.innerHTML = 'Not enough parameters, impossible to add!';
 	}
 
+	function YB_addFeed2(u) {
+        let alreadyHas = false;
+        for (let i=0; i<feedz.length; i++) {
+            if (feedz[i].name == decodeURIComponent(u.params.name)) {
+                alreadyHas = true;
+                break;
+            }
+        }
+        let e = InfernoAddElem('div',{className:'block__content js-imagelist-info'},[
+            InfernoAddElem('h4',{innerHTML:'Add feed "'+decodeURIComponent(u.params.name)+'"'},[]),
+            InfernoAddElem('br',{},[]),
+            InfernoAddElem('span',{innerHTML:'Update interval: '+(u.params.cache==0?'each '+u.params.ccache:u.params.cache)+' minutes'},[]),
+            InfernoAddElem('br',{},[]),
+            InfernoAddElem('br',{},[]),
+            alreadyHas?InfernoAddElem('span',{},[
+                InfernoAddElem('span',{className:'button',id:"yy_add",innerHTML:'Replace'},[]),
+                InfernoAddElem('span',{innerHTML:' '},[]),
+                InfernoAddElem('span',{className:'button',id:"yy_include",innerHTML:'Rename automatically'},[]),
+                InfernoAddElem('span',{innerHTML:' '},[]),
+                InfernoAddElem('span',{className:'button',id:"yy_cancel",innerHTML:'Cancel'},[])
+            ]):
+            InfernoAddElem('span',{},[
+                InfernoAddElem('span',{className:'button',id:"yy_add",innerHTML:'Add feed'},[]),
+                InfernoAddElem('span',{innerHTML:' '},[]),
+                InfernoAddElem('span',{className:'button',id:"yy_cancel",innerHTML:'Cancel'},[]),
+                InfernoAddElem('span',{className:'button',id:"yy_include",style:'display:none',innerHTML:'Rename automatically'},[])
+            ])
+        ]);
+        document.getElementById('imagelist_container').insertBefore(e,document.querySelector('#imagelist_container .block__content.js-resizable-media-container'));
+
+        document.getElementById('yy_cancel').addEventListener('click', function() {
+            if (history.length == 1) close();
+            else history.back();
+        });
+
+        document.getElementById('yy_add').addEventListener('click', function() {
+            YB_insertFeed2(u);
+        });
+
+        document.getElementById('yy_include').addEventListener('click', function() {
+            u.params.name = decodeURIComponent(u.params.name)+'_'+parseInt(65536*Math.random());
+            YB_insertFeed2(u);
+        });
+
+	}
+
 	function YDB() {
 		let x = location.search.slice(1);
 		if (location.search == "") YB_createEmpty();
@@ -903,6 +1002,11 @@
 			preRun();
 			YDB();
 		}
+        else if (location.pathname == "/search" || location.pathname == '/search/index') {
+			preRun();
+            let u = parseURL(location.href);
+            if (u.params.name != undefined) YB_addFeed2(u);
+        }
 		register();
 	}
 })();
