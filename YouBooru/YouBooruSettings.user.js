@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.7.1
+// @version      0.7.2
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -38,7 +38,7 @@
 	let settings;
 	let resaved = false;
 	let errorCode = 0;
-	let windows = '._ydb_window {position:fixed;width:80vw;height:80vh;top:10vh;left:10vw} ._ydb_warn{background:#f00 !important}';
+	let windows = '._ydb_window {position:fixed;width:80vw;height:80vh;top:10vh;left:10vw;overflow-y:auto} ._ydb_warn{background:#f00 !important}';
 	const warningText = 'These two lines are used by YourBooru to save data in your account. Do not split or edit them.';
 	const backupVersion = 1;
 
@@ -506,6 +506,10 @@
 		}
 		let changed = false;
 		let exploreChilds = function(c, m, o) {
+            //container, module data container, onchange functions, module data container path, container id
+            let callback = function(m, el, val) {
+                m[el.dataset.parameter] = val;
+            };
 			let changed = false;
 			for (let i=0; i<c.childNodes.length; i++) {
 				let el = c.childNodes[i];
@@ -513,16 +517,16 @@
 				else if (el.classList.contains('_ydb_s_valuecont')) {
 					if (m[el.dataset.parameter] != el.value) {
 						changed = true;
-						if (o != undefined && o[el.dataset.parameter] != undefined) o[el.dataset.parameter](m, el);
 						m[el.dataset.parameter] = el.value;
+						if (o != undefined && o[el.dataset.parameter] != undefined) o[el.dataset.parameter](m, el, callback);
 					}
 				}
 				else if (el.classList.contains('_ydb_s_checkcont')) {
 					let cel = el.getElementsByTagName('input')[0];
 					if (m[el.dataset.parameter] != cel.checked) {
 						changed = true;
-						if (o != undefined && o[el.dataset.parameter] != undefined) o[el.dataset.parameter](m, el);
 						m[el.dataset.parameter] = cel.checked;
+						if (o != undefined && o[el.dataset.parameter] != undefined) o[el.dataset.parameter](m, cel, callback);
 					}
 				}
 				else if (el.classList.contains('_ydb_array')) {
@@ -545,7 +549,7 @@
 					}
 
 					if (inChanged) changed = true;
-					if (inChanged && o != undefined && o[el.dataset.parameter]._ != undefined) o[el.dataset.parameter]._(m, m[el.dataset.parameter]);
+					if (inChanged && o != undefined && o[el.dataset.parameter]._ != undefined) o[el.dataset.parameter]._(m, m[el.dataset.parameter], callback);
 				}
 			}
 			return changed;
@@ -553,10 +557,12 @@
 		let containers = document.getElementsByClassName('_ydb_settings_container');
 		for (let i=0; i<containers.length; i++) {
 			let mx = modules[containers[i].dataset.parent];
+            mx.changed = false;
 			if (exploreChilds(containers[i], mx.saved, mx.onChanges)) {
 				changed = true;
+                mx.changed = true;
 				if (mx.onChanges != undefined && mx.onChanges._ != undefined) mx.onChanges._(mx);
-				localStorage[mx.container] = JSON.stringify(mx.saved);
+				//localStorage[mx.container] = JSON.stringify(mx.saved);
 			}
 		}
 		read();
@@ -568,6 +574,10 @@
 			let checker = function() {
 				if (window._YDB_public.handled != 0) setTimeout(checker, 100);
 				else {
+                    for (let i=0; i<containers.length; i++) {
+                        let mx = modules[containers[i].dataset.parent];
+                        if (mx.changed) localStorage[mx.container] = JSON.stringify(mx.saved);
+                    }
 					resaved = true;
 					document.querySelector('.edit_user input.button[type=submit]').removeAttribute('disabled');
 					document.querySelector('.edit_user input.button[type=submit]').click();
@@ -575,7 +585,13 @@
 			};
 			setTimeout(checker, 100);
 		}
-		else if (changed) backup();
+        else if (changed) {
+            for (let i=0; i<containers.length; i++) {
+                let mx = modules[containers[i].dataset.parent];
+                if (mx.changed) localStorage[mx.container] = JSON.stringify(mx.saved);
+            }
+            backup();
+        }
 		debugLogger('YDB:S', 'Settings saved', 0);
 	}
 
