@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.1
+// @version      0.4.2
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -115,7 +115,6 @@
                         m.changed = true;
                     },
                     w:function(m, el, cb) {
-                        console.log(el.checked);
                         if (el.checked) m.changed = true;
                     }
                 }
@@ -371,7 +370,7 @@
     }
 
     function tagAliases(original, opt) {
-        let limit = 100;
+        let limit = 500;
         checkAliases();
         let udata = readTagTools();
 
@@ -406,7 +405,6 @@
 		let artists = function(orig) {
             let tags = goodParse(orig);
             for (let i=0; i<tags.tags.length; i++) {
-                console.log(tags.tags[i]);
                 if (tags.tags[i].v.startsWith('@')) {
                     tags.tags[i].v = tags.tags[i].v.replace('@','artist:');
                 }
@@ -419,6 +417,24 @@
         if (q!=rq) {
             changed = true;
             rq = q;
+        }
+
+        let compressSyntax = function (orig) {
+            let q2 = orig.replace(/ \&\& /g, ',');
+			q2 = q2.replace(/ \|\| /g, ' OR ');
+			while (q2.indexOf(', ')>-1) q2 = q2.replace(/, /g, ',');
+			while (q2.indexOf(' ,')>-1) q2 = q2.replace(/ ,/g, ',');
+        	q2 = q2.replace(new RegExp(' NOT ','g'), '-');
+        	q2 = q2.replace(new RegExp('^NOT ','g'), '-');
+            return q2;
+        };
+
+		if (rq.length > limit) {
+            q = compressSyntax(rq);
+            if (q!=rq) {
+                changed = true;
+                rq = q;
+            }
         }
 
         let compressAliases = function (orig) {
@@ -576,6 +592,30 @@
         setTimeout(colorTags,500);
     }
 
+	//bad links fixes
+    function urlSearchInElem(e) {
+        let exclude = [];
+        for (let i=0; i<e.querySelectorAll('a').length; i++) exclude.push(e.querySelectorAll('a')[i].href);
+        for (let i=0; i<e.querySelectorAll('img').length; i++) exclude.push(e.querySelectorAll('img')[i].src);
+        for (let i=0; i<e.querySelectorAll('.image-show-container').length; i++) exclude.push(e.querySelectorAll('.image-show-container')[i].dataset.sourceUrl);
+            console.log(exclude);
+        e.innerHTML = e.innerHTML.replace(/(https?:\/\/|ftp:\/\/)((?![.,?!;:()]*(\s|$|\"|\<))[^\s]){2,}/gim, function(str){
+            for (let i=0; i<exclude.length; i++) if (exclude[i] == str) return str;
+            for (let i=0; i<exclude.length; i++) if (exclude[i] == str+'/') return str;
+            for (let i=0; i<exclude.length; i++) if (exclude[i]+'/' == str) return str;
+            console.log(str);
+            let color = getComputedStyle(document.querySelector('footer a')).color;
+            return '<a href="'+str+'" style="border-bottom: 1px dotted '+color+'">'+str+'</a>';
+        });
+    }
+
+    function urlSearch(e) {
+        let i;
+        for (i=0; i<e.querySelectorAll('.communication__body__text').length; i++) urlSearchInElem(e.querySelectorAll('.communication__body__text')[i]);
+        for (i=0; i<e.querySelectorAll('.profile-about').length; i++) urlSearchInElem(e.querySelectorAll('.profile-about')[i]);
+        for (i=0; i<e.querySelectorAll('.image-description').length; i++) urlSearchInElem(e.querySelectorAll('.image-description')[i]);
+    }
+
     //target _blank
     //domain fixes
     function linksPatch(doc) {
@@ -697,6 +737,7 @@
     if (ls.patchSearch) bigSearch();
     aliases();
     asWatchlist();
+    urlSearch(document);
     linksPatch(document);
     colorTags();
     if (location.pathname == "/pages/yourbooru") {
@@ -706,5 +747,6 @@
         if (e.target.classList == undefined) return;
         if (!(e.target.id == 'image_comments' || (e.target.classList.contains('block') && e.target.classList.contains('communication')))) return;
         badge(e.target);
+		urlSearch(e.target);
         linksPatch(e.target);});
 })();
