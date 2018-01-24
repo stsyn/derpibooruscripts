@@ -12,7 +12,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.16
+// @version      0.4.17
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -591,7 +591,7 @@
 			r.feed.saved = parseInt(Date.now() / 60000);
 		}
 		let left=0;
-		for (let i=0; i<feedz.length; i++) if (feedz[i] != null) if (!(feedz.mainPage && !feedz.mainPage)) if (!feedz[i].loaded) {
+		for (let i=0; i<feedz.length; i++) if (feedz[i] != null) if (privated || feedz[i].mainPage) if (!feedz[i].loaded) {
 			left++;
 		};
 		if (left>0) return;
@@ -728,7 +728,7 @@
 		feed.temp.innerHTML = '';
 		feed.loaded = true;
 		feed.url.href = feedzURLs[id];
-		for (let i=0; i<feedz.length; i++) if (feedz[i] != null) if (!(feedz.mainPage && !feedz.mainPage)) if (!feedz[i].loaded) return;
+		for (let i=0; i<feedz.length; i++) if (feedz[i] != null) if (privated || feedz[i].mainPage) if (!feedz[i].loaded) return;
 		postRun();
 	}
 
