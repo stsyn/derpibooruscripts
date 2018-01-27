@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.2
+// @version      0.4.4
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -37,7 +37,7 @@
 (function() {
     'use strict';
     let processing = false;
-    let result;
+    let result, debug;
 	let version = 0;
 
     var tagDB = getTagDB();
@@ -126,6 +126,17 @@
         window._YDB_public.funcs.tagSimpleParser = simpleParse;
 		window._YDB_public.funcs.tagComplexCombine = goodCombine;
 		window._YDB_public.funcs.tagSimpleCombine = simpleCombine;
+
+		try {
+			debug = window._YDB_public.funcs.log;
+		}
+		catch(e) {
+			debug = function(id, value, level) {
+
+				let levels = ['.', '?', '!'];
+				console.log('['+levels[level]+'] ['+id+'] '+value);
+			};
+		}
     }
 
     //reader
@@ -241,6 +252,90 @@
         return y;
     }
 
+	function goodParseIngnoreParentheses(x) {
+		let yx = {};
+        yx.orig = x;
+        x = x.replace(/\|\|/g, ', ');
+        x = x.replace(/\&\&/g, ', ');
+        //x = x.replace(/^\-/g, ' ');
+        //x = x.replace(/^\!/g, ' ');
+        //x = x.replace(/[ ,\(]\-/g, function(str){return str[0]+' ';});
+        //x = x.replace(/[ ,\(]!/g, function(str){return str[0]+' ';});
+        x = x.replace(/[ ,\(]\*/g, function(str){return str[0]+' ';});
+        x = x.replace(/\"/g, ' ');
+        x = x.replace(/\~/g, ',');
+        x = x.replace(/\^/g, ',');
+        x = x.replace(new RegExp(' OR ','g'), ',   ');
+        x = x.replace(new RegExp(' AND ','g'), ',    ');
+        x = x.replace(new RegExp(' NOT ','g'), ',    ');
+        x = x.replace(new RegExp('^NOT ','g'), '    ');
+        let y = x.split(',');
+		let afix2 = 0;
+		let pcounter = 0;
+		let pstarted = false;
+        for (let i=0; i<y.length; i++) {
+			let c = y[i].length;
+			y[i] = y[i].replace(/^ +/g,'');
+			let d = c-y[i].length;
+			afix2+=d;
+			let j = 0;
+			while (y[i][j] == '(' || y[i][j] == ' ' || y[i][j] == '-') {
+				if (y[i][j] == '(') pcounter++;
+				j++;
+			}
+			j = y[i].length-1;
+			while (y[i][j] == ')' || y[i][j] == ' ') {
+				if (y[i][j] == ')') pcounter--;
+				j--;
+			}
+
+			let lx=0;
+			if (pcounter>0 || pstarted) {
+				if (!pstarted) {
+					let tag = {};
+					tag.offset = afix2;
+					tag.length = y[i].length;
+					lx = 1+tag.length;
+					tag.v = y[i];
+					y[i] = tag;
+					pstarted = true;
+				}
+				else {
+					let a = y[i-1].offset+y[i-1].length;
+					y[i-1].v += yx.orig.substr(a, afix2-a);
+					y[i-1].v += y[i];
+					y[i-1].length +=y[i].length;
+					lx = 1+y[i].length;
+					y[i-1].length +=afix2-a;
+					y.splice(i, 1);
+					i--;
+					if (pcounter == 0) {
+						pstarted = false;
+					}
+				}
+			}
+			else {
+				pstarted = false;
+				let tag = {};
+				tag.offset = afix2;
+				tag.length = y[i].length;
+				lx = 1+y[i].length;
+				let s1 = y[i].replace(/^ +/g,'');
+				tag.offset += y[i].length-s1.length;
+				tag.length -= y[i].length-s1.length;
+				let s2 = s1.replace(/ +$/g,'');
+				tag.length -= s1.length-s2.length;
+				tag.v = s2;
+				y[i] = tag;
+			}
+			afix2 += lx;
+        }
+        yx.temp = x;
+        yx.tags = y;
+		console.log(yx.tags);
+        return yx;
+	}
+
     function goodParse(x) {
         let yx = {};
         yx.orig = x;
@@ -254,14 +349,13 @@
         x = x.replace(/[ ,\(]\-/g, function(str){return str[0]+' ';});
         x = x.replace(/[ ,\(]!/g, function(str){return str[0]+' ';});
         x = x.replace(/[ ,\(]\*/g, function(str){return str[0]+' ';});
-        x = x.replace(/\?/g, ' ');
         x = x.replace(/\"/g, ' ');
         x = x.replace(/\~/g, ',');
         x = x.replace(/\^/g, ',');
-        x = x.replace(new RegExp(' OR ','g'), ' ,  ');
-        x = x.replace(new RegExp(' AND ','g'), ',   ');
-        x = x.replace(new RegExp(' NOT ','g'), ',   ');
-        x = x.replace(new RegExp('^NOT ','g'), '   ');
+        x = x.replace(new RegExp(' OR ','g'), ',   ');
+        x = x.replace(new RegExp(' AND ','g'), ',    ');
+        x = x.replace(new RegExp(' NOT ','g'), ',    ');
+        x = x.replace(new RegExp('^NOT ','g'), '    ');
         let y = x.split(',');
         let afix = 0;
         for (let i=0; i<y.length; i++) {
@@ -369,8 +463,47 @@
         return original;
     }
 
+	function DeMorgan (x) {
+		// I _really_ want to use my old feeds
+		let c = function(x, p) {
+			let yx = goodParseIngnoreParentheses(x);
+			if (yx.tags.length == 1) return x;
+			let ch = false;
+			console.log(yx.tags);
+			for (let i=0; i<yx.tags.length; i++) {
+				if ((yx.tags[i].v[0] == '(' || (yx.tags[i].v.startsWith('-('))) && /\)$/.test(yx.tags[i].v)) {
+					let l = yx.tags[i].v.length;
+					let r = c(yx.tags[i].v.substr(1,yx.tags[i].v.length-2), true);
+					ch = true;
+					if (! /\)$/.test(r) ) {
+						r = '('+r+')';
+					}
+					if (r.length < yx.tags[i].v.length) yx.tags[i].v = r;
+				}
+			}
+			if (x.indexOf(' OR ')>=yx.tags[0].length && x.indexOf(' OR ')<=yx.tags[1].offset) {
+				let y = '-'+(p?'(':'');
+				for (let i=0; i<yx.tags.length; i++) {
+            		yx.tags[i].v = yx.tags[i].v.replace(/^ +/g,'');
+					let d = yx.tags[i].v.startsWith('-');
+					if (d) y+=yx.tags[i].v.slice(1);
+					else y+='-'+yx.tags[i].v;
+					if (i+1<yx.tags.length) y+=',';
+				}
+				if (p) y+=')';
+				if (y.length < x.length) return y;
+				else return x;
+			}
+			else if (!ch) return x;
+			let s = goodCombine(yx).replace(/\-\-\(/g,'(');
+			if (s.length < x.length) return s;
+			else return x;
+		};
+		return c(x, true);
+	}
+
     function tagAliases(original, opt) {
-        let limit = 500;
+        let limit = 9999;
         checkAliases();
         let udata = readTagTools();
 
@@ -424,8 +557,13 @@
 			q2 = q2.replace(/ \|\| /g, ' OR ');
 			while (q2.indexOf(', ')>-1) q2 = q2.replace(/, /g, ',');
 			while (q2.indexOf(' ,')>-1) q2 = q2.replace(/ ,/g, ',');
+        	q2 = q2.replace(new RegExp(' AND ','g'), ',');
         	q2 = q2.replace(new RegExp(' NOT ','g'), '-');
         	q2 = q2.replace(new RegExp('^NOT ','g'), '-');
+        	q2 = q2.replace(/[ ,\(]!/g, function(str){return str[0]+'-';});
+            q2 = q2.replace(/^ +/g,'');
+            q2 = q2.replace(/ +$/g,'');
+			while (q2.indexOf('  ')>-1) q2 = q2.replace(/  /g, ' ');
             return q2;
         };
 
@@ -456,6 +594,14 @@
             }
         }
 
+        /*if (rq.length > limit) {
+            q = DeMorgan(rq);
+            if (q.length<rq.length) {
+                changed = true;
+                rq = q;
+            }
+        }*/
+
         let compressArtists = function (orig) {
             let tags = goodParse(orig);
             for (let i=0; i<tags.tags.length; i++) {
@@ -475,6 +621,7 @@
         }
 
         if (changed) {
+			debug('YDB:T','Query '+q+' compressed to '+rq,0);
             udata[md5(rq)] = {q:original, t:getTimestamp()};
             writeTagTools(udata);
         };
@@ -598,12 +745,10 @@
         for (let i=0; i<e.querySelectorAll('a').length; i++) exclude.push(e.querySelectorAll('a')[i].href);
         for (let i=0; i<e.querySelectorAll('img').length; i++) exclude.push(e.querySelectorAll('img')[i].src);
         for (let i=0; i<e.querySelectorAll('.image-show-container').length; i++) exclude.push(e.querySelectorAll('.image-show-container')[i].dataset.sourceUrl);
-            console.log(exclude);
         e.innerHTML = e.innerHTML.replace(/(https?:\/\/|ftp:\/\/)((?![.,?!;:()]*(\s|$|\"|\<))[^\s]){2,}/gim, function(str){
             for (let i=0; i<exclude.length; i++) if (exclude[i] == str) return str;
             for (let i=0; i<exclude.length; i++) if (exclude[i] == str+'/') return str;
             for (let i=0; i<exclude.length; i++) if (exclude[i]+'/' == str) return str;
-            console.log(str);
             let color = getComputedStyle(document.querySelector('footer a')).color;
             return '<a href="'+str+'" style="border-bottom: 1px dotted '+color+'">'+str+'</a>';
         });
