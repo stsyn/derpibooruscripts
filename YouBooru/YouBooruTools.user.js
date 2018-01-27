@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.5
+// @version      0.4.6
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -780,8 +780,10 @@
 					artists.push(n);
 					if (document.querySelector('.image_uploader a') != undefined && document.querySelector('.image_uploader a').innerHTML == n) {
 						console.log(n);
-						document.querySelector('.image_uploader a').classList.add('interaction--upvote');
-						document.querySelector('.image_uploader a').classList.add('active');
+                        for (let i=0; i<document.querySelectorAll('.image_uploader a').length; i++) {
+                            document.querySelectorAll('.image_uploader a')[i].classList.add('interaction--upvote');
+                            document.querySelectorAll('.image_uploader a')[i].classList.add('active');
+                        }
 					}
 					highlightArtist(document, n);
 					break;
@@ -825,8 +827,7 @@
 			for (let i=0; i<e.getElementsByClassName('communication__body').length; i++) {
 				let el = e.getElementsByClassName('communication__body')[i];
 				if (el.querySelector('.communication__body__sender-name a') != undefined && el.querySelector('.communication__body__sender-name a').innerHTML == n) {
-					el.querySelector('.communication__body__sender-name a').classList.add('interaction--upvote');
-					el.querySelector('.communication__body__sender-name a').classList.add('active');
+					el.querySelector('.communication__body__sender-name a').classList.add('flash--success');
 				}
 			}
 		};
