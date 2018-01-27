@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.4
+// @version      0.4.5
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -39,6 +39,7 @@
     let processing = false;
     let result, debug;
 	let version = 0;
+	let artists = [];
 
     var tagDB = getTagDB();
 
@@ -761,6 +762,93 @@
         for (i=0; i<e.querySelectorAll('.image-description').length; i++) urlSearchInElem(e.querySelectorAll('.image-description')[i]);
     }
 
+	//highlight artist
+	function getArtists() {
+		let callback = function(r) {
+			let x = addElem('div',{innerHTML:r.responseText,style:'display:none'},document.body);
+			let exit = function() {
+				document.body.removeChild(x);
+			};
+			for (let i=0; i<x.querySelectorAll('.tag-info__more strong').length; i++) {
+				let ax = x.querySelectorAll('.tag-info__more strong')[i];
+				if (ax.innerHTML == 'Associated Derpibooru users:') {
+					let n = ax.nextSibling.nextSibling.innerHTML;
+					for (let j=0; j<artists.length; j++) if (n == artists[j]) {
+						exit();
+						return;
+					}
+					artists.push(n);
+					if (document.querySelector('.image_uploader a') != undefined && document.querySelector('.image_uploader a').innerHTML == n) {
+						console.log(n);
+						document.querySelector('.image_uploader a').classList.add('interaction--upvote');
+						document.querySelector('.image_uploader a').classList.add('active');
+					}
+					highlightArtist(document, n);
+					break;
+				}
+			}
+			exit();
+		};
+
+		let readyHandler = function(request) {
+            return function () {
+                if (request.readyState === 4) {
+                    if (request.status === 200) return callback(request);
+                    else if (request.status === 0) {
+                        return false;
+                    }
+                    else {
+                        return false;
+                    }
+                }
+            };
+        };
+
+        let get = function(el) {
+            let req = new XMLHttpRequest();
+            req.el = el;
+            req.onreadystatechange = readyHandler(req);
+            req.open('GET', el.href);
+            req.send();
+        };
+
+		for (let i=0; i<document.querySelectorAll('.tag.dropdown[data-tag-category="origin"] .tag__name').length; i++) {
+			let el = document.querySelectorAll('.tag.dropdown[data-tag-category="origin"] .tag__name')[i];
+			if (el.innerHTML == 'edit' || el.innerHTML == 'alternate version' || el.innerHTML == 'derpibooru exclusive') continue;
+			get(el);
+		}
+	}
+
+	function highlightArtist(e, name) {
+		let highlight = function(e,n) {
+			if (document.querySelector('.image_uploader a') == undefined) return;
+			for (let i=0; i<e.getElementsByClassName('communication__body').length; i++) {
+				let el = e.getElementsByClassName('communication__body')[i];
+				if (el.querySelector('.communication__body__sender-name a') != undefined && el.querySelector('.communication__body__sender-name a').innerHTML == n) {
+					el.querySelector('.communication__body__sender-name a').classList.add('interaction--upvote');
+					el.querySelector('.communication__body__sender-name a').classList.add('active');
+				}
+			}
+		};
+		if (name != undefined) highlight(e, name);
+		else {
+			for (let i=0; i<artists.length; i++) highlight(e, artists[i]);
+		}
+	}
+
+	//highlight uploader
+	function showUploader(e) {
+		if (document.querySelector('.image_uploader a') == undefined) return;
+		let n = document.querySelector('.image_uploader a').innerHTML;
+		for (let i=0; i<e.getElementsByClassName('communication__body').length; i++) {
+			let el = e.getElementsByClassName('communication__body')[i];
+			if (el.querySelector('.communication__body__sender-name a') != undefined && el.querySelector('.communication__body__sender-name a').innerHTML == n) {
+				addElem('span',{innerHTML:' (OP)'},el.querySelector('.communication__body__sender-name'));
+
+			}
+		}
+	}
+
     //target _blank
     //domain fixes
     function linksPatch(doc) {
@@ -884,6 +972,8 @@
     asWatchlist();
     urlSearch(document);
     linksPatch(document);
+	showUploader(document);
+	getArtists();
     colorTags();
     if (location.pathname == "/pages/yourbooru") {
         YDB();
@@ -893,5 +983,7 @@
         if (!(e.target.id == 'image_comments' || (e.target.classList.contains('block') && e.target.classList.contains('communication')))) return;
         badge(e.target);
 		urlSearch(e.target);
-        linksPatch(e.target);});
+        linksPatch(e.target);
+		showUploader(e.target);
+		highlightArtist(e.target);});
 })();
