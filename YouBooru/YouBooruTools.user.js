@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.7
+// @version      0.4.8
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -882,6 +882,7 @@
         };
 
         let soloWork = function(el) {
+            if (el.querySelector('.interaction--hide') == undefined) return;
             if (inital) {
                 el.addEventListener('DOMNodeInserted',function(e) {
                     setTimeout(function() {deactivateButtons(el,false);}, 100);
