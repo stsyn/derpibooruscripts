@@ -12,7 +12,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.17
+// @version      0.4.18
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -348,7 +348,7 @@
 	}
 
 	function write(w) {
-		localStorage._ydb_feeds = JSON.stringify(w);
+		localStorage._ydb_feeds = JSON.stringify(f_s_c);
 		localStorage._ydb_caches = JSON.stringify(feedzCache);
 		localStorage._ydb_cachesUrls = JSON.stringify(feedzURLs);
 	}
@@ -882,25 +882,28 @@
 	function YB_insertFeed2(u) {
 		var f = {};
 		let i;
+        console.log(feedz);
 		for (i=0; i<feedz.length; i++) {
-			if (feedz[i].name == decodeURIComponent(u.params.name)) {
+			if (feedz[i].name == document.querySelector('#searchform [name="name"]').value) {
 				f = feedz[i];
 				break;
 			}
 		}
 		f.loaded = false;
-		f.name = decodeURIComponent(u.params.name);
-		f.query = decodeURIComponent(u.params.q).replace(/\+/g,' ');
-		f.sort = u.params.sf;
-		f.sd = u.params.sd;
-		f.cache = u.params.cache;
-		f.ccache = u.params.ccache;
+		f.name = document.querySelector('#searchform [name="name"]').value;
+		f.query = document.querySelector('#searchform [name="q"]').value;
+		f.sort = document.querySelector('#searchform [name="sf"]').value;
+		f.sd = document.querySelector('#searchform [name="sd"]').value;
+		f.cache = parseInt(document.querySelector('#searchform [name="cache"]').value);
+		f.ccache = parseInt(document.querySelector('#searchform [name="ccache"]').value);
+        if (isNaN(f.cache) || f.cache<0) f.cache = 30;
+        if (isNaN(f.ccache) || f.ccache<0) f.ccache = 60;
 		feedz[i] = f;
 		write();
 
 		if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup(function() {
 			if (history.length == 1) close();
-			else history.back();
+			else location.href = '/settings#YourBooru';
 		});
 	}
 
@@ -952,39 +955,110 @@
 		else c.innerHTML = 'Not enough parameters, impossible to add!';
 	}
 
+    function YB_feedButton() {
+        let e = InfernoAddElem('a',{href:location.href+'&name=New+feed&cache=30&ccache=0',title:'Create feed'},[
+            InfernoAddElem('i',{className:'fa',innerHTML:'\uF09E'},[]),
+            InfernoAddElem('span',{innerHTML:' Create feed'},[])
+        ]);
+        document.querySelector('.block__header.flex .flex__right').insertBefore(e,document.querySelector('.block__header.flex .flex__right').firstChild);
+    }
+
 	function YB_addFeed2(u) {
-        let alreadyHas = false;
-        for (let i=0; i<feedz.length; i++) {
-            if (feedz[i].name == decodeURIComponent(u.params.name)) {
-                alreadyHas = true;
-                break;
+        let uniqueCheck = function(p) {
+            let x = false;
+            for (let i=0; i<feedz.length; i++) {
+                if (feedz[i].name == p) {
+                    x = true;
+                    break;
+                }
             }
-        }
-        let e = InfernoAddElem('div',{className:'block__content js-imagelist-info'},[
-            InfernoAddElem('h4',{innerHTML:'Add feed "'+decodeURIComponent(u.params.name)+'"'},[]),
-            InfernoAddElem('br',{},[]),
-            InfernoAddElem('span',{innerHTML:'Update interval: '+(u.params.cache==0?'each '+u.params.ccache:u.params.cache)+' minutes'},[]),
-            InfernoAddElem('br',{},[]),
-            InfernoAddElem('br',{},[]),
-            alreadyHas?InfernoAddElem('span',{},[
-                InfernoAddElem('span',{className:'button',id:"yy_add",innerHTML:'Replace'},[]),
-                InfernoAddElem('span',{innerHTML:' '},[]),
-                InfernoAddElem('span',{className:'button',id:"yy_include",innerHTML:'Rename automatically'},[]),
-                InfernoAddElem('span',{innerHTML:' '},[]),
-                InfernoAddElem('span',{className:'button',id:"yy_cancel",innerHTML:'Cancel'},[])
-            ]):
-            InfernoAddElem('span',{},[
-                InfernoAddElem('span',{className:'button',id:"yy_add",innerHTML:'Add feed'},[]),
-                InfernoAddElem('span',{innerHTML:' '},[]),
-                InfernoAddElem('span',{className:'button',id:"yy_cancel",innerHTML:'Cancel'},[]),
-                InfernoAddElem('span',{className:'button',id:"yy_include",style:'display:none',innerHTML:'Rename automatically'},[])
+            return x;
+        };
+        let alreadyHas = uniqueCheck(decodeURIComponent(u.params.name).replace(/\+/g,' '));
+
+        let e = InfernoAddElem('div',{},[
+            InfernoAddElem('h1',{className:'',innerHTML:'Add feed '},[]),
+            InfernoAddElem('div',{className:'block js-imagelist-info'},[
+                InfernoAddElem('div',{className:'block__content'},[
+                    InfernoAddElem('span',{innerHTML:'Name: '},[]),
+                    InfernoAddElem('input',{value:decodeURIComponent(u.params.name).replace(/\+/g,' '),name:'name',className:'input',events:[{t:'input',f:function(e) {
+                        alreadyHas = uniqueCheck(e.target.value);
+                        if (!alreadyHas) {
+                            document.getElementById('yy_warn').classList.add('hidden');
+                            document.getElementById('yy_add').value = 'Add feed';
+                        }
+                        else {
+                            document.getElementById('yy_warn').classList.remove('hidden');
+                            document.getElementById('yy_add').value = 'Replace';
+                        }
+                    }}]},[]),
+                    InfernoAddElem('span',{innerHTML:' That feed already exists!', id:'yy_warn', className:'flash--warning '+(alreadyHas?'':'hidden')},[]),
+                    InfernoAddElem('br',{},[]),
+                    InfernoAddElem('br',{},[]),
+                    InfernoAddElem('span',{innerHTML:'Update: '},[]),
+                    InfernoAddElem('span',{id:'yy_cache'},[
+                        InfernoAddElem('span',{innerHTML:'after '},[]),
+                        InfernoAddElem('input',{value:decodeURIComponent(u.params.cache),name:'cache',className:'input',events:[{t:'input',f:function(e) {
+                            if (e.target.value == '0' || e.target.value == '') {
+                                document.getElementById('yy_ccache').style.opacity = '1';
+                                document.querySelector('#yy_ccache input').removeAttribute('disabled');
+                            }
+                            else {
+                                document.getElementById('yy_cache').style.opacity = '1';
+                                document.getElementById('yy_ccache').style.opacity = '.2';
+                                document.querySelector('#yy_ccache input').setAttribute('disabled',true);
+                            }
+                        }}]},[])
+                    ]),
+                    InfernoAddElem('span',{id:'yy_ccache'},[
+                        InfernoAddElem('span',{innerHTML:' each '},[]),
+                        InfernoAddElem('input',{value:decodeURIComponent(u.params.ccache),name:'ccache',className:'input',events:[{t:'input',f:function(e) {
+                            if (e.target.value == '0' || e.target.value == '') {
+                                document.getElementById('yy_cache').style.opacity = '1';
+                                document.querySelector('#yy_cache input').removeAttribute('disabled');
+                            }
+                            else {
+                                document.getElementById('yy_ccache').style.opacity = '1';
+                                document.getElementById('yy_cache').style.opacity = '.2';
+                                document.querySelector('#yy_cache input').setAttribute('disabled',true);
+                            }
+                        }}]},[])
+                    ]),
+                    InfernoAddElem('span',{innerHTML:' minutes'},[]),
+                    InfernoAddElem('br',{},[]),
+                    InfernoAddElem('br',{},[]),
+                    InfernoAddElem('span',{},[
+                        InfernoAddElem('input',{type:'button',className:'button',id:"yy_add",value:(alreadyHas?'Replace':'Add feed')},[]),
+                        InfernoAddElem('span',{innerHTML:' '},[]),
+                        InfernoAddElem('span',{className:'button',id:"yy_cancel",innerHTML:'Cancel'},[]),
+                        InfernoAddElem('span',{className:'button',id:"yy_include",style:'display:none',innerHTML:'Rename automatically'},[])
+                    ])
+                ])
             ])
         ]);
-        document.getElementById('imagelist_container').insertBefore(e,document.querySelector('#imagelist_container .block__content.js-resizable-media-container'));
+
+        //document.getElementById('imagelist_container').insertBefore(e,document.querySelector('#imagelist_container .block__content.js-resizable-media-container'));
+        //document.getElementById('searchform').lastChild.style.marginBottom = '0';
+        document.getElementById('searchform').appendChild(e);
+
+        if (u.params.cache == 0) {
+            document.getElementById('yy_cache').style.opacity = '.2';
+            document.querySelector('#yy_cache input').setAttribute('disabled',true);
+        }
+        else {
+            document.getElementById('yy_ccache').style.opacity = '.2';
+            document.querySelector('#yy_ccache input').setAttribute('disabled',true);
+        }
 
         document.getElementById('yy_cancel').addEventListener('click', function() {
             if (history.length == 1) close();
-            else history.back();
+            else {
+                let q = '';
+                for (let i in u.params) {
+                    if (i != 'name' && i != 'cache' && i != 'ccache') q+=i+'='+u.params[i]+'&';
+                }
+                location.search = q;
+            }
         });
 
         document.getElementById('yy_add').addEventListener('click', function() {
@@ -996,6 +1070,7 @@
             YB_insertFeed2(u);
         });
 
+        document.getElementById('container').insertBefore(InfernoAddElem('div',{className:'flash flash--success', innerHTML:'Feed editing panel is located on the bottom'},[]),document.getElementById('content'));
 	}
 
 	function YDB() {
@@ -1021,6 +1096,7 @@
 			preRun();
             let u = parseURL(location.href);
             if (u.params.name != undefined) YB_addFeed2(u);
+            else YB_feedButton();
         }
 		register();
 	}
