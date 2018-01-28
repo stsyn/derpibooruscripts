@@ -1,6 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Feeds
 // @namespace    http://tampermonkey.net/
+
 // @include      *://trixiebooru.org/*
 // @include      *://derpibooru.org/*
 // @include      *://www.trixiebooru.org/*
@@ -9,10 +10,20 @@
 // @include      *://*.orzgs6djmvrg633souxg64th.*.*/*
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
+
+// @exclude      *://trixiebooru.org/adverts/*
+// @exclude      *://derpibooru.org/adverts/*
+// @exclude      *://www.trixiebooru.org/adverts/*
+// @exclude      *://www.derpibooru.org/adverts/*
+// @exclude      *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/adverts/*
+// @exclude      *://*.orzgs6djmvrg633souxg64th.*.*/adverts/*
+// @exclude      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
+// @exclude      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
+
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.19
+// @version      0.4.20
 // @description  Feedz
 // @author       stsyn
 // @grant        none
