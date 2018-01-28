@@ -24,7 +24,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.3.1
+// @version      0.3.2
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -54,7 +54,7 @@
 		override:false,
 
 		//If true, navigation will be fixed while page loading
-		preloading:true,
+		preloading:false,
 
 		//With which sortings type find button should be fixed
 		scoreUp:true,
@@ -553,24 +553,34 @@
 		if (myURL.params.sf != undefined && document.querySelector('#_ydb_s_qpusher_sf *[value*='+x+']') != undefined) document.querySelector('#_ydb_s_qpusher_sf *[value*='+x+']').selected = 'selected';
 		if (myURL.params.sd != undefined && document.querySelector('#_ydb_s_qpusher_sd *[value='+myURL.params.sd+']') != undefined) document.querySelector('#_ydb_s_qpusher_sd *[value='+myURL.params.sd+']').selected = 'selected';
 
-		let ch = function(e,arg) {
-			let s = location.search;
-			let t = compileQueryComponent(e.target.value);
-			if (myURL.params[arg] == "" || myURL.params[arg] == undefined) s += '?'+arg+'='+e.target.value;
-			else s = s.replace(arg+'='+myURL.params[arg], arg+'='+t);
-			document.getElementById('_ydb_s_qpusher').search = s;
+		let ch = function(e,arg,first) {
 		};
 
 		let chall =function() {
-			ch({target:document.querySelector('form.header__search .input')},'q');
-			ch({target:document.querySelector('#_ydb_s_qpusher_sf')},'sf');
-			ch({target:document.querySelector('#_ydb_s_qpusher_sd')},'sd');
+			let s = location.search;
+			let es = ['form.header__search .input','#_ydb_s_qpusher_sf','#_ydb_s_qpusher_sd'];
+			let args = ['q','sf','sd'];
+			for (let i=0; i<2; i++) {
+				let e = document.querySelector(es[i]);
+				let arg= args[i];
+				let t = compileQueryComponent(e.value);
+				if (myURL.params[arg] == "" || myURL.params[arg] == undefined) {
+					if (location.search == "" && i==0) s += '?'+arg+'='+e.value;
+					else s += '&'+arg+'='+e.value;
+				}
+				else s = s.replace(arg+'='+myURL.params[arg], arg+'='+t);
+			}
+			document.getElementById('_ydb_s_qpusher').search = s;
+/*
+			ch({target:document.querySelector('form.header__search .input')},'q',true);
+			ch({target:document.querySelector('#_ydb_s_qpusher_sf')},'sf',false);
+			ch({target:document.querySelector('#_ydb_s_qpusher_sd')},'sd',false);*/
 		};
 
 		setTimeout(function() {
-			document.querySelector('form.header__search .input').addEventListener('input', function(e) {ch(e,'q');});
-			document.querySelector('#_ydb_s_qpusher_sf').addEventListener('input', function(e) {ch(e,'sf');});
-			document.querySelector('#_ydb_s_qpusher_sd').addEventListener('input', function(e) {ch(e,'sd');});
+			document.querySelector('form.header__search .input').addEventListener('input', function(e) {chall();});
+			document.querySelector('#_ydb_s_qpusher_sf').addEventListener('input', function(e) {chall();});
+			document.querySelector('#_ydb_s_qpusher_sd').addEventListener('input', function(e) {chall();});
 		}, 200);
 
 		//fetching tags
@@ -579,11 +589,11 @@
 			ChildsAddElem('span',{dataset:{tag:t[j].dataset.tagName}, className:'tag__dropdown__link'}, t[j].getElementsByClassName('dropdown__content')[0],[
 				InfernoAddElem('a',{style:'cursor:pointer', innerHTML:'Set query ', events:[{t:'click',f:function(e){
 					document.querySelector('form.header__search .input').value=e.target.parentNode.dataset.tag;
-					ch({target:document.querySelector('form.header__search .input')},'q');
+					chall();
 				}}]},[]),
 				InfernoAddElem('a',{style:'cursor:pointer', innerHTML:'[+]', events:[{t:'click',f:function(e){
 					document.querySelector('form.header__search .input').value+=(document.querySelector('form.header__search .input').value.trim == ''?'':',')+e.target.parentNode.dataset.tag;
-					ch({target:document.querySelector('form.header__search .input')},'q');
+					chall();
 				}}]},[])
 			]);
 		}
