@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.6
+// @version      0.4.7
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -60,6 +60,7 @@
                 {type:'checkbox', name:'Force hiding (Ignorantia non est argumentum!)', parameter:'force'},
                 {type:'header', name:'UI'},
                 {type:'checkbox', name:'Bigger search fields', parameter:'patchSearch'},
+                {type:'checkbox', name:'Deactive downvote if upvoted (and reverse)', parameter:'deactivateButtons'},
                 {type:'header', name:'Tag aliases'},
                 {type:'checkbox', name:'Do not parse page name', parameter:'oldName'},
                 {type:'checkbox', name:'As short queries as possible', parameter:'compress', styleS:{display:'none'}},
@@ -127,6 +128,7 @@
         window._YDB_public.funcs.tagSimpleParser = simpleParse;
 		window._YDB_public.funcs.tagComplexCombine = goodCombine;
 		window._YDB_public.funcs.tagSimpleCombine = simpleCombine;
+		window._YDB_public.funcs.upvoteDownvoteDisabler = deactivateButtons;
 
 		try {
 			debug = window._YDB_public.funcs.log;
@@ -850,6 +852,66 @@
 		}
 	}
 
+    //deactivateButtons
+	function deactivateButtons(e, inital) {
+        if (!ls.deactivateButtons) return;
+        let work = function(el) {
+            if (inital) {
+                el.addEventListener('DOMNodeInserted',function(e) {
+                    console.log('test');
+                    setTimeout(function() {deactivateButtons(el,false);}, 100);
+                });
+            }
+            if (el.querySelector('.media-box__header .interaction--upvote.active') != undefined || el.querySelector('.media-box__header .interaction--fave.active') != undefined) {
+				el.querySelector('.media-box__header .interaction--downvote').classList.add('hidden');
+				el.querySelector('.media-box__header .interaction--hide').classList.add('hidden');
+			}
+            else {
+				el.querySelector('.media-box__header .interaction--downvote').classList.remove('hidden');
+				el.querySelector('.media-box__header .interaction--hide').classList.remove('hidden');
+            }
+
+			if (el.querySelector('.media-box__header .interaction--downvote.active') != undefined || el.querySelector('.media-box__header .interaction--hide.active') != undefined) {
+				el.querySelector('.media-box__header .interaction--upvote').classList.add('hidden');
+				el.querySelector('.media-box__header .interaction--fave').classList.add('hidden');
+			}
+            else {
+				el.querySelector('.media-box__header .interaction--upvote').classList.remove('hidden');
+				el.querySelector('.media-box__header .interaction--fave').classList.remove('hidden');
+            }
+        };
+
+        let soloWork = function(el) {
+            if (inital) {
+                el.addEventListener('DOMNodeInserted',function(e) {
+                    setTimeout(function() {deactivateButtons(el,false);}, 100);
+                });
+            }
+            if (el.querySelector('.interaction--upvote.active') != undefined || el.querySelector('.interaction--fave.active') != undefined) {
+				el.querySelector('.interaction--downvote').classList.add('hidden');
+				el.querySelector('.interaction--hide').classList.add('hidden');
+			}
+            else {
+				el.querySelector('.interaction--downvote').classList.remove('hidden');
+				el.querySelector('.interaction--hide').classList.remove('hidden');
+            }
+
+			if (el.querySelector('.interaction--downvote.active') != undefined || el.querySelector('.interaction--hide.active') != undefined) {
+				el.querySelector('.interaction--upvote').classList.add('hidden');
+				el.querySelector('.interaction--fave').classList.add('hidden');
+			}
+            else {
+				el.querySelector('.interaction--upvote').classList.remove('hidden');
+				el.querySelector('.interaction--fave').classList.remove('hidden');
+            }
+        };
+        if (e.classList!=undefined && e.classList.contains('media-box')) work(e);
+        else if ((e.classList != undefined && e.classList.contains('block__header')) || e.getElementsByClassName('media-box').length == 0) soloWork(e);
+		else for (let i=0; i<e.getElementsByClassName('media-box').length; i++) {
+			work(e.getElementsByClassName('media-box')[i]);
+		}
+	}
+
     //target _blank
     //domain fixes
     function linksPatch(doc) {
@@ -974,6 +1036,7 @@
     urlSearch(document);
     linksPatch(document);
 	showUploader(document);
+    if (ls.deactivateButtons) deactivateButtons(document, true);
 	getArtists();
     colorTags();
     if (location.pathname == "/pages/yourbooru") {
