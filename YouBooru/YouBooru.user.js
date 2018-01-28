@@ -12,7 +12,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.18
+// @version      0.4.19
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -684,6 +684,7 @@
         r.feed.observer.observe(r.feed.container, {attributes: true, childList: true, characterData: true, subtree:true });*/
 
 		feedAfterload(r, c.innerHTML, id);
+        if (window._YDB_public.funcs != undefined && window._YDB_public.funcs.upvoteDownvoteDisabler != undefined) window._YDB_public.funcs.upvoteDownvoteDisabler(c, true);
 	}
 
 	function fillParsed(feed, id) {
@@ -725,6 +726,7 @@
         });
         feed.observer.observe(feed.container, {attributes: true, childList: true, characterData: true, subtree:true });*/
 
+        if (window._YDB_public.funcs != undefined && window._YDB_public.funcs.upvoteDownvoteDisabler != undefined) window._YDB_public.funcs.upvoteDownvoteDisabler(c, true);
 		feed.temp.innerHTML = '';
 		feed.loaded = true;
 		feed.url.href = feedzURLs[id];
