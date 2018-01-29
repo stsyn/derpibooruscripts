@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.8
+// @version      0.4.9
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -888,22 +888,22 @@
                     setTimeout(function() {deactivateButtons(el,false);}, 100);
                 });
             }
-            if (el.querySelector('.interaction--upvote.active') != undefined || el.querySelector('.interaction--fave.active') != undefined) {
-				el.querySelector('.interaction--downvote').classList.add('hidden');
-				el.querySelector('.interaction--hide').classList.add('hidden');
+            if (el.querySelector('.interaction--upvote.active[href="#"]') != undefined || el.querySelector('.interaction--fave.active[href="#"]') != undefined) {
+				el.querySelector('.interaction--downvote[href="#"]').classList.add('hidden');
+				el.querySelector('.interaction--hide[href="#"]').classList.add('hidden');
 			}
             else {
-				el.querySelector('.interaction--downvote').classList.remove('hidden');
-				el.querySelector('.interaction--hide').classList.remove('hidden');
+				el.querySelector('.interaction--downvote[href="#"]').classList.remove('hidden');
+				el.querySelector('.interaction--hide[href="#"]').classList.remove('hidden');
             }
 
-			if (el.querySelector('.interaction--downvote.active') != undefined || el.querySelector('.interaction--hide.active') != undefined) {
-				el.querySelector('.interaction--upvote').classList.add('hidden');
-				el.querySelector('.interaction--fave').classList.add('hidden');
+			if (el.querySelector('.interaction--downvote.active[href="#"]') != undefined || el.querySelector('.interaction--hide.active[href="#"]') != undefined) {
+				el.querySelector('.interaction--upvote[href="#"]').classList.add('hidden');
+				el.querySelector('.interaction--fave[href="#"]').classList.add('hidden');
 			}
             else {
-				el.querySelector('.interaction--upvote').classList.remove('hidden');
-				el.querySelector('.interaction--fave').classList.remove('hidden');
+				el.querySelector('.interaction--upvote[href="#"]').classList.remove('hidden');
+				el.querySelector('.interaction--fave[href="#"]').classList.remove('hidden');
             }
         };
         if (e.classList!=undefined && e.classList.contains('media-box')) work(e);
