@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.20
+// @version      0.4.21
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -208,9 +208,10 @@
 								elem.innerHTML = '------';
 								return;
 							}
-							elem.href = '/search?name='+encodeURIComponent(f.name)+'&q='+
-								encodeURIComponent(window._YDB_public.funcs.tagAliases(f.query, {legacy:false})).replace(/\%20/g,'+')+
-								'&sf='+f.sort+'&sd='+f.sd+'&cache='+f.cache+'&ccache='+f.ccache;
+							let q = f.query;
+							if (window._YDB_public.funcs != undefined && window._YDB_public.funcs.tagAliases !=undefined)
+								q = encodeURIComponent(window._YDB_public.funcs.tagAliases(f.query, {legacy:false}));
+							elem.href = '/search?name='+encodeURIComponent(f.name)+'&q='+q.replace(/\%20/g,'+')+'&sf='+f.sort+'&sd='+f.sd+'&cache='+f.cache+'&ccache='+f.ccache;
 						}},
 						{type:'button', name:'Reset cache', action:resetCache}
 					],[
