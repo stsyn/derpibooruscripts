@@ -12,7 +12,7 @@ normal:{
 
 regulars:{
 	oc:/^oc:/g,
-	origin:/^(artist:|editor:)/g,
+	origin:/^(artist:|editor:|colorist:)/g,
 	spoiler:/^spoiler:/g
 },
 
