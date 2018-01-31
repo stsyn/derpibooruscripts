@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.21
+// @version      0.4.22
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -116,6 +116,7 @@
 	var feedzURLs = [];
 	var f_s_c;
 	var debug;
+	let sentRequests = 0;
 
 	/********************
 
@@ -174,14 +175,15 @@
 			s:[
 				{type:'checkbox', name:'Do not remove watchlist', parameter:'doNotRemoveWatchList'},
 				{type:'breakline'},
-				{type:'input', name:'Images in each feed:', parameter:'imagesInFeeds', validation:{type:'int',min:1,max:50}},
+				{type:'input', name:'Images in each feed:', parameter:'imagesInFeeds', validation:{type:'int',min:1,max:25}},
+				{type:'input', name:'Minimum feeds loaded at once:', parameter:'oneTimeLoad', validation:{type:'int',min:1,max:10}},
 				{type:'breakline'},
 				{type:'checkbox', name:'Watch link on the right side', parameter:'watchFeedLinkOnRightSide'},
 				{type:'breakline'},
 				{type:'checkbox', name:'Remove unneeded content from HTML', parameter:'optimizeLS'},
 				{type:'array', parameter:'feedz', addText:'Add feed', customOrder:true, s:[
 					[
-						{type:'input', name:'Name', parameter:'name',styleI:{width:'33.5em', marginRight:'.5em'}},
+						{type:'input', name:'Name', parameter:'name',styleI:{width:'33.5em', marginRight:'.5em'},validation:{type:'unique'}},
 						{type:'select', name:'Sorting', parameter:'sort',styleI:{marginRight:'.5em'}, values:[
 							{name:'Creation date', value:'created_at'},
 							{name:'Score', value:'score'},
@@ -313,6 +315,8 @@
 				delete feedz[i].cachedQuery;
 			}
 		}
+
+		if (config.oneTimeLoad == undefined) config.oneTimeLoad = 3;
 	}
 
 	function legacyPreRun() {
@@ -462,12 +466,33 @@
 		return s;
 	}
 
-	function getFeed(feed, id) {
+	function getFeed(feed, id, inital) {
 		let req = new XMLHttpRequest();
 		req.feed = feed;
 		req.onreadystatechange = readyHandler(req, id);
 		req.open('GET', compileURL(feed, true));
-		req.send();
+		if (inital) {
+			if (sentRequests>config.oneTimeLoad) {
+				console.log(feed.container.getBoundingClientRect().top, (window.innerHeight+window.pageYOffset)*2);
+				if (parseInt(feed.container.getBoundingClientRect().top) <= (window.innerHeight+window.pageYOffset)*2) {
+					setTimeout(function(){req.send();},500*(sentRequests-config.oneTimeLoad+1));
+				}
+				else {
+					let d = window.pageYOffset;
+					let c = function() {
+						if (feed.container.getBoundingClientRect().top <= (window.innerHeight+window.pageYOffset+(window.pageYOffset-d)*3)*1.5) {
+							req.send();
+						}
+						else setTimeout(c,200);
+						d = window.pageYOffset;
+					};
+					c();
+				}
+			}
+			else req.send();
+		}
+		else req.send();
+		sentRequests++;
 	}
 
 	function spoiler(event) {
@@ -755,7 +780,9 @@
 		cont.style.minWidth = 'calc(100% - 338px)';
 		if (cont.childNodes.length == 1) config.hasWatchList = false;
 		else config.hasWatchList = true;
-		for (i=0; i<(config.doNotRemoveWatchList?1:2); i++) cont.childNodes[i].style.display = 'none';
+		for (i=0; i<(config.doNotRemoveWatchList?1:2); i++) {
+			if (cont.childNodes[i] != undefined) cont.childNodes[i].style.display = 'none';
+		}
 
 		let ptime = new Date();
 		ptime = parseInt(ptime.getTime()/60000);
@@ -828,36 +855,36 @@
 			f.cache = parseInt(f.cache);
 			f.ccache = parseInt(f.ccache);
 			if (feedzCache[i] == undefined) {
-				getFeed(f, i);
+				getFeed(f, i, true);
 				debug('YDB:F','Requested update to feed "'+f.name+'". Reason "No cache found"', '1');
 			}
 			else if (feedzCache[i].startsWith('Server timeout.')) {
-				getFeed(f, i);
+				getFeed(f, i, true);
 				debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Not finished loading"', '1');
 			}
 			else if (compileURL(f) != feedzURLs[i]) {
-				getFeed(f, i);
+				getFeed(f, i, true);
 				debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Feed url changed"', '1');
 			}
 			else if (parseInt(config.imagesInFeeds*1.2) != feedz[i].responsed) {
-				getFeed(f, i);
+				getFeed(f, i, true);
 				debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Changed setting imageInFeeds"', '1');
 			}
 			else if (ptime > (f.saved+f.cache))
 			{
 				if ((f.ccache !== undefined) && (f.ccache>0) && (!isNaN(f.ccache))) {
 					if (parseInt(ptime/f.ccache) > parseInt(f.saved/f.ccache)) {
-						getFeed(f, i);
+						getFeed(f, i, true);
 						debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Scheduled update"', '1');
 					}
 					else fillParsed(f, i);
 				}
 				else {
-					getFeed(f, i);
+					getFeed(f, i, true);
 					debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Cache lifetime expired"', '1');
 				}
 			}
-			else if (feedzURLs[i] == undefined) getFeed(f, i);
+			else if (feedzURLs[i] == undefined) getFeed(f, i, true);
 			else fillParsed(f, i);
 		}
 
