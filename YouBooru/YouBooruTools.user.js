@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.9
+// @version      0.4.10
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -128,7 +128,10 @@
         window._YDB_public.funcs.tagSimpleParser = simpleParse;
 		window._YDB_public.funcs.tagComplexCombine = goodCombine;
 		window._YDB_public.funcs.tagSimpleCombine = simpleCombine;
-		window._YDB_public.funcs.upvoteDownvoteDisabler = deactivateButtons;
+		window._YDB_public.funcs.upvoteDownvoteDisabler = function(elem, inital) {
+			commentButtons(elem, inital);
+			deactivateButtons(elem, inital);
+		};
 
 		try {
 			debug = window._YDB_public.funcs.log;
@@ -749,6 +752,7 @@
         for (let i=0; i<e.querySelectorAll('img').length; i++) exclude.push(e.querySelectorAll('img')[i].src);
         for (let i=0; i<e.querySelectorAll('.image-show-container').length; i++) exclude.push(e.querySelectorAll('.image-show-container')[i].dataset.sourceUrl);
         e.innerHTML = e.innerHTML.replace(/(https?:\/\/|ftp:\/\/)((?![.,?!;:()]*(\s|$|\"|\<))[^\s]){2,}/gim, function(str){
+			str = str.replace(/\&amp;/g,'&');
             for (let i=0; i<exclude.length; i++) if (exclude[i] == str) return str;
             for (let i=0; i<exclude.length; i++) if (exclude[i] == str+'/') return str;
             for (let i=0; i<exclude.length; i++) if (exclude[i]+'/' == str) return str;
@@ -856,9 +860,9 @@
 	function deactivateButtons(e, inital) {
         if (!ls.deactivateButtons) return;
         let work = function(el) {
+			if (el.querySelector('.media-box__header--link-row') == undefined) return;
             if (inital) {
                 el.addEventListener('DOMNodeInserted',function(e) {
-                    console.log('test');
                     setTimeout(function() {deactivateButtons(el,false);}, 100);
                 });
             }
@@ -909,6 +913,17 @@
         if (e.classList!=undefined && e.classList.contains('media-box')) work(e);
         else if ((e.classList != undefined && e.classList.contains('block__header')) || e.getElementsByClassName('media-box').length == 0) soloWork(e);
 		else for (let i=0; i<e.getElementsByClassName('media-box').length; i++) {
+			work(e.getElementsByClassName('media-box')[i]);
+		}
+	}
+
+	function commentButtons(e) {
+        let work = function(el) {
+			if (el.querySelector('.media-box__header--link-row') == undefined) return;
+            el.querySelector('.media-box__header .interaction--comments').href = el.querySelector('.media-box__content a').href+'#comments';
+        };
+
+        for (let i=0; i<e.getElementsByClassName('media-box').length; i++) {
 			work(e.getElementsByClassName('media-box')[i]);
 		}
 	}
@@ -1019,8 +1034,8 @@
 
     function YDB() {
         let x = location.search.slice(1);
-        if (location.search == "") YB_createEmpty();
-        else if (location.search == "?") YB_createEmpty();
+        if (location.search == "") return;
+        else if (location.search == "?") return;
         else {
             let u = x.split('?');
             //if (u[0] == "checklist") YB_checkList(u);
@@ -1038,6 +1053,7 @@
     linksPatch(document);
 	showUploader(document);
     if (ls.deactivateButtons) deactivateButtons(document, true);
+	commentButtons(document, true);
 	getArtists();
     colorTags();
     if (location.pathname == "/pages/yourbooru") {
