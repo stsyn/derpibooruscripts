@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.7.2
+// @version      0.7.3
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -466,6 +466,17 @@
 								addElem('div',{className:'flash flash--warning', innerHTML:'>'+mm.name+': '+x.name+reason}, ec);
 								errorlevel++;
 								el.classList.add('_ydb_warn');
+							}
+						}
+						else if (v.type == 'unique') {
+							for (let i=0; i<c.parentNode.querySelectorAll('input._ydb_s_valuecont[data-parent="'+el.dataset.parent+'"][data-parameter="'+el.dataset.parameter+'"]').length;i++) {
+								let c2 = c.parentNode.querySelectorAll('input._ydb_s_valuecont[data-parent="'+el.dataset.parent+'"][data-parameter="'+el.dataset.parameter+'"]')[i];
+								if (c2 == el) break;
+								if (c2.value == el.value) {
+									addElem('div',{className:'flash flash--warning', innerHTML:'>'+mm.name+': '+x.name+' should be unique!'}, ec);
+									errorlevel++;
+									el.classList.add('_ydb_warn');
+								}
 							}
 						}
 						continue;
