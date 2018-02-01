@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.22
+// @version      0.4.23
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -476,17 +476,20 @@
 				console.log(feed.container.getBoundingClientRect().top, (window.innerHeight+window.pageYOffset)*2);
 				if (parseInt(feed.container.getBoundingClientRect().top) <= (window.innerHeight+window.pageYOffset)*2) {
 					setTimeout(function(){req.send();},500*(sentRequests-config.oneTimeLoad+1));
+					console.log('Отсроченный запуск №'+sentRequests);
 				}
 				else {
 					let d = window.pageYOffset;
 					let c = function() {
 						if (feed.container.getBoundingClientRect().top <= (window.innerHeight+window.pageYOffset+(window.pageYOffset-d)*3)*1.5) {
+							console.log('Запускается...');
 							req.send();
 						}
 						else setTimeout(c,200);
 						d = window.pageYOffset;
 					};
 					c();
+					console.log('Отсроченный запуск по позиции №'+sentRequests);
 				}
 			}
 			else req.send();
@@ -618,7 +621,7 @@
 
 	function feedAfterload(r,cc,id,notcache) {
 		feedzURLs[id] = compileURL(r.feed);
-		r.feed.url.href = feedzURLs[id];
+		r.feed.url.href = feedzURLs[id]+'&feedId='+id;
 		r.feed.temp.innerHTML = '';
 		r.feed.loaded = true;
 		r.feed.responsed = parseInt(config.imagesInFeeds*1.2);
@@ -766,7 +769,7 @@
         if (window._YDB_public.funcs != undefined && window._YDB_public.funcs.upvoteDownvoteDisabler != undefined) window._YDB_public.funcs.upvoteDownvoteDisabler(c, true);
 		feed.temp.innerHTML = '';
 		feed.loaded = true;
-		feed.url.href = feedzURLs[id];
+		feed.url.href = feedzURLs[id]+'&feedId='+id;
 		for (let i=0; i<feedz.length; i++) if (feedz[i] != null) if (privated || feedz[i].mainPage) if (!feedz[i].loaded) return;
 		postRun();
 	}
@@ -937,6 +940,8 @@
 		f.sd = document.querySelector('#searchform [name="sd"]').value;
 		f.cache = parseInt(document.querySelector('#searchform [name="cache"]').value);
 		f.ccache = parseInt(document.querySelector('#searchform [name="ccache"]').value);
+		f.double = document.querySelector('#searchform [name="double"]').checked;
+		f.mainPage = document.querySelector('#searchform [name="mainPage"]').checked;
         if (isNaN(f.cache) || f.cache<0) f.cache = 30;
         if (isNaN(f.ccache) || f.ccache<0) f.ccache = 60;
 		feedz[i] = f;
@@ -944,6 +949,7 @@
 
 		if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup(function() {
 			if (history.length == 1) close();
+			else if (u.params.feedId != undefined) location.href = '/search?q='+customQueries(f)+'&sf='+f.sort+'&sd='+f.sd+'&feedId='+i;
 			else location.href = '/settings#YourBooru';
 		});
 	}
@@ -996,11 +1002,20 @@
 		else c.innerHTML = 'Not enough parameters, impossible to add!';
 	}
 
-    function YB_feedButton() {
-        let e = InfernoAddElem('a',{href:location.href+'&name=New+feed&cache=30&ccache=0',title:'Create feed'},[
-            InfernoAddElem('i',{className:'fa',innerHTML:'\uF09E'},[]),
-            InfernoAddElem('span',{innerHTML:' Create feed'},[])
-        ]);
+    function YB_feedButton(id) {
+		let e;
+		if (id != undefined) {
+			e = InfernoAddElem('a',{href:location.href+'&name='+feedz[id].name+'&cache='+feedz[id].cache+'&ccache='+feedz[id].ccache,title:'Edit feed'},[
+				InfernoAddElem('i',{className:'fa',innerHTML:'\uF09E'},[]),
+				InfernoAddElem('span',{innerHTML:' Edit feed'},[])
+			]);
+		}
+		else {
+			e = InfernoAddElem('a',{href:location.href+'&name=New+feed&cache=30&ccache=0',title:'Create feed'},[
+				InfernoAddElem('i',{className:'fa',innerHTML:'\uF09E'},[]),
+				InfernoAddElem('span',{innerHTML:' Create feed'},[])
+			]);
+		}
         document.querySelector('.block__header.flex .flex__right').insertBefore(e,document.querySelector('.block__header.flex .flex__right').firstChild);
     }
 
@@ -1030,7 +1045,7 @@
                         }
                         else {
                             document.getElementById('yy_warn').classList.remove('hidden');
-                            document.getElementById('yy_add').value = 'Replace';
+                            document.getElementById('yy_add').value = 'Update';
                         }
                     }}]},[]),
                     InfernoAddElem('span',{innerHTML:' That feed already exists!', id:'yy_warn', className:'flash--warning '+(alreadyHas?'':'hidden')},[]),
@@ -1067,9 +1082,16 @@
                     ]),
                     InfernoAddElem('span',{innerHTML:' minutes'},[]),
                     InfernoAddElem('br',{},[]),
+                    InfernoAddElem('label',{innerHTML:'Double size '},[
+						InfernoAddElem('input',{checked:(u.params.feedId!=undefined?feedz[u.params.feedId].double:false),name:'double',type:'checkbox'},[])
+					]),
+                    InfernoAddElem('label',{innerHTML:' Show on main page '},[
+						InfernoAddElem('input',{checked:(u.params.feedId!=undefined?feedz[u.params.feedId].mainPage:true),name:'mainPage',type:'checkbox'},[])
+					]),
+                    InfernoAddElem('br',{},[]),
                     InfernoAddElem('br',{},[]),
                     InfernoAddElem('span',{},[
-                        InfernoAddElem('input',{type:'button',className:'button',id:"yy_add",value:(alreadyHas?'Replace':'Add feed')},[]),
+                        InfernoAddElem('input',{type:'button',className:'button',id:"yy_add",value:(alreadyHas?'Update':'Add feed')},[]),
                         InfernoAddElem('span',{innerHTML:' '},[]),
                         InfernoAddElem('span',{className:'button',id:"yy_cancel",innerHTML:'Cancel'},[]),
                         InfernoAddElem('span',{className:'button',id:"yy_include",style:'display:none',innerHTML:'Rename automatically'},[])
@@ -1137,6 +1159,7 @@
 			preRun();
             let u = parseURL(location.href);
             if (u.params.name != undefined) YB_addFeed2(u);
+			else if (u.params.feedId != undefined) YB_feedButton(u.params.feedId);
             else YB_feedButton();
         }
 		register();
