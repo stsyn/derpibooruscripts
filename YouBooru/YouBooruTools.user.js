@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.10
+// @version      0.4.11
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -72,7 +72,7 @@
                 {type:'text', name:'Original tag', styleS:{width:'70%', textAlign:'center',display:'inline-block'}},
                 {type:'array', parameter:'aliases', addText:'Add', customOrder:false, s:[
                     [
-                        {type:'input', name:'', parameter:'a',styleI:{width:'calc(40% - 10px - 12.5em)'}},
+                        {type:'input', name:'', parameter:'a',styleI:{width:'calc(40% - 10px - 12.5em)'},validation:{type:'unique'}},
                         {type:'textarea', name:'', parameter:'b',styleI:{width:'60%'}},
                         {type:'input', name:'', parameter:'c',styleI:{display:'none'}},
                         {type:'checkbox', name:'As watchlist', parameter:'w'}
