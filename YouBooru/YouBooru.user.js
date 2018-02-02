@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.23
+// @version      0.4.24
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -33,6 +33,7 @@
 (function() {
 	'use strict';
 	let privated = false;
+	let feedCSS = '._ydb_feedloading {display:none} ._ydb_feedshadow .block__content {opacity:0.5} ._ydb_feedshadow ._ydb_feedloading{display:block !important; position:absolute; width:100%; top:48%; pointer-events:none; text-align:center}';
 	var data={};
 
 	/*
@@ -40,6 +41,8 @@
        https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
 
 	   These configs work from this place until you install YourBooru:Settings
+
+	   But it's still strongly recommended to install it, old way of configuring is no longer supported!
     */
 
 	var config = {
@@ -166,6 +169,7 @@
 	}
 
 	function register() {
+		addElem('style',{type:'text/css',innerHTML:feedCSS},document.head);
 		if (window._YDB_public == undefined) window._YDB_public = {};
 		if (window._YDB_public.settings == undefined) window._YDB_public.settings = {};
 		window._YDB_public.settings.feeds = {
@@ -192,8 +196,19 @@
 							{name:'Width', value:'width'},
 							{name:'Height', value:'height'},
 							{name:'Comments', value:'comments'},
-							{name:'Random', value:'random'}
-						]},
+							{name:'Random', value:'random'},
+							{name:'Gallery', value:'gallery_id'}
+						],i:function(module,elem) {
+							let f = module.saved.feedz[elem.parentNode.dataset.id];
+							if (f == undefined || !f.sort.startsWith('gallery_id')) {
+								elem.removeChild(elem.querySelector('option[value="gallery_id"]'));
+							}
+							else {
+								let x = elem.querySelector('option[value="gallery_id"]');
+								x.value = f.sort;
+								x.selected = true;
+							}
+						}},
 						{type:'select', name:'Direction', parameter:'sd',styleI:{marginRight:'.5em'}, values:[
 							{name:'Descending', value:'desc'},
 							{name:'Ascending', value:'asc'}
@@ -467,29 +482,27 @@
 	}
 
 	function getFeed(feed, id, inital) {
+		fillParsed(feed, id);
+		feed.container.parentNode.classList.add('_ydb_feedshadow');
 		let req = new XMLHttpRequest();
 		req.feed = feed;
 		req.onreadystatechange = readyHandler(req, id);
 		req.open('GET', compileURL(feed, true));
 		if (inital) {
 			if (sentRequests>config.oneTimeLoad) {
-				console.log(feed.container.getBoundingClientRect().top, (window.innerHeight+window.pageYOffset)*2);
 				if (parseInt(feed.container.getBoundingClientRect().top) <= (window.innerHeight+window.pageYOffset)*2) {
 					setTimeout(function(){req.send();},500*(sentRequests-config.oneTimeLoad+1));
-					console.log('Отсроченный запуск №'+sentRequests);
 				}
 				else {
 					let d = window.pageYOffset;
 					let c = function() {
 						if (feed.container.getBoundingClientRect().top <= (window.innerHeight+window.pageYOffset+(window.pageYOffset-d)*3)*1.5) {
-							console.log('Запускается...');
 							req.send();
 						}
 						else setTimeout(c,200);
 						d = window.pageYOffset;
 					};
 					c();
-					console.log('Отсроченный запуск по позиции №'+sentRequests);
 				}
 			}
 			else req.send();
@@ -648,6 +661,8 @@
 		let mwidth = parseInt(cont.clientWidth) - 14;
 		let twidth = parseInt(mwidth/parseInt(config.imagesInFeeds*(privated?1.2:1))-8);
 
+		c.innerHTML = '';
+		c.parentNode.classList.remove('_ydb_feedshadow');
 		if (pc === null) c.innerHTML = 'Empty feed';
 		else {
 			if (r.feed.postprocessors != undefined && r.feed.postprocessors.length != undefined) {
@@ -727,7 +742,7 @@
         if (window._YDB_public.funcs != undefined && window._YDB_public.funcs.upvoteDownvoteDisabler != undefined) window._YDB_public.funcs.upvoteDownvoteDisabler(c, true);
 	}
 
-	function fillParsed(feed, id) {
+	function fillParsed(feed, id, pre) {
 		let c = feed.container;
 		if ((feedzCache[id] == null) || (feedzCache[id].length < 50 )) {
 			if (feedzCache[id] == null) c.innerHTML = 'Empty feed';
@@ -768,8 +783,9 @@
 
         if (window._YDB_public.funcs != undefined && window._YDB_public.funcs.upvoteDownvoteDisabler != undefined) window._YDB_public.funcs.upvoteDownvoteDisabler(c, true);
 		feed.temp.innerHTML = '';
-		feed.loaded = true;
 		feed.url.href = feedzURLs[id]+'&feedId='+id;
+		if (pre) return;
+		feed.loaded = true;
 		for (let i=0; i<feedz.length; i++) if (feedz[i] != null) if (privated || feedz[i].mainPage) if (!feedz[i].loaded) return;
 		postRun();
 	}
@@ -797,6 +813,7 @@
 			if (!(privated || f.mainPage)) continue;
 			let elem = document.createElement('div');
 			elem.className = 'block';
+			elem.style.position = 'relative';
 			let head = document.createElement('div');
 			head.className = 'block__header';
 			let title = document.createElement('span');
@@ -835,13 +852,18 @@
 			elem.appendChild(shitcontainer);
 			cont.appendChild(elem);
 
+			let ut2 = document.createElement('span');
+			ut2.className = '_ydb_feedloading';
+			ut2.innerHTML = ' Updating feed...';
+			head.appendChild(ut2);
+
 			f.reload = document.createElement('a');
 			if (config.watchFeedLinkOnRightSide) f.reload.style.float = 'right';
 			let ie2 = document.createElement('i');
 			ie2.className = 'fa';
 			ie2.innerHTML = '';
 			f.reload.appendChild(ie2);
-			let ut2 = document.createElement('span');
+			ut2 = document.createElement('span');
 			ut2.className = 'hide-mobile';
 			ut2.innerHTML = ' Reload feed';
 			f.reload.appendChild(ut2);
@@ -942,6 +964,8 @@
 		f.ccache = parseInt(document.querySelector('#searchform [name="ccache"]').value);
 		f.double = document.querySelector('#searchform [name="double"]').checked;
 		f.mainPage = document.querySelector('#searchform [name="mainPage"]').checked;
+		if (f.sort.startsWith('random')) f.sort = 'random';
+		console.log(f.sort);
         if (isNaN(f.cache) || f.cache<0) f.cache = 30;
         if (isNaN(f.ccache) || f.ccache<0) f.ccache = 60;
 		feedz[i] = f;
