@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.11
+// @version      0.4.12
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -42,6 +42,35 @@
 	let artists = [];
 
     var tagDB = getTagDB();
+
+	//probably that should be in library...
+	function parseURL(url) {
+		var a = document.createElement('a');
+		a.href = url;
+		return {
+			source: url,
+			protocol: a.protocol.replace(':',''),
+			host: a.hostname,
+			port: a.port,
+			query: a.search,
+			params: (function(){
+				var ret = {},
+					seg = a.search.replace(/^\?/,'').split('&'),
+					len = seg.length, i = 0, s;
+				for (;i<len;i++) {
+					if (!seg[i]) { continue; }
+					s = seg[i].split('=');
+					ret[s[0]] = s[1];
+				}
+				return ret;
+			})(),
+			file: (a.pathname.match(/\/([^\/?#]+)$/i) || [,''])[1],
+			hash: a.hash.replace('#',''),
+			path: a.pathname.replace(/^([^\/])/,'/$1'),
+			relative: (a.href.match(/tps?:\/\/[^\/]+(.+)/) || [,''])[1],
+			segments: a.pathname.replace(/^\//,'').split('/')
+		};
+	}
 
     function write(ls2) {
         localStorage._ydb_tools = JSON.stringify(ls2);
@@ -768,6 +797,26 @@
         for (i=0; i<e.querySelectorAll('.image-description').length; i++) urlSearchInElem(e.querySelectorAll('.image-description')[i]);
     }
 
+	//gallery sort
+	function addGalleryOption() {
+		if (location.pathname == "/search" || location.pathname == '/search/index') {
+			let t = simpleParse(document.querySelector('.js-search-field').value);
+			for (let i=0; i<t.length; i++) {
+				if (t[i].startsWith('gallery_id')) {
+					addElem('option',{value:t[i],innerHTML:'As in gallery #'+t[i].split(':').pop()},document.querySelector('#searchform select[name="sf"]'));
+				}
+			}
+			let sf = parseURL(location.href).params.sf.replace('%3A',':');
+			if (sf.startsWith('gallery_id')) {
+				document.querySelector('#searchform select[name="sf"] option[value*="'+sf.split(':').pop()+'"]').selected = true;
+			}
+		}
+		else if (location.pathname.startsWith("/galleries")) {
+			let id = location.pathname.split('/').pop();
+			addElem('a',{href:'/search?q=gallery_id%3A'+id+'&sf=gallery_id%3A'+id+'&sd=desc',innerHTML:'Open in search'},document.querySelector('.block__header--sub'));
+		}
+	}
+
 	//highlight artist
 	function getArtists() {
 		let callback = function(r) {
@@ -1056,6 +1105,7 @@
 	commentButtons(document, true);
 	getArtists();
     colorTags();
+	addGalleryOption();
     if (location.pathname == "/pages/yourbooru") {
         YDB();
     }
