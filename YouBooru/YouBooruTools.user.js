@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.12
+// @version      0.4.13
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -40,6 +40,17 @@
     let result, debug;
 	let version = 0;
 	let artists = [];
+    let style = `
+body[data-theme*="dark"] ._ydb_green {
+background: #5b9b26;
+color: #e0e0e0;
+}
+
+._ydb_green {
+background: #67af2b;
+color: #fff;
+}
+`;
 
     var tagDB = getTagDB();
 
@@ -77,6 +88,7 @@
     }
 
     function register() {
+		addElem('style',{type:'text/css',innerHTML:style},document.head);
         if (window._YDB_public == undefined) window._YDB_public = {};
         if (window._YDB_public.settings == undefined) window._YDB_public.settings = {};
         window._YDB_public.settings.tools = {
@@ -836,8 +848,7 @@
 					if (document.querySelector('.image_uploader a') != undefined && document.querySelector('.image_uploader a').innerHTML == n) {
 						console.log(n);
                         for (let i=0; i<document.querySelectorAll('.image_uploader a').length; i++) {
-                            document.querySelectorAll('.image_uploader a')[i].classList.add('interaction--upvote');
-                            document.querySelectorAll('.image_uploader a')[i].classList.add('active');
+                            document.querySelectorAll('.image_uploader a')[i].classList.add('_ydb_green');
                         }
 					}
 					highlightArtist(document, n);
