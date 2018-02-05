@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.7.3
+// @version      0.7.4
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -692,10 +692,10 @@
 			document.getElementsByClassName('block__header')[0].childNodes[i].addEventListener('click', function(e) {location.hash = e.target.href.split('#')[1];});
 		}
 
-		document.querySelector('.edit_user input.button[type=submit]').addEventListener('click', save);
+		document.querySelector('input.button[type=submit]').addEventListener('click', save);
 		setTimeout(hh, 500);
 		if (location.hash.slice(1) == 'backup') {
-			document.querySelector('.edit_user input.button[type=submit]').click();
+			document.querySelector('input.button[type=submit]').click();
 		}
 		validate();
 	}
