@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.24
+// @version      0.4.25
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -66,6 +66,7 @@
 			query:'first_seen_at.gte:6 hours ago',
 			sort:'score',
 			sd:'desc',
+			ccache:0,
 			cache:5
 		},
 		{
@@ -73,6 +74,7 @@
 			query:'ponut',
 			sort:'',
 			sd:'desc',
+			ccache:0,
 			cache:30
 		},
 		{
@@ -80,6 +82,7 @@
 			query:'cat || cat lingerie || behaving like a cat',
 			sort:'',
 			sd:'desc',
+			ccache:0,
 			cache:30
 		},
 		{
@@ -95,6 +98,7 @@
 			query:'my:watched, first_seen_at.lte:1 years ago',
 			sort:'random',
 			sd:'desc',
+			ccache:0,
 			cache:5
 		},
 		{
@@ -102,6 +106,7 @@
 			query:'my:upvotes',
 			sort:'random',
 			sd:'desc',
+			ccache:0,
 			cache:5
 		},
 		{
