@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.25
+// @version      0.4.26
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -638,7 +638,7 @@
 	}
 
 	function feedAfterload(r,cc,id,notcache) {
-		feedzURLs[id] = compileURL(r.feed);
+		feedzURLs[id] = compileURL(r.feed, true);
 		r.feed.url.href = feedzURLs[id]+'&feedId='+id;
 		r.feed.temp.innerHTML = '';
 		r.feed.loaded = true;
@@ -707,7 +707,7 @@
 					elem.querySelector('.media-box__content .image-container').removeAttribute('data-uris');
 					elem.querySelector('.media-box__content .image-container').removeAttribute('data-aspect-ratio');
 					elem.querySelector('.media-box__content .image-container').removeAttribute('data-created-at');
-					if (elem.querySelector('.media-box__content .image-container img') !== null) elem.querySelector('.media-box__content .image-container img').removeAttribute('alt');
+					if (elem.querySelector('.media-box__content .image-container img') != null) elem.querySelector('.media-box__content .image-container img').removeAttribute('alt');
 				}
 
 				elem.getElementsByClassName('media-box__header')[0].style.width = twidth+'px';
@@ -757,7 +757,8 @@
 			c.innerHTML = feedzCache[id];
 			for (let i=0; i<parseInt(config.imagesInFeeds*1.2)*(feed.double?2:1); i++) {
 				let elem = c.childNodes[i];
-				if (elem.querySelector('.media-box__content .image-container.thumb a img') !== null) elem.querySelector('.media-box__content--large .image-container.thumb a img').onload = spoiler;
+				if (elem == undefined) break;
+				if (elem.querySelector('.media-box__content .image-container.thumb a img') != null) elem.querySelector('.media-box__content--large .image-container.thumb a img').onload = spoiler;
 				let mwidth = parseInt(cont.clientWidth) - 14;
 				let twidth = parseInt(mwidth/parseInt(config.imagesInFeeds*(privated?1.2:1))-8);
 				elem.getElementsByClassName('media-box__header')[0].style.width = twidth+'px';
