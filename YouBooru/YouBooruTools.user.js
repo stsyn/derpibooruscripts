@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.13
+// @version      0.4.14
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -40,6 +40,8 @@
     let result, debug;
 	let version = 0;
 	let artists = [];
+	let bps = ['princess luna','tempest shadow','starlight glimmer','oc:blackjack','princess celestia','rarity'];
+	let best_pony_for_today = bps[parseInt(Math.random()*bps.length)];
     let style = `
 body[data-theme*="dark"] ._ydb_green {
 background: #5b9b26;
@@ -49,6 +51,10 @@ color: #e0e0e0;
 ._ydb_green {
 background: #67af2b;
 color: #fff;
+}
+
+._ydb_t_patched {
+overflow-y:hidden;
 }
 `;
 
@@ -105,6 +111,7 @@ color: #fff;
                 {type:'header', name:'Tag aliases'},
                 {type:'checkbox', name:'Do not parse page name', parameter:'oldName'},
                 {type:'checkbox', name:'As short queries as possible', parameter:'compress', styleS:{display:'none'}},
+                {type:'input', name:'Shrink comments longer that (px)', parameter:'shrinkComms', validation:{type:'int',min:180, default:500}},
                 {type:'breakline'},
                 {type:'text', name:'If synchronizing enabled, adding and removing tags from watchlist via tag dropdown will cause small popup window until synchronizing done.'},
                 {type:'breakline'},
@@ -118,7 +125,7 @@ color: #fff;
                         {type:'input', name:'', parameter:'c',styleI:{display:'none'}},
                         {type:'checkbox', name:'As watchlist', parameter:'w'}
                     ]
-                ], template:{a:'',b:'', w:false}}
+                ], template:{a:'best_pony',b:best_pony_for_today, w:false}}
             ],
             onChanges:{
                 aliases:{
@@ -214,6 +221,10 @@ color: #fff;
     }
 	if (ls.version == undefined) {
 		ls.version = version;
+        write(ls);
+	}
+	if (ls.shrinkComms == undefined) {
+		ls.shrinkComms = 500;
         write(ls);
 	}
 
@@ -797,6 +808,7 @@ color: #fff;
             for (let i=0; i<exclude.length; i++) if (exclude[i] == str) return str;
             for (let i=0; i<exclude.length; i++) if (exclude[i] == str+'/') return str;
             for (let i=0; i<exclude.length; i++) if (exclude[i]+'/' == str) return str;
+			if (e.innerText.indexOf(str) < 0) return str;
             let color = getComputedStyle(document.querySelector('footer a')).color;
             return '<a href="'+str+'" style="border-bottom: 1px dotted '+color+'">'+str+'</a>';
         });
@@ -831,6 +843,7 @@ color: #fff;
 
 	//highlight artist
 	function getArtists() {
+		if (location.pathname == '/tags') return;
 		let callback = function(r) {
 			let x = addElem('div',{innerHTML:r.responseText,style:'display:none'},document.body);
 			let exit = function() {
@@ -839,19 +852,22 @@ color: #fff;
 			for (let i=0; i<x.querySelectorAll('.tag-info__more strong').length; i++) {
 				let ax = x.querySelectorAll('.tag-info__more strong')[i];
 				if (ax.innerHTML == 'Associated Derpibooru users:') {
-					let n = ax.nextSibling.nextSibling.innerHTML;
-					for (let j=0; j<artists.length; j++) if (n == artists[j]) {
+					let n = ax.nextSibling.nextSibling;
+					for (let j=0; j<artists.length; j++) if (n.innerHTML == artists[j]) {
 						exit();
 						return;
 					}
-					artists.push(n);
-					if (document.querySelector('.image_uploader a') != undefined && document.querySelector('.image_uploader a').innerHTML == n) {
-						console.log(n);
+					artists.push(n.innerHTML);
+					while (n.nextSibling != undefined && n.nextSibling.nextSibling != undefined && n.nextSibling.nextSibling.tagName == 'A') {
+						n = n.nextSibling.nextSibling;
+						artists.push(n.innerHTML);
+					}
+					if (document.querySelector('.image_uploader a') != undefined && document.querySelector('.image_uploader a').innerHTML == n.innerHTML) {
                         for (let i=0; i<document.querySelectorAll('.image_uploader a').length; i++) {
                             document.querySelectorAll('.image_uploader a')[i].classList.add('_ydb_green');
                         }
 					}
-					highlightArtist(document, n);
+					highlightArtist(document, n.innerHTML);
 					break;
 				}
 			}
@@ -912,6 +928,61 @@ color: #fff;
 			if (el.querySelector('.communication__body__sender-name a') != undefined && el.querySelector('.communication__body__sender-name a').innerHTML == n) {
 				addElem('span',{innerHTML:' (OP)'},el.querySelector('.communication__body__sender-name'));
 
+			}
+		}
+	}
+
+	//compress labels
+	function personal_titles_have_to_be_24_characters_long(e) {
+		for (let i=0; i<e.querySelectorAll('.label:not(._ydb_t_patched)').length; i++) {
+			let el = e.querySelectorAll('.label:not(._ydb_t_patched)')[i];
+			el.classList.add('_ydb_t_patched');
+			if (el.innerHTML.length > 24) {
+				let t = el.innerHTML;
+				el.innerHTML = el.innerHTML.substr(0,24);
+				addElem('a',{innerHTML:'Read more >>', href:'javascript://', events:[{t:'click',f:function() {
+					el.innerHTML = t;
+				}}]}, el);
+			}
+		}
+	}
+
+	//compress comments
+	function shrinkComms(e) {
+		for (let i=0; i<e.querySelectorAll('.block.communication').length; i++) {
+			let el = e.querySelectorAll('.block.communication')[i];
+			if (el.clientHeight > parseInt(ls.shrinkComms)+13) {
+				el.style.position = 'relative';
+				let t = el.querySelector('.communication__body__text');
+				t.classList.add('_ydb_t_comm_shrink');
+				t.style.height = ls.shrinkComms+'px';
+				let x;
+				let y = InfernoAddElem('div',{className:'block__content communication__options', style:'display:none;text-align:center;font-size:150%;margin-bottom:2px'},[
+					InfernoAddElem('a',{href:'javascript://', style:'width:100%;display:inline-block;', events:[{t:'click',f:function() {
+						t.classList.add('_ydb_t_comm_shrink');
+						t.style.height = ls.shrinkComms+'px';
+						x.style.display = 'block';
+						y.style.display = 'none';
+					}}]}, [
+						InfernoAddElem('i',{innerHTML:'',className:'fa'},[]),
+						InfernoAddElem('span',{innerHTML:' Shrink '},[]),
+						InfernoAddElem('i',{innerHTML:'',className:'fa'},[])
+					])
+				]);
+				x = InfernoAddElem('div',{className:'block__content communication__options', style:'position:absolute;text-align:center;font-size:150%;bottom:'+(el.querySelector('.communication__options').clientHeight+4)+'px;width:calc(100% - 14px)'},[
+					InfernoAddElem('a',{href:'javascript://', style:'width:100%;display:inline-block;',events:[{t:'click',f:function() {
+						t.classList.remove('_ydb_t_comm_shrink');
+						t.style.height = 'auto';
+						x.style.display = 'none';
+						y.style.display = 'block';
+					}}]}, [
+						InfernoAddElem('i',{innerHTML:'',className:'fa'},[]),
+						InfernoAddElem('span',{innerHTML:' Expand '},[]),
+						InfernoAddElem('i',{innerHTML:'',className:'fa'},[])
+					])
+				]);
+				el.insertBefore(y,el.lastChild);
+				el.insertBefore(x,el.lastChild);
 			}
 		}
 	}
@@ -1112,6 +1183,8 @@ color: #fff;
     urlSearch(document);
     linksPatch(document);
 	showUploader(document);
+	personal_titles_have_to_be_24_characters_long(document);
+	shrinkComms(document);
     if (ls.deactivateButtons) deactivateButtons(document, true);
 	commentButtons(document, true);
 	getArtists();
@@ -1127,5 +1200,7 @@ color: #fff;
 		urlSearch(e.target);
         linksPatch(e.target);
 		showUploader(e.target);
+		shrinkComms(e.target);
+		personal_titles_have_to_be_24_characters_long(e.target);
 		highlightArtist(e.target);});
 })();
