@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.7.4
+// @version      0.7.5
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -234,6 +234,9 @@
 			if (v.attrS != undefined) for (let s in v.attrS) y[s] = v.attrS[s];
 			if (v.styleI != undefined) for (let s in v.styleI) x.style[s] = v.styleI[s];
 			if (v.styleS != undefined) for (let s in v.styleS) y.style[s] = v.styleS[s];
+			if (v.eventsI != undefined) for (let s in v.eventsI) x.addEventListener(s,v.eventsI[s]);
+			if (v.eventsS != undefined) for (let s in v.eventsS) y.addEventListener(s,v.eventsS[s]);
+			if (v.validation != undefined) x.dataset.validation = v.validation.type;
 			if (v.i != undefined) v.i(mod, x);
 
 		});
@@ -516,8 +519,8 @@
 			return;
 		}
 		let changed = false;
-		let exploreChilds = function(c, m, o) {
-            //container, module data container, onchange functions, module data container path, container id
+		let exploreChilds = function(c, m, o, mx) {
+            //container, module data container, onchange functions, module
             let callback = function(m, el, val) {
                 m[el.dataset.parameter] = val;
             };
@@ -529,6 +532,8 @@
 					if (m[el.dataset.parameter] != el.value) {
 						changed = true;
 						m[el.dataset.parameter] = el.value;
+						if (el.dataset.validation == 'int') m[el.dataset.parameter] = parseInt(m[el.dataset.parameter]);
+						else if (el.dataset.validation == 'float') m[el.dataset.parameter] = parseFloat(m[el.dataset.parameter]);
 						if (o != undefined && o[el.dataset.parameter] != undefined) o[el.dataset.parameter](m, el, callback);
 					}
 				}
@@ -569,7 +574,7 @@
 		for (let i=0; i<containers.length; i++) {
 			let mx = modules[containers[i].dataset.parent];
             mx.changed = false;
-			if (exploreChilds(containers[i], mx.saved, mx.onChanges)) {
+			if (exploreChilds(containers[i], mx.saved, mx.onChanges, mx.s)) {
 				changed = true;
                 mx.changed = true;
 				if (mx.onChanges != undefined && mx.onChanges._ != undefined) mx.onChanges._(mx);
