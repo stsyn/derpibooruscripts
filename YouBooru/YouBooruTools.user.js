@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.15
+// @version      0.4.16
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -60,6 +60,14 @@ overflow-y:hidden;
 .ydb_t_block.block__content:not(.hidden) {
 display:block;
 }
+
+body[data-theme*="dark"] ._ydb_greentext {
+color: #66e066;
+}
+
+._ydb_greentext {
+color: #040;
+}
 `;
 
     var tagDB = getTagDB();
@@ -112,10 +120,19 @@ display:block;
                 {type:'header', name:'UI'},
                 {type:'checkbox', name:'Bigger search fields', parameter:'patchSearch'},
                 {type:'checkbox', name:'Deactive downvote if upvoted (and reverse)', parameter:'deactivateButtons'},
+                {type:'breakline'},
+                {type:'input', name:'Shrink comments and posts longer that (px)', parameter:'shrinkComms', validation:{type:'int',min:280, default:500}},
+                {type:'checkbox', name:'Button to shrink expanded posts', parameter:'shrinkButt'},
+                {type:'breakline'},
+                {type:'checkbox', name:'Greentext (don\'t tell TSP about it)', parameter:'greenText',eventsI:{change:function (e) {
+					if ((document.body.dataset.userName == 'The Frowning Pony') || (document.body.dataset.userName == 'The Smiling Pony')) {
+						alert(errorMessages[errorLog++%errorMessages.length]);
+						e.target.checked = false;
+					}
+				}}},
                 {type:'header', name:'Tag aliases'},
                 {type:'checkbox', name:'Do not parse page name', parameter:'oldName'},
                 {type:'checkbox', name:'As short queries as possible', parameter:'compress', styleS:{display:'none'}},
-                {type:'input', name:'Shrink comments longer that (px)', parameter:'shrinkComms', validation:{type:'int',min:280, default:500}},
                 {type:'breakline'},
                 {type:'text', name:'If synchronizing enabled, adding and removing tags from watchlist via tag dropdown will cause small popup window until synchronizing done.'},
                 {type:'breakline'},
@@ -231,6 +248,22 @@ display:block;
 		ls.shrinkComms = 500;
         write(ls);
 	}
+	if ((document.body.dataset.userName == 'The Frowning Pony') || (document.body.dataset.userName == 'The Smiling Pony')) {
+		ls.greenText = false;
+		localStorage._fucken_grin_ = 'caught';
+        write(ls);
+	}
+	else if (localStorage._fucken_grin_ == 'caught' && ls.greenText) {
+		alert('It\'s still you? :P');
+		ls.greenText = false;
+        write(ls);
+	}
+	if (ls.greenText == undefined) {
+		ls.greenText = true;
+        write(ls);
+	}
+	let errorMessages = ['Nope', 'Nope', 'N-nope!', 'Stahp it', 'You don\'t want it', 'Go ewey', 'Look, I don\'t want permaban, so, stop it c:', 'Plz', ':c', 'why u so bad?'];
+	let errorLog = 0;
 
     if (ls.aliases != undefined && ls.aliases.length>0) {
         ls.aliases.sort(function(a, b){
@@ -799,6 +832,38 @@ display:block;
         setTimeout(colorTags,500);
     }
 
+	//greenText
+	function greentext(e) {
+		let parser = function(et) {
+			console.log(et.childNodes);
+			for (let i=0; i<et.childNodes.length; i++) {
+				let el = et.childNodes[i];
+				if (el.tagName != undefined) {
+					parser(el);
+				}
+				else {
+					let x = el.textContent.replace(/^\s+/g,'');
+					let els = [el];
+					let z = el.nextSibling;
+					while (z != undefined && z.tagName != 'BR' && z.tagName != 'BLOCKQUOTE') {
+						els.push(z);
+						if (z.outerHTML != undefined) x += z.outerHTML;
+						else x += z.textContent;
+						z = z.nextSibling;
+					}
+					if (x.startsWith('>')) {
+						let t = InfernoAddElem('span',{className:'_ydb_greentext',innerHTML:x},[]);
+						et.insertBefore(t,el);
+						for (let j=0; j<els.length; j++) {
+							et.removeChild(els[j]);
+						}
+					}
+				}
+			}
+		};
+		parser(e);
+	}
+
 	//spoilers
 	function YDBSpoilers(e) {
 		let hideBlock = function(e) {
@@ -819,6 +884,7 @@ display:block;
 		for (let i=0; i<e.querySelectorAll('ins').length; i++) {
 			let el = e.querySelectorAll('ins')[i];
 			if (el.innerHTML.startsWith('$')) {
+				if (el.style.display == 'none') continue;
 				let uid = '_ydb_spoil';
 				let h = InfernoAddElem('div',{className:'block'},[
 					InfernoAddElem('div',{className:'block__header'},[
@@ -840,7 +906,7 @@ display:block;
 				n.classList.add('hidden');
 				n.classList.remove('spoiler');
 				n.classList.add('ydb_t_block');
-				n.style.margin=0;
+				n.style.margin = 0;
 				el.style.display = 'none';
 				el.parentNode.insertBefore(h,el);
 				YDBSpoilers(n);
@@ -890,16 +956,19 @@ display:block;
     function urlSearch(e) {
         let i;
         for (i=0; i<e.querySelectorAll('.communication__body__text').length; i++) {
-			YDBSpoilers(e.querySelectorAll('.communication__body__text')[i]);
+			greentext(e.querySelectorAll('.communication__body__text')[i]);
 			urlSearchInElem(e.querySelectorAll('.communication__body__text')[i]);
+			YDBSpoilers(e.querySelectorAll('.communication__body__text')[i]);
 		}
         for (i=0; i<e.querySelectorAll('.profile-about').length; i++) {
-			YDBSpoilers(e.querySelectorAll('.profile-about')[i]);
+			greentext(e.querySelectorAll('.profile-about')[i]);
 			urlSearchInElem(e.querySelectorAll('.profile-about')[i]);
+			YDBSpoilers(e.querySelectorAll('.profile-about')[i]);
 		}
         for (i=0; i<e.querySelectorAll('.image-description').length; i++) {
-			YDBSpoilers(e.querySelectorAll('.image-description')[i]);
+			greentext(e.querySelectorAll('.image-description')[i]);
 			urlSearchInElem(e.querySelectorAll('.image-description')[i]);
+			YDBSpoilers(e.querySelectorAll('.image-description')[i]);
 		}
     }
 
@@ -1064,7 +1133,7 @@ display:block;
 						InfernoAddElem('i',{innerHTML:'',className:'fa'},[])
 					])
 				]);
-				el.insertBefore(y,el.lastChild);
+				if (ls.shrinkButt) el.insertBefore(y,el.lastChild);
 				el.insertBefore(x,el.lastChild);
 			}
 			else {
