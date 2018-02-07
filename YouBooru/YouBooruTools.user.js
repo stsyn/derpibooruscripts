@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.14
+// @version      0.4.15
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -55,6 +55,10 @@ color: #fff;
 
 ._ydb_t_patched {
 overflow-y:hidden;
+}
+
+.ydb_t_block.block__content:not(.hidden) {
+display:block;
 }
 `;
 
@@ -111,7 +115,7 @@ overflow-y:hidden;
                 {type:'header', name:'Tag aliases'},
                 {type:'checkbox', name:'Do not parse page name', parameter:'oldName'},
                 {type:'checkbox', name:'As short queries as possible', parameter:'compress', styleS:{display:'none'}},
-                {type:'input', name:'Shrink comments longer that (px)', parameter:'shrinkComms', validation:{type:'int',min:180, default:500}},
+                {type:'input', name:'Shrink comments longer that (px)', parameter:'shrinkComms', validation:{type:'int',min:280, default:500}},
                 {type:'breakline'},
                 {type:'text', name:'If synchronizing enabled, adding and removing tags from watchlist via tag dropdown will cause small popup window until synchronizing done.'},
                 {type:'breakline'},
@@ -390,7 +394,6 @@ overflow-y:hidden;
         }
         yx.temp = x;
         yx.tags = y;
-		console.log(yx.tags);
         return yx;
 	}
 
@@ -527,7 +530,6 @@ overflow-y:hidden;
 			let yx = goodParseIngnoreParentheses(x);
 			if (yx.tags.length == 1) return x;
 			let ch = false;
-			console.log(yx.tags);
 			for (let i=0; i<yx.tags.length; i++) {
 				if ((yx.tags[i].v[0] == '(' || (yx.tags[i].v.startsWith('-('))) && /\)$/.test(yx.tags[i].v)) {
 					let l = yx.tags[i].v.length;
@@ -797,6 +799,77 @@ overflow-y:hidden;
         setTimeout(colorTags,500);
     }
 
+	//spoilers
+	function YDBSpoilers(e) {
+		let hideBlock = function(e) {
+			let u = e.target;
+			while (!u.classList.contains('block__header')) u = u.parentNode;
+			let x = u.nextSibling;
+			x.classList.toggle('hidden');
+			u.getElementsByClassName('fa')[0].innerHTML = (x.classList.contains('hidden')?'\uF061':'\uF063');
+		};
+
+		setTimeout(function() {
+			for (let i=0; i<e.querySelectorAll('._ydb_spoil:not(._ydb_spoil_patched)').length; i++) {
+				e.querySelectorAll('._ydb_spoil:not(._ydb_spoil_patched)')[i].addEventListener('click', hideBlock);
+				e.querySelectorAll('._ydb_spoil:not(._ydb_spoil_patched)')[i].classList.add('_ydb_spoil_patched');
+			}
+		}, 100);
+
+		for (let i=0; i<e.querySelectorAll('ins').length; i++) {
+			let el = e.querySelectorAll('ins')[i];
+			if (el.innerHTML.startsWith('$')) {
+				let uid = '_ydb_spoil';
+				let h = InfernoAddElem('div',{className:'block'},[
+					InfernoAddElem('div',{className:'block__header'},[
+						InfernoAddElem('a',{className:uid},[
+							InfernoAddElem('i', {className:'fa', innerHTML:'\uF061'}),
+							InfernoAddElem('span',{innerHTML:' '+el.innerHTML.slice(1)},[])
+						])
+					])
+				]);
+
+				let n = el.nextSibling;
+				while (n.tagName !='BLOCKQUOTE' && !(n.classList != undefined && n.classList.contains('spoiler'))) {
+					n = n.nextSibling;
+					if (n == undefined) break;
+				};
+				if (n == undefined) break;
+				h.appendChild(n);
+				n.classList.add('block__content');
+				n.classList.add('hidden');
+				n.classList.remove('spoiler');
+				n.classList.add('ydb_t_block');
+				n.style.margin=0;
+				el.style.display = 'none';
+				el.parentNode.insertBefore(h,el);
+				YDBSpoilers(n);
+			}
+		}
+		for (let i=0; i<e.querySelectorAll('blockquote, .spoiler').length; i++) {
+			let el = e.querySelectorAll('blockquote, .spoiler')[i];
+			if (el.innerHTML.startsWith('$')) {
+				let uid = '_ydb_spoil';
+				let h = InfernoAddElem('div',{className:'block'},[
+					InfernoAddElem('div',{className:'block__header'},[
+						InfernoAddElem('a',{className:uid},[
+							InfernoAddElem('i', {className:'fa', innerHTML:'\uF061'}),
+							InfernoAddElem('span',{innerHTML:' Spoiler'},[])
+						])
+					])
+				]);
+				el.innerHTML = el.innerHTML.slice(1);
+				el.parentNode.insertBefore(h,el);
+				h.appendChild(el);
+				el.classList.add('block__content');
+				el.classList.add('hidden');
+				el.classList.remove('spoiler');
+				el.classList.add('ydb_t_block');
+				el.style.margin = 0;
+			}
+		}
+	}
+
 	//bad links fixes
     function urlSearchInElem(e) {
         let exclude = [];
@@ -816,9 +889,18 @@ overflow-y:hidden;
 
     function urlSearch(e) {
         let i;
-        for (i=0; i<e.querySelectorAll('.communication__body__text').length; i++) urlSearchInElem(e.querySelectorAll('.communication__body__text')[i]);
-        for (i=0; i<e.querySelectorAll('.profile-about').length; i++) urlSearchInElem(e.querySelectorAll('.profile-about')[i]);
-        for (i=0; i<e.querySelectorAll('.image-description').length; i++) urlSearchInElem(e.querySelectorAll('.image-description')[i]);
+        for (i=0; i<e.querySelectorAll('.communication__body__text').length; i++) {
+			YDBSpoilers(e.querySelectorAll('.communication__body__text')[i]);
+			urlSearchInElem(e.querySelectorAll('.communication__body__text')[i]);
+		}
+        for (i=0; i<e.querySelectorAll('.profile-about').length; i++) {
+			YDBSpoilers(e.querySelectorAll('.profile-about')[i]);
+			urlSearchInElem(e.querySelectorAll('.profile-about')[i]);
+		}
+        for (i=0; i<e.querySelectorAll('.image-description').length; i++) {
+			YDBSpoilers(e.querySelectorAll('.image-description')[i]);
+			urlSearchInElem(e.querySelectorAll('.image-description')[i]);
+		}
     }
 
 	//gallery sort
@@ -843,7 +925,7 @@ overflow-y:hidden;
 
 	//highlight artist
 	function getArtists() {
-		if (location.pathname == '/tags') return;
+		if (!((parseInt(location.pathname.slice(1))>=0 && location.pathname.split('/')[2] == undefined) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && location.pathname.split('/')[3] == undefined))) return;
 		let callback = function(r) {
 			let x = addElem('div',{innerHTML:r.responseText,style:'display:none'},document.body);
 			let exit = function() {
@@ -951,16 +1033,17 @@ overflow-y:hidden;
 	function shrinkComms(e) {
 		for (let i=0; i<e.querySelectorAll('.block.communication').length; i++) {
 			let el = e.querySelectorAll('.block.communication')[i];
-			if (el.clientHeight > parseInt(ls.shrinkComms)+13) {
-				el.style.position = 'relative';
+			if (el.clientHeight > parseInt(ls.shrinkComms)*1.2+13) {
 				let t = el.querySelector('.communication__body__text');
+				if (t.classList.contains('_ydb_t_comm_shrink')) continue;
 				t.classList.add('_ydb_t_comm_shrink');
-				t.style.height = ls.shrinkComms+'px';
+				t.style.maxHeight = parseInt(ls.shrinkComms)*0.8+'px';
+				el.style.position = 'relative';
 				let x;
-				let y = InfernoAddElem('div',{className:'block__content communication__options', style:'display:none;text-align:center;font-size:150%;margin-bottom:2px'},[
+				let y = InfernoAddElem('div',{className:'block__content communication__options _ydb_tools_compress', style:'display:none;text-align:center;font-size:150%;margin-bottom:2px'},[
 					InfernoAddElem('a',{href:'javascript://', style:'width:100%;display:inline-block;', events:[{t:'click',f:function() {
 						t.classList.add('_ydb_t_comm_shrink');
-						t.style.height = ls.shrinkComms+'px';
+						t.style.maxHeight = parseInt(ls.shrinkComms)*0.8+'px';
 						x.style.display = 'block';
 						y.style.display = 'none';
 					}}]}, [
@@ -969,10 +1052,10 @@ overflow-y:hidden;
 						InfernoAddElem('i',{innerHTML:'',className:'fa'},[])
 					])
 				]);
-				x = InfernoAddElem('div',{className:'block__content communication__options', style:'position:absolute;text-align:center;font-size:150%;bottom:'+(el.querySelector('.communication__options').clientHeight+4)+'px;width:calc(100% - 14px)'},[
+				x = InfernoAddElem('div',{className:'block__content communication__options _ydb_tools_expand', style:'position:absolute;text-align:center;font-size:150%;bottom:'+(el.querySelector('.communication__options').clientHeight+4)+'px;width:calc(100% - 14px)'},[
 					InfernoAddElem('a',{href:'javascript://', style:'width:100%;display:inline-block;',events:[{t:'click',f:function() {
 						t.classList.remove('_ydb_t_comm_shrink');
-						t.style.height = 'auto';
+						t.style.maxHeight = 'none';
 						x.style.display = 'none';
 						y.style.display = 'block';
 					}}]}, [
@@ -983,6 +1066,14 @@ overflow-y:hidden;
 				]);
 				el.insertBefore(y,el.lastChild);
 				el.insertBefore(x,el.lastChild);
+			}
+			else {
+				let t = el.querySelector('.communication__body__text');
+				if (t.classList.contains('_ydb_t_comm_shrink')) {
+					t.removeChild(t.getElementsByClassName('_ydb_tools_compress')[0]);
+					t.removeChild(t.getElementsByClassName('_ydb_tools_expand')[0]);
+					t.classList.remove('_ydb_t_comm_shrink');
+				}
 			}
 		}
 	}
@@ -1173,18 +1264,32 @@ overflow-y:hidden;
         }
     }
 
-    badge(document);
+	function listRunInComms(targ) {
+    	badge(targ);
+		urlSearch(targ);
+		linksPatch(targ);
+		showUploader(targ);
+		personal_titles_have_to_be_24_characters_long(targ);
+	}
+
+	function listRunWhenDone() {
+		shrinkComms(document);
+	}
+
+	function listener(e) {
+        if (e.target.classList == undefined) return;
+        if (!(e.target.id == 'image_comments' || (e.target.parentNode.classList.contains('communication-edit__tab')) || (e.target.classList.contains('block') && e.target.classList.contains('communication')))) return;
+    	listRunInComms(e.target);
+		shrinkComms(e.target);
+		highlightArtist(e.target);
+	}
 
     flashNotifies();
     profileLinks();
     if (ls.patchSearch) bigSearch();
     aliases();
     asWatchlist();
-    urlSearch(document);
-    linksPatch(document);
-	showUploader(document);
-	personal_titles_have_to_be_24_characters_long(document);
-	shrinkComms(document);
+    listRunInComms(document);
     if (ls.deactivateButtons) deactivateButtons(document, true);
 	commentButtons(document, true);
 	getArtists();
@@ -1193,14 +1298,7 @@ overflow-y:hidden;
     if (location.pathname == "/pages/yourbooru") {
         YDB();
     }
-    if (document.getElementById('comments') != undefined) document.getElementById('comments').addEventListener("DOMNodeInserted",function(e) {
-        if (e.target.classList == undefined) return;
-        if (!(e.target.id == 'image_comments' || (e.target.classList.contains('block') && e.target.classList.contains('communication')))) return;
-        badge(e.target);
-		urlSearch(e.target);
-        linksPatch(e.target);
-		showUploader(e.target);
-		shrinkComms(e.target);
-		personal_titles_have_to_be_24_characters_long(e.target);
-		highlightArtist(e.target);});
+	window.addEventListener('load',listRunWhenDone);
+    if (document.getElementById('comments') != undefined) document.getElementById('comments').addEventListener("DOMNodeInserted", listener);
+    if (document.querySelector('.communication-edit__tab[data-tab="preview"]') != undefined) document.querySelector('.communication-edit__tab[data-tab="preview"]').addEventListener("DOMNodeInserted", listener);
 })();
