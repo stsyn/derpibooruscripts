@@ -839,7 +839,7 @@ color: #040;
 			for (let i=0; i<et.childNodes.length; i++) {
 				let el = et.childNodes[i];
 				if (el.tagName != undefined) {
-					parser(el);
+					if (el.tagName != 'A') parser(el);
 				}
 				else {
 					let x = el.textContent.replace(/^\s+/g,'');
