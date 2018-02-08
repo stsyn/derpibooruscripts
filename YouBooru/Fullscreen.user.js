@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.12
+// @version      0.5.13
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -320,7 +320,7 @@ margin:auto;
 .source_url a, #footer_content a, .button--link, .communication__body a, .comment_backlinks a, .communication__options a, a.interaction-user-list-item, .pagination a,
 a.block__header--single-item:hover, .block__header:not(.center--layout) a:hover, .block__header--sub a:hover, .block__header--single-item a:hover, .autocomplete__item--selected,
 .block--fixed a, .rule a, a.togglable-faq-item, .field a:not([data-tag-name]), a.media-box__header--link, a.media-box__header--link:hover, #content h1 a, #content h3 a, .flash a,
-#content p strong a, #content li a, .quick-tag-table__tab a, .flash--site-notice.flash a, #content code a {
+#content p strong a, #content strong a, #content li a, .quick-tag-table__tab a, .flash--site-notice.flash a, #content code a {
 color:_fs_color;
 }
 p>a {
@@ -331,7 +331,7 @@ color:_fs_color !important;
 color:#e88585
 }
 
-._fs_dark #content .block__content .communication__body .spoiler:not(:hover) a {
+body[data-theme*="dark"] #content .block__content .communication__body .spoiler:not(:hover) a {
 color:#782c21
 }
 
@@ -376,7 +376,7 @@ a:not(.header__link):not([rel="dc:source"]):not(.button):not(.block__header):not
 color:#aaa !important;
 }
 
-._fs_dark a:not(.header__link):not([rel="dc:source"]):not(.button):not(.block__header):not(.block__header--single-item):not(.tag__name):not(.interaction--fave):not(.interaction--comments):not(.interaction--upvote):not(.interaction--downvote):not(.media-box__header--link):hover{
+body[data-theme*="dark"] a:not(.header__link):not([rel="dc:source"]):not(.button):not(.block__header):not(.block__header--single-item):not(.tag__name):not(.interaction--fave):not(.interaction--comments):not(.interaction--upvote):not(.interaction--downvote):not(.media-box__header--link):hover{
 color:#aaa !important;
 }
 
@@ -418,7 +418,7 @@ image-rendering: pixelated;
 `;
 
     styles.noneTag = `
-._fs_dark .tag[data-tag-category="none"] {
+body[data-theme*="dark"] .tag[data-tag-category="none"] {
 background: #444;
 border-color: #888;
 color: #888;
@@ -823,8 +823,13 @@ color: #555;
     }
 
     function isDarkF() {
-        let c2 = document.head.querySelector('link[rel=stylesheet][media=all]').href;
-        return c2.split('/')[5].startsWith('dark');
+        try {
+            let c2 = document.head.querySelector('link[rel=stylesheet][media=all]').href;
+            return c2.split('/')[5].startsWith('dark');
+        }
+        catch(e) {
+            return Boolean(document.querySelector('body[data-theme*="dark"]'));
+        }
     }
 
     function prePreColor() {
@@ -841,7 +846,6 @@ color: #555;
             pub.isDark = isDarkF();
 
             if (settings.style != colors.value || pub.isDark != colors.isDark || state.colorApi == undefined || state.colorApi < currentColorApi) {
-                console.log('sss');
                 state.colorApi = currentColorApi;
                 write();
                 remove('colorAccent');
@@ -859,7 +863,6 @@ color: #555;
     }
 
     function applyColor() {
-        putDark();
         let r = function(x) {
             styles.colorAccent = styles.colorAccent.replace(new RegExp(x,'g'), 'rgb('+colors[x][0]+','+colors[x][1]+','+colors[x][2]+')');
         };
