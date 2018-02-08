@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.26
+// @version      0.4.27
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -559,6 +559,17 @@
 				ux.classList.add('hidden');
 				if (video) {
 					ix.classList.remove('hidden');
+
+					let s = document.createElement('source');
+					s.src = x.getAttribute('data-thumb').replace('gif','webm');
+					s.type = 'video/webm';
+					ix.appendChild(s);
+
+					s = document.createElement('source');
+					s.src = x.getAttribute('data-thumb').replace('gif','mp4');
+					s.type = 'video/mp4';
+					ix.appendChild(s);
+
 					xx.classList.add('hidden');
 				}
 				else ix.src = x.getAttribute('data-thumb');
