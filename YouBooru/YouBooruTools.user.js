@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.16
+// @version      0.4.17
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -42,6 +42,20 @@
 	let artists = [];
 	let bps = ['princess luna','tempest shadow','starlight glimmer','oc:blackjack','princess celestia','rarity'];
 	let best_pony_for_today = bps[parseInt(Math.random()*bps.length)];
+	let hidden = {
+		normal:[
+			{
+				big:'https://derpicdn.net/img/view/2017/10/23/1568696.png',
+				small:'https://derpicdn.net/img/2017/10/23/1568696/small.png'
+			}
+		],
+		pony:[
+			{
+				big:'https://derpicdn.net/img/2012/11/24/161576/large.png',
+				small:'https://derpicdn.net/img/2012/11/24/161576/small.png'
+			}
+		]
+	};
     let style = `
 body[data-theme*="dark"] ._ydb_green {
 background: #5b9b26;
@@ -66,7 +80,7 @@ color: #66e066;
 }
 
 ._ydb_greentext {
-color: #040;
+color: #0a0;
 }
 `;
 
@@ -120,6 +134,7 @@ color: #040;
                 {type:'header', name:'UI'},
                 {type:'checkbox', name:'Bigger search fields', parameter:'patchSearch'},
                 {type:'checkbox', name:'Deactive downvote if upvoted (and reverse)', parameter:'deactivateButtons'},
+                {type:'checkbox', name:'Hide images immediately', parameter:'fastHide'},
                 {type:'breakline'},
                 {type:'input', name:'Shrink comments and posts longer that (px)', parameter:'shrinkComms', validation:{type:'int',min:280, default:500}},
                 {type:'checkbox', name:'Button to shrink expanded posts', parameter:'shrinkButt'},
@@ -200,6 +215,7 @@ color: #040;
 		window._YDB_public.funcs.upvoteDownvoteDisabler = function(elem, inital) {
 			commentButtons(elem, inital);
 			deactivateButtons(elem, inital);
+			hiddenImg(elem, inital);
 		};
 
 		try {
@@ -248,6 +264,11 @@ color: #040;
 		ls.shrinkComms = 500;
         write(ls);
 	}
+	if (ls.fastHide == undefined) {
+		ls.fastHide = true;
+        write(ls);
+	}
+
 	if ((document.body.dataset.userName == 'The Frowning Pony') || (document.body.dataset.userName == 'The Smiling Pony')) {
 		ls.greenText = false;
 		localStorage._fucken_grin_ = 'caught';
@@ -260,6 +281,7 @@ color: #040;
 	}
 	if (ls.greenText == undefined) {
 		ls.greenText = true;
+		if (localStorage._fucken_grin_ == 'caught') ls.greenText = false;
         write(ls);
 	}
 	let errorMessages = ['Nope', 'Nope', 'N-nope!', 'Stahp it', 'You don\'t want it', 'Go ewey', 'Look, I don\'t want permaban, so, stop it c:', 'Plz', ':c', 'why u so bad?'];
@@ -835,7 +857,6 @@ color: #040;
 	//greenText
 	function greentext(e) {
 		let parser = function(et) {
-			console.log(et.childNodes);
 			for (let i=0; i<et.childNodes.length; i++) {
 				let el = et.childNodes[i];
 				if (el.tagName != undefined) {
@@ -1088,11 +1109,11 @@ color: #040;
 		for (let i=0; i<e.querySelectorAll('.label:not(._ydb_t_patched)').length; i++) {
 			let el = e.querySelectorAll('.label:not(._ydb_t_patched)')[i];
 			el.classList.add('_ydb_t_patched');
-			if (el.innerHTML.length > 24) {
+			if (el.innerText.length > 24) {
 				let t = el.innerHTML;
-				el.innerHTML = el.innerHTML.substr(0,24);
+				el.innerText = el.innerText.substr(0,24);
 				addElem('a',{innerHTML:'Read more >>', href:'javascript://', events:[{t:'click',f:function() {
-					el.innerHTML = t;
+					el.innerText = t;
 				}}]}, el);
 			}
 		}
@@ -1148,13 +1169,16 @@ color: #040;
 	}
 
     //deactivateButtons
-	function deactivateButtons(e, inital) {
+	function deactivateButtons(e, inital, itsHide) {
         if (!ls.deactivateButtons) return;
         let work = function(el) {
 			if (el.querySelector('.media-box__header--link-row') == undefined) return;
             if (inital) {
                 el.addEventListener('DOMNodeInserted',function(e) {
                     setTimeout(function() {deactivateButtons(el,false);}, 100);
+                });
+                el.querySelector('.media-box__header .interaction--hide').addEventListener('click',function(e) {
+                    deactivateButtons(el,false, true);
                 });
             }
             if (el.querySelector('.media-box__header .interaction--upvote.active') != undefined || el.querySelector('.media-box__header .interaction--fave.active') != undefined) {
@@ -1166,7 +1190,7 @@ color: #040;
 				el.querySelector('.media-box__header .interaction--hide').classList.remove('hidden');
             }
 
-			if (el.querySelector('.media-box__header .interaction--downvote.active') != undefined || el.querySelector('.media-box__header .interaction--hide.active') != undefined) {
+			if (el.querySelector('.media-box__header .interaction--downvote.active') != undefined || (el.querySelector('.media-box__header .interaction--hide.active') != undefined ^ itsHide)) {
 				el.querySelector('.media-box__header .interaction--upvote').classList.add('hidden');
 				el.querySelector('.media-box__header .interaction--fave').classList.add('hidden');
 			}
@@ -1215,6 +1239,46 @@ color: #040;
         };
 
         for (let i=0; i<e.getElementsByClassName('media-box').length; i++) {
+			work(e.getElementsByClassName('media-box')[i]);
+		}
+	}
+
+	function hiddenImg(e, inital, invert) {
+		let horsie = (document.querySelector('body[data-theme*="ponyicons"]')?'pony':'normal');
+		if (!ls.fastHide) return;
+		if (parseURL(location.href).params.hidden == '1') return;
+        let work = function(el) {
+            if (inital) {
+                el.querySelector('.media-box__header .interaction--hide').addEventListener('click',function(e) {
+                    hiddenImg(el,false,true);
+                });
+            }
+			if (el.querySelector('.media-box__header--link-row') == undefined) return;
+            if ((el.querySelector('.media-box__header .interaction--hide.active') != undefined ^ invert)) {
+				if (el.querySelector('.media-box__content picture img') != undefined) {
+					el.querySelector('.image-container').dataset.hthumb = el.querySelector('.media-box__content picture img').src;
+					el.querySelector('.media-box__content picture img').src = hidden[horsie][parseInt(Math.random()*hidden[horsie].length)].small;
+				}
+				else {
+					el.querySelector('.media-box__content a video').style.display = 'none';
+					ChildsAddElem('picture',{},el.querySelector('.media-box__content a'), [
+						InfernoAddElem('img',{src:hidden[horsie][parseInt(Math.random()*hidden[horsie].length)].small},[])
+					]);
+				}
+			}
+			else if (!inital) {
+				if (el.querySelector('.media-box__content a video') != undefined) {
+					el.querySelector('.media-box__content a video').style.display = 'block';
+					el.querySelector('.media-box__content a picture').style.display = 'none';
+				}
+				else {
+					el.querySelector('.media-box__content picture img').src = el.querySelector('.image-container').dataset.hthumb;
+				}
+			}
+        };
+
+        if (e.classList!=undefined && e.classList.contains('media-box')) work(e);
+        else for (let i=0; i<e.getElementsByClassName('media-box').length; i++) {
 			work(e.getElementsByClassName('media-box')[i]);
 		}
 	}
@@ -1361,6 +1425,8 @@ color: #040;
     listRunInComms(document);
     if (ls.deactivateButtons) deactivateButtons(document, true);
 	commentButtons(document, true);
+	shrinkComms(document);
+	hiddenImg(document,true);
 	getArtists();
     colorTags();
 	addGalleryOption();
