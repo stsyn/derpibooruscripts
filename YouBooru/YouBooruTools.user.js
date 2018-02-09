@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.18
+// @version      0.4.19
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1172,9 +1172,9 @@ color: #0a0;
 				if (ls.shrinkButt) el.insertBefore(y,el.lastChild);
 				el.insertBefore(x,el.lastChild);
 			}
-			else {
+			else if (el.clientHeight < parseInt(ls.shrinkComms)*0.8+13) {
 				let t = el.querySelector('.communication__body__text');
-				if (t.classList.contains('_ydb_t_comm_shrink')) {
+				if (t.classList.contains('_ydb_t_comm_shrink') && parseInt(t.style.maxHeight)<t.clientHeight) {
 					if (el.getElementsByClassName('_ydb_tools_compress')[0] != undefined) el.removeChild(el.getElementsByClassName('_ydb_tools_compress')[0]);
 					el.removeChild(el.getElementsByClassName('_ydb_tools_expand')[0]);
 					t.classList.remove('_ydb_t_comm_shrink');
