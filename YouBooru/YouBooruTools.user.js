@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.17
+// @version      0.4.18
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -886,6 +886,21 @@ color: #0a0;
 	}
 
 	//spoilers
+	//help
+	function YDBSpoilersHelp() {
+		for (let i=0; i<document.getElementsByClassName('textile_help').length; i++) {
+			document.getElementsByClassName('textile_help')[i].insertBefore(InfernoAddElem('span',{},[
+				InfernoAddElem('ins',{innerHTML:'YDB Spoilers:'},[]),
+				InfernoAddElem('span',{innerHTML:' +'},[]),
+				InfernoAddElem('strong',{innerHTML:'$'},[]),
+				InfernoAddElem('span',{innerHTML:'Spoiler name+[bq]Spoiler body[/bq], [bq]'},[]),
+				InfernoAddElem('strong',{innerHTML:'$'},[]),
+				InfernoAddElem('span',{innerHTML:'Nameless spoiler body[/bq] ([bq] can be replaced with [spoiler])'},[]),
+				InfernoAddElem('br',{},[])
+			]), document.getElementsByClassName('textile_help')[i].getElementsByTagName('strong')[0]);
+		}
+	}
+
 	function YDBSpoilers(e) {
 		let hideBlock = function(e) {
 			let u = e.target;
@@ -1160,8 +1175,8 @@ color: #0a0;
 			else {
 				let t = el.querySelector('.communication__body__text');
 				if (t.classList.contains('_ydb_t_comm_shrink')) {
-					t.removeChild(t.getElementsByClassName('_ydb_tools_compress')[0]);
-					t.removeChild(t.getElementsByClassName('_ydb_tools_expand')[0]);
+					if (el.getElementsByClassName('_ydb_tools_compress')[0] != undefined) el.removeChild(el.getElementsByClassName('_ydb_tools_compress')[0]);
+					el.removeChild(el.getElementsByClassName('_ydb_tools_expand')[0]);
 					t.classList.remove('_ydb_t_comm_shrink');
 				}
 			}
@@ -1422,6 +1437,7 @@ color: #0a0;
     if (ls.patchSearch) bigSearch();
     aliases();
     asWatchlist();
+	YDBSpoilersHelp();
     listRunInComms(document);
     if (ls.deactivateButtons) deactivateButtons(document, true);
 	commentButtons(document, true);
