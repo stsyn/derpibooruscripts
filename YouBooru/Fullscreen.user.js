@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.13
+// @version      0.5.14
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -563,6 +563,9 @@ color: #555;
                 objects.image.style.marginTop = (window.innerHeight - (objects.icontainer.dataset.height / zoomRatio)) / 2+'px';
                 objects.image.style.width = '100vw';
 
+                if (objects.image.tagName == 'VIDEO' && pub.scaled == 'true') {
+                    objects.image.style.marginTop = 0;
+                }
             }
             else {
                 objects.image.style.marginTop = '0';
