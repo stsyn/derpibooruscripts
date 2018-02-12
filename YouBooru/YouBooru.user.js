@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.27
+// @version      0.4.29
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -32,6 +32,17 @@
 
 (function() {
 	'use strict';
+	
+	let main = function() {
+	let scriptId = 'feeds';
+	let aE = false;
+	try {if (GM_info == undefined) {aE = true;}}
+	catch(e) {aE = true;}
+	try {if (window._YDB_public.settings[scriptId] != undefined) return;}
+	catch(e){}
+	if (aE) {if (!window._YDB_public.allowedToRun[scriptId]) return;}
+	let version = aE?window._YDB_public.version:GM_info.script.version;
+	
 	let privated = false;
 	let feedCSS = '._ydb_feedloading {display:none} ._ydb_feedshadow .block__content {opacity:0.5} ._ydb_feedshadow ._ydb_feedloading{display:block !important; position:absolute; width:100%; top:48%; pointer-events:none; text-align:center}';
 	var data={};
@@ -71,15 +82,15 @@
 		},
 		{
 			name:'Fresh ponuts every day',
-			query:'ponut',
+			query:'?onut',
 			sort:'',
 			sd:'desc',
 			ccache:0,
 			cache:30
 		},
 		{
-			name:'Your cat\'s derpibooru',
-			query:'cat || cat lingerie || behaving like a cat',
+			name:'Catbooru',
+			query:'cat || cat lingerie || behaving like a cat || catsuit || cat ears || cat keyhole bra set || catified || nyan cat || sphinx || cat costume',
 			sort:'',
 			sd:'desc',
 			ccache:0,
@@ -123,7 +134,15 @@
 	var feedzCache = [];
 	var feedzURLs = [];
 	var f_s_c;
-	var debug;
+	var debug = function(id, value, level) {
+		try {
+			window._YDB_public.funcs.log(id, value, level);
+		}
+		catch(e) {
+			let levels = ['.', '?', '!'];
+			console.log('['+levels[level]+'] ['+id+'] '+value);
+		};
+	}
 	let sentRequests = 0;
 
 	/********************
@@ -180,7 +199,7 @@
 		window._YDB_public.settings.feeds = {
 			name:'Feeds',
 			container:'_ydb_feeds',
-			version:GM_info.script.version,
+			version:version,
 			s:[
 				{type:'checkbox', name:'Do not remove watchlist', parameter:'doNotRemoveWatchList'},
 				{type:'breakline'},
@@ -250,16 +269,6 @@
 				}
 			}
 		};
-		try {
-			debug = window._YDB_public.funcs.log;
-		}
-		catch(e) {
-			debug = function(id, value, level) {
-
-				let levels = ['.', '?', '!'];
-				console.log('['+levels[level]+'] ['+id+'] '+value);
-			};
-		}
 	}
 
 	function resizeEverything() {
@@ -1204,5 +1213,15 @@
             else YB_feedButton();
         }
 		register();
+	}
+	};
+	
+	let aE = false;
+	try {if (GM_info == undefined) {aE = true;}}
+	catch(e) {aE = true;}
+	if (!aE) main();
+	else {
+		let code = '('+main.toString()+')();';
+		addElem('script',{innerHTML:code},document.head);
 	}
 })();
