@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.7.9.1
+// @version      0.8.0
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -34,16 +34,19 @@
 (function() {
 	'use strict';
 
+	let main = function() {
 	let aE = false;
-	if (GM_info == undefined) {
+	try {if (GM_info == undefined) {
 		aE = true;
-	}
+	}}
+	catch(e) {aE = true;}
 	try {
 		if (window._YDB_public.settings.settings != undefined) return;
 	}
 	catch(e){
 	}
-
+	let version = aE?window._YDB_public.version:GM_info.script.version;
+	
 	let config;
 	let modules = [];
 	let settings;
@@ -94,7 +97,7 @@
 		window._YDB_public.settings.settings = {
 			name:'Settings',
 			container:'_ydb_config',
-			version:aE?window._YDB_public.version:GM_info.script.version,
+			version:version,
 			s:[
 				{type:'checkbox', name:'Synchronize (settings will be duplicated at watchlist string filter, this will not affect watchlist)', parameter:'synch'},
 				{type:'breakline'},
@@ -887,4 +890,16 @@
 	if (location.pathname == "/settings") setTimeout(settingPage, 50);
 	if (location.pathname == "/pages/yourbooru") yourbooruPage();
 	register();
+	};
+
+	let aE = false;
+	try {if (GM_info == undefined) {
+		aE = true;
+	}}
+	catch(e) {aE = true;}
+	if (!aE) main();
+	else {
+		let code = '('+main.toString()+')();';
+		addElem('script',{innerHTML:code},document.head);
+	}
 })();
