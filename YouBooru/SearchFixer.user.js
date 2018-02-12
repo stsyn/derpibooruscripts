@@ -24,7 +24,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.3.2
+// @version      0.3.6
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -33,6 +33,17 @@
 
 (function() {
 	'use strict';
+	
+	let main = function() {
+	let scriptId = 'ssf';
+	let aE = false;
+	try {if (GM_info == undefined) {aE = true;}}
+	catch(e) {aE = true;}
+	try {if (window._YDB_public.settings[scriptId] != undefined) return;}
+	catch(e){}
+	if (aE) {if (!window._YDB_public.allowedToRun[scriptId]) return;}
+	let sversion = aE?window._YDB_public.version:GM_info.script.version;
+	
 	// These settings also may be edited via YourBooru:Settings
 	// https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
 
@@ -64,7 +75,15 @@
 	};
 
 	var findTemp = 0, findIter = 1, TTL = 5;
-	var debug;
+	let debug = function(id, value, level) {
+		try {
+			window._YDB_public.funcs.log(id, value, level);
+		}
+		catch(e) {
+			let levels = ['.', '?', '!'];
+			console.log('['+levels[level]+'] ['+id+'] '+value);
+		};
+	};
 	var galleryLastImageId;
 
 	//https://habrahabr.ru/post/177559/
@@ -103,9 +122,9 @@
 	function register() {
 		if (window._YDB_public == undefined) window._YDB_public = {};
 		if (window._YDB_public.settings == undefined) window._YDB_public.settings = {};
-		window._YDB_public.settings.searchSortingFixer = {
+		window._YDB_public.settings.ssf = {
 			name:'Search Sorting Fixer',
-			version:GM_info.script.version,
+			version:sversion,
 			container:'_ssf',
 			s:[
 				{type:'checkbox', name:'Fix score sorting', parameter:'score'},
@@ -124,17 +143,6 @@
 				{type:'checkbox', name:'; unsupported sortings', parameter:'everyUp'}
 			]
 		};
-
-		try {
-			debug = window._YDB_public.funcs.log;
-		}
-		catch(e) {
-			debug = function(id, value, level) {
-				let levels = ['.', '?', '!'];
-				console.log('['+levels[level]+'] ['+id+'] '+value);
-			};
-		}
-
 	}
 
 	//////////////////////////////////////////////
@@ -550,6 +558,7 @@
 		if (myURL.params.sf != undefined && myURL.params.sf.startsWith('gallery_id')) addElem('option',{value:myURL.params.sf, innerHTML:'gallery'},document.getElementById('_ydb_s_qpusher_sf'));
 		let x = myURL.params.sf;
 		if (myURL.params.sf != undefined && myURL.params.sf.startsWith('gallery_id')) x = 'gallery_id';
+		if (myURL.params.sf != undefined && myURL.params.sf.startsWith('random')) x = 'random';
 		if (myURL.params.sf != undefined && document.querySelector('#_ydb_s_qpusher_sf *[value*='+x+']') != undefined) document.querySelector('#_ydb_s_qpusher_sf *[value*='+x+']').selected = 'selected';
 		if (myURL.params.sd != undefined && document.querySelector('#_ydb_s_qpusher_sd *[value='+myURL.params.sd+']') != undefined) document.querySelector('#_ydb_s_qpusher_sd *[value='+myURL.params.sd+']').selected = 'selected';
 
@@ -705,5 +714,15 @@
 			}
 			crLink('.js-up', 'act', 'find');
 		});
+	}
+	};
+	
+	let aE = false;
+	try {if (GM_info == undefined) {aE = true;}}
+	catch(e) {aE = true;}
+	if (!aE) main();
+	else {
+		let code = '('+main.toString()+')();';
+		addElem('script',{type:'text/javascript',innerHTML:code},document.head);
 	}
 })();
