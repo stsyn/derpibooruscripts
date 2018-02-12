@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.7.5
+// @version      0.7.9.1
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -33,6 +33,17 @@
 
 (function() {
 	'use strict';
+
+	let aE = false;
+	if (GM_info == undefined) {
+		aE = true;
+	}
+	try {
+		if (window._YDB_public.settings.settings != undefined) return;
+	}
+	catch(e){
+	}
+
 	let config;
 	let modules = [];
 	let settings;
@@ -83,7 +94,7 @@
 		window._YDB_public.settings.settings = {
 			name:'Settings',
 			container:'_ydb_config',
-			version:GM_info.script.version,
+			version:aE?window._YDB_public.version:GM_info.script.version,
 			s:[
 				{type:'checkbox', name:'Synchronize (settings will be duplicated at watchlist string filter, this will not affect watchlist)', parameter:'synch'},
 				{type:'breakline'},
@@ -495,14 +506,26 @@
 			}
 			return errorlevel;
 		};
-		let containers = document.getElementsByClassName('_ydb_settings_container');
-		for (let i=0; i<containers.length; i++) {
-			let mx = modules[containers[i].dataset.parent];
-			errorlevel += (validateChilds(containers[i], mx.options, mx));
+		if (e == undefined) {
+			let containers = document.getElementsByClassName('_ydb_settings_container');
+			for (let i=0; i<containers.length; i++) {
+				let mx = modules[containers[i].dataset.parent];
+				errorlevel += (validateChilds(containers[i], mx.options, mx));
+			}
+
+			if (errorlevel>0) {
+				let x = addElem('div',{className:'flash flash--warning', style:'font-weight:500', innerHTML:'There is '+errorlevel+' errors preventing settings to be saved:'}, ec);
+				ec.insertBefore(x,ec.childNodes[0]);
+			}
 		}
-		if (errorlevel>0) {
-			let x = addElem('div',{className:'flash flash--warning', style:'font-weight:500', innerHTML:'There is '+errorlevel+' errors preventing settings to be saved:'}, ec);
-			ec.insertBefore(x,ec.childNodes[0]);
+		else {
+			let virgin = (ec.childNodes.length == 0);
+			let mx = modules[e.dataset.parent];
+			errorlevel += (validateChilds(e, mx.options, mx));
+			if (errorlevel>0 && virgin) {
+				let x = addElem('div',{className:'flash flash--warning', style:'font-weight:500', innerHTML:'There is '+errorlevel+' errors preventing settings to be saved:'}, ec);
+				ec.insertBefore(x,ec.childNodes[0]);
+			}
 		}
 		return errorlevel;
 	}
@@ -621,6 +644,12 @@
 		addElem('style',{type:'text/css',innerHTML:style},document.head);
 		addElem('a',{href:'#',innerHTML:'YourBooru',dataset:{clickTab:'YourBooru'}},document.getElementsByClassName('block__header')[0]);
 
+		let editCont = addElem('div',{className:'block'},cont);
+		let listCont = addElem('div',{className:'block'},cont);
+		ChildsAddElem('div', {className:'block__header'}, listCont, [
+			InfernoAddElem('span', {innerHTML:'Installed plugins', style:'margin-left:12px'})
+		]);
+
 		let el;
 		if (!settings.synch) {
 			el = document.createElement('div');
@@ -629,18 +658,38 @@
 			cont.appendChild(el);
 		}
 
+		let loadedList = {};
+		let injectModule = function(k) {
+			let ss = {};
+			let s2 = window._YDB_public.settings[k];
+			try {ss = JSON.parse(localStorage[window._YDB_public.settings[k].container]);}
+			catch (ex) {console.log('Warning: '+k+' has empty storage!');}
+			modules[s2.container] = {name:s2.name, container:s2.container, changed:false, saved:ss, options:s2.s, onChanges:s2.onChanges};
+			if (s2.s != undefined) {
+				try {renderCustom(s2, editCont, modules[s2.container]);}
+				catch(e) {console.log('Error rendering '+k+'. '+e);}
+			}
+
+			addElem('div', {classList:'block__content alternating-color', innerHTML:s2.name+' ver. '+s2.version}, listCont);
+		};
+
+		let injectLegacyModule = function(k) {
+			let ss = {};
+			try {ss = JSON.parse(localStorage[k.container]);}
+			catch (ex) {console.log('Warning: '+k.name+' has empty storage!');}
+			modules[k.container] = {name:k.name, container:k.container, changed:false, saved:ss, options:k.s, onChanges:k.onChanges};
+			try {renderCustom(k, editCont, modules[k.container]);}
+			catch(e) {console.log('Error rendering '+k.name+'. '+e);}
+
+			addElem('div', {classList:'block__content alternating-color', innerHTML:k.name+' ver. '+k.version}, listCont);
+		};
+
 		//loading, stage 1
 		if (window._YDB_public != undefined) {
 			if (window._YDB_public.settings != undefined) {
 				for (let k in window._YDB_public.settings) {
-					if (window._YDB_public.settings[k] != undefined && window._YDB_public.settings[k].s != undefined) {
-						let ss = {};
-						let s2 = window._YDB_public.settings[k];
-						try {ss = JSON.parse(localStorage[window._YDB_public.settings[k].container]);}
-						catch (ex) {console.log('Warning: '+k+' has empty storage!');}
-						modules[s2.container] = {name:k, container:s2.container, changed:false, saved:ss, options:s2.s, onChanges:s2.onChanges};
-						renderCustom(s2, cont, modules[s2.container]);
-					}
+					injectModule(k);
+					loadedList[k] = true;
 				}
 			}
 		}
@@ -649,11 +698,8 @@
 		for (let i=0; i<document.getElementsByClassName('_YDB_reserved_register').length; i++) {
 			try {
 				let k = JSON.parse(document.getElementsByClassName('_YDB_reserved_register')[i].dataset.value);
-				let ss = {};
-				try {ss = JSON.parse(localStorage[k.container]);}
-				catch (ex) {console.log('Warning: '+k.name+' has empty storage!');}
-				modules[k.container] = {name:k.name, container:k.container, changed:false, saved:ss, options:k.s, onChanges:k.onChanges};
-				renderCustom(k, cont, modules[k.container]);
+				injectLegacyModule(k);
+				loadedList[k.name] = true;
 			}
 			catch (e) {
 				console.log('Error JSON processing "'+document.getElementsByClassName('_YDB_reserved_register')[i].dataset.value+'" '+e);
@@ -661,24 +707,6 @@
 		}
 
 		//postloading
-		ChildsAddElem('div', {className:'block__header'}, cont, [
-			InfernoAddElem('span', {innerHTML:'Installed plugins', style:'margin-left:12px'})
-		]);
-
-		let s = '';
-		for (let key in window._YDB_public.settings) {
-			let ax = window._YDB_public.settings[key];
-			addElem('div', {classList:'block__content alternating-color', innerHTML:ax.name+' ver. '+ax.version}, cont);
-		}
-		for (let i=0; i<document.getElementsByClassName('_YDB_reserved_register').length; i++) {
-			try {
-				let ax = JSON.parse(document.getElementsByClassName('_YDB_reserved_register')[i].dataset.value);
-				addElem('div', {classList:'block__content alternating-color', innerHTML:ax.name+' ver. '+ax.version}, cont);
-			}
-			catch (e) {
-			}
-		}
-
 		ChildsAddElem('div', {className:'block__header'}, cont, [
 			InfernoAddElem('a', {innerHTML:'Backup', target:'_blank', href:'/pages/yourbooru?backup'}),
 			InfernoAddElem('a', {innerHTML:'Logs', target:'_blank', href:'/pages/yourbooru?logs'})
@@ -703,6 +731,31 @@
 			document.querySelector('input.button[type=submit]').click();
 		}
 		validate();
+
+		let timer = 50;
+		let handler = function() {
+			for (let k in window._YDB_public.settings) {
+				if (!loadedList[k]) {
+					injectModule(k);
+					loadedList[k] = true;
+				}
+			}
+			for (let i=0; i<document.getElementsByClassName('_YDB_reserved_register').length; i++) {
+			try {
+				let k = JSON.parse(document.getElementsByClassName('_YDB_reserved_register')[i].dataset.value);
+				if (!loadedList[k.name]) {
+					injectLegacyModule(k);
+					loadedList[k.name] = true;
+				}
+			}
+			catch (e) {
+			}
+		}
+
+			timer*=4;
+			setTimeout(handler, timer);
+		};
+		setTimeout(handler, 50);
 	}
 
 	////////////////////////////
@@ -831,7 +884,7 @@
 
 	addElem('style',{type:'text/css',innerHTML:windows},document.head);
 	if (settings.timestamp+21600 < parseInt(Date.now()/1000) && location.pathname != "/settings") getData();
-	if (location.pathname == "/settings") setTimeout(settingPage, 100);
+	if (location.pathname == "/settings") setTimeout(settingPage, 50);
 	if (location.pathname == "/pages/yourbooru") yourbooruPage();
 	register();
 })();
