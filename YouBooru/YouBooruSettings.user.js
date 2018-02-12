@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.8.0
+// @version      0.8.1
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -35,16 +35,13 @@
 	'use strict';
 
 	let main = function() {
+	let scriptId = 'settings';
 	let aE = false;
-	try {if (GM_info == undefined) {
-		aE = true;
-	}}
+	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
-	try {
-		if (window._YDB_public.settings.settings != undefined) return;
-	}
-	catch(e){
-	}
+	try {if (window._YDB_public.settings[scriptId] != undefined) return;}
+	catch(e){}
+	if (aE) {if (!window._YDB_public.allowedToRun[scriptId]) return;}
 	let version = aE?window._YDB_public.version:GM_info.script.version;
 	
 	let config;
@@ -509,7 +506,7 @@
 			}
 			return errorlevel;
 		};
-		if (e == undefined) {
+		if (e == undefined || e.tagName == undefined) {
 			let containers = document.getElementsByClassName('_ydb_settings_container');
 			for (let i=0; i<containers.length; i++) {
 				let mx = modules[containers[i].dataset.parent];
