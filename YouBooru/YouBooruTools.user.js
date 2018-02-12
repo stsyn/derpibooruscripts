@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.19
+// @version      0.4.20
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -36,8 +36,18 @@
 
 (function() {
     'use strict';
+	let main = function() {
+	let scriptId = 'tools';
+	let aE = false;
+	try {if (GM_info == undefined) {aE = true;}}
+	catch(e) {aE = true;}
+	try {if (window._YDB_public.settings[scriptId] != undefined) return;}
+	catch(e){}
+	if (aE) {if (!window._YDB_public.allowedToRun[scriptId]) return;}
+	let sversion = aE?window._YDB_public.version:GM_info.script.version;
+	
     let processing = false;
-    let result, debug;
+    let result;
 	let version = 0;
 	let artists = [];
 	let bps = ['princess luna','tempest shadow','starlight glimmer','oc:blackjack','princess celestia','rarity'];
@@ -55,6 +65,15 @@
 				small:'https://derpicdn.net/img/2012/11/24/161576/small.png'
 			}
 		]
+	};
+	let debug = function(id, value, level) {
+		try {
+			window._YDB_public.funcs.log(id, value, level);
+		}
+		catch(e) {
+			let levels = ['.', '?', '!'];
+			console.log('['+levels[level]+'] ['+id+'] '+value);
+		};
 	};
     let style = `
 body[data-theme*="dark"] ._ydb_green {
@@ -126,7 +145,7 @@ color: #0a0;
         window._YDB_public.settings.tools = {
             name:'Tools',
             container:'_ydb_tools',
-            version:GM_info.script.version,
+            version:sversion,
             s:[
                 {type:'header', name:'Notifications'},
                 {type:'checkbox', name:'Reset', parameter:'reset'},
@@ -217,17 +236,6 @@ color: #0a0;
 			deactivateButtons(elem, inital);
 			hiddenImg(elem, inital);
 		};
-
-		try {
-			debug = window._YDB_public.funcs.log;
-		}
-		catch(e) {
-			debug = function(id, value, level) {
-
-				let levels = ['.', '?', '!'];
-				console.log('['+levels[level]+'] ['+id+'] '+value);
-			};
-		}
     }
 
     //reader
@@ -1452,4 +1460,14 @@ color: #0a0;
 	window.addEventListener('load',listRunWhenDone);
     if (document.getElementById('comments') != undefined) document.getElementById('comments').addEventListener("DOMNodeInserted", listener);
     if (document.querySelector('.communication-edit__tab[data-tab="preview"]') != undefined) document.querySelector('.communication-edit__tab[data-tab="preview"]').addEventListener("DOMNodeInserted", listener);
+	};
+	
+	let aE = false;
+	try {if (GM_info == undefined) {aE = true;}}
+	catch(e) {aE = true;}
+	if (!aE) main();
+	else {
+		let code = '('+main.toString()+')();';
+		addElem('script',{innerHTML:code},document.head);
+	}
 })();
