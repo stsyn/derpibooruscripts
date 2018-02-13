@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.20
+// @version      0.4.21
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -45,7 +45,7 @@
 	catch(e){}
 	if (aE) {if (!window._YDB_public.allowedToRun[scriptId]) return;}
 	let sversion = aE?window._YDB_public.version:GM_info.script.version;
-	
+
     let processing = false;
     let result;
 	let version = 0;
@@ -142,7 +142,13 @@ color: #0a0;
 		addElem('style',{type:'text/css',innerHTML:style},document.head);
         if (window._YDB_public == undefined) window._YDB_public = {};
         if (window._YDB_public.settings == undefined) window._YDB_public.settings = {};
-        window._YDB_public.settings.tools = {
+		window._YDB_public.settings.toolsUB = {
+            name:'Tools (Userbase)',
+            container:'_ydb_toolsUB',
+            version:sversion,
+
+		};
+		window._YDB_public.settings.tools = {
             name:'Tools',
             container:'_ydb_tools',
             version:sversion,
@@ -1271,6 +1277,7 @@ color: #0a0;
 		if (!ls.fastHide) return;
 		if (parseURL(location.href).params.hidden == '1') return;
         let work = function(el) {
+			if (el.querySelector('.media-box__header--link-row') == undefined) return;
             if (inital) {
                 el.querySelector('.media-box__header .interaction--hide').addEventListener('click',function(e) {
                     hiddenImg(el,false,true);
@@ -1317,6 +1324,135 @@ color: #0a0;
             if (a[i].host != location.host && a[i].host != '') a[i].target = '_blank';
         }
     }
+
+	/////////////////////////////////////////////
+	//user aliases
+	let userbase = {
+		users:{},
+		pending:[],
+		lost:{}
+	};
+	let userbaseStarted = false;
+
+	function UA(e) {
+		let createUser = function(name, aliases, ts) {
+			let user = {
+				name:name,
+				aliases:aliases,
+				ts:ts
+			};
+			userbase.users[name] = user;
+			userbase.pending.push(name);
+			return user;
+			write();
+		};
+
+		let write = function() {
+			localStorage._ydb_toolsUB = JSON.stringify(userbase);
+		};
+
+		let getTimestamp = function(user, regular) {
+			let nameEncode = function(name) {
+				return encodeURI(name.replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/\//g,'-fwslash-').replace(/\//g,'-bwslash-').replace(/ /g,'+'));
+			};
+			let callback = function(req) {
+				try {
+					let x = JSON.parse(req.responseText);
+					if (regular) {
+						userbase.pending.push(userbase.pending.shift());
+					}
+					if (user.ts == undefined) {
+						user.ts = x.created_at;
+						write();
+					}
+				}
+				catch(e) {
+					debug('YDB:T','Failed to get timestamp from name '+user.name+'. Encoded to '+nameEncode(user.name)+'. Maybe it\'s encoder issue, contact dev.', 2);
+				}
+			};
+			let readyHandler = function(request) {
+				return function () {
+					if (request.readyState === 4) {
+						if (request.status === 200) return callback(request);
+						else if (request.status === 0) {
+							return false;
+						}
+						else {
+							debug('YDB:T','Failed to get timestamp from name '+user.name+'. Encoded to '+nameEncode(user.name)+'. Maybe it\'s encoder issue, contact dev.', 2);
+							return false;
+						}
+					}
+				};
+			};
+
+			let get = function(name) {
+				let req = new XMLHttpRequest();
+				req.onreadystatechange = readyHandler(req);
+				req.open('GET', '/profiles/'+nameEncode(name)+'.json');
+				req.send();
+			};
+
+			get(user.name);
+		};
+		if (!userbaseStarted) {
+			userbaseStarted = true;
+			try {
+				let temp = JSON.parse(localStorage._ydb_toolsUB);
+				userbase = temp;
+			}
+			catch(e) {}
+
+			if (document.querySelector('.profile-top__name-header') != undefined) {
+				let name = document.querySelector('.profile-top__name-header').innerHTML.slice(0, -10);
+				if (userbase.users[name] == undefined) {
+					if (document.querySelector('.profile-top__name-header').nextSibling.tagName != 'BR') {
+						let t = document.querySelector('.profile-top__name-header').nextSibling.wholeText;
+						t = t.substring(21,t.length-2).trim();
+						if (t != name) {
+							let aliases = [t];
+							if (userbase.users[t] != undefined) {
+								//проверка таймштампа и слияние
+							}
+							else {
+								let user = createUser(name, aliases);
+								getTimestamp(user, false);
+							}
+						}
+					}
+				}
+			}
+
+			if (userbase.pending.length>0) getTimestamp(userbase.users[userbase.pending[0]], true);
+		}
+		for (let i=0; i<e.getElementsByClassName('communication__body').length; i++) {
+			let el = e.getElementsByClassName('communication__body')[i];
+			let eln = el.querySelector('.communication__body__sender-name a');
+			if (eln == undefined) continue;
+			let ele = el.querySelector('.communication__body__sender-name');
+			let name = eln.innerHTML;
+			if (userbase.users[name] != undefined) continue;
+			let alias = ele.nextSibling;
+			while (!(alias.classList != undefined && alias.classList.contains('communication__body__text'))) {
+				if (alias.classList != undefined && alias.classList.contains('small-text')) {
+					let t = alias.innerHTML;
+					t = t.substring(21,t.length-2).trim();
+					if (t == name) break;
+					let aliases = [t];
+					if (userbase.users[t] != undefined) {
+						//проверка таймштампа и слияние
+					}
+					else {
+						let user = createUser(name, aliases);
+						getTimestamp(user, false);
+					}
+					break;
+				}
+				alias = alias.nextSibling;
+			}
+		}
+
+	}
+	/////////////////////////////////////////////
 
     //selfbadges
     function badge(core) {
@@ -1422,6 +1558,7 @@ color: #0a0;
 
 	function listRunInComms(targ) {
     	badge(targ);
+		UA(targ);
 		urlSearch(targ);
 		linksPatch(targ);
 		showUploader(targ);
@@ -1461,7 +1598,7 @@ color: #0a0;
     if (document.getElementById('comments') != undefined) document.getElementById('comments').addEventListener("DOMNodeInserted", listener);
     if (document.querySelector('.communication-edit__tab[data-tab="preview"]') != undefined) document.querySelector('.communication-edit__tab[data-tab="preview"]').addEventListener("DOMNodeInserted", listener);
 	};
-	
+
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
