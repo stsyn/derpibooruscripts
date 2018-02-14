@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.8.1
+// @version      0.9.0
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -43,13 +43,13 @@
 	catch(e){}
 	if (aE) {if (!window._YDB_public.allowedToRun[scriptId]) return;}
 	let version = aE?window._YDB_public.version:GM_info.script.version;
-	
+
 	let config;
 	let modules = [];
 	let settings;
 	let resaved = false;
 	let errorCode = 0;
-	let windows = '._ydb_window {position:fixed;width:80vw;height:80vh;top:10vh;left:10vw;overflow-y:auto} ._ydb_warn{background:#f00 !important}';
+	let windows = '._ydb_window {position:fixed;z-index:999;width:80vw;height:80vh;top:10vh;left:10vw;overflow-y:auto} ._ydb_warn{background:#f00 !important}';
 	const warningText = 'These two lines are used by YourBooru to save data in your account. Do not split or edit them.';
 	const backupVersion = 1;
 
@@ -299,12 +299,16 @@
 						let s = JSON.parse(LZMA.decompress(r));
 						if (settings.timestamp < s.timestamp || force) {
 							for (let y in s.vs) {
+								console.log(y, s.vs[y]);
 								localStorage[y] = s.vs[y];
 							}
+							settings.timestamp = parseInt(Date.now()/1000);
+							write();
+							if (location.pathname != "/pages/yourbooru" && location.search != '?synch') location.reload();
+							return;
 						}
 						settings.timestamp = parseInt(Date.now()/1000);
 						write();
-						if (location.pathname != "/pages/yourbooru" && location.search != '?synch') location.reload();
 						return;
 					}
 				}
@@ -354,40 +358,10 @@
 		for (let i=0; i<x.length; i++) container.value += x[i] + (i<x.length-1?'\n':'');
 	}
 
-	function backgroundBackup(callback) {
-		if (!settings.synch) {
-			callback();
-			return;
-		}
+	function createBackup(x) {
+		let ret;
 
-		read();
-		settings.bgBackupflag = true;
-		write();
-		window._YDB_public.bgCalled = true;
-		let t = window.open('/settings#backup', 'backup', 'width=1,height=1');
-		let checker = function() {
-			read();
-			if (settings.bgBackupflag) setTimeout(checker, 100);
-			else {
-				window._YDB_public.bgCalled = false;
-				t.close();
-				debugLogger('YDB:S', 'Bg backup successfully created', 0);
-				if (callback != undefined) callback();
-			}
-		};
-		checker();
-	}
-
-	function backup() {
-		read();
-		if (!settings.synch) {
-			//removeBackup();
-			return;
-		}
-		let container = document.getElementById('user_watched_images_exclude_str');
-		let x = container.value.split('\n');
 		let inserted;
-
 		let content = {};
 		content.timestamp = parseInt(Date.now()/1000);
 		content.version = backupVersion;
@@ -416,8 +390,79 @@
 			x.push(warningText);
 			x.push(r);
 		}
-		container.value = '';
-		for (let i=0; i<x.length; i++) container.value += x[i] + (i<x.length-1?'\n':'');
+		ret = '';
+		for (let i=0; i<x.length; i++) ret += x[i] + (i<x.length-1?'\n':'');
+		return ret;
+	}
+
+	function backgroundBackup(callback) {
+		let s = document.querySelector('._ydb_settings_cloneForm');
+
+		let process = function() {
+			read();
+			write();
+			let el = s.querySelector('textarea[name*="watched_images_exclude_str"]');
+			let x = el.innerHTML.split('\n');
+			let ax = createBackup(x);
+			el.innerHTML = ax;
+			let readyHandler = function(request) {
+				return function () {
+					if (request.readyState === 4) {
+						if (callback!= undefined) callback(true);
+					}
+				};
+			};
+
+			let get = function() {
+				let req = new XMLHttpRequest();
+				req.onreadystatechange = readyHandler(req);
+				req.open('POST', '/update_settings');
+				req.send(new FormData(s.querySelector('form')));
+			};
+			get();
+		}
+
+		let callbackS = function (r) {
+			let x = addElem('div',{style:'display:none',innerHTML:r.responseText},document.body);
+			s = ChildsAddElem('div',{style:'display:none',className:'_ydb_settings_cloneForm'},document.body,[
+				x.querySelector('form.edit_user')
+			]);
+			document.body.removeChild(x);
+			process();
+		};
+
+		let get = function() {
+			let req = new XMLHttpRequest();
+			req.onreadystatechange = readyHandler(req);
+			req.open('GET', '/settings');
+			req.send();
+		};
+
+		let readyHandler = function(request) {
+			return function () {
+				if (request.readyState === 4) {
+					if (request.status === 200) return callbackS(request);
+					else {
+						debugLogger('YDB:S','Failed to fetch settings. Backup impossible',2);
+						callback(false);
+					}
+				}
+			};
+		};
+
+		if (s == undefined) get();
+		else process();
+	}
+
+	function backup() {
+		read();
+		if (!settings.synch) {
+			//removeBackup();
+			return;
+		}
+		let container = document.getElementById('user_watched_images_exclude_str');
+		let x = container.value.split('\n');
+		container.value = createBackup(x);
 		debugLogger('YDB:S', 'Front backup successfully created', 0);
 	}
 
@@ -634,7 +679,86 @@
 		debugLogger('YDB:S', 'Settings saved', 0);
 	}
 
+
+	function injectModule(k, editCont, listCont) {
+		let ss = {};
+		let s2 = window._YDB_public.settings[k];
+		try {ss = JSON.parse(localStorage[window._YDB_public.settings[k].container]);}
+		catch (ex) {console.log('Warning: '+k+' has empty storage!');}
+		modules[s2.container] = {name:s2.name, container:s2.container, changed:false, saved:ss, options:s2.s, onChanges:s2.onChanges};
+		if (s2.s != undefined && editCont != undefined) {
+			try {renderCustom(s2, editCont, modules[s2.container]);}
+			catch(e) {console.log('Error rendering '+k+'. '+e);}
+		}
+
+		if (listCont != undefined && !s2.hidden) addElem('div', {classList:'block__content alternating-color', innerHTML:s2.name+' ver. '+s2.version}, listCont);
+	}
+
+	function injectLegacyModule(k, editCont, listCont) {
+		let ss = {};
+		try {ss = JSON.parse(localStorage[k.container]);}
+		catch (ex) {console.log('Warning: '+k.name+' has empty storage!');}
+		modules[k.container] = {name:k.name, container:k.container, changed:false, saved:ss, options:k.s, onChanges:k.onChanges};
+		if (k.s != undefined && editCont != undefined) {
+			try {renderCustom(k, editCont, modules[k.container]);}
+			catch(e) {console.log('Error rendering '+k.name+'. '+e);}
+		}
+
+		if (listCont != undefined && !k.hidden) addElem('div', {classList:'block__content alternating-color', innerHTML:k.name+' ver. '+k.version}, listCont);
+	}
+
+	function listModules() {
+		let loadedList = {};
+		//loading, stage 1
+		if (window._YDB_public != undefined) {
+			if (window._YDB_public.settings != undefined) {
+				for (let k in window._YDB_public.settings) {
+					injectModule(k);
+					loadedList[k] = true;
+				}
+			}
+		}
+
+		//loading, stage 2
+		for (let i=0; i<document.getElementsByClassName('_YDB_reserved_register').length; i++) {
+			try {
+				let k = JSON.parse(document.getElementsByClassName('_YDB_reserved_register')[i].dataset.value);
+				injectLegacyModule(k);
+				loadedList[k.name] = true;
+			}
+			catch (e) {
+				console.log('Error JSON processing "'+document.getElementsByClassName('_YDB_reserved_register')[i].dataset.value+'" '+e);
+			}
+		}
+
+		let timer = 50;
+		let handler = function() {
+			for (let k in window._YDB_public.settings) {
+				if (!loadedList[k]) {
+					injectModule(k);
+					loadedList[k] = true;
+				}
+			}
+			for (let i=0; i<document.getElementsByClassName('_YDB_reserved_register').length; i++) {
+			try {
+				let k = JSON.parse(document.getElementsByClassName('_YDB_reserved_register')[i].dataset.value);
+				if (!loadedList[k.name]) {
+					injectLegacyModule(k);
+					loadedList[k.name] = true;
+				}
+			}
+			catch (e) {
+			}
+		}
+
+			timer*=4;
+			setTimeout(handler, timer);
+		};
+		setTimeout(handler, 50);
+	}
+
 	function settingPage() {
+		localStorage._ydb_watchListFilterString = document.getElementById('user_watched_images_exclude_str').innerHTML;
 		let cont;
 		//preparing
 		document.getElementById('js-setting-table').insertBefore(cont = InfernoAddElem('div',{className:'block__tab hidden',dataset:{tab:'YourBooru'},style:'position:relative'}), document.querySelector('[data-tab="local"]').nextSibling);
@@ -659,36 +783,12 @@
 		}
 
 		let loadedList = {};
-		let injectModule = function(k) {
-			let ss = {};
-			let s2 = window._YDB_public.settings[k];
-			try {ss = JSON.parse(localStorage[window._YDB_public.settings[k].container]);}
-			catch (ex) {console.log('Warning: '+k+' has empty storage!');}
-			modules[s2.container] = {name:s2.name, container:s2.container, changed:false, saved:ss, options:s2.s, onChanges:s2.onChanges};
-			if (s2.s != undefined) {
-				try {renderCustom(s2, editCont, modules[s2.container]);}
-				catch(e) {console.log('Error rendering '+k+'. '+e);}
-			}
-
-			addElem('div', {classList:'block__content alternating-color', innerHTML:s2.name+' ver. '+s2.version}, listCont);
-		};
-
-		let injectLegacyModule = function(k) {
-			let ss = {};
-			try {ss = JSON.parse(localStorage[k.container]);}
-			catch (ex) {console.log('Warning: '+k.name+' has empty storage!');}
-			modules[k.container] = {name:k.name, container:k.container, changed:false, saved:ss, options:k.s, onChanges:k.onChanges};
-			try {renderCustom(k, editCont, modules[k.container]);}
-			catch(e) {console.log('Error rendering '+k.name+'. '+e);}
-
-			addElem('div', {classList:'block__content alternating-color', innerHTML:k.name+' ver. '+k.version}, listCont);
-		};
 
 		//loading, stage 1
 		if (window._YDB_public != undefined) {
 			if (window._YDB_public.settings != undefined) {
 				for (let k in window._YDB_public.settings) {
-					injectModule(k);
+					injectModule(k, editCont, listCont);
 					loadedList[k] = true;
 				}
 			}
@@ -698,7 +798,7 @@
 		for (let i=0; i<document.getElementsByClassName('_YDB_reserved_register').length; i++) {
 			try {
 				let k = JSON.parse(document.getElementsByClassName('_YDB_reserved_register')[i].dataset.value);
-				injectLegacyModule(k);
+				injectLegacyModule(k, editCont, listCont);
 				loadedList[k.name] = true;
 			}
 			catch (e) {
@@ -736,7 +836,7 @@
 		let handler = function() {
 			for (let k in window._YDB_public.settings) {
 				if (!loadedList[k]) {
-					injectModule(k);
+					injectModule(k, editCont, listCont);
 					loadedList[k] = true;
 				}
 			}
@@ -744,7 +844,7 @@
 			try {
 				let k = JSON.parse(document.getElementsByClassName('_YDB_reserved_register')[i].dataset.value);
 				if (!loadedList[k.name]) {
-					injectLegacyModule(k);
+					injectLegacyModule(k, editCont, listCont);
 					loadedList[k.name] = true;
 				}
 			}
@@ -885,6 +985,7 @@
 	addElem('style',{type:'text/css',innerHTML:windows},document.head);
 	if (settings.timestamp+21600 < parseInt(Date.now()/1000) && location.pathname != "/settings") getData();
 	if (location.pathname == "/settings") setTimeout(settingPage, 50);
+	else setTimeout(listModules, 50);
 	if (location.pathname == "/pages/yourbooru") yourbooruPage();
 	register();
 	};
