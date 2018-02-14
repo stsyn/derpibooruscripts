@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.22
+// @version      0.4.23
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1350,22 +1350,33 @@ color: #0a0;
 			if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup();
 			return user;
 		};
+		
+		let removeUser = function(username) {
+			delete userbase.users[username];
+			for (let i=0; i<userbase.pending.length; i++) {
+				if (userbase.pending[i] == username) {
+					userbase.pending.splice(i,1);
+					return;
+				}
+			}
+		};
 
 		let write = function() {
 			localStorage._ydb_toolsUB = JSON.stringify(userbase);
 		};
-
+		
 		let tswrite = function() {
 			localStorage._ydb_toolsUBTS = JSON.stringify(userbaseTS);
 		};
 
-		let getTimestamp = function(user, regular) {
+		let getTimestamp = function(user, regular, simplyReturn) {
 			let nameEncode = function(name) {
 				return encodeURI(name.replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/\//g,'-fwslash-').replace(/\//g,'-bwslash-').replace(/ /g,'+'));
 			};
 			let callback = function(req) {
 				try {
 					let x = JSON.parse(req.responseText);
+					if (simplyReturn) return x.created_at;
 					if (regular) {
 						userbase.pending.push(userbase.pending.shift());
 					}
@@ -1376,7 +1387,8 @@ color: #0a0;
 					}
 					else {
 						if (user.ts != x.created_at) {
-							//panic
+							userbase.lost[user.ts] = user;
+							removeUser(user.name);
 						}
 						write();
 						if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup();
@@ -1404,7 +1416,7 @@ color: #0a0;
 			let get = function(name) {
 				let req = new XMLHttpRequest();
 				req.onreadystatechange = readyHandler(req);
-				req.open('GET', '/profiles/'+nameEncode(name)+'.json');
+				req.open('GET', '/profiles/'+nameEncode(name)+'.json', !simplyReturn);
 				req.send();
 			};
 			if (regular) {
@@ -1435,7 +1447,7 @@ color: #0a0;
 					userbaseTS.lastRun = userbase.lastRun;
 				}
 			}
-
+			
 			if (userbase.ttu != undefined) {
 				delete userbase.ttu;
 				delete userbase.lastRun;
@@ -1444,17 +1456,42 @@ color: #0a0;
 			if (document.querySelector('.profile-top__name-header') != undefined) {
 				let name = document.querySelector('.profile-top__name-header').innerHTML.slice(0, -10);
 				if (userbase.users[name] == undefined) {
-					if (document.querySelector('.profile-top__name-header').nextSibling.tagName != 'BR') {
+					if (document.querySelector('.profile-top__name-header').nextSibling.tagName != undefined) {
 						let t = document.querySelector('.profile-top__name-header').nextSibling.wholeText;
 						t = t.substring(21,t.length-2).trim();
 						let aliases = [t];
 						if (userbase.users[t] != undefined) {
-							//проверка таймштампа и слияние
+							let ts = getTimestamp(user, false, true);
+							if (userbase.users[t].ts == ts) {
+								aliases = userbase.users[t].aliases;
+								aliases.push(t);
+								removeUser(t);
+								createUser(name, aliases, ts);
+							}
+							else {
+								userbase.lost[userbase.users[t].ts] = userbase.users[t];
+								removeUser(t);
+								createUser(name, aliases, ts);
+							}
 						}
 						else {
-							let user = createUser(name, aliases);
-							getTimestamp(user, false);
+							createUser(name, aliases);
 						}
+					}
+				}
+				else {
+					let a = userbase.users[name].aliases;
+					if (userbase.users[name].aliases.length>0) {
+						let ae = [];
+						for (let i=0;i<a.length; a++) {
+							ae.push(InfernoAddElem('div',{className:'alternating-color block__content', innerHTML:a[i]},[]))
+						}
+						ae.unshift(InfernoAddElem('div',{className:'block__header'},[
+							InfernoAddElem('span',{className:'block__header__title',innerHTML:'Also known as:'},[])
+						]));
+						document.querySelector('.column-layout__left').insertBefore(
+							InfernoAddElem('div',{className:'block'},ae)
+						,document.querySelector('.column-layout__left').firstChild);
 					}
 				}
 			}
@@ -1477,7 +1514,18 @@ color: #0a0;
 					t = t.substring(21,t.length-2).trim();
 					let aliases = [t];
 					if (userbase.users[t] != undefined) {
-						//проверка таймштампа и слияние
+						let ts = getTimestamp(user, false, true);
+						if (userbase.users[t].ts == ts) {
+							aliases = userbase.users[t].aliases;
+							aliases.push(t);
+							removeUser(t);
+							createUser(name, aliases, ts);
+						}
+						else {
+							userbase.lost[userbase.users[t].ts] = userbase.users[t];
+							removeUser(t);
+							createUser(name, aliases, ts);
+						}
 					}
 					else {
 						let user = createUser(name, aliases);
