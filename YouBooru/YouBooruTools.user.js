@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.21
+// @version      0.4.22
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -146,7 +146,7 @@ color: #0a0;
             name:'Tools (Userbase)',
             container:'_ydb_toolsUB',
             version:sversion,
-
+			hidden:true
 		};
 		window._YDB_public.settings.tools = {
             name:'Tools',
@@ -173,8 +173,6 @@ color: #0a0;
                 {type:'header', name:'Tag aliases'},
                 {type:'checkbox', name:'Do not parse page name', parameter:'oldName'},
                 {type:'checkbox', name:'As short queries as possible', parameter:'compress', styleS:{display:'none'}},
-                {type:'breakline'},
-                {type:'text', name:'If synchronizing enabled, adding and removing tags from watchlist via tag dropdown will cause small popup window until synchronizing done.'},
                 {type:'breakline'},
                 {type:'breakline'},
                 {type:'text', name:'Aliase', styleS:{width:'30%', textAlign:'center',display:'inline-block'}},
@@ -1327,10 +1325,15 @@ color: #0a0;
 
 	/////////////////////////////////////////////
 	//user aliases
+	let UBinterval = 604800000;
 	let userbase = {
 		users:{},
 		pending:[],
 		lost:{}
+	};
+	let userbaseTS = {
+		ttu:0,
+		lastRun:0
 	};
 	let userbaseStarted = false;
 
@@ -1343,12 +1346,17 @@ color: #0a0;
 			};
 			userbase.users[name] = user;
 			userbase.pending.push(name);
-			return user;
 			write();
+			if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup();
+			return user;
 		};
 
 		let write = function() {
 			localStorage._ydb_toolsUB = JSON.stringify(userbase);
+		};
+
+		let tswrite = function() {
+			localStorage._ydb_toolsUBTS = JSON.stringify(userbaseTS);
 		};
 
 		let getTimestamp = function(user, regular) {
@@ -1364,6 +1372,14 @@ color: #0a0;
 					if (user.ts == undefined) {
 						user.ts = x.created_at;
 						write();
+						if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup();
+					}
+					else {
+						if (user.ts != x.created_at) {
+							//panic
+						}
+						write();
+						if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup();
 					}
 				}
 				catch(e) {
@@ -1391,8 +1407,16 @@ color: #0a0;
 				req.open('GET', '/profiles/'+nameEncode(name)+'.json');
 				req.send();
 			};
-
-			get(user.name);
+			if (regular) {
+				userbaseTS.ttu -= (Date.now()-userbaseTS.lastRun);
+				if (userbaseTS.ttu <= 0) {
+					if (userbaseTS.lastRun == 0) userbaseTS.ttu = 0;
+					get(user.name);
+					userbaseTS.lastRun = Date.now();
+					userbaseTS.ttu += (UBinterval/userbase.pending.length);
+				}
+				tswrite();
+			}
 		};
 		if (!userbaseStarted) {
 			userbaseStarted = true;
@@ -1401,6 +1425,21 @@ color: #0a0;
 				userbase = temp;
 			}
 			catch(e) {}
+			try {
+				let temp = JSON.parse(localStorage._ydb_toolsUBTS);
+				userbaseTS = temp;
+			}
+			catch(e) {
+				if (userbase.ttu != undefined) {
+					userbaseTS.ttu = userbase.ttu;
+					userbaseTS.lastRun = userbase.lastRun;
+				}
+			}
+
+			if (userbase.ttu != undefined) {
+				delete userbase.ttu;
+				delete userbase.lastRun;
+			}
 
 			if (document.querySelector('.profile-top__name-header') != undefined) {
 				let name = document.querySelector('.profile-top__name-header').innerHTML.slice(0, -10);
@@ -1408,21 +1447,21 @@ color: #0a0;
 					if (document.querySelector('.profile-top__name-header').nextSibling.tagName != 'BR') {
 						let t = document.querySelector('.profile-top__name-header').nextSibling.wholeText;
 						t = t.substring(21,t.length-2).trim();
-						if (t != name) {
-							let aliases = [t];
-							if (userbase.users[t] != undefined) {
-								//проверка таймштампа и слияние
-							}
-							else {
-								let user = createUser(name, aliases);
-								getTimestamp(user, false);
-							}
+						let aliases = [t];
+						if (userbase.users[t] != undefined) {
+							//проверка таймштампа и слияние
+						}
+						else {
+							let user = createUser(name, aliases);
+							getTimestamp(user, false);
 						}
 					}
 				}
 			}
 
-			if (userbase.pending.length>0) getTimestamp(userbase.users[userbase.pending[0]], true);
+			if (userbase.pending.length>0) {
+				getTimestamp(userbase.users[userbase.pending[0]], true);
+			}
 		}
 		for (let i=0; i<e.getElementsByClassName('communication__body').length; i++) {
 			let el = e.getElementsByClassName('communication__body')[i];
@@ -1436,7 +1475,6 @@ color: #0a0;
 				if (alias.classList != undefined && alias.classList.contains('small-text')) {
 					let t = alias.innerHTML;
 					t = t.substring(21,t.length-2).trim();
-					if (t == name) break;
 					let aliases = [t];
 					if (userbase.users[t] != undefined) {
 						//проверка таймштампа и слияние
