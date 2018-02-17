@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.23
+// @version      0.4.24
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -591,44 +591,6 @@ color: #0a0;
         return original;
     }
 
-	function DeMorgan (x) {
-		// I _really_ want to use my old feeds
-		let c = function(x, p) {
-			let yx = goodParseIngnoreParentheses(x);
-			if (yx.tags.length == 1) return x;
-			let ch = false;
-			for (let i=0; i<yx.tags.length; i++) {
-				if ((yx.tags[i].v[0] == '(' || (yx.tags[i].v.startsWith('-('))) && /\)$/.test(yx.tags[i].v)) {
-					let l = yx.tags[i].v.length;
-					let r = c(yx.tags[i].v.substr(1,yx.tags[i].v.length-2), true);
-					ch = true;
-					if (! /\)$/.test(r) ) {
-						r = '('+r+')';
-					}
-					if (r.length < yx.tags[i].v.length) yx.tags[i].v = r;
-				}
-			}
-			if (x.indexOf(' OR ')>=yx.tags[0].length && x.indexOf(' OR ')<=yx.tags[1].offset) {
-				let y = '-'+(p?'(':'');
-				for (let i=0; i<yx.tags.length; i++) {
-            		yx.tags[i].v = yx.tags[i].v.replace(/^ +/g,'');
-					let d = yx.tags[i].v.startsWith('-');
-					if (d) y+=yx.tags[i].v.slice(1);
-					else y+='-'+yx.tags[i].v;
-					if (i+1<yx.tags.length) y+=',';
-				}
-				if (p) y+=')';
-				if (y.length < x.length) return y;
-				else return x;
-			}
-			else if (!ch) return x;
-			let s = goodCombine(yx).replace(/\-\-\(/g,'(');
-			if (s.length < x.length) return s;
-			else return x;
-		};
-		return c(x, true);
-	}
-
     function tagAliases(original, opt) {
         let limit = 9999;
         checkAliases();
@@ -636,8 +598,6 @@ color: #0a0;
 
         let als = {};
         if (ls.aliases != undefined) for (let i=0; i<ls.aliases.length; i++) als[ls.aliases[i].a] = ls.aliases[i].b;
-        let changed = false;
-        let rq = original;
         let iterations = 0;
 
         let cycledParse = function(orig) {
@@ -655,13 +615,6 @@ color: #0a0;
             return q2;
         };
 
-        let q = cycledParse(original);
-        if (opt.legacy) q = legacyTagAliases(q);
-        if (q!=original) {
-            changed = true;
-            rq = q;
-        }
-
 		let artists = function(orig) {
             let tags = goodParse(orig);
             for (let i=0; i<tags.tags.length; i++) {
@@ -672,12 +625,6 @@ color: #0a0;
             let q2 = goodCombine(tags);
             return q2;
         };
-
-		q = artists(rq);
-        if (q!=rq) {
-            changed = true;
-            rq = q;
-        }
 
         let compressSyntax = function (orig) {
             let q2 = orig.replace(/ \&\& /g, ',');
@@ -694,14 +641,6 @@ color: #0a0;
             return q2;
         };
 
-		if (rq.length > limit) {
-            q = compressSyntax(rq);
-            if (q!=rq) {
-                changed = true;
-                rq = q;
-            }
-        }
-
         let compressAliases = function (orig) {
             let tags = goodParse(orig);
             let tt = getTagShortAliases();
@@ -713,21 +652,6 @@ color: #0a0;
             let q2 = goodCombine(tags);
             return q2;
         };
-        if (rq.length > limit) {
-            q = compressAliases(rq);
-            if (q!=rq) {
-                changed = true;
-                rq = q;
-            }
-        }
-
-        /*if (rq.length > limit) {
-            q = DeMorgan(rq);
-            if (q.length<rq.length) {
-                changed = true;
-                rq = q;
-            }
-        }*/
 
         let compressArtists = function (orig) {
             let tags = goodParse(orig);
@@ -739,23 +663,98 @@ color: #0a0;
             let q2 = goodCombine(tags);
             return q2;
         };
-        if (rq.length > limit) {
-            q = compressArtists(rq);
-            if (q!=rq) {
-                changed = true;
-                rq = q;
+		
+		let unspoilTag = function (orig) {
+			if (window._YDB_public.funcs.getNonce == undefined) return orig;
+            let tags = goodParse(orig);
+            for (let i=0; i<tags.tags.length; i++) {
+                if (tags.tags[i].v == '__ydb_Unspoil') {
+                    tags.tags[i].v = '!__ydb_Unspoil:'+md5(document.body.dataset.userName+window._YDB_public.funcs.getNonce());
+                }
             }
-        }
+            let q2 = goodCombine(tags);
+            return q2;
+        };
 
-        if (changed) {
-			debug('YDB:T','Query '+q+' compressed to '+rq,0);
-            udata[md5(rq)] = {q:original, t:getTimestamp()};
+		//////////////////////////////////////////////////////
+		
+        let q = cycledParse(original);
+        if (opt.legacy) q = legacyTagAliases(q);
+		q = artists(q);
+		if (q.length > limit) q = compressSyntax(q);
+        if (q.length > limit) q = compressAliases(q);
+        if (q.length > limit) q = compressArtists(q);
+		q = unspoilTag(q);
+		
+        if (q!=original) {
+			debug('YDB:T','Query '+original+' compressed to '+q,0);
+            udata[md5(q)] = {q:original, t:getTimestamp()};
             writeTagTools(udata);
         };
-        return rq;
+        return q;
     }
+	
+	function unspoil(cont) {
+		let work = function (elem) {
+			let ux = elem.querySelector('.media-box__overlay.js-spoiler-info-overlay');
+			if (ux.innerHTML == '') return;
+			
+			let ix = elem.querySelector('video');
+			let xx = elem.querySelector('a img');
+			let x = elem.querySelector('.image-container');
+			let s = JSON.parse(x.getAttribute('data-uris')).thumb;
+			if (s.indexOf('.webm')>-1) ux.innerHTML = 'Webm';
+			else ux.classList.add('hidden');
+			if (ix) {
+				ix.classList.remove('hidden');
+
+				let s = document.createElement('source');
+				s.src = JSON.parse(x.getAttribute('data-uris')).thumb;
+				s.type = 'video/webm';
+				ix.appendChild(s);
+
+				xx.classList.add('hidden');
+				xx.parentNode.removeChild(xx);
+			}
+			else {
+				xx.src = JSON.parse(x.getAttribute('data-uris')).thumb.replace('.webm','.gif');
+			}
+			elem.innerHTML = elem.innerHTML; //CBEPXPA3YM.JPEG
+		};
+		let work2 = function (elem) {
+			let ux = elem.querySelector('.block--warning');
+			let x = elem.querySelector('.image-show');
+			ux.classList.add('hidden');
+			x.classList.remove('hidden');
+		};
+		if (cont != undefined) {
+			if (cont.querySelectorAll('.media-box').length > 0) for (let i=0; i<cont.querySelectorAll('.media-box').length; i++) {
+				work(cont.querySelectorAll('.media-box')[i]);
+			}
+			else if (cont.classList.contains('image-show-container')) work2(cont);
+		}
+	}
 
     function aliases() {
+		let q = document.getElementsByClassName('header__input--search')[0].value;
+		let qc = goodParse(q);
+		for (let i=0; i<qc.tags.length; i++) {
+			if (qc.tags[i].v.startsWith('__ydb_Unspoil')) {
+				let n = qc.tags[i].v.split(':').pop();
+				if (n == undefined || window._YDB_public.funcs.getNonce == undefined) {
+					document.getElementById('container').insertBefore(InfernoAddElem('div',{className:'flash flash--warning', innerHTML:'YDB:Settings 0.9.1+ required to use "__ydb_Unspoil"!'},[]),document.getElementById('content'));
+					break;
+				}
+				let hash = md5(document.body.dataset.userName+window._YDB_public.funcs.getNonce());
+				if (hash != n) {
+					document.getElementById('container').insertBefore(InfernoAddElem('div',{className:'flash flash--warning', innerHTML:'Invalid or outdated token!'},[]),document.getElementById('content'));
+					break;
+				}
+				if (document.getElementsByClassName('js-resizable-media-container')[0] != undefined) unspoil(document.getElementsByClassName('js-resizable-media-container')[0]);
+				else if (document.getElementsByClassName('image-show-container')[0] != undefined) unspoil(document.getElementsByClassName('image-show-container')[0]);
+			}
+		}
+		
         let data = readTagTools();
         let s = md5(document.getElementsByClassName('header__input--search')[0].value);
         if (data[s] != undefined) {
@@ -1338,11 +1337,12 @@ color: #0a0;
 	let userbaseStarted = false;
 
 	function UA(e) {
-		let createUser = function(name, aliases, ts) {
+		let createUser = function(name, aliases, ts, id) {
 			let user = {
 				name:name,
 				aliases:aliases,
-				ts:ts
+				ts:ts,
+				id:id
 			};
 			userbase.users[name] = user;
 			userbase.pending.push(name);
@@ -1350,7 +1350,7 @@ color: #0a0;
 			if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup();
 			return user;
 		};
-		
+
 		let removeUser = function(username) {
 			delete userbase.users[username];
 			for (let i=0; i<userbase.pending.length; i++) {
@@ -1364,7 +1364,7 @@ color: #0a0;
 		let write = function() {
 			localStorage._ydb_toolsUB = JSON.stringify(userbase);
 		};
-		
+
 		let tswrite = function() {
 			localStorage._ydb_toolsUBTS = JSON.stringify(userbaseTS);
 		};
@@ -1382,12 +1382,13 @@ color: #0a0;
 					}
 					if (user.ts == undefined) {
 						user.ts = x.created_at;
+						user.id = x.id;
 						write();
 						if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup();
 					}
 					else {
-						if (user.ts != x.created_at) {
-							userbase.lost[user.ts] = user;
+						if (user.ts != x.created_at && user.id != x.id) {
+							userbase.lost[user.id] = user;
 							removeUser(user.name);
 						}
 						write();
@@ -1447,7 +1448,7 @@ color: #0a0;
 					userbaseTS.lastRun = userbase.lastRun;
 				}
 			}
-			
+
 			if (userbase.ttu != undefined) {
 				delete userbase.ttu;
 				delete userbase.lastRun;
@@ -1456,22 +1457,23 @@ color: #0a0;
 			if (document.querySelector('.profile-top__name-header') != undefined) {
 				let name = document.querySelector('.profile-top__name-header').innerHTML.slice(0, -10);
 				if (userbase.users[name] == undefined) {
-					if (document.querySelector('.profile-top__name-header').nextSibling.tagName != undefined) {
+					if (document.querySelector('.profile-top__name-header').nextSibling.tagName == undefined) {
 						let t = document.querySelector('.profile-top__name-header').nextSibling.wholeText;
 						t = t.substring(21,t.length-2).trim();
 						let aliases = [t];
 						if (userbase.users[t] != undefined) {
 							let ts = getTimestamp(user, false, true);
-							if (userbase.users[t].ts == ts) {
+							let id = document.querySelector('a[href*="/lists/user_comments"]').href.split('/').pop();
+							if (userbase.users[t].ts == ts && userbase.users[t].id == id) {
 								aliases = userbase.users[t].aliases;
 								aliases.push(t);
 								removeUser(t);
-								createUser(name, aliases, ts);
+								createUser(name, aliases, ts, id);
 							}
 							else {
-								userbase.lost[userbase.users[t].ts] = userbase.users[t];
+								userbase.lost[userbase.users[t].id] = userbase.users[t];
 								removeUser(t);
-								createUser(name, aliases, ts);
+								createUser(name, aliases, ts, id);
 							}
 						}
 						else {
