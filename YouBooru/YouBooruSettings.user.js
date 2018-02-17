@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.0
+// @version      0.9.1
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -63,6 +63,7 @@
 			settings = {};
 		}
 		if (settings.debugLength == undefined) settings.debugLength = 100;
+		if (settings.nonce == undefined || isNaN(settings.nonce)) settings.nonce = parseInt(Math.random()*Number.MAX_SAFE_INTEGER);
 		write();
 	}
 	read();
@@ -111,6 +112,7 @@
 		window._YDB_public.funcs.callWindow = callWindow;
 		window._YDB_public.funcs.backgroundBackup = backgroundBackup;
 		window._YDB_public.funcs.log = debugLogger;
+		window._YDB_public.funcs.getNonce = function() {return settings.nonce;};
 	}
 
 	function hideBlock(e) {
