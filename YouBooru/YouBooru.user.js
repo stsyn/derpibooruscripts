@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.30
+// @version      0.4.31
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -685,7 +685,6 @@
         let aloff = false;
         if (window._YDB_public.funcs != undefined && window._YDB_public.funcs.tagSimpleParser != undefined) {
             let t = window._YDB_public.funcs.tagSimpleParser(r.feed.query);
-            console.log(t);
             for (let i=0; i<t.length; i++) {
                 if (t[i].startsWith('__ydb_Unspoil')) {
                     aloff = true;
@@ -780,6 +779,16 @@
 
 	function fillParsed(feed, id, pre) {
 		let c = feed.container;
+        let aloff = false;
+        if (window._YDB_public.funcs != undefined && window._YDB_public.funcs.tagSimpleParser != undefined) {
+            let t = window._YDB_public.funcs.tagSimpleParser(feed.query);
+            for (let i=0; i<t.length; i++) {
+                if (t[i].startsWith('__ydb_Unspoil')) {
+                    aloff = true;
+                    break;
+                }
+            }
+		}
 		if ((feedzCache[id] == null) || (feedzCache[id].length < 50 )) {
 			if (feedzCache[id] == null) c.innerHTML = 'Empty feed';
 			else c.innerHTML = feedzCache[id];
@@ -789,7 +798,7 @@
 			for (let i=0; i<parseInt(config.imagesInFeeds*1.2)*(feed.double?2:1); i++) {
 				let elem = c.childNodes[i];
 				if (elem == undefined) break;
-				if (elem.querySelector('.media-box__content .image-container.thumb a img') != null) elem.querySelector('.media-box__content--large .image-container.thumb a img').onload = spoiler;
+				if (elem.querySelector('.media-box__content .image-container.thumb a img') != null) elem.querySelector('.media-box__content--large .image-container.thumb a img').onload = function(e) {spoiler(e,aloff);};
 				let mwidth = parseInt(cont.clientWidth) - 14;
 				let twidth = parseInt(mwidth/parseInt(config.imagesInFeeds*(privated?1.2:1))-8);
 				elem.getElementsByClassName('media-box__header')[0].style.width = twidth+'px';
