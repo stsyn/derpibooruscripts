@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.29
+// @version      0.4.30
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -525,7 +525,7 @@
 		sentRequests++;
 	}
 
-	function spoiler(event) {
+	function spoiler(event, alwaysOff) {
 		if ((event.target.width==1) && (event.target.height==1)) {
 			let x = event.target.parentNode.parentNode.parentNode;
 			let video = false;
@@ -564,7 +564,7 @@
 				xx = x.getElementsByTagName('img')[0];
 			}
 			let ax = ix.parentNode.parentNode;
-			if (data.spoilerType == 'off') {
+			if (data.spoilerType == 'off' || alwaysOff) {
 				ux.classList.add('hidden');
 				if (video) {
 					ix.classList.remove('hidden');
@@ -682,6 +682,17 @@
 		if (votes !== undefined) votes = JSON.parse(votes);
 
 		let pc = r.feed.temp.querySelector('.block__content.js-resizable-media-container');
+        let aloff = false;
+        if (window._YDB_public.funcs != undefined && window._YDB_public.funcs.tagSimpleParser != undefined) {
+            let t = window._YDB_public.funcs.tagSimpleParser(r.feed.query);
+            console.log(t);
+            for (let i=0; i<t.length; i++) {
+                if (t[i].startsWith('__ydb_Unspoil')) {
+                    aloff = true;
+                    break;
+                }
+            }
+		}
 		let c = r.feed.container;
 		let mwidth = parseInt(cont.clientWidth) - 14;
 		let twidth = parseInt(mwidth/parseInt(config.imagesInFeeds*(privated?1.2:1))-8);
@@ -741,7 +752,7 @@
 				}
 
 				elem.classList.add('_ydb_resizible');
-				if (elem.querySelector('.media-box__content .image-container.thumb a img') !== null) elem.querySelector('.media-box__content--large .image-container.thumb a img').onload = spoiler;
+				if (elem.querySelector('.media-box__content .image-container.thumb a img') !== null) elem.querySelector('.media-box__content--large .image-container.thumb a img').onload = function(e) {spoiler(e,aloff);};
 				if (twidth < 240) {
 					elem.getElementsByClassName('media-box__header')[0].classList.add('media-box__header--small');
 				}
