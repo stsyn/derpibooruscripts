@@ -24,7 +24,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.3.6
+// @version      0.3.7
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -33,21 +33,25 @@
 
 (function() {
 	'use strict';
-	
+
 	let main = function() {
 	let scriptId = 'ssf';
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
 	try {if (window._YDB_public.settings[scriptId] != undefined) return;}
-	catch(e){}
+	catch(e) {}
 	if (aE) {if (!window._YDB_public.allowedToRun[scriptId]) return;}
 	let sversion = aE?window._YDB_public.version:GM_info.script.version;
-	
+
 	// These settings also may be edited via YourBooru:Settings
+	// And it's strongly recomended to install it, you won't lose settings if you update script!
 	// https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
 
 	var settings = {
+		//!!!Change to true if you want to use these settings
+		override:false,
+
 		//Which sortings type should be fixed
 		score:true,
 		random:true,
@@ -61,9 +65,6 @@
 		//Blink on completion
 		blink:true,
 
-		//Change to true if you want to use these settings
-		override:false,
-
 		//If true, navigation will be fixed while page loading
 		preloading:false,
 
@@ -71,10 +72,14 @@
 		scoreUp:true,
 		sizesUp:true,
 		commentsUp:true,
-		everyUp:true
+		everyUp:true,
+
+		//Pregaining image data
+		pregain:true
 	};
 
-	var findTemp = 0, findIter = 1, TTL = 5;
+	let findTemp = 0, findIter = 1, TTL = 5;
+	let preparam;
 	let debug = function(id, value, level) {
 		try {
 			window._YDB_public.funcs.log(id, value, level);
@@ -84,7 +89,7 @@
 			console.log('['+levels[level]+'] ['+id+'] '+value);
 		};
 	};
-	var galleryLastImageId;
+	let galleryLastImageId;
 
 	//https://habrahabr.ru/post/177559/
 	function parseURL(url) {
@@ -169,6 +174,7 @@
 	}
 
 	function complete (target, link) {
+		link = link.split('#')[0];
 		blink(document.querySelectorAll(target)[0]);
 		if (settings.preloading && target != '.js-up') document.querySelectorAll(target)[0].href=link;
 		else location.href=link;
@@ -192,6 +198,13 @@
 		return;
 	}
 
+	function gainParams() {
+		if (myURL.params.sf == 'score') return parseInt(document.getElementsByClassName('score')[0].innerHTML);
+		else if (myURL.params.sf == 'width') return document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[0];
+		else if (myURL.params.sf == 'height') return document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[1];
+		else if (myURL.params.sf == 'comments') return document.querySelectorAll('.comments_count')[0].innerHTML;
+	}
+
 	function parse(r, type) {
 		let u;
 		try {
@@ -200,14 +213,11 @@
 		catch (e) {
 			debug ('SSF',e,2);
 		}
-		console.log(type, findIter, u);
 		let i;
 		if (type == 'find') {
-			let param = '';
-			if (myURL.params.sf == 'score') param = parseInt(document.getElementsByClassName('score')[0].innerHTML);
-			else if (myURL.params.sf == 'width') param = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[0];
-			else if (myURL.params.sf == 'height') param = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[1];
-			else if (myURL.params.sf == 'comments') param = document.querySelectorAll('.comments_count')[0].innerHTML;
+			let param;
+			if (settings.pregain) param = preparam;
+			else param = gainParams();
 
 			if (r.level == 'act' && param == '') {
 				findTemp = u.total;
@@ -236,7 +246,7 @@
 				return;
 			}
 			else {
-				complete('.js-up', compileXQuery(parseInt(findTemp/u.search.length+1), false));
+				complete(r.sel, compileXQuery(parseInt(findTemp/u.search.length+1), false));
 				return;
 			}
 		}
@@ -319,7 +329,7 @@
 					}
 					else {
 						//в запросе ваще одна пихча
-						if (u.search[s].id == id) {
+						if (u.search[0].id == id) {
 							request(compileQuery(type, 1), r.sel, type, 'act');
 						}
 						else {
@@ -434,20 +444,20 @@
 
 		let prevUrl = '//'+myURL.host+'/search.json?q=('+myURL.params.q+')';
 		let dir = ((myURL.params.sd=='asc'^type=='prev')?'gt':'lt');
+		let cscore;
+		if (settings.pregain) cscore = preparam;
+		else cscore = gainParams();
+
 		if (myURL.params.sf == "score") {
-			let cscore = parseInt(document.getElementsByClassName('score')[0].innerHTML);
 			prevUrl += ',(score:'+cscore+',id.'+dir+':'+id+')';
 		}
 		else if (myURL.params.sf == "width") {
-			let cscore = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[0];
 			prevUrl += ',(width:'+cscore+',id.'+dir+':'+id+')';
 		}
 		else if (myURL.params.sf == "height") {
-			let cscore = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[1];
 			prevUrl += ',(height:'+cscore+',id.'+dir+':'+id+')';
 		}
 		else if (myURL.params.sf == "comments") {
-			let cscore = document.querySelectorAll('.comments_count')[0].innerHTML;
 			prevUrl += ',(comment_count:'+cscore+',id.'+dir+':'+id+')';
 		}
 		prevUrl+='&perpage=1&sf=created_at&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
@@ -460,21 +470,21 @@
 		if (delta != undefined) d = delta*((myURL.params.sd=='asc'^type=='prev')?-1:1);
 		let prevUrl = '//'+myURL.host+'/search.json?q=('+myURL.params.q+')';
 		if (type !='random' && myURL.params.sf != "random") {
+			let cscore;
+			if (settings.pregain) cscore = preparam;
+			else cscore = gainParams();
+
 			let dir = ((myURL.params.sd=='asc'^(type=='prev' || type=='find'))?'gt':'lt');
 			if (myURL.params.sf == "score") {
-				let cscore = parseInt(document.getElementsByClassName('score')[0].innerHTML);
 				prevUrl += ',((score:'+(cscore+d)+',id.'+dir+':'+id+')+||+(score.'+dir+':'+(cscore+d)+'))';
 			}
 			else if (myURL.params.sf == "width") {
-				let cscore = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[0];
 				prevUrl += ',((width:'+(cscore+d)+',id.'+dir+':'+id+')+||+(width.'+dir+':'+(cscore+d)+'))';
 			}
 			else if (myURL.params.sf == "height") {
-				let cscore = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[1];
 				prevUrl += ',((height:'+(cscore+d)+',id.'+dir+':'+id+')+||+(height.'+dir+':'+(cscore+d)+'))';
 			}
 			else if (myURL.params.sf == "comments") {
-				let cscore = document.querySelectorAll('.comments_count')[0].innerHTML;
 				prevUrl += ',((comment_count:'+(cscore+d)+',id.'+dir+':'+id+')+||+(comment_count.'+dir+':'+(cscore+d)+'))';
 			}
 			prevUrl+='&perpage=3&sf='+myURL.params.sf+'&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
@@ -489,20 +499,20 @@
 		let dir = ((myURL.params.sd!='asc')?'gt':'lt');
 		let sd = ((myURL.params.sd!='asc')?'asc':'desc');
 		let sf = myURL.params.sf;
+		let cscore;
+		if (settings.pregain) cscore = preparam;
+		else cscore = gainParams();
+
 		if (myURL.params.sf == "score") {
-			let cscore = parseInt(document.getElementsByClassName('score')[0].innerHTML);
 			prevUrl += ',(score.'+dir+':'+cscore+')';
 		}
 		else if (myURL.params.sf == "width") {
-			let cscore = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[0];
 			prevUrl += ',(width.'+dir+':'+cscore+')';
 		}
 		else if (myURL.params.sf == "height") {
-			let cscore = document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[1];
 			prevUrl += ',(height.'+dir+':'+cscore+')';
 		}
 		else if (myURL.params.sf == "comments") {
-			let cscore = document.querySelectorAll('.comments_count')[0].innerHTML;
 			prevUrl += ',(comment_count.'+dir+':'+cscore+')';
 		}
 		else {
@@ -551,9 +561,13 @@
 			document.querySelector('form.header__search').insertBefore(InfernoAddElem('div',{className:'header__search__button', style:'height: 28px;'},[
 				InfernoAddElem('a',{id:'_ydb_s_qpusher',title:'Push search query to url bar', style:'height:28px;padding:0', href:location.href, className:'header__link header__search__button'}, [
 					InfernoAddElem('i',{className:'fa fa-arrow-up',style:'color:#fff; width:28px; line-height:28px; text-align:center; font-size:110%'}, [])
+				]),
+				InfernoAddElem('a',{id:'_ydb_s_finder',title:'Find this image position in entered query', style:'height:28px;padding:0', className:'header__link header__search__button'}, [
+					InfernoAddElem('i',{className:'fa',style:'color:#fff; width:28px; line-height:28px; text-align:center; font-size:110%',innerHTML:'\uF03C'}, [])
 				])
 			]),document.querySelector('form.header__search>a.header__search__button'));
 		}
+		document.getElementById('_ydb_s_qpusher').hash = '';
 
 		if (myURL.params.sf != undefined && myURL.params.sf.startsWith('gallery_id')) addElem('option',{value:myURL.params.sf, innerHTML:'gallery'},document.getElementById('_ydb_s_qpusher_sf'));
 		let x = myURL.params.sf;
@@ -608,6 +622,7 @@
 		}
 	}
 
+
 	////////////////////////////////
 
 	function execute() {
@@ -622,12 +637,29 @@
 		}
 	}
 
+	function commonClickAction(e) {
+		e.preventDefault();
+		if (settings.blink) {
+			let elem = e.target;
+			if (elem.classList.contains('fa')) elem = elem.parentNode;
+			elem.classList.add('interaction--fave');
+			elem.classList.add('active');
+		}
+		myURL = parseURL(location.href);
+	}
+
+		/////////////////////////////////
+
 	if (localStorage._ssf == undefined || settings.override) {
 		localStorage._ssf = JSON.stringify(settings);
 	}
 	else {
 		try {
 			var settings2 = JSON.parse(localStorage._ssf);
+			if (settings2.pregain == undefined) {
+				settings2.pregain = true;
+				localStorage._ssf = JSON.stringify(settings2);
+			}
 			settings = settings2;
 		}
 		catch(e) {
@@ -638,6 +670,7 @@
 	let myURL = parseURL(location.href);
 	if (myURL.sf != undefined) if (myURL.params.sf.startsWith('gallery_id')) return;
 	let id = parseInt(myURL.path.slice(1));
+
 
 	if (isNaN(id)) {
 		id = myURL.path.split('/');
@@ -660,37 +693,20 @@
 		!(myURL.params.sf.startsWith('gallery_id') && !settings.gallery) &&
 		!((myURL.params.sf == 'width' || myURL.params.sf == 'height') && !settings.sizes)
 	) {
+		if (settings.pregain) preparam = gainParams();
 		if (!(myURL.params.sf.startsWith('gallery_id'))) myURL.params.sf = myURL.params.sf.split('%')[0];
 		if (settings.preloading) execute();
 		else {
 			document.querySelectorAll('.js-next')[0].addEventListener('click',function(e) {
-				e.preventDefault();
-				if (settings.blink) {
-					let elem = e.target;
-					if (elem.classList.contains('fa')) elem = elem.parentNode;
-					elem.classList.add('interaction--fave');
-					elem.classList.add('active');
-				}
+				commonClickAction(e);
 				crLink('.js-next', (myURL.params.sf=='random')?'post':'pre', 'next');
 			});
 			document.querySelectorAll('.js-prev')[0].addEventListener('click',function(e) {
-				e.preventDefault();
-				if (settings.blink) {
-					let elem = e.target;
-					if (elem.classList.contains('fa')) elem = elem.parentNode;
-					elem.classList.add('interaction--fave');
-					elem.classList.add('active');
-				}
+				commonClickAction(e);
 				crLink('.js-prev', (myURL.params.sf=='random')?'post':'pre', 'prev');
 			});
 			document.querySelectorAll('.js-rand')[0].addEventListener('click',function(e) {
-				e.preventDefault();
-				if (settings.blink) {
-					let elem = e.target;
-					if (elem.classList.contains('fa')) elem = elem.parentNode;
-					elem.classList.add('interaction--fave');
-					elem.classList.add('active');
-				}
+				commonClickAction(e);
 				crLink('.js-rand', 'post', 'random');
 			});
 		}
@@ -705,18 +721,18 @@
 
 	)) {
 		document.querySelectorAll('.js-up')[0].addEventListener('click',function(e) {
-			e.preventDefault();
-			if (settings.blink) {
-				let elem = e.target;
-				if (elem.classList.contains('fa')) elem = elem.parentNode;
-				elem.classList.add('interaction--fave');
-				elem.classList.add('active');
-			}
+			commonClickAction(e);
 			crLink('.js-up', 'act', 'find');
+		});
+
+		document.getElementById('_ydb_s_finder').addEventListener('click',function(e) {
+			commonClickAction(e);
+			myURL = parseURL(document.getElementById('_ydb_s_qpusher').href);
+			crLink('#_ydb_s_finder', 'act', 'find');
 		});
 	}
 	};
-	
+
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
