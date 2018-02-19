@@ -66,7 +66,7 @@
 		blink:true,
 
 		//If true, navigation will be fixed while page loading
-		preloading:false,
+		preloading:true,
 
 		//With which sortings type find button should be fixed
 		scoreUp:true,
