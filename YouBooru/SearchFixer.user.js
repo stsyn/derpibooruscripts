@@ -24,7 +24,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.3.7
+// @version      0.3.8
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -566,8 +566,8 @@
 					InfernoAddElem('i',{className:'fa',style:'color:#fff; width:28px; line-height:28px; text-align:center; font-size:110%',innerHTML:'\uF03C'}, [])
 				])
 			]),document.querySelector('form.header__search>a.header__search__button'));
+			document.getElementById('_ydb_s_qpusher').hash = '';
 		}
-		document.getElementById('_ydb_s_qpusher').hash = '';
 
 		if (myURL.params.sf != undefined && myURL.params.sf.startsWith('gallery_id')) addElem('option',{value:myURL.params.sf, innerHTML:'gallery'},document.getElementById('_ydb_s_qpusher_sf'));
 		let x = myURL.params.sf;
