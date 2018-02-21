@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.24
+// @version      0.4.25
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1542,6 +1542,43 @@ color: #0a0;
 	}
 	/////////////////////////////////////////////
 
+	//filling
+	function resizeEverything() {
+		let ccont = document.getElementsByClassName('column-layout__main')[0];
+		let mwidth = parseInt(ccont.clientWidth) - 14;
+		let twidth = parseInt(mwidth/5-8);
+		for (let i=0; i<document.getElementsByClassName('js-resizable-media-container').length; i++) {
+			let el = document.getElementsByClassName('js-resizable-media-container')[i];
+			for (let j=0; j<el.getElementsByClassName('media-box').length; j++) {
+				let eli = el.getElementsByClassName('media-box')[j];
+				eli.getElementsByClassName('media-box__header')[0].style.width = twidth+'px';
+				eli.getElementsByClassName('media-box__content')[0].style.width = twidth+'px';
+				eli.getElementsByClassName('media-box__content')[0].style.height = twidth+'px';
+				if (twidth < 150) {
+					eli.getElementsByClassName('media-box__header')[0].classList.remove('media-box__header--large');
+					eli.getElementsByClassName('media-box__header')[0].classList.add('media-box__header--small');
+					eli.getElementsByClassName('media-box__content')[0].classList.remove('media-box__content--large');
+					eli.getElementsByClassName('media-box__content')[0].classList.add('media-box__content--small');
+					eli.getElementsByClassName('image-container')[0].classList.remove('thumb');
+					eli.getElementsByClassName('image-container')[0].classList.add('thumb_small');
+					eli.getElementsByClassName('image-container')[0].dataset.size = 'thumb_small';
+					if (eli.querySelector('[src*="derpicdn.net"]') != undefined) eli.querySelector('[src*="derpicdn.net"]').src =  eli.querySelector('[src*="derpicdn.net"]').src.replace('/thumb.','/thumb_small.');
+				}
+				else {
+					eli.getElementsByClassName('media-box__content')[0].classList.add('media-box__content--large');
+					eli.getElementsByClassName('media-box__content')[0].classList.remove('media-box__content--small');
+					eli.getElementsByClassName('image-container')[0].classList.add('thumb');
+					eli.getElementsByClassName('image-container')[0].classList.remove('thumb_small');
+					eli.getElementsByClassName('image-container')[0].dataset.size = 'thumb';
+					eli.getElementsByClassName('media-box__header')[0].classList.add('media-box__header--large');
+					eli.getElementsByClassName('media-box__header')[0].classList.remove('media-box__header--small');
+					if (eli.querySelector('[src*="derpicdn.net"]') != undefined) eli.querySelector('[src*="derpicdn.net"]').src = eli.querySelector('[src*="derpicdn.net"]').src.replace('/thumb_small.','/thumb.');
+				}
+			}
+		}
+		if (document.getElementsByClassName('js-resizable-media-container').length > 0) window.addEventListener('resize',resizeEverything);
+	}
+
     //selfbadges
     function badge(core) {
         let x = [];
@@ -1678,6 +1715,7 @@ color: #0a0;
 	hiddenImg(document,true);
 	getArtists();
     colorTags();
+	resizeEverything();
 	addGalleryOption();
     if (location.pathname == "/pages/yourbooru") {
         YDB();
