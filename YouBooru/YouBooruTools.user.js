@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.25
+// @version      0.4.26
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1543,8 +1543,9 @@ color: #0a0;
 	/////////////////////////////////////////////
 
 	//filling
-	function resizeEverything() {
+	function resizeEverything(inital) {
 		let ccont = document.getElementsByClassName('column-layout__main')[0];
+		if (ccont == undefined) return;
 		let mwidth = parseInt(ccont.clientWidth) - 14;
 		let twidth = parseInt(mwidth/5-8);
 		for (let i=0; i<document.getElementsByClassName('js-resizable-media-container').length; i++) {
@@ -1576,7 +1577,7 @@ color: #0a0;
 				}
 			}
 		}
-		if (document.getElementsByClassName('js-resizable-media-container').length > 0) window.addEventListener('resize',resizeEverything);
+		if (document.getElementsByClassName('js-resizable-media-container').length > 0 && inital) window.addEventListener('resize',resizeEverything);
 	}
 
     //selfbadges
@@ -1715,7 +1716,7 @@ color: #0a0;
 	hiddenImg(document,true);
 	getArtists();
     colorTags();
-	resizeEverything();
+	resizeEverything(true);
 	addGalleryOption();
     if (location.pathname == "/pages/yourbooru") {
         YDB();
