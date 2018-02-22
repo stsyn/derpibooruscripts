@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.26
+// @version      0.4.27
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -470,13 +470,13 @@ color: #0a0;
         x = x.replace(/\|\|/g, ', ');
         x = x.replace(/\&\&/g, ', ');
         x = x.replace(/^\(/g, ' ');
-        while (x.indexOf('(') >= 0) x = x.replace(/[^\\\(]\(/g, function(str){return str[0]+' ';});
-        while (x.indexOf(')') >= 0) x = x.replace(/[^\\\)]\)/g, function(str){return str[0]+' ';});
+        while (x.indexOf('(') >= 0) x = x.replace(/([^\\\(])\(/g, '$1 ');
+        while (x.indexOf(')') >= 0) x = x.replace(/([^\\\)])\)/g, '$1 ');
         x = x.replace(/^\-/g, ' ');
         x = x.replace(/^\!/g, ' ');
-        x = x.replace(/[ ,\(]\-/g, function(str){return str[0]+' ';});
-        x = x.replace(/[ ,\(]!/g, function(str){return str[0]+' ';});
-        x = x.replace(/[ ,\(]\*/g, function(str){return str[0]+' ';});
+        x = x.replace(/([ ,\(])\-/g, '$1 ');
+        x = x.replace(/([ ,\(])!/g, '$1 ');
+        x = x.replace(/([ ,\(])\*/g, '$1 ');
         x = x.replace(/\"/g, ' ');
         x = x.replace(/\~/g, ',');
         x = x.replace(/\^/g, ',');
