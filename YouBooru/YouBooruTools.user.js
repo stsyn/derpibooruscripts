@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.4.27
+// @version      0.5.0
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -103,7 +103,9 @@ color: #0a0;
 }
 `;
 
-    var tagDB = getTagDB();
+    var tagDB ={normal:{character:[],episode:[],error:[],oc:[],origin:[],rating:[],spoiler:[]},regulars:{},list:{oc:[],origin:[]}};
+    try {tagDB = getTagDB();}
+    catch(e) {}
 
 	//probably that should be in library...
 	function parseURL(url) {
@@ -642,7 +644,7 @@ color: #0a0;
         };
 
         let compressAliases = function (orig) {
-            let tags = goodParse(orig);
+            /*let tags = goodParse(orig);
             let tt = getTagShortAliases();
             for (let i=0; i<tags.tags.length; i++) {
                 if (tt[tags.tags[i].v] != undefined) {
@@ -650,7 +652,10 @@ color: #0a0;
                 }
             }
             let q2 = goodCombine(tags);
-            return q2;
+            return q2;*/
+
+            //disabled for now
+            return orig;
         };
 
         let compressArtists = function (orig) {
@@ -1284,7 +1289,9 @@ color: #0a0;
             if ((el.querySelector('.media-box__header .interaction--hide.active') != undefined ^ invert)) {
 				if (el.querySelector('.media-box__content picture img') != undefined) {
 					el.querySelector('.image-container').dataset.hthumb = el.querySelector('.media-box__content picture img').src;
+					el.querySelector('.image-container').dataset.hsthumb = el.querySelector('.media-box__content picture img').srcset;
 					el.querySelector('.media-box__content picture img').src = hidden[horsie][parseInt(Math.random()*hidden[horsie].length)].small;
+					el.querySelector('.media-box__content picture img').srcset = hidden[horsie][parseInt(Math.random()*hidden[horsie].length)].small;
 				}
 				else {
 					el.querySelector('.media-box__content a video').style.display = 'none';
@@ -1300,6 +1307,7 @@ color: #0a0;
 				}
 				else {
 					el.querySelector('.media-box__content picture img').src = el.querySelector('.image-container').dataset.hthumb;
+					el.querySelector('.media-box__content picture img').srcset = el.querySelector('.image-container').dataset.hsthumb;
 				}
 			}
         };
@@ -1337,11 +1345,10 @@ color: #0a0;
 	let userbaseStarted = false;
 
 	function UA(e) {
-		let createUser = function(name, aliases, ts, id) {
+		let createUser = function(name, aliases, id) {
 			let user = {
 				name:name,
 				aliases:aliases,
-				ts:ts,
 				id:id
 			};
 			userbase.users[name] = user;
@@ -1376,18 +1383,18 @@ color: #0a0;
 			let callback = function(req) {
 				try {
 					let x = JSON.parse(req.responseText);
-					if (simplyReturn) return x.created_at;
+					if (simplyReturn) return x.id;
 					if (regular) {
 						userbase.pending.push(userbase.pending.shift());
+                        delete user.ts;
 					}
-					if (user.ts == undefined) {
-						user.ts = x.created_at;
+					if (user.id == undefined) {
 						user.id = x.id;
 						write();
 						if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup();
 					}
 					else {
-						if (user.ts != x.created_at && user.id != x.id) {
+						if (user.id != x.id) {
 							userbase.lost[user.id] = user;
 							removeUser(user.name);
 						}
@@ -1416,9 +1423,12 @@ color: #0a0;
 
 			let get = function(name) {
 				let req = new XMLHttpRequest();
-				req.onreadystatechange = readyHandler(req);
+				if (!simplyReturn) req.onreadystatechange = readyHandler(req);
 				req.open('GET', '/profiles/'+nameEncode(name)+'.json', !simplyReturn);
 				req.send();
+                if (simplyReturn) {
+                    if (request.status === 200) return JSON.parse(req.responseText).id
+                }
 			};
 			if (regular) {
 				userbaseTS.ttu -= (Date.now()-userbaseTS.lastRun);
@@ -1426,10 +1436,13 @@ color: #0a0;
 					if (userbaseTS.lastRun == 0) userbaseTS.ttu = 0;
 					get(user.name);
 					userbaseTS.lastRun = Date.now();
-					userbaseTS.ttu += (UBinterval/userbase.pending.length);
+					userbaseTS.ttu += UBinterval/userbase.pending.length;
+                    userbaseTS.ttu = parseInt(userbaseTS.ttu);
 				}
 				tswrite();
 			}
+            else {
+            }
 		};
 		if (!userbaseStarted) {
 			userbaseStarted = true;
@@ -1462,18 +1475,17 @@ color: #0a0;
 						t = t.substring(21,t.length-2).trim();
 						let aliases = [t];
 						if (userbase.users[t] != undefined) {
-							let ts = getTimestamp(user, false, true);
 							let id = document.querySelector('a[href*="/lists/user_comments"]').href.split('/').pop();
-							if (userbase.users[t].ts == ts && userbase.users[t].id == id) {
+							if (userbase.users[t].id == id) {
 								aliases = userbase.users[t].aliases;
 								aliases.push(t);
 								removeUser(t);
-								createUser(name, aliases, ts, id);
+								createUser(name, aliases, id);
 							}
 							else {
 								userbase.lost[userbase.users[t].id] = userbase.users[t];
 								removeUser(t);
-								createUser(name, aliases, ts, id);
+								createUser(name, aliases, id);
 							}
 						}
 						else {
@@ -1508,7 +1520,16 @@ color: #0a0;
 			if (eln == undefined) continue;
 			let ele = el.querySelector('.communication__body__sender-name');
 			let name = eln.innerHTML;
-			if (userbase.users[name] != undefined) continue;
+			if (userbase.users[name] != undefined) {
+                let s = InfernoAddElem('div',{style:'width:100px;font-size:.86em'},[
+                    InfernoAddElem('span',{innerHTML:'AKA '},[]),
+                    InfernoAddElem('strong',{innerHTML:userbase.users[name].aliases.join()},[]),
+                    InfernoAddElem('br',{},[])
+                ]);
+                if (!el.parentNode.querySelector('.flex__fixed.spacing-right').lastChild.classList.contains('post-image-container'))
+                    el.parentNode.querySelector('.flex__fixed.spacing-right').insertBefore(s,el.parentNode.querySelector('.flex__fixed.spacing-right').lastChild);
+                continue;
+            }
 			let alias = ele.nextSibling;
 			while (!(alias.classList != undefined && alias.classList.contains('communication__body__text'))) {
 				if (alias.classList != undefined && alias.classList.contains('small-text')) {
@@ -1517,14 +1538,14 @@ color: #0a0;
 					let aliases = [t];
 					if (userbase.users[t] != undefined) {
 						let ts = getTimestamp(user, false, true);
-						if (userbase.users[t].ts == ts) {
+						if (userbase.users[t].id == ts) {
 							aliases = userbase.users[t].aliases;
 							aliases.push(t);
 							removeUser(t);
 							createUser(name, aliases, ts);
 						}
 						else {
-							userbase.lost[userbase.users[t].ts] = userbase.users[t];
+							userbase.lost[userbase.users[t].id] = userbase.users[t];
 							removeUser(t);
 							createUser(name, aliases, ts);
 						}
@@ -1564,6 +1585,7 @@ color: #0a0;
 					eli.getElementsByClassName('image-container')[0].classList.add('thumb_small');
 					eli.getElementsByClassName('image-container')[0].dataset.size = 'thumb_small';
 					if (eli.querySelector('[src*="derpicdn.net"]') != undefined) eli.querySelector('[src*="derpicdn.net"]').src =  eli.querySelector('[src*="derpicdn.net"]').src.replace('/thumb.','/thumb_small.');
+					if (eli.querySelector('[src*="derpicdn.net"]') != undefined) eli.querySelector('[src*="derpicdn.net"]').srcset =  eli.querySelector('[src*="derpicdn.net"]').srcset.replace('/thumb.','/thumb_small.');
 				}
 				else {
 					eli.getElementsByClassName('media-box__content')[0].classList.add('media-box__content--large');
@@ -1574,6 +1596,7 @@ color: #0a0;
 					eli.getElementsByClassName('media-box__header')[0].classList.add('media-box__header--large');
 					eli.getElementsByClassName('media-box__header')[0].classList.remove('media-box__header--small');
 					if (eli.querySelector('[src*="derpicdn.net"]') != undefined) eli.querySelector('[src*="derpicdn.net"]').src = eli.querySelector('[src*="derpicdn.net"]').src.replace('/thumb_small.','/thumb.');
+					if (eli.querySelector('[src*="derpicdn.net"]') != undefined) eli.querySelector('[src*="derpicdn.net"]').srcset =  eli.querySelector('[src*="derpicdn.net"]').srcset.replace('/thumb_small.','/thumb.');
 				}
 			}
 		}
