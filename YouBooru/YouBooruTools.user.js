@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.0
+// @version      0.5.1
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1526,7 +1526,7 @@ color: #0a0;
                     InfernoAddElem('strong',{innerHTML:userbase.users[name].aliases.join()},[]),
                     InfernoAddElem('br',{},[])
                 ]);
-                if (!el.parentNode.querySelector('.flex__fixed.spacing-right').lastChild.classList.contains('post-image-container'))
+                if (!(el.parentNode.querySelector('.flex__fixed.spacing-right').lastChild.classList != undefined && el.parentNode.querySelector('.flex__fixed.spacing-right').lastChild.classList.contains('post-image-container')))
                     el.parentNode.querySelector('.flex__fixed.spacing-right').insertBefore(s,el.parentNode.querySelector('.flex__fixed.spacing-right').lastChild);
                 continue;
             }
