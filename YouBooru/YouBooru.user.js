@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.4.31
+// @version      0.5.0
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -133,6 +133,7 @@
 
 	var feedzCache = [];
 	var feedzURLs = [];
+    var feedzEvents = [];
 	var f_s_c;
 	var debug = function(id, value, level) {
 		try {
@@ -142,7 +143,7 @@
 			let levels = ['.', '?', '!'];
 			console.log('['+levels[level]+'] ['+id+'] '+value);
 		};
-	}
+	};
 	let sentRequests = 0;
 
 	/********************
@@ -332,6 +333,15 @@
 				debug('YDB:F','Cannot get feeds URLCache', 1);
 			}
 		}
+		svd = localStorage._ydb_cachesEvents;
+		if (svd !== undefined) {
+			try {
+				feedzEvents = JSON.parse(svd);
+			}
+			catch (e) {
+				debug('YDB:F','Cannot get feeds EventCache', 1);
+			}
+		}
 
 		for (let i=0; i<feedz.length; i++) {
 			if (feedz[i] != null) feedz[i].loaded = false;
@@ -396,6 +406,7 @@
 		localStorage._ydb_feeds = JSON.stringify(f_s_c);
 		localStorage._ydb_caches = JSON.stringify(feedzCache);
 		localStorage._ydb_cachesUrls = JSON.stringify(feedzURLs);
+		localStorage._ydb_cachesEvents = JSON.stringify(feedzEvents);
 	}
 
 	function postRun() {
@@ -676,6 +687,29 @@
 		postRun();
 	}
 
+    function updateEvents(elem, feed) {
+        let obj = {};
+        obj.fcount = elem.getElementsByClassName('favourites')[0].innerHTML;
+        obj.count = elem.getElementsByClassName('score')[0].innerHTML;
+        obj.isFaved = (Boolean)(elem.querySelector('.interaction--fave.active'));
+        obj.isUpvoted = (Boolean)(elem.querySelector('.interaction--upvote.active'));
+        obj.isDownvoted = (Boolean)(elem.querySelector('.interaction--downvote.active'));
+        feedzEvents[feed.internalId][elem.dataset.imageId] = obj;
+    }
+
+    function applyEvents(elem,feed) {
+        let obj = feed.eventCont[elem.dataset.imageId];
+        if (obj == undefined) return;
+        elem.getElementsByClassName('favourites')[0].innerHTML = obj.fcount;
+        elem.getElementsByClassName('score')[0].innerHTML = obj.count;
+        if (obj.isFaved) elem.querySelector('.interaction--fave').classList.add('active');
+        else elem.querySelector('.interaction--fave').classList.remove('active');
+        if (obj.isUpvoted) elem.querySelector('.interaction--upvote').classList.add('active');
+        else elem.querySelector('.interaction--upvote').classList.remove('active');
+        if (obj.isDownvoted) elem.querySelector('.interaction--downvote').classList.add('active');
+        else elem.querySelector('.interaction--downvote').classList.remove('active');
+    }
+
 	function parse(r, id) {
 		r.feed.temp.innerHTML = r.responseText;
 		let votes =r.feed.temp.querySelector('.js-datastore').getAttribute('data-interactions');
@@ -698,6 +732,7 @@
 
 		c.innerHTML = '';
 		c.parentNode.classList.remove('_ydb_feedshadow');
+        feedzEvents[r.feed.internalId] = {};
 		if (pc === null) c.innerHTML = 'Empty feed';
 		else {
 			if (r.feed.postprocessors != undefined && r.feed.postprocessors.length != undefined) {
@@ -757,21 +792,22 @@
 				}
 				if (i>=parseInt(config.imagesInFeeds*(privated?1.2:1)*(r.feed.double?2:1))) elem.classList.add('hidden');
 				c.appendChild(pc.childNodes[0]);
+                updateEvents(elem, r.feed);
 			}
 		}
 
-		/*r.feed.observer = new MutationObserver(function(mutations) {
+		r.feed.observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
                 if (mutation.type == 'attributes') {
                     let u = mutation.target.classList;
                     if (u.contains('interaction--fave') || u.contains('interaction--upvote') || u.contains('interaction--downvote')) {
-                        feedzCache[id] = r.feed.container.innerHTML;
-                        localStorage._ydb_caches = JSON.stringify(feedzCache);
+                        updateEvents(r.feed.container.querySelector('.media-box[data-image-id="'+mutation.target.dataset.imageId+'"]'), r.feed);
+                        localStorage._ydb_cachesEvents = JSON.stringify(feedzEvents);
                     }
                 }
             });
         });
-        r.feed.observer.observe(r.feed.container, {attributes: true, childList: true, characterData: true, subtree:true });*/
+        setTimeout(function() {r.feed.observer.observe(r.feed.container, {attributes: true, childList: true, characterData: true, subtree:true });},250);
 
 		feedAfterload(r, c.innerHTML, id);
         if (window._YDB_public.funcs != undefined && window._YDB_public.funcs.upvoteDownvoteDisabler != undefined) window._YDB_public.funcs.upvoteDownvoteDisabler(c, true);
@@ -812,20 +848,21 @@
 				}
                 if (i>=parseInt(config.imagesInFeeds*(privated?1.2:1)*(feed.double?2:1))) elem.classList.add('hidden');
                 else elem.classList.remove('hidden');
+                applyEvents(elem,feed);
 			}
 		}
-		/*feed.observer = new MutationObserver(function(mutations) {
+		feed.observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
                 if (mutation.type == 'attributes') {
                     let u = mutation.target.classList;
                     if (u.contains('interaction--fave') || u.contains('interaction--upvote') || u.contains('interaction--downvote')) {
-                        feedzCache[id] = feed.container.innerHTML;
-                        localStorage._ydb_caches = JSON.stringify(feedzCache);
+                        updateEvents(feed.container.querySelector('.media-box[data-image-id="'+mutation.target.dataset.imageId+'"]'), feed);
+                        localStorage._ydb_cachesEvents = JSON.stringify(feedzEvents);
                     }
                 }
             });
         });
-        feed.observer.observe(feed.container, {attributes: true, childList: true, characterData: true, subtree:true });*/
+        feed.observer.observe(feed.container, {attributes: true, childList: true, characterData: true, subtree:true });
 
         if (window._YDB_public.funcs != undefined && window._YDB_public.funcs.upvoteDownvoteDisabler != undefined) window._YDB_public.funcs.upvoteDownvoteDisabler(c, true);
 		feed.temp.innerHTML = '';
@@ -925,6 +962,8 @@
 			f.saved = parseInt(f.saved);
 			f.cache = parseInt(f.cache);
 			f.ccache = parseInt(f.ccache);
+            f.eventCont = feedzEvents[i];
+            if (f.eventCont == undefined) f.eventCont = {};
 			if (feedzCache[i] == undefined) {
 				getFeed(f, i, true);
 				debug('YDB:F','Requested update to feed "'+f.name+'". Reason "No cache found"', '1');
@@ -994,7 +1033,6 @@
 	function YB_insertFeed2(u) {
 		var f = {};
 		let i;
-        console.log(feedz);
 		for (i=0; i<feedz.length; i++) {
 			if (feedz[i].name == document.querySelector('#searchform [name="name"]').value) {
 				f = feedz[i];
@@ -1011,7 +1049,6 @@
 		f.double = document.querySelector('#searchform [name="double"]').checked;
 		f.mainPage = document.querySelector('#searchform [name="mainPage"]').checked;
 		if (f.sort.startsWith('random')) f.sort = 'random';
-		console.log(f.sort);
         if (isNaN(f.cache) || f.cache<0) f.cache = 30;
         if (isNaN(f.ccache) || f.ccache<0) f.ccache = 60;
 		feedz[i] = f;
