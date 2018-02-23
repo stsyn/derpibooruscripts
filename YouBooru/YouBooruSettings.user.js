@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.3
+// @version      0.9.4
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -426,6 +426,7 @@
 
 		let callbackS = function (r) {
 			let x = addElem('div',{style:'display:none',innerHTML:r.responseText},document.body);
+            if (x.querySelector('form.new_user') != undefined) return;
 			s = ChildsAddElem('div',{style:'display:none',className:'_ydb_settings_cloneForm'},document.body,[
 				x.querySelector('form.edit_user')
 			]);
