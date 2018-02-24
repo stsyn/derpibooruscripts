@@ -24,7 +24,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.3.8
+// @version      0.3.9
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -738,7 +738,11 @@
 	catch(e) {aE = true;}
 	if (!aE) main();
 	else {
-		let code = '('+main.toString()+')();';
-		addElem('script',{type:'text/javascript',innerHTML:code},document.head);
+		let ax = JSON.parse(localStorage._ydb_host);
+		if (ax.browser == 'firefox') main();
+		else {
+			let code = '('+main.toString()+')();';
+			addElem('script',{innerHTML:code},document.head);
+		}
 	}
 })();
