@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.1
+// @version      0.5.2
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -73,7 +73,7 @@
 		catch(e) {
 			let levels = ['.', '?', '!'];
 			console.log('['+levels[level]+'] ['+id+'] '+value);
-		};
+		}
 	};
     let style = `
 body[data-theme*="dark"] ._ydb_green {
@@ -103,9 +103,15 @@ color: #0a0;
 }
 `;
 
-    var tagDB ={normal:{character:[],episode:[],error:[],oc:[],origin:[],rating:[],spoiler:[]},regulars:{},list:{oc:[],origin:[]}};
-    try {tagDB = getTagDB();}
-    catch(e) {}
+    let tagDB ={normal:{character:[],episode:[],error:[],oc:[],origin:[],rating:[],spoiler:[]},regulars:{},list:{oc:[],origin:[]}};
+    function _getTagDB() {
+        try {
+            tagDB = getTagDB();
+            colorTags();
+        }
+        catch(e) {setTimeout(_getTagDB,500);}
+    }
+    _getTagDB();
 
 	//probably that should be in library...
 	function parseURL(url) {
@@ -695,7 +701,7 @@ color: #0a0;
 			debug('YDB:T','Query '+original+' compressed to '+q,0);
             udata[md5(q)] = {q:original, t:getTimestamp()};
             writeTagTools(udata);
-        };
+        }
         return q;
     }
 	
@@ -781,7 +787,7 @@ color: #0a0;
             document.getElementsByClassName('header__search__button')[0].addEventListener('click',function() {aliaseParse(document.getElementsByClassName('header__input--search')[0]);});
             if (document.querySelector('input[type="submit"][value="Search"]')!=undefined)
                 document.querySelector('input[type="submit"][value="Search"]').addEventListener('click',function() {aliaseParse(document.querySelector('.js-search-form .input'));});
-        };
+        }
     }
 
     function asWatchlist() {
@@ -994,7 +1000,7 @@ color: #0a0;
         for (let i=0; i<e.querySelectorAll('a').length; i++) exclude.push(e.querySelectorAll('a')[i].href);
         for (let i=0; i<e.querySelectorAll('img').length; i++) exclude.push(e.querySelectorAll('img')[i].src);
         for (let i=0; i<e.querySelectorAll('.image-show-container').length; i++) exclude.push(e.querySelectorAll('.image-show-container')[i].dataset.sourceUrl);
-        e.innerHTML = e.innerHTML.replace(/(https?:\/\/|ftp:\/\/)((?![.,?!;:()]*(\s|$|\"|\<))[^\s]){2,}/gim, function(str){
+        e.innerHTML = e.innerHTML.replace(/(https?:\/\/|ftp:\/\/)((?![.,?!;:()]*(\s|$|\"|<))[^\s]){2,}/gim, function(str){
 			str = str.replace(/\&amp;/g,'&');
             for (let i=0; i<exclude.length; i++) if (exclude[i] == str) return str;
             for (let i=0; i<exclude.length; i++) if (exclude[i] == str+'/') return str;
@@ -1168,9 +1174,9 @@ color: #0a0;
 						x.style.display = 'block';
 						y.style.display = 'none';
 					}}]}, [
-						InfernoAddElem('i',{innerHTML:'',className:'fa'},[]),
+						InfernoAddElem('i',{innerHTML:'\uF062',className:'fa'},[]),
 						InfernoAddElem('span',{innerHTML:' Shrink '},[]),
-						InfernoAddElem('i',{innerHTML:'',className:'fa'},[])
+						InfernoAddElem('i',{innerHTML:'\uF062',className:'fa'},[])
 					])
 				]);
 				x = InfernoAddElem('div',{className:'block__content communication__options _ydb_tools_expand', style:'position:absolute;text-align:center;font-size:150%;bottom:'+(el.querySelector('.communication__options').clientHeight+4)+'px;width:calc(100% - 14px)'},[
@@ -1180,9 +1186,9 @@ color: #0a0;
 						x.style.display = 'none';
 						y.style.display = 'block';
 					}}]}, [
-						InfernoAddElem('i',{innerHTML:'',className:'fa'},[]),
+						InfernoAddElem('i',{innerHTML:'\uF063',className:'fa'},[]),
 						InfernoAddElem('span',{innerHTML:' Expand '},[]),
-						InfernoAddElem('i',{innerHTML:'',className:'fa'},[])
+						InfernoAddElem('i',{innerHTML:'\uF063',className:'fa'},[])
 					])
 				]);
 				if (ls.shrinkButt) el.insertBefore(y,el.lastChild);
@@ -1427,7 +1433,7 @@ color: #0a0;
 				req.open('GET', '/profiles/'+nameEncode(name)+'.json', !simplyReturn);
 				req.send();
                 if (simplyReturn) {
-                    if (request.status === 200) return JSON.parse(req.responseText).id
+                    if (request.status === 200) return JSON.parse(req.responseText).id;
                 }
 			};
 			if (regular) {
@@ -1498,7 +1504,7 @@ color: #0a0;
 					if (userbase.users[name].aliases.length>0) {
 						let ae = [];
 						for (let i=0;i<a.length; a++) {
-							ae.push(InfernoAddElem('div',{className:'alternating-color block__content', innerHTML:a[i]},[]))
+							ae.push(InfernoAddElem('div',{className:'alternating-color block__content', innerHTML:a[i]},[]));
 						}
 						ae.unshift(InfernoAddElem('div',{className:'block__header'},[
 							InfernoAddElem('span',{className:'block__header__title',innerHTML:'Also known as:'},[])
@@ -1738,7 +1744,6 @@ color: #0a0;
 	shrinkComms(document);
 	hiddenImg(document,true);
 	getArtists();
-    colorTags();
 	resizeEverything(true);
 	addGalleryOption();
     if (location.pathname == "/pages/yourbooru") {
@@ -1748,13 +1753,18 @@ color: #0a0;
     if (document.getElementById('comments') != undefined) document.getElementById('comments').addEventListener("DOMNodeInserted", listener);
     if (document.querySelector('.communication-edit__tab[data-tab="preview"]') != undefined) document.querySelector('.communication-edit__tab[data-tab="preview"]').addEventListener("DOMNodeInserted", listener);
 	};
+	
 
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
 	if (!aE) main();
 	else {
-		let code = '('+main.toString()+')();';
-		addElem('script',{innerHTML:code},document.head);
+		let ax = JSON.parse(localStorage._ydb_host);
+		if (ax.browser == 'firefox') main();
+		else {
+			let code = '('+main.toString()+')();';
+			addElem('script',{innerHTML:code},document.head);
+		}
 	}
 })();
