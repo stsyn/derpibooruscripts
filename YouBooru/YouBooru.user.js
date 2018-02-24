@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.0
+// @version      0.5.1
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -142,7 +142,7 @@
 		catch(e) {
 			let levels = ['.', '?', '!'];
 			console.log('['+levels[level]+'] ['+id+'] '+value);
-		};
+		}
 	};
 	let sentRequests = 0;
 
@@ -212,7 +212,7 @@
 				{type:'checkbox', name:'Remove unneeded content from HTML', parameter:'optimizeLS'},
 				{type:'array', parameter:'feedz', addText:'Add feed', customOrder:true, s:[
 					[
-						{type:'input', name:'Name', parameter:'name',styleI:{width:'33.5em', marginRight:'.5em'},validation:{type:'unique'}},
+						{type:'input', name:'Name', parameter:'name',styleI:{width:'33em', marginRight:'.5em'},validation:{type:'unique'}},
 						{type:'select', name:'Sorting', parameter:'sort',styleI:{marginRight:'.5em'}, values:[
 							{name:'Creation date', value:'created_at'},
 							{name:'Score', value:'score'},
@@ -490,7 +490,7 @@
 
 	function compileURL(f, act) {
 		let tx = customQueries(f);
-		let s = '/search?q='+encodeURIComponent(tx.replace(new RegExp(' ','g'),'+')).replace(new RegExp('%2B','g'),'+')+'&sf='+f.sort+'&sd='+f.sd;
+		let s = location.protocol+'//'+location.host+'/search?q='+encodeURIComponent(tx.replace(new RegExp(' ','g'),'+')).replace(new RegExp('%2B','g'),'+')+'&sf='+f.sort+'&sd='+f.sd;
 		if (act && (window._YDB_public.funcs != undefined || window._YDB_public.funcs.feedURLs != undefined)) {
 			for (let i in window._YDB_public.funcs.feedURLs) s += window._YDB_public.funcs.feedURLs[i](f);
 		}
@@ -499,7 +499,7 @@
 
 	function compileJSONURL(f, act) {
 		let tx = customQueries(f);
-		let s = '/search.json?q='+encodeURIComponent(tx.replace(new RegExp(' ','g'),'+')).replace(new RegExp('%2B','g'),'+')+'&sf='+f.sort+'&sd='+f.sd;
+		let s = location.protocol+'//'+location.host+'/search.json?q='+encodeURIComponent(tx.replace(new RegExp(' ','g'),'+')).replace(new RegExp('%2B','g'),'+')+'&sf='+f.sort+'&sd='+f.sd;
 		if (act && (window._YDB_public.funcs != undefined || window._YDB_public.funcs.feedURLs != undefined)) {
 			for (let i in window._YDB_public.funcs.feedURLs) s += window._YDB_public.funcs.feedURLs[i](f);
 		}
@@ -682,7 +682,7 @@
 		let left=0;
 		for (let i=0; i<feedz.length; i++) if (feedz[i] != null) if (privated || feedz[i].mainPage) if (!feedz[i].loaded) {
 			left++;
-		};
+		}
 		if (left>0) return;
 		postRun();
 	}
@@ -944,7 +944,7 @@
 			if (config.watchFeedLinkOnRightSide) f.reload.style.float = 'right';
 			let ie2 = document.createElement('i');
 			ie2.className = 'fa';
-			ie2.innerHTML = '';
+			ie2.innerHTML = '\uF021';
 			f.reload.appendChild(ie2);
 			ut2 = document.createElement('span');
 			ut2.className = 'hide-mobile';
@@ -1278,7 +1278,11 @@
 	catch(e) {aE = true;}
 	if (!aE) main();
 	else {
-		let code = '('+main.toString()+')();';
-		addElem('script',{innerHTML:code},document.head);
+		let ax = JSON.parse(localStorage._ydb_host);
+		if (ax.browser == 'firefox') main();
+		else {
+			let code = '('+main.toString()+')();';
+			addElem('script',{innerHTML:code},document.head);
+		}
 	}
 })();
