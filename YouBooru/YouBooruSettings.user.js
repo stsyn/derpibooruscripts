@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.4
+// @version      0.9.5
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -1006,7 +1006,11 @@
 	catch(e) {aE = true;}
 	if (!aE) main();
 	else {
-		let code = '('+main.toString()+')();';
-		addElem('script',{innerHTML:code},document.head);
+		let ax = JSON.parse(localStorage._ydb_host);
+		if (ax.browser == 'firefox') main();
+		else {
+			let code = '('+main.toString()+')();';
+			addElem('script',{innerHTML:code},document.head);
+		}
 	}
 })();
