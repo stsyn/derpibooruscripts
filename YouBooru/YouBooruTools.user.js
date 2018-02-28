@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.2
+// @version      0.5.3
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1569,6 +1569,26 @@ color: #0a0;
 	}
 	/////////////////////////////////////////////
 
+	//mark as read
+	function readAll() {
+		if (location.pathname.startsWith('/notifications')) {
+			document.getElementById('content').insertBefore(InfernoAddElem('span',{style:'font-size:150%'},[
+				InfernoAddElem('a',{innerHTML:'Read all',href:'#',events:[{t:'click', f:function() {
+					document.querySelectorAll('a[data-click-markread]').forEach(function(e,i,a) {
+						e.click();
+					})
+				}}]},[]),
+				InfernoAddElem('span',{innerHTML:' | '},[]),
+				InfernoAddElem('a',{innerHTML:'Read merging',href:'#',events:[{t:'click', f:function() {
+					document.querySelectorAll('a[data-click-markread]').forEach(function(e,i,a) {
+						if (e.previousSibling.previousSibling.previousSibling.previousSibling.previousSibling.wholeText.startsWith(' merged image'))
+							e.click();
+					})
+				}}]},[])
+			]),document.getElementById('content').childNodes[1])
+		}
+	}
+
 	//filling
 	function resizeEverything(inital) {
 		let ccont = document.getElementsByClassName('column-layout__main')[0];
@@ -1734,6 +1754,7 @@ color: #0a0;
 
     flashNotifies();
     profileLinks();
+	readAll();
     if (ls.patchSearch) bigSearch();
     aliases();
     asWatchlist();
