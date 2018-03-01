@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.14
+// @version      0.5.16
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -511,7 +511,7 @@ color: #555;
                 ]}
             ]
         };
-        document.addEventListener('DOMContentLoaded', function() {addElem('span', {style:'display:none', type:'text', dataset:{value:JSON.stringify(fsData)}, className:'_YDB_reserved_register'}, document.body);});
+        document.addEventListener('DOMContentLoaded', function() {addElem('span', {style:'display:none', type:'text', dataset:{value:JSON.stringify(fsData),origin:'script'}, className:'_YDB_reserved_register'}, document.body);});
     }
 
     function append(id) {
@@ -584,7 +584,7 @@ color: #555;
     function init() {
         objects.disable = addElem('a', {id:'_ydb_fs_disable', className:'', style:'display:none', innerHTML:'Disable', events:[{t:'click',f:function() {disable();}}]}, document.querySelector('#content>.block:first-child>.block__header'));
         objects.enable = addElem('a', {id:'_ydb_fs_enable', className:'header__link', innerHTML:'Fullscreen', events:[{t:'click',f:function() {enable(true);}}]}, document.body);
-        document.getElementsByClassName('flex-row__right')[0].insertBefore(objects.enable, document.getElementsByClassName('flex-row__right')[0].childNodes[0]);
+        document.getElementsByClassName('header__force-right')[0].insertBefore(objects.enable, document.getElementsByClassName('header__force-right')[0].childNodes[0]);
     }
 
     function disgustingLoadedImgFetch() {
