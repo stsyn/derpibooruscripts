@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.3
+// @version      0.5.4
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -354,7 +354,7 @@ color: #0a0;
     //bigger search fields
     function bigSearch() {
         let css = 'header ._ydb_t_textarea {resize:none;overflow:hidden;line-height:2em;white-space:pre}'+
-            'header ._ydb_t_textarea:focus {max-width:calc(100vw - 350px);overflow:auto;position:absolute;width:calc(100vw - 350px);height:5em;z-index:5;white-space:pre-wrap}'+
+            'header ._ydb_t_textarea:focus {max-width:calc(100vw - 350px);margin-top:1.5em;overflow:auto;position:absolute;width:calc(100vw - 350px);height:5em;z-index:5;white-space:pre-wrap}'+
             '#searchform textarea {min-width:100%;max-width:100%;min-height:2.4em;line-height:1.5em;height:7em}';
         addElem('style',{type:'text/css',innerHTML:css},document.head);
         let x = [document.getElementsByClassName('header__input--search')[0], document.querySelector('.js-search-form input')];
@@ -1338,7 +1338,7 @@ color: #0a0;
 
 	/////////////////////////////////////////////
 	//user aliases
-	let UBinterval = 604800000;
+	let UBinterval = 1209600000;
 	let userbase = {
 		users:{},
 		pending:[],
@@ -1712,11 +1712,8 @@ color: #0a0;
 
         let finish = function() {
             o.b = simpleCombine(y);
-            //write(ls);
             result = o;
             processing = false;
-            /*if (history.length == 1) close();
-            else history.back();*/
         };
         if (y.length>0) get(0);
     }
@@ -1727,7 +1724,6 @@ color: #0a0;
         else if (location.search == "?") return;
         else {
             let u = x.split('?');
-            //if (u[0] == "checklist") YB_checkList(u);
         }
     }
 
@@ -1737,6 +1733,7 @@ color: #0a0;
 		urlSearch(targ);
 		linksPatch(targ);
 		showUploader(targ);
+		setTimeout(function() {shrinkComms(targ)},200);
 		personal_titles_have_to_be_24_characters_long(targ);
 	}
 
