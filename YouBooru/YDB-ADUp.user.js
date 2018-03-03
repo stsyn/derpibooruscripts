@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.1.0
+// @version      0.1.1
 // @author       stsyn
 
 // @include      *://trixiebooru.org/*
@@ -128,7 +128,7 @@
 		url += '&originView='+JSON.parse(document.getElementsByClassName('image-show-container')[0].dataset.uris).large;
 		url += '&originWidth='+document.getElementsByClassName('image-show-container')[0].dataset.width;
 		url += '&originHeight='+document.getElementsByClassName('image-show-container')[0].dataset.height;
-		ChildsAddElem('li',{},document.querySelector('ul.image_menu.horizontal-list'), [
+		ChildsAddElem('li',{style:'float:right'},document.querySelector('ul.image_menu.horizontal-list'), [
 			InfernoAddElem('a',{href:'/images/new'+url},[
 				InfernoAddElem('button',{className:'button button--link',innerHTML:'Upload copy'},[])
 			])
