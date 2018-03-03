@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.1.1
+// @version      0.1.2
 // @author       stsyn
 
 // @include      *://trixiebooru.org/*
@@ -125,7 +125,7 @@
 		let src = document.querySelector('span.source_url a');
 		if (src) url += '&src='+encodeURIComponent(src.innerHTML);
 		url += '&origin='+document.getElementsByClassName('image-show-container')[0].dataset.imageId;
-		url += '&originView='+JSON.parse(document.getElementsByClassName('image-show-container')[0].dataset.uris).large;
+		url += '&originView='+encodeURIComponent(JSON.parse(document.getElementsByClassName('image-show-container')[0].dataset.uris).large);
 		url += '&originWidth='+document.getElementsByClassName('image-show-container')[0].dataset.width;
 		url += '&originHeight='+document.getElementsByClassName('image-show-container')[0].dataset.height;
 		ChildsAddElem('li',{style:'float:right'},document.querySelector('ul.image_menu.horizontal-list'), [
@@ -136,7 +136,7 @@
 	}
 	else if (location.pathname == '/images/new') {
 		let url = parseURL(location.href);
-		if (location.search == '') return;
+		//if (location.search == '') return;
 		if (url.params.origin != undefined) {
 			fetchExtData(url);
 		}
@@ -144,7 +144,7 @@
 		document.getElementById('js-image-upload-preview').style.width = '320px';
 		document.getElementById('js-image-upload-preview').style.marginBottom = '0';
 		document.querySelector('.image-other').insertBefore(InfernoAddElem('div',{},[
-			InfernoAddElem('div',{className:'block__content'},[
+			InfernoAddElem('div',{className:'block__content '+(url.params.origin!=undefined?'hidden':'')},[
 				InfernoAddElem('strong',{innerHTML:'Similar images'},[]),
 				InfernoAddElem('div',{id:'_ydb_similarGallery'},[
 					InfernoAddElem('strong',{innerHTML:'Fetching...'},[])
@@ -167,7 +167,7 @@
 			diff(url);
 		};
 		fillData1(url);
-		if (url.params.origin == undefined && url.params.src != undefined && url.params.src != "undefined" && url.params.src != "") {
+		/*if (url.params.origin == undefined && url.params.src != undefined && url.params.src != "undefined" && url.params.src != "")*/ {
 			let build = function(req) {
 				let s = InfernoAddElem('div',{style:'display:none',innerHTML:req.responseText},[]);
 				document.body.appendChild(s);
