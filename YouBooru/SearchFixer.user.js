@@ -24,7 +24,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.3.9
+// @version      0.3.10
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -198,11 +198,17 @@
 		return;
 	}
 
-	function gainParams() {
+	function gainParams(arr) {
+        if (arr) return {
+            score:parseInt(document.getElementsByClassName('score')[0].innerHTML),
+            width:document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[0],
+            height:document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[1],
+            comments:document.querySelectorAll('.comments_count')[0].innerHTML
+        };
 		if (myURL.params.sf == 'score') return parseInt(document.getElementsByClassName('score')[0].innerHTML);
-		else if (myURL.params.sf == 'width') return document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[0];
-		else if (myURL.params.sf == 'height') return document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[1];
-		else if (myURL.params.sf == 'comments') return document.querySelectorAll('.comments_count')[0].innerHTML;
+		if (myURL.params.sf == 'width') return document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[0];
+		if (myURL.params.sf == 'height') return document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[1];
+		if (myURL.params.sf == 'comments') return document.querySelectorAll('.comments_count')[0].innerHTML;
 	}
 
 	function parse(r, type) {
@@ -216,7 +222,7 @@
 		let i;
 		if (type == 'find') {
 			let param;
-			if (settings.pregain) param = preparam;
+			if (settings.pregain) param = preparam[myURL.params.sf];
 			else param = gainParams();
 
 			if (r.level == 'act' && param == '') {
@@ -445,7 +451,7 @@
 		let prevUrl = '//'+myURL.host+'/search.json?q=('+myURL.params.q+')';
 		let dir = ((myURL.params.sd=='asc'^type=='prev')?'gt':'lt');
 		let cscore;
-		if (settings.pregain) cscore = preparam;
+		if (settings.pregain) cscore = preparam[myURL.params.sf];
 		else cscore = gainParams();
 
 		if (myURL.params.sf == "score") {
@@ -471,7 +477,7 @@
 		let prevUrl = '//'+myURL.host+'/search.json?q=('+myURL.params.q+')';
 		if (type !='random' && myURL.params.sf != "random") {
 			let cscore;
-			if (settings.pregain) cscore = preparam;
+			if (settings.pregain) cscore = preparam[myURL.params.sf];
 			else cscore = gainParams();
 
 			let dir = ((myURL.params.sd=='asc'^(type=='prev' || type=='find'))?'gt':'lt');
@@ -500,7 +506,7 @@
 		let sd = ((myURL.params.sd!='asc')?'asc':'desc');
 		let sf = myURL.params.sf;
 		let cscore;
-		if (settings.pregain) cscore = preparam;
+		if (settings.pregain) cscore = preparam[myURL.params.sf];
 		else cscore = gainParams();
 
 		if (myURL.params.sf == "score") {
@@ -542,7 +548,7 @@
 		document.querySelector('form.header__search').classList.add('dropdown');
 		document.querySelector('form.header__search').appendChild(
 			InfernoAddElem('span',{className:'dropdown__content', style:'position:static;min-width:0;z-index:1'},[
-				InfernoAddElem('select',{id:'_ydb_s_qpusher_sf',className:'input', style:'display:inline', name:'sf', size:1},[
+				InfernoAddElem('select',{id:'_ydb_s_qpusher_sf',className:'input header__input', style:'display:inline;width:5em', name:'sf', size:1},[
 					InfernoAddElem('option',{value:'created_at', innerHTML:'created_at'},[]),
 					InfernoAddElem('option',{value:'score', innerHTML:'score'},[]),
 					InfernoAddElem('option',{value:'wilson', innerHTML:'wilson'},[]),
@@ -552,25 +558,27 @@
 					InfernoAddElem('option',{value:'comments', innerHTML:'comments'},[]),
 					InfernoAddElem('option',{value:'random', innerHTML:'random'},[]),
 				]),
-				InfernoAddElem('select',{id:'_ydb_s_qpusher_sd',className:'input', style:'display:inline', name:'sd', size:1},[
+				InfernoAddElem('select',{id:'_ydb_s_qpusher_sd',className:'input header__input', style:'display:inline', name:'sd', size:1},[
 					InfernoAddElem('option',{value:'desc', innerHTML:'desc'},[]),
 					InfernoAddElem('option',{value:'asc', innerHTML:'asc'},[])
 				])
 			]));
 		if (withup) {
-			document.querySelector('form.header__search').insertBefore(InfernoAddElem('div',{className:'header__search__button', style:'height: 28px;'},[
-				InfernoAddElem('a',{id:'_ydb_s_qpusher',title:'Push search query to url bar', style:'height:28px;padding:0', href:location.href, className:'header__link header__search__button'}, [
-					InfernoAddElem('i',{className:'fa fa-arrow-up',style:'color:#fff; width:28px; line-height:28px; text-align:center; font-size:110%'}, [])
-				]),
+            document.querySelector('form.header__search').insertBefore(
 				InfernoAddElem('a',{id:'_ydb_s_finder',title:'Find this image position in entered query', style:'height:28px;padding:0', className:'header__link header__search__button'}, [
-					InfernoAddElem('i',{className:'fa',style:'color:#fff; width:28px; line-height:28px; text-align:center; font-size:110%',innerHTML:'\uF03C'}, [])
-				])
-			]),document.querySelector('form.header__search>a.header__search__button'));
+					InfernoAddElem('i',{className:'fa',style:'color:#fff; width:28px; line-height:28px; text-align:center; font-size:110%; vertical-align:super;',innerHTML:'\uF03C'}, [])
+				]),document.querySelector('form.header__search>a.header__search__button'));
+			document.querySelector('form.header__search').insertBefore(
+				InfernoAddElem('a',{id:'_ydb_s_qpusher',title:'Push search query to url bar', style:'height:28px;padding:0', href:location.href, className:'header__link header__search__button'}, [
+					InfernoAddElem('i',{className:'fa fa-arrow-up',style:'color:#fff; width:28px; line-height:28px; text-align:center; font-size:110%; vertical-align:super;'}, [])
+				]),document.querySelector('form.header__search>a.header__search__button'));
 			document.getElementById('_ydb_s_qpusher').hash = '';
 		}
 
 		if (myURL.params.sf != undefined && myURL.params.sf.startsWith('gallery_id')) addElem('option',{value:myURL.params.sf, innerHTML:'gallery'},document.getElementById('_ydb_s_qpusher_sf'));
-		let x = myURL.params.sf;
+        if (myURL.params.sf == '') myURL.params.sf = 'created_at';
+        if (myURL.params.sd == '') myURL.params.sd = 'desc';
+        let x = myURL.params.sf;
 		if (myURL.params.sf != undefined && myURL.params.sf.startsWith('gallery_id')) x = 'gallery_id';
 		if (myURL.params.sf != undefined && myURL.params.sf.startsWith('random')) x = 'random';
 		if (myURL.params.sf != undefined && document.querySelector('#_ydb_s_qpusher_sf *[value*='+x+']') != undefined) document.querySelector('#_ydb_s_qpusher_sf *[value*='+x+']').selected = 'selected';
@@ -620,6 +628,13 @@
 				}}]},[])
 			]);
 		}
+
+		document.getElementById('_ydb_s_finder').addEventListener('click',function(e) {
+			commonClickAction(e);
+			myURL = parseURL(document.getElementById('_ydb_s_qpusher').href);
+            console.log(myURL);
+			crLink('#_ydb_s_finder', 'act', 'find');
+		});
 	}
 
 
@@ -679,6 +694,7 @@
 	}
 
 	pushQuery(!isNaN(id));
+    if (!isNaN(id) && settings.pregain) preparam = gainParams(true);
 
 	if (
 		!isNaN(id) &&
@@ -693,7 +709,6 @@
 		!(myURL.params.sf.startsWith('gallery_id') && !settings.gallery) &&
 		!((myURL.params.sf == 'width' || myURL.params.sf == 'height') && !settings.sizes)
 	) {
-		if (settings.pregain) preparam = gainParams();
 		if (!(myURL.params.sf.startsWith('gallery_id'))) myURL.params.sf = myURL.params.sf.split('%')[0];
 		if (settings.preloading) execute();
 		else {
@@ -723,12 +738,6 @@
 		document.querySelectorAll('.js-up')[0].addEventListener('click',function(e) {
 			commonClickAction(e);
 			crLink('.js-up', 'act', 'find');
-		});
-
-		document.getElementById('_ydb_s_finder').addEventListener('click',function(e) {
-			commonClickAction(e);
-			myURL = parseURL(document.getElementById('_ydb_s_qpusher').href);
-			crLink('#_ydb_s_finder', 'act', 'find');
 		});
 	}
 	};
