@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.16
+// @version      0.5.17
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -37,7 +37,9 @@
     var styles = {};
     styles.general = `
 #_ydb_fs_mainPopup {
-position:relative
+position:relative;
+display: flex;
+flex-direction: column;
 }
 footer {
 position:absolute;
