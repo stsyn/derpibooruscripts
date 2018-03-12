@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.4
+// @version      0.5.5
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -169,7 +169,7 @@ color: #0a0;
                 {type:'checkbox', name:'Deactive downvote if upvoted (and reverse)', parameter:'deactivateButtons'},
                 {type:'checkbox', name:'Hide images immediately', parameter:'fastHide'},
                 {type:'breakline'},
-                {type:'input', name:'Shrink comments and posts longer that (px)', parameter:'shrinkComms', validation:{type:'int',min:280, default:500}},
+                {type:'input', name:'Shrink comments and posts longer than (px)', parameter:'shrinkComms', validation:{type:'int',min:280, default:500}},
                 {type:'checkbox', name:'Button to shrink expanded posts', parameter:'shrinkButt'},
                 {type:'breakline'},
                 {type:'checkbox', name:'Greentext (don\'t tell TSP about it)', parameter:'greenText',eventsI:{change:function (e) {
@@ -674,7 +674,7 @@ color: #0a0;
             let q2 = goodCombine(tags);
             return q2;
         };
-		
+
 		let unspoilTag = function (orig) {
 			if (window._YDB_public.funcs.getNonce == undefined) return orig;
             let tags = goodParse(orig);
@@ -688,7 +688,7 @@ color: #0a0;
         };
 
 		//////////////////////////////////////////////////////
-		
+
         let q = cycledParse(original);
         if (opt.legacy) q = legacyTagAliases(q);
 		q = artists(q);
@@ -696,7 +696,7 @@ color: #0a0;
         if (q.length > limit) q = compressAliases(q);
         if (q.length > limit) q = compressArtists(q);
 		q = unspoilTag(q);
-		
+
         if (q!=original) {
 			debug('YDB:T','Query '+original+' compressed to '+q,0);
             udata[md5(q)] = {q:original, t:getTimestamp()};
@@ -704,12 +704,12 @@ color: #0a0;
         }
         return q;
     }
-	
+
 	function unspoil(cont) {
 		let work = function (elem) {
 			let ux = elem.querySelector('.media-box__overlay.js-spoiler-info-overlay');
 			if (ux.innerHTML == '') return;
-			
+
 			let ix = elem.querySelector('video');
 			let xx = elem.querySelector('a img');
 			let x = elem.querySelector('.image-container');
@@ -765,7 +765,7 @@ color: #0a0;
 				else if (document.getElementsByClassName('image-show-container')[0] != undefined) unspoil(document.getElementsByClassName('image-show-container')[0]);
 			}
 		}
-		
+
         let data = readTagTools();
         let s = md5(document.getElementsByClassName('header__input--search')[0].value);
         if (data[s] != undefined) {
@@ -1342,7 +1342,11 @@ color: #0a0;
 	let userbase = {
 		users:{},
 		pending:[],
-		lost:{}
+		lost:{},
+		friendlist:{},
+		scratchpad:{},
+		artists:{},
+		idIndex:{}
 	};
 	let userbaseTS = {
 		ttu:0,
@@ -1358,7 +1362,6 @@ color: #0a0;
 				id:id
 			};
 			userbase.users[name] = user;
-			userbase.pending.push(name);
 			write();
 			if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup();
 			return user;
@@ -1401,6 +1404,7 @@ color: #0a0;
 					}
 					else {
 						if (user.id != x.id) {
+							delete userbase.idIndex[user.id];
 							userbase.lost[user.id] = user;
 							removeUser(user.name);
 						}
@@ -1433,7 +1437,7 @@ color: #0a0;
 				req.open('GET', '/profiles/'+nameEncode(name)+'.json', !simplyReturn);
 				req.send();
                 if (simplyReturn) {
-                    if (request.status === 200) return JSON.parse(req.responseText).id;
+                    if (req.status === 200) return JSON.parse(req.responseText).id;
                 }
 			};
 			if (regular) {
@@ -1448,8 +1452,10 @@ color: #0a0;
 				tswrite();
 			}
             else {
+				return get(user.name);
             }
 		};
+
 		if (!userbaseStarted) {
 			userbaseStarted = true;
 			try {
@@ -1486,6 +1492,7 @@ color: #0a0;
 								aliases = userbase.users[t].aliases;
 								aliases.push(t);
 								removeUser(t);
+								userbase.idIndex[id] = name;
 								createUser(name, aliases, id);
 							}
 							else {
@@ -1516,8 +1523,20 @@ color: #0a0;
 				}
 			}
 
-			if (userbase.pending.length>0) {
-				getTimestamp(userbase.users[userbase.pending[0]], true);
+			if (userbase.idIndex == undefined) {
+				//y'know, reseting time
+				if (userbase.idIndex == undefined) userbase.idIndex = {};
+				if (userbase.friendlist == undefined) userbase.friendlist = {};
+				if (userbase.scratchpad == undefined) userbase.scratchpad = {};
+				if (userbase.artists == undefined) userbase.artists = {};
+				userbase.pending = [];
+
+				for (let i in userbase.users) {
+					let us = userbase.users[i];
+					if (us.id == undefined) us.id = getTimestamp(us, false, true);
+					userbase.idIndex[us.id] = us.name;
+				}
+				write();
 			}
 		}
 		for (let i=0; i<e.getElementsByClassName('communication__body').length; i++) {
@@ -1548,6 +1567,7 @@ color: #0a0;
 							aliases = userbase.users[t].aliases;
 							aliases.push(t);
 							removeUser(t);
+							userbase.idIndex[ts] = name;
 							createUser(name, aliases, ts);
 						}
 						else {
@@ -1771,7 +1791,7 @@ color: #0a0;
     if (document.getElementById('comments') != undefined) document.getElementById('comments').addEventListener("DOMNodeInserted", listener);
     if (document.querySelector('.communication-edit__tab[data-tab="preview"]') != undefined) document.querySelector('.communication-edit__tab[data-tab="preview"]').addEventListener("DOMNodeInserted", listener);
 	};
-	
+
 
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
