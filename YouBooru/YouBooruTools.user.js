@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.5
+// @version      0.5.6
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -81,9 +81,9 @@ background: #5b9b26;
 color: #e0e0e0;
 }
 
-._ydb_green {
-background: #67af2b;
-color: #fff;
+body[ ._ydb_green {
+background: #67af2b !important;
+color: #fff !important;
 }
 
 ._ydb_t_patched {
@@ -94,11 +94,21 @@ overflow-y:hidden;
 display:block;
 }
 
-body[data-theme*="dark"] ._ydb_greentext {
+body[data-theme*="dark"] .spoiler ._ydb_greentext {
+color: #782c21;
+}
+body[data-theme*="dark"] ._ydb_greentext,
+body[data-theme*="dark"] .spoiler:hover ._ydb_greentext,
+body[data-theme*="dark"] .spoiler-revealed ._ydb_greentext {
 color: #66e066;
 }
 
-._ydb_greentext {
+.spoiler ._ydb_greentext {
+color: #e88585;
+}
+._ydb_greentext,
+.spoiler:hover ._ydb_greentext,
+.spoiler-revealed ._ydb_greentext {
 color: #0a0;
 }
 `;
@@ -1039,6 +1049,7 @@ color: #0a0;
 					addElem('option',{value:t[i],innerHTML:'As in gallery #'+t[i].split(':').pop()},document.querySelector('#searchform select[name="sf"]'));
 				}
 			}
+			if (parseURL(location.href).params.sf == undefined) return;
 			let sf = parseURL(location.href).params.sf.replace('%3A',':');
 			if (sf.startsWith('gallery_id')) {
 				document.querySelector('#searchform select[name="sf"] option[value*="'+sf.split(':').pop()+'"]').selected = true;
@@ -1053,6 +1064,14 @@ color: #0a0;
 	//highlight artist
 	function getArtists() {
 		if (!((parseInt(location.pathname.slice(1))>=0 && location.pathname.split('/')[2] == undefined) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && location.pathname.split('/')[3] == undefined))) return;
+		let initHighlight = function(n) {
+			if (document.querySelector('.image_uploader a') != undefined && document.querySelector('.image_uploader a').innerHTML == n) {
+				for (let i=0; i<document.querySelectorAll('.image_uploader a').length; i++) {
+					document.querySelectorAll('.image_uploader a')[i].classList.add('_ydb_green');
+				}
+			}
+		}
+		
 		let callback = function(r) {
 			let x = addElem('div',{innerHTML:r.responseText,style:'display:none'},document.body);
 			let exit = function() {
@@ -1071,10 +1090,17 @@ color: #0a0;
 						n = n.nextSibling.nextSibling;
 						artists.push(n.innerHTML);
 					}
-					if (document.querySelector('.image_uploader a') != undefined && document.querySelector('.image_uploader a').innerHTML == n.innerHTML) {
-                        for (let i=0; i<document.querySelectorAll('.image_uploader a').length; i++) {
-                            document.querySelectorAll('.image_uploader a')[i].classList.add('_ydb_green');
-                        }
+					initHighlight(n.innerHTML);
+					let id;
+					if (userbase.idIndex[n.innerHTML] == undefined) {
+						id = getUserId(n.innerHTML);
+						userbase.artists[r.el.innerHTML] = id;
+						addUserInBase(n.innerHTML,id)
+					}
+					else {
+						id = userbase.idIndex[n.innerHTML];
+						userbase.artists[r.el.innerHTML] = id;
+						UAwrite();
 					}
 					highlightArtist(document, n.innerHTML);
 					break;
@@ -1098,11 +1124,19 @@ color: #0a0;
         };
 
         let get = function(el) {
-            let req = new XMLHttpRequest();
-            req.el = el;
-            req.onreadystatechange = readyHandler(req);
-            req.open('GET', el.href);
-            req.send();
+			if (userbase.artists[el.innerHTML] != undefined && Math.random()*200>1) {
+				let n = userbase.idIndex[userbase.artists[el.innerHTML]];
+				artists.push(n);
+				initHighlight(n);
+				highlightArtist(document, n);
+			}
+			else {
+				let req = new XMLHttpRequest();
+				req.el = el;
+				req.onreadystatechange = readyHandler(req);
+				req.open('GET', el.href);
+				req.send();
+			}
         };
 
 		for (let i=0; i<document.querySelectorAll('.tag.dropdown[data-tag-category="origin"] .tag__name').length; i++) {
@@ -1146,9 +1180,9 @@ color: #0a0;
 		for (let i=0; i<e.querySelectorAll('.label:not(._ydb_t_patched)').length; i++) {
 			let el = e.querySelectorAll('.label:not(._ydb_t_patched)')[i];
 			el.classList.add('_ydb_t_patched');
-			if (el.innerText.length > 24) {
+			if (el.innerText.length > 25) {
 				let t = el.innerHTML;
-				el.innerText = el.innerText.substr(0,24);
+				el.innerText = el.innerText.substr(0,25);
 				addElem('a',{innerHTML:'Read more >>', href:'javascript://', events:[{t:'click',f:function() {
 					el.innerText = t;
 				}}]}, el);
@@ -1342,6 +1376,7 @@ color: #0a0;
 	let userbase = {
 		users:{},
 		pending:[],
+		slowpending:[],
 		lost:{},
 		friendlist:{},
 		scratchpad:{},
@@ -1353,6 +1388,7 @@ color: #0a0;
 		lastRun:0
 	};
 	let userbaseStarted = false;
+	let getUserId, addUserInBase, UAwrite;
 
 	function UA(e) {
 		let createUser = function(name, aliases, id) {
@@ -1362,8 +1398,8 @@ color: #0a0;
 				id:id
 			};
 			userbase.users[name] = user;
+			userbase.idIndex[id] = name;
 			write();
-			if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup();
 			return user;
 		};
 
@@ -1379,6 +1415,7 @@ color: #0a0;
 
 		let write = function() {
 			localStorage._ydb_toolsUB = JSON.stringify(userbase);
+			if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup();
 		};
 
 		let tswrite = function() {
@@ -1457,6 +1494,9 @@ color: #0a0;
 		};
 
 		if (!userbaseStarted) {
+			getUserId = function (name) {return getTimestamp({name:name},false,true)};
+			addUserInBase = function (name, id) {createUser(name,[],id)};
+			UAwrite = function (name, id) {write()};
 			userbaseStarted = true;
 			try {
 				let temp = JSON.parse(localStorage._ydb_toolsUB);
@@ -1492,7 +1532,6 @@ color: #0a0;
 								aliases = userbase.users[t].aliases;
 								aliases.push(t);
 								removeUser(t);
-								userbase.idIndex[id] = name;
 								createUser(name, aliases, id);
 							}
 							else {
@@ -1539,6 +1578,9 @@ color: #0a0;
 				write();
 			}
 		}
+		
+		if (e == undefined) return;
+		
 		for (let i=0; i<e.getElementsByClassName('communication__body').length; i++) {
 			let el = e.getElementsByClassName('communication__body')[i];
 			let eln = el.querySelector('.communication__body__sender-name a');
@@ -1567,7 +1609,6 @@ color: #0a0;
 							aliases = userbase.users[t].aliases;
 							aliases.push(t);
 							removeUser(t);
-							userbase.idIndex[ts] = name;
 							createUser(name, aliases, ts);
 						}
 						else {
@@ -1587,7 +1628,7 @@ color: #0a0;
 		}
 
 	}
-	/////////////////////////////////////////////
+		/////////////////////////////////////////////
 
 	//mark as read
 	function readAll() {
@@ -1769,6 +1810,7 @@ color: #0a0;
 		highlightArtist(e.target);
 	}
 
+	UA();
     flashNotifies();
     profileLinks();
 	readAll();
