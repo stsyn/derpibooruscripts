@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.1
+// @version      0.5.3
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -694,6 +694,7 @@
         obj.isFaved = (Boolean)(elem.querySelector('.interaction--fave.active'));
         obj.isUpvoted = (Boolean)(elem.querySelector('.interaction--upvote.active'));
         obj.isDownvoted = (Boolean)(elem.querySelector('.interaction--downvote.active'));
+        obj.isHidden = (Boolean)(elem.querySelector('.interaction--hide.active'));
         feedzEvents[feed.internalId][elem.dataset.imageId] = obj;
     }
 
@@ -708,6 +709,8 @@
         else elem.querySelector('.interaction--upvote').classList.remove('active');
         if (obj.isDownvoted) elem.querySelector('.interaction--downvote').classList.add('active');
         else elem.querySelector('.interaction--downvote').classList.remove('active');
+        if (obj.isHidden) elem.querySelector('.interaction--hide').classList.add('active');
+        else elem.querySelector('.interaction--hide').classList.remove('active');
     }
 
 	function parse(r, id) {
@@ -800,7 +803,7 @@
             mutations.forEach(function(mutation) {
                 if (mutation.type == 'attributes') {
                     let u = mutation.target.classList;
-                    if (u.contains('interaction--fave') || u.contains('interaction--upvote') || u.contains('interaction--downvote')) {
+                    if (u.contains('interaction--fave') || u.contains('interaction--upvote') || u.contains('interaction--downvote') || u.contains('interaction--hide')) {
                         updateEvents(r.feed.container.querySelector('.media-box[data-image-id="'+mutation.target.dataset.imageId+'"]'), r.feed);
                         localStorage._ydb_cachesEvents = JSON.stringify(feedzEvents);
                     }
@@ -855,7 +858,7 @@
             mutations.forEach(function(mutation) {
                 if (mutation.type == 'attributes') {
                     let u = mutation.target.classList;
-                    if (u.contains('interaction--fave') || u.contains('interaction--upvote') || u.contains('interaction--downvote')) {
+                    if (u.contains('interaction--fave') || u.contains('interaction--upvote') || u.contains('interaction--downvote') || u.contains('interaction--hide')) {
                         updateEvents(feed.container.querySelector('.media-box[data-image-id="'+mutation.target.dataset.imageId+'"]'), feed);
                         localStorage._ydb_cachesEvents = JSON.stringify(feedzEvents);
                     }
