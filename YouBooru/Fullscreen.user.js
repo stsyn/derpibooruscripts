@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.17
+// @version      0.5.18
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -329,11 +329,11 @@ p>a {
 color:_fs_color !important;
 }
 
-#content .block__content .communication__body .spoiler:not(:hover) a {
+#content .block__content .communication__body .spoiler:not(:hover) a, .image-description .spoiler:not(:hover) a{
 color:#e88585
 }
 
-body[data-theme*="dark"] #content .block__content .communication__body .spoiler:not(:hover) a {
+body[data-theme*="dark"] #content .block__content .communication__body .spoiler:not(:hover) a, .image-description .spoiler:not(:hover) a {
 color:#782c21
 }
 
@@ -343,7 +343,7 @@ background-color:_fs_ccomponent;
 }
 
 .image-description, #imagespns, .block__header--js-tabbed, .block__header--js-tabbed a.selected, .block__header--js-tabbed a.selected:hover,
-.button:not(.commission__category), .toggle-box+label, .block__list a.block__list__link, .block__list, .input, .communication__toolbar__button,
+.button:not(.commission__category):not(.button--state-warning):not(.button--state-danger):not(.button--state-success), .toggle-box+label, .block__list a.block__list__link, .block__list, .input, .communication__toolbar__button,
 .block__header--js-tabbed a, .block__header--js-tabbed a:last-child, .block__header--js-tabbed a:first-child, .block--fixed:not(.block--success):not(.block--warning), .media-box, .filter {
 border-color:_fs_background;
 }
@@ -361,7 +361,7 @@ background:_fs_4component;
 .header--secondary a.header__link:hover, .header--secondary .header__dropdown:hover>a, .input:focus, .communication__toolbar__button:hover, .tag__dropdown__link,
 .block__header, .block__header--single-item,
 .block__header a, .block__header--single-item a, .block__list a.block__list__link,
-.communication__options, .button:not(.commission__category), a.media-box__header--link:hover, .header--secondary span.header__counter,
+.communication__options, .button:not(.commission__category):not(.button--state-warning):not(.button--state-danger):not(.button--state-success), a.media-box__header--link:hover, .header--secondary span.header__counter,
 .interaction--downvote.disabled, .interaction--downvote.disabled:hover{
 background:_fs_2component;
 }
