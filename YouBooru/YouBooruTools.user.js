@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.6
+// @version      0.5.7
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1071,7 +1071,7 @@ color: #0a0;
 				}
 			}
 		}
-		
+
 		let callback = function(r) {
 			let x = addElem('div',{innerHTML:r.responseText,style:'display:none'},document.body);
 			let exit = function() {
@@ -1194,6 +1194,10 @@ color: #0a0;
 	function shrinkComms(e) {
 		for (let i=0; i<e.querySelectorAll('.block.communication').length; i++) {
 			let el = e.querySelectorAll('.block.communication')[i];
+			if (el.clientHeight == 0) {
+				setTimeout(function() {shrinkComms(e)}, 200);
+				return;
+			}
 			if (el.clientHeight > parseInt(ls.shrinkComms)*1.2+13) {
 				let t = el.querySelector('.communication__body__text');
 				if (t.classList.contains('_ydb_t_comm_shrink')) continue;
@@ -1578,9 +1582,9 @@ color: #0a0;
 				write();
 			}
 		}
-		
+
 		if (e == undefined) return;
-		
+
 		for (let i=0; i<e.getElementsByClassName('communication__body').length; i++) {
 			let el = e.getElementsByClassName('communication__body')[i];
 			let eln = el.querySelector('.communication__body__sender-name a');
@@ -1588,15 +1592,20 @@ color: #0a0;
 			let ele = el.querySelector('.communication__body__sender-name');
 			let name = eln.innerHTML;
 			if (userbase.users[name] != undefined) {
-                let s = InfernoAddElem('div',{style:'width:100px;font-size:.86em'},[
-                    InfernoAddElem('span',{innerHTML:'AKA '},[]),
-                    InfernoAddElem('strong',{innerHTML:userbase.users[name].aliases.join()},[]),
-                    InfernoAddElem('br',{},[])
-                ]);
-                if (!(el.parentNode.querySelector('.flex__fixed.spacing-right').lastChild.classList != undefined && el.parentNode.querySelector('.flex__fixed.spacing-right').lastChild.classList.contains('post-image-container')))
-                    el.parentNode.querySelector('.flex__fixed.spacing-right').insertBefore(s,el.parentNode.querySelector('.flex__fixed.spacing-right').lastChild);
-                continue;
-            }
+				if (userbase.scratchpad[userbase.users[name].id] != undefined) {
+					eln.title = userbase.scratchpad[userbase.users[name].id];
+				}
+				if (userbase.users[name].aliases.length>0) {
+					let s = InfernoAddElem('div',{style:'width:100px;font-size:.86em'},[
+						InfernoAddElem('span',{innerHTML:'AKA '},[]),
+						InfernoAddElem('strong',{innerHTML:userbase.users[name].aliases.join()},[]),
+						InfernoAddElem('br',{},[])
+					]);
+					if (!(el.parentNode.querySelector('.flex__fixed.spacing-right').lastChild.classList != undefined && el.parentNode.querySelector('.flex__fixed.spacing-right').lastChild.classList.contains('post-image-container')))
+						el.parentNode.querySelector('.flex__fixed.spacing-right').insertBefore(s,el.parentNode.querySelector('.flex__fixed.spacing-right').lastChild);
+				}
+				continue;
+			}
 			let alias = ele.nextSibling;
 			while (!(alias.classList != undefined && alias.classList.contains('communication__body__text'))) {
 				if (alias.classList != undefined && alias.classList.contains('small-text')) {
@@ -1628,7 +1637,38 @@ color: #0a0;
 		}
 
 	}
-		/////////////////////////////////////////////
+	/////////////////////////////////////////////
+
+	function scratchPad() {
+		if (document.querySelector('.profile-top__name-header') != undefined) {
+			let name = document.querySelector('.profile-top__name-header').innerHTML.slice(0, -10);
+			let id = document.querySelector('a[href*="/lists/user_comments"]').href.split('/').pop();
+			let content = '';
+			if (userbase.scratchpad[id] != undefined) content = userbase.scratchpad[id];
+			document.querySelector('.column-layout__left').insertBefore(
+				InfernoAddElem('div',{className:'block'},[
+					InfernoAddElem('div',{className:'block__header'},[
+						InfernoAddElem('span',{className:'block__header__title',innerHTML:'Private scratchpad'},[])
+					]),
+					InfernoAddElem('div',{className:'block__content'},[
+						InfernoAddElem('textarea',{className:'input input--wide', value:content, id:'_ydb_scratchpad'},[]),
+						InfernoAddElem('span',{innerHTML:'Do not use for passwords!'},[]),
+						InfernoAddElem('input',{type:'button', className:"button input--wide",value:'Update',events:[{t:'click',f:function(e) {
+							if (userbase.scratchpad[id] == undefined) {
+								if (userbase.idIndex[id] == undefined) {
+									addUserInBase(name, id);
+								}
+							}
+							userbase.scratchpad[id] = document.getElementById('_ydb_scratchpad').value;
+							UAwrite();
+							e.target.classList.add('button--state-success');
+							setTimeout(function() {e.target.classList.remove('button--state-success');}, 200);
+						}}]},[])
+					])
+				])
+			,document.querySelector('.column-layout__left').firstChild);
+		}
+	}
 
 	//mark as read
 	function readAll() {
@@ -1814,6 +1854,7 @@ color: #0a0;
     flashNotifies();
     profileLinks();
 	readAll();
+	scratchPad();
     if (ls.patchSearch) bigSearch();
     aliases();
     asWatchlist();
