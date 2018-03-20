@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.18
+// @version      0.5.19
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -51,7 +51,6 @@ background:none
 }
 #content>.block:first-child, .flash--site-notice, ._fs #_ydb_fs_enable {
 height:0;
-overflow-y:hidden;
 margin:0;
 padding:0;
 }
@@ -144,6 +143,8 @@ position:fixed;
 z-index:202;
 display:inline-block !important;
 opacity:0.3;
+font-size: 120%;
+line-height: 205%;
 }
 #_ydb_fs_disable:hover {
 opacity:.7
@@ -188,10 +189,12 @@ width:auto;
 opacity:0.2;
 }
 
-#content>.block:first-child>.block__header {
+#content>.block:first-child>.block__header>div {
 text-align:center;
+width:100%;
 font-size:150%;
 line-height:175%;
+z-index:2;
 }
 
 #content>.block:first-child>.block__header>.block__header__title {
@@ -200,6 +203,11 @@ line-height:100%;
 transition-duration: 0.1s;
 transition-timing-function: ease-in-out;
 color:#e0e0e0;
+}
+
+.block__header__title {
+font-size:100%;
+line-height:175%;
 }
 
 #content>.block:first-child>.block__header>.interaction--comments:hover,
@@ -228,7 +236,17 @@ right:0;
 position:absolute;
 z-index:202;
 opacity:0.3;
-display:inline
+display:inline;
+top: 0;
+}
+#content>.block:first-child>.block__header>div>.image-size{
+right:0;
+position:absolute;
+font-size:70%;
+z-index:202;
+opacity:0.3;
+display:inline;
+top: 2em;
 }
 
 #content>.block:first-child>.block__header [href*="/download/"]:hover {
@@ -936,14 +954,14 @@ color: #555;
             ])
         ]);
 
-        document.querySelector('#content>.block:first-child>.block__header').insertBefore(objects.mainButton,document.getElementsByClassName('interaction--fave')[0]);
+        document.querySelector('#content>.block:first-child>.block__header>div:nth-child(2)').insertBefore(objects.mainButton,document.getElementsByClassName('interaction--fave')[0]);
         document.querySelectorAll('#content>div')[3].appendChild(document.getElementById('image_options_area'));
-        popUps.coms.appendChild(document.querySelectorAll('#content>div')[4]);
-        popUps.downContainer.appendChild(document.querySelector('#content>.block:first-child .block__header--sub').cloneNode(true));
-        if (popUps.downContainer.childNodes[0].classList.contains('center--layout')) popUps.downContainer.childNodes[0].style.textAlign='center';
-        popUps.downContainer.childNodes[0].classList.add('layout--narrow');
+        popUps.coms.appendChild(document.querySelectorAll('#content>div')[3]);
+        //popUps.downContainer.appendChild(document.querySelector('#content>.block:first-child').cloneNode(true));
+        //if (popUps.downContainer.childNodes[0].classList.contains('center--layout')) popUps.downContainer.childNodes[0].style.textAlign='center';
+        //popUps.downContainer.childNodes[0].classList.add('layout--narrow');
         popUps.downContainer.appendChild(document.querySelectorAll('#content>div')[2]);
-        popUps.downContainer.appendChild(document.querySelectorAll('#content>div')[2]);
+        popUps.downContainer.appendChild(popUps.coms.querySelector('#image_options_area'));
 
         document.querySelector('a[title="'+settings.button+'"]').classList.add('ydb_top_right_link');
 
@@ -967,8 +985,10 @@ color: #555;
             document.querySelectorAll('#content>.block:first-child>.block__header [class*="js-notification"')[1].cloneNode(true),
             document.querySelector('#content>.block:first-child>.block__header .dropdown').cloneNode(true),
             document.querySelector('#content>.block:first-child>.block__header [href*="/related/"').cloneNode(true),
-            document.querySelector('#content>.block:first-child>.block__header>.hide-mobile').cloneNode(true)
+            document.querySelector('#content>.block:first-child>.block__header>div:nth-child(3)').cloneNode(true)
         ]);
+		document.querySelector('#_ydb_fs_mainPopup>.block__header>div:last-child').style.display = 'inline';
+		document.querySelector('#_ydb_fs_mainPopup>.block__header>div>.image-size').style.display = 'none';
         popUps.main.appendChild(document.querySelector('footer'));
 
         objects.image = document.getElementById('image-display');
@@ -1019,10 +1039,10 @@ color: #555;
         document.body.removeEventListener('mousemove',mouseListener);
         objects.dcontainer.removeEventListener("wheel", wheelListener);
 
-        document.querySelector('#content>.block:first-child>.block__header').removeChild(objects.mainButton);
+        document.querySelector('#content>.block:first-child>.block__header>div:nth-child(2)').removeChild(objects.mainButton);
 
-        document.getElementById('content').appendChild(popUps.downContainer.childNodes[1]);
-        document.getElementById('content').appendChild(popUps.downContainer.childNodes[1]);
+        document.getElementById('content').appendChild(popUps.downContainer.childNodes[0]);
+        document.getElementById('content').appendChild(popUps.downContainer.childNodes[0]);
         document.getElementById('content').appendChild(popUps.coms.getElementsByTagName('div')[0]);
         document.querySelector('a[title="'+settings.button+'"]').classList.remove('ydb_top_right_link');
 
