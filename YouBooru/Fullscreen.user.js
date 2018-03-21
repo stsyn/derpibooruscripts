@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.20
+// @version      0.5.21
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -985,7 +985,7 @@ color: #555;
             document.querySelectorAll('#content>.block:first-child>.block__header [class*="js-notification"')[1].cloneNode(true),
             document.querySelector('#content>.block:first-child>.block__header .dropdown').cloneNode(true),
             document.querySelector('#content>.block:first-child>.block__header [href*="/related/"').cloneNode(true),
-            document.querySelector('#content>.block:first-child>.block__header>div:nth-child(3)').cloneNode(true)
+            document.querySelector('#content>.block:first-child>.block__header>div:nth-child(4)').cloneNode(true)
         ]);
 		document.querySelector('#_ydb_fs_mainPopup>.block__header>div:last-child').style.display = 'inline';
 		document.querySelector('#_ydb_fs_mainPopup>.block__header>div>.image-size').style.display = 'none';
