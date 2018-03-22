@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.21
+// @version      0.5.22
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -480,6 +480,11 @@ color: #555;
     }
 
     if (state.enabled == undefined) state.enabled = false;
+	if (state.NU1 == undefined) {
+		state.enabled = false;
+		state.NU1 = true;
+		write();
+	}
 
 
     if (settings.extended == undefined) settings.extended = true;
