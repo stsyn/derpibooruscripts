@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.8
+// @version      0.5.10
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1094,13 +1094,15 @@ color: #0a0;
 					let id;
 					if (userbase.idIndex[n.innerHTML] == undefined) {
 						id = getUserId(n.innerHTML);
+						if (id == undefined) break;
 						userbase.artists[r.el.innerHTML] = id;
 						addUserInBase(n.innerHTML,id)
 					}
 					else {
 						id = userbase.idIndex[n.innerHTML];
 						userbase.artists[r.el.innerHTML] = id;
-						UAwrite();
+						if (!r.u) UAwrite();
+						else userCheck(n.innerHTML, id);
 					}
 					highlightArtist(document, n.innerHTML);
 					break;
@@ -1123,6 +1125,7 @@ color: #0a0;
             };
         };
 
+		let checked=0;
         let get = function(el) {
 			if (userbase.artists[el.innerHTML] != undefined && Math.random()*200>1) {
 				let n = userbase.idIndex[userbase.artists[el.innerHTML]];
@@ -1131,10 +1134,13 @@ color: #0a0;
 				highlightArtist(document, n);
 			}
 			else {
+				if (checked > 1) return;
 				let req = new XMLHttpRequest();
 				req.el = el;
+				req.u = (userbase.artists[el.innerHTML] != undefined);
 				req.onreadystatechange = readyHandler(req);
 				req.open('GET', el.href);
+				checked++;
 				req.send();
 			}
         };
@@ -1382,7 +1388,7 @@ color: #0a0;
 		pending:[],
 		slowpending:[],
 		lost:{},
-		friendlist:{},
+		friendlist:[],
 		scratchpad:{},
 		artists:{},
 		idIndex:{}
@@ -1392,22 +1398,52 @@ color: #0a0;
 		lastRun:0
 	};
 	let userbaseStarted = false;
-	let getUserId, addUserInBase, UAwrite;
+	let getUserId, addUserInBase, UAwrite, userCheck, addUserPending;
 
 	function UA(e) {
 		let createUser = function(name, aliases, id) {
-			let user = {
-				name:name,
-				aliases:aliases,
-				id:id
-			};
-			userbase.users[name] = user;
-			userbase.idIndex[id] = name;
-			write();
+			let user;
+			if (userbase.users[name] != undefined) {
+				user = userbase.users[name];
+				let changed = false;
+				if (user.aliases.length<aliases.length) {
+					user.aliases = aliases;
+					changed = true;
+				}
+				if (user.id != id && id != undefined) {
+					delete userbase.idIndex[user.id];
+					user.id = id;
+					if (userbase.idIndex[id] != undefined && userbase.idIndex[id] != name) {
+						removeUser(userbase.idIndex[id]);
+					}
+					userbase.idIndex[id] = name;
+					changed = true;
+				}
+				if (changed) write();
+			}
+			else {
+				user = {
+					name:name,
+					aliases:aliases,
+					id:id
+				};
+				userbase.users[name] = user;
+				if (userbase.idIndex[id] != undefined && id != undefined && userbase.idIndex[id] != name) {
+					removeUser(userbase.idIndex[id]);
+				}
+				userbase.idIndex[id] = name;
+				write();
+			}
 			return user;
 		};
 
+		let addPending = function(user) {
+			//for (let i=0; i<userbase.pending.length; i++) if (user.id == userbase.pending[i]) return;
+			userbase.pending.push(user.id);
+		}
+
 		let removeUser = function(username) {
+			if (username == userbase.idIndex[userbase.users[username].id]) delete userbase.idIndex[userbase.users[username].id];
 			delete userbase.users[username];
 			for (let i=0; i<userbase.pending.length; i++) {
 				if (userbase.pending[i] == username) {
@@ -1432,25 +1468,35 @@ color: #0a0;
 			};
 			let callback = function(req) {
 				try {
-					let x = JSON.parse(req.responseText);
-					if (simplyReturn) return x.id;
+					let x, nx;
+					if (!regular) {
+						x = JSON.parse(req.responseText).id;
+					}
+					else {
+						x = user.id;
+						let n = document.createElement('div');
+						n.innerHTML = req.responseText;
+						nx = n.getElementsByTagName('h1')[0].innerHTML.slice(0,-11);
+					}
+					if (simplyReturn) return x;
 					if (regular) {
 						userbase.pending.push(userbase.pending.shift());
                         delete user.ts;
 					}
 					if (user.id == undefined) {
-						user.id = x.id;
+						user.id = x;
 						write();
-						if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup();
 					}
 					else {
-						if (user.id != x.id) {
+						if (user.id != x) {
 							delete userbase.idIndex[user.id];
 							userbase.lost[user.id] = user;
 							removeUser(user.name);
 						}
+						if (user.name != nx) {
+							createUser(nx,user.aliases.push(user.name),x);
+						}
 						write();
-						if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup();
 					}
 				}
 				catch(e) {
@@ -1472,20 +1518,32 @@ color: #0a0;
 				};
 			};
 
-			let get = function(name) {
+			let get = function(user) {
 				let req = new XMLHttpRequest();
-				if (!simplyReturn) req.onreadystatechange = readyHandler(req);
-				req.open('GET', '/profiles/'+nameEncode(name)+'.json', !simplyReturn);
+				let url;
+				if (!simplyReturn) {
+					req.onreadystatechange = readyHandler(req);
+					url = '/lists/user_comments/'+user.id;
+				}
+				else {
+					if (regular) url = '/lists/user_comments/'+user.id;
+					else url = '/profiles/'+nameEncode(user.name)+'.json';
+				}
+				req.open('GET', url, !simplyReturn);
 				req.send();
                 if (simplyReturn) {
                     if (req.status === 200) return JSON.parse(req.responseText).id;
                 }
 			};
+
+			if (userbase.users[user.name] != undefined) {
+				user = userbase.users[user.name];
+			}
 			if (regular) {
 				userbaseTS.ttu -= (Date.now()-userbaseTS.lastRun);
 				if (userbaseTS.ttu <= 0) {
 					if (userbaseTS.lastRun == 0) userbaseTS.ttu = 0;
-					get(user.name);
+					get(user);
 					userbaseTS.lastRun = Date.now();
 					userbaseTS.ttu += UBinterval/userbase.pending.length;
                     userbaseTS.ttu = parseInt(userbaseTS.ttu);
@@ -1493,14 +1551,16 @@ color: #0a0;
 				tswrite();
 			}
             else {
-				return get(user.name);
+				return get(user);
             }
 		};
 
 		if (!userbaseStarted) {
 			getUserId = function (name) {return getTimestamp({name:name},false,true)};
 			addUserInBase = function (name, id) {createUser(name,[],id)};
+			addUserPending = addPending;
 			UAwrite = function (name, id) {write()};
+			userCheck = function (name, id) {getTimestamp({name:name, id:id},true,false)}
 			userbaseStarted = true;
 			try {
 				let temp = JSON.parse(localStorage._ydb_toolsUB);
@@ -1569,7 +1629,7 @@ color: #0a0;
 			if (userbase.idIndex == undefined) {
 				//y'know, reseting time
 				if (userbase.idIndex == undefined) userbase.idIndex = {};
-				if (userbase.friendlist == undefined) userbase.friendlist = {};
+				if (userbase.friendlist == undefined) userbase.friendlist = [];
 				if (userbase.scratchpad == undefined) userbase.scratchpad = {};
 				if (userbase.artists == undefined) userbase.artists = {};
 				userbase.pending = [];
@@ -1581,6 +1641,12 @@ color: #0a0;
 				}
 				write();
 			}
+
+			if (userbase.pending.length>0) {
+				getTimestamp(userbase.users[userbase.idIndex[userbase.pending[0]]], true);
+			}
+
+			if (!Array.isArray(userbase.friendlist)) userbase.friendlist = [];
 		}
 
 		if (e == undefined) return;
@@ -1755,6 +1821,118 @@ color: #0a0;
         }
     }
 
+	function contacts() {
+		if (document.querySelector('.js-burger-links a.header__link[href*="messages"]') == undefined) return;
+		let cc = document.querySelector('.js-burger-links a.header__link[href*="messages"]');
+		cc.querySelector('i').classList.add('fa-address-book');
+		cc.querySelector('i').classList.remove('fa-envelope');
+		cc.lastChild.data = ' Contacts';
+		cc.href='/pages/yourbooru?contactList';
+
+		if (location.pathname.startsWith('/messages/new')) {
+			let x = [];
+			for (let i=0; i<userbase.friendlist.length; i++) {
+				x.push(InfernoAddElem('span',{className:'button',innerHTML:userbase.idIndex[userbase.friendlist[i]],events:[{t:'click',f:function() {document.getElementById('recipient').value = userbase.idIndex[userbase.friendlist[i]];}}]}));
+			}
+
+			document.querySelector('.block__tab.communication-edit__tab .field .field').insertBefore(
+				InfernoAddElem('div',{},x),
+			document.getElementById('recipient'));
+		}
+
+		if (document.getElementsByClassName('profile-top__name-and-links')[0] != undefined) {
+			let uid = document.querySelector('a[href*="/lists/user_comments"]').href.split('/').pop();
+			let added = false;
+			for (let i=0; i<userbase.friendlist.length; i++) {
+				if (uid == userbase.friendlist[i]) {
+					added = true;
+					break;
+				}
+			}
+			if (!added) document.getElementsByClassName('profile-top__options__column')[0].appendChild(
+				InfernoAddElem('li',{},[
+					InfernoAddElem('a',{href:'javascript://',innerHTML:'Add to contacts', events:[{t:'click',f:function(e) {
+						let name = document.querySelector('.profile-top__name-header').innerHTML.slice(0, -10);
+						addUserInBase(name, uid);
+						userbase.friendlist.push(uid);
+						addUserPending({id:uid});
+						document.getElementsByClassName('profile-top__options__column')[0].lastChild.classList.add('hidden');
+						UAwrite();
+					}}]},[])
+				])
+			);
+		}
+	}
+
+	function YDB_contacts() {
+		document.querySelector('#content h1').innerHTML = 'Contact list';
+		let c = document.querySelector('#content .walloftext');
+		c.innerHTML = '';
+
+		let nameEncode = function(name) {
+			return encodeURI(name.replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/\//g,'-fwslash-').replace(/\//g,'-bwslash-').replace(/ /g,'+'));
+		};
+
+		let removeUser = function(user) {
+			for (let i=0; i<userbase.friendlist.length; i++) if (user.id == userbase.friendlist[i]) {
+				userbase.friendlist.splice(i, 1);
+				break;
+			}
+			for (let i=0; i<userbase.pending.length; i++) if (user.id == userbase.pending[i]) {
+				userbase.pending.splice(i, 1);
+				break;
+			}
+		}
+
+		let generateLine = function(i) {
+			let user = userbase.users[userbase.idIndex[userbase.friendlist[i]]];
+			if (user == undefined) return InfernoAddElem('div',{className:'alternating-color block__content flex flex--center-distributed flex--centered'},[
+					InfernoAddElem('div',{style:'flex-basis: 48px;'},[]),
+					InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
+						InfernoAddElem('span',{innerHTML:'[USER NOT FOUND]'},[])
+					]),
+					InfernoAddElem('a',{className:'interaction--downvote',style:'padding:0 12px', events:[{t:'click',f:function(){removeUser(user)}}]},[
+						InfernoAddElem('i',{className:'fa fa-trash-alt'},[]),
+						InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Remove'},[])
+					])
+				]);
+			return InfernoAddElem('div',{className:'alternating-color block__content flex flex--center-distributed flex--centered'},[
+				InfernoAddElem('div',{style:'flex-basis: 48px;'},[
+					InfernoAddElem('img',{width:48,height:48},[])
+				]),
+				InfernoAddElem('a',{className:'flex__grow',style:'padding-left:1em',href:'/profiles/'+nameEncode(user.name)},[
+					InfernoAddElem('span',{innerHTML:user.name},[])
+				]),
+				InfernoAddElem('a',{style:'padding:0 12px', href:'/messages/new?to_id='+user.id},[
+					InfernoAddElem('i',{className:'fa fa-envelope'},[]),
+					InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Send message'},[])
+				]),
+				InfernoAddElem('a',{style:'padding:0 12px', href:'/messages?with='+user.id},[
+					InfernoAddElem('i',{className:'fa fa-clock'},[]),
+					InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Conversations'},[])
+				]),
+				InfernoAddElem('a',{className:'interaction--downvote',style:'padding:0 12px', events:[{t:'click',f:function(){removeUser(user)}}]},[
+					InfernoAddElem('i',{className:'fa fa-trash-alt'},[]),
+					InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Remove'},[])
+				])
+			]);
+		};
+		let x = [];
+
+		for (let i=0; i<userbase.friendlist.length; i++) {
+			x.push(generateLine(i));
+		}
+
+		if (userbase.friendlist.length == 0) {
+			x.push(InfernoAddElem('div',{},[
+				InfernoAddElem('div',{innerHTML:'Your contact list is empty.'},[]),
+				InfernoAddElem('img',{src:'https://derpicdn.net/img/2013/4/2/285856/medium.png'},[])
+			]));
+		}
+
+		ChildsAddElem('div',{className:'block',style:'width:100%'}, c, x);
+	}
+
     //fixing watchlist
     function YB_checkList(o, elems) {
         elems.querySelector('h1').innerHTML = 'Checking watchlist tags...';
@@ -1825,6 +2003,7 @@ color: #0a0;
         else if (location.search == "?") return;
         else {
             let u = x.split('?');
+			if (u[0] == 'contactList') YDB_contacts();
         }
     }
 
@@ -1867,6 +2046,7 @@ color: #0a0;
 	getArtists();
 	resizeEverything(true);
 	addGalleryOption();
+	contacts();
     if (location.pathname == "/pages/yourbooru") {
         YDB();
     }
