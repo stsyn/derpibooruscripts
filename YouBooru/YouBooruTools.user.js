@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.10
+// @version      0.5.11
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1707,6 +1707,13 @@ color: #0a0;
 
 	function scratchPad() {
 		if (document.querySelector('.profile-top__name-header') != undefined) {
+			let hmm;
+			if (document.body.dataset.theme.startsWith('eq')) hmm = true;
+			let generate = function() {
+				let s = ['Provide as much detail as possible.','All glory to Glimmerbooru!','Denunciations left here are accepted for consideration.',
+						'The NKVD carefully investigates the information written here.', 'Stay alert, Comrade! Western spies everywhere.'];
+				return s[parseInt(Math.random()*s.length)];
+			};
 			let name = document.querySelector('.profile-top__name-header').innerHTML.slice(0, -10);
 			let id = document.querySelector('a[href*="/lists/user_comments"]').href.split('/').pop();
 			let content = '';
@@ -1717,8 +1724,8 @@ color: #0a0;
 						InfernoAddElem('span',{className:'block__header__title',innerHTML:'Private scratchpad'},[])
 					]),
 					InfernoAddElem('div',{className:'block__content'},[
-						InfernoAddElem('textarea',{className:'input input--wide', value:content, id:'_ydb_scratchpad'},[]),
-						InfernoAddElem('span',{innerHTML:'Do not use for passwords!'},[]),
+						InfernoAddElem('textarea',{className:'input input--wide', value:content, id:'_ydb_scratchpad', placeholder:hmm?generate():''},[]),
+						InfernoAddElem('span',{innerHTML:hmm?'Thank you for your assistance.':'Do not use for passwords!'},[]),
 						InfernoAddElem('input',{type:'button', className:"button input--wide",value:'Update',events:[{t:'click',f:function(e) {
 							if (userbase.scratchpad[id] == undefined) {
 								if (userbase.idIndex[id] == undefined) {
