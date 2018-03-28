@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.3
+// @version      0.5.4
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -356,6 +356,21 @@
 		}
 
 		if (config.oneTimeLoad == undefined) config.oneTimeLoad = 3;
+
+		if (!config.aux && document.body.dataset.theme.startsWith('eq')) {
+			feedz.unshift({
+				name:'Central Artvision of the Glimmerbooru',
+				query:'(propaganda, (equality || communism), -explicit, -sketch, score.gte:10, -id:1466701, -id:643544, -id:644756, -id:353630, -id:215575, -id:175149) || id:870369 || id:864660 || id:987860, __ydb_tryUnspoil',
+				sort:'random',
+				sd:'desc',
+				ccache:0,
+				cache:55
+			});
+			feedzCache.unshift('');
+			feedzURLs.unshift('');
+			feedzEvents.unshift({});
+			config.aux = true;
+		}
 	}
 
 	function legacyPreRun() {
@@ -478,8 +493,12 @@
 			tx = tx.replace('__ydb_LastYearsAlt', getYearsAltQuery());
 			tx = tx.replace('__ydb_LastYears', getYearsQuery());
 			tx = tx.replace('__ydb_Spoilered', spoileredQuery());
+			tx = tx.replace('__ydb_tryUnspoil', '');
 		}
-		else tx = window._YDB_public.funcs.tagAliases(tx, {legacy:true});
+		else {
+			tx = tx.replace('__ydb_tryUnspoil', '__ydb_Unspoil');
+			tx = window._YDB_public.funcs.tagAliases(tx, {legacy:true});
+		}
 
 		tx = tx.replace('__ydb_SinceLeavedNoNew', getNotSeenYetQueryNoNew(f));
 		tx = tx.replace('__ydb_SinceLeaved', getNotSeenYetQuery(f));
@@ -1269,7 +1288,7 @@
 			preRun();
             let u = parseURL(location.href);
             if (u.params.name != undefined) YB_addFeed2(u);
-			else if (u.params.feedId != undefined) YB_feedButton(u.params.feedId);
+			else if (u.params.feedId != undefined && !(document.body.dataset.theme.startsWith('eq') && u.params.feedId == 0)) YB_feedButton(u.params.feedId);
             else YB_feedButton();
         }
 		register();
