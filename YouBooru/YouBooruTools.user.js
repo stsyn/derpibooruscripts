@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.11
+// @version      0.5.12
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -686,11 +686,13 @@ color: #0a0;
         };
 
 		let unspoilTag = function (orig) {
-			if (window._YDB_public.funcs.getNonce == undefined) return orig;
+			let nonce;
+			if (window._YDB_public.funcs.getNonce == undefined) nonce = 'unsafe_nonce';
+			else nonce = window._YDB_public.funcs.getNonce();
             let tags = goodParse(orig);
             for (let i=0; i<tags.tags.length; i++) {
                 if (tags.tags[i].v == '__ydb_Unspoil') {
-                    tags.tags[i].v = '!__ydb_Unspoil:'+md5(document.body.dataset.userName+window._YDB_public.funcs.getNonce());
+                    tags.tags[i].v = '!__ydb_Unspoil:'+md5(document.body.dataset.userName+nonce);
                 }
             }
             let q2 = goodCombine(tags);
@@ -762,11 +764,15 @@ color: #0a0;
 		for (let i=0; i<qc.tags.length; i++) {
 			if (qc.tags[i].v.startsWith('__ydb_Unspoil')) {
 				let n = qc.tags[i].v.split(':').pop();
-				if (n == undefined || window._YDB_public.funcs.getNonce == undefined) {
-					document.getElementById('container').insertBefore(InfernoAddElem('div',{className:'flash flash--warning', innerHTML:'YDB:Settings 0.9.1+ required to use "__ydb_Unspoil"!'},[]),document.getElementById('content'));
-					break;
+				if (window._YDB_public.funcs.getNonce == undefined) {
+					document.getElementById('container').insertBefore(InfernoAddElem('div',{className:'flash flash--warning', innerHTML:'YDB:Settings 0.9.1+ strongly recommended! Using unsafe nonce.'},[]),document.getElementById('content'));
 				}
-				let hash = md5(document.body.dataset.userName+window._YDB_public.funcs.getNonce());
+
+				let nonce;
+				if (window._YDB_public.funcs.getNonce == undefined) nonce = 'unsafe_nonce';
+				else nonce = window._YDB_public.funcs.getNonce();
+
+				let hash = md5(document.body.dataset.userName+nonce);
 				if (hash != n) {
 					document.getElementById('container').insertBefore(InfernoAddElem('div',{className:'flash flash--warning', innerHTML:'Invalid or outdated token!'},[]),document.getElementById('content'));
 					break;
@@ -789,7 +795,7 @@ color: #0a0;
 
             data[s].t = getTimestamp();
         }
-        if (ls.aliases != undefined && ls.aliases.length>0) {
+        /*if (ls.aliases != undefined) */{
             let aliaseParse = function(el) {
                 el.value = tagAliases(el.value, {legacy:true});
             };
