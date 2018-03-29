@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.12
+// @version      0.5.13
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -27,6 +27,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagDB0.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagShortAliases0.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/badgesDB0.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
@@ -178,6 +179,7 @@ color: #0a0;
                 {type:'checkbox', name:'Bigger search fields', parameter:'patchSearch'},
                 {type:'checkbox', name:'Deactive downvote if upvoted (and reverse)', parameter:'deactivateButtons'},
                 {type:'checkbox', name:'Hide images immediately', parameter:'fastHide'},
+                {type:'checkbox', name:'Old headers style', parameter:'oldHead'},
                 {type:'breakline'},
                 {type:'input', name:'Shrink comments and posts longer than (px)', parameter:'shrinkComms', validation:{type:'int',min:280, default:500}},
                 {type:'checkbox', name:'Button to shrink expanded posts', parameter:'shrinkButt'},
@@ -296,6 +298,10 @@ color: #0a0;
 	}
 	if (ls.fastHide == undefined) {
 		ls.fastHide = true;
+        write(ls);
+	}
+	if (ls.oldHead == undefined) {
+		ls.oldHead = true;
         write(ls);
 	}
 
@@ -1255,6 +1261,10 @@ color: #0a0;
 		}
 	}
 
+	//compress badges
+	function compressBadges(e) {
+	}
+
     //deactivateButtons
 	function deactivateButtons(e, inital, itsHide) {
         if (!ls.deactivateButtons) return;
@@ -1372,6 +1382,12 @@ color: #0a0;
         else for (let i=0; i<e.getElementsByClassName('media-box').length; i++) {
 			work(e.getElementsByClassName('media-box')[i]);
 		}
+	}
+
+	//canonical headers
+	function oldHeaders() {
+		let xs = `#content>.block>.block__header.flex:not(.image-metabar) {flex-wrap: wrap;}`;
+		document.head.appendChild(InfernoAddElem('style',{innerHTML:xs},[]))
 	}
 
     //target _blank
@@ -1834,6 +1850,7 @@ color: #0a0;
         }
     }
 
+	// contacts module
 	function contacts() {
 		if (document.querySelector('.js-burger-links a.header__link[href*="messages"]') == undefined) return;
 		let cc = document.querySelector('.js-burger-links a.header__link[href*="messages"]');
@@ -1916,15 +1933,20 @@ color: #0a0;
 				InfernoAddElem('a',{className:'flex__grow',style:'padding-left:1em',href:'/profiles/'+nameEncode(user.name)},[
 					InfernoAddElem('span',{innerHTML:user.name},[])
 				]),
+				InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
+					InfernoAddElem('span',{innerHTML:userbase.scratchpad[userbase.friendlist[i]]==undefined?'':
+						userbase.scratchpad[userbase.friendlist[i]].split('\n')[0].substring(0, 100)
+					},[])
+				]),
 				InfernoAddElem('a',{style:'padding:0 12px', href:'/messages/new?to_id='+user.id},[
 					InfernoAddElem('i',{className:'fa fa-envelope'},[]),
 					InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Send message'},[])
 				]),
 				InfernoAddElem('a',{style:'padding:0 12px', href:'/messages?with='+user.id},[
 					InfernoAddElem('i',{className:'fa fa-clock'},[]),
-					InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Conversations'},[])
+					InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Chat history'},[])
 				]),
-				InfernoAddElem('a',{className:'interaction--downvote',style:'padding:0 12px', events:[{t:'click',f:function(){removeUser(user)}}]},[
+				InfernoAddElem('a',{className:'interaction--downvote',style:'padding:0 12px', href:'javascript://', events:[{t:'click',f:function(){removeUser(user)}}]},[
 					InfernoAddElem('i',{className:'fa fa-trash-alt'},[]),
 					InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Remove'},[])
 				])
@@ -2053,6 +2075,7 @@ color: #0a0;
 	YDBSpoilersHelp();
     listRunInComms(document);
     if (ls.deactivateButtons) deactivateButtons(document, true);
+	if (ls.oldHead) oldHeaders();
 	commentButtons(document, true);
 	shrinkComms(document);
 	hiddenImg(document,true);
