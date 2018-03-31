@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.13
+// @version      0.5.14
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1486,7 +1486,7 @@ color: #0a0;
 
 		let getTimestamp = function(user, regular, simplyReturn) {
 			let nameEncode = function(name) {
-				return encodeURI(name.replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/\//g,'-fwslash-').replace(/\//g,'-bwslash-').replace(/ /g,'+'));
+				return encodeURI(name.replace(/\+/g,'-plus-').replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/\//g,'-fwslash-').replace(/\\/g,'-bwslash-').replace(/ /g,'+'));
 			};
 			let callback = function(req) {
 				try {
