@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.23
+// @version      0.5.24
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -871,7 +871,7 @@ color: #555;
     function preEnableColor() {
         if (settings.colorAccent &&
 			//https://derpicdn.net/media/2015/11/8/344630e545392fb6a9224d2.png
-			document.querySelector('.fa__text').innerHTML[0] < 'U'
+			!document.body.dataset.theme.startsWith('eq')
 		   ) {
             objects.colorAccent = addElem('div', {id:'_fs_colorAccent', className:'tag hidden', dataset:{tagCategory:settings.style}}, document.body);
             pub.isDark = isDarkF();
