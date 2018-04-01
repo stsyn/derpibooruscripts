@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.4
+// @version      0.5.5
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -708,18 +708,22 @@
 
     function updateEvents(elem, feed) {
         let obj = {};
+        try {
         obj.fcount = elem.getElementsByClassName('favourites')[0].innerHTML;
         obj.count = elem.getElementsByClassName('score')[0].innerHTML;
         obj.isFaved = (Boolean)(elem.querySelector('.interaction--fave.active'));
         obj.isUpvoted = (Boolean)(elem.querySelector('.interaction--upvote.active'));
         obj.isDownvoted = (Boolean)(elem.querySelector('.interaction--downvote.active'));
         obj.isHidden = (Boolean)(elem.querySelector('.interaction--hide.active'));
+        }
+        catch (e) {}
         feedzEvents[feed.internalId][elem.dataset.imageId] = obj;
     }
 
     function applyEvents(elem,feed) {
         let obj = feed.eventCont[elem.dataset.imageId];
         if (obj == undefined) return;
+        try {
         elem.getElementsByClassName('favourites')[0].innerHTML = obj.fcount;
         elem.getElementsByClassName('score')[0].innerHTML = obj.count;
         if (obj.isFaved) elem.querySelector('.interaction--fave').classList.add('active');
@@ -730,6 +734,8 @@
         else elem.querySelector('.interaction--downvote').classList.remove('active');
         if (obj.isHidden) elem.querySelector('.interaction--hide').classList.add('active');
         else elem.querySelector('.interaction--hide').classList.remove('active');
+        }
+        catch (e) {}
     }
 
 	function parse(r, id) {
