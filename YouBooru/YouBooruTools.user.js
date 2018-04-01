@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.14
+// @version      0.5.15
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1278,16 +1278,17 @@ color: #0a0;
                     deactivateButtons(el,false, true);
                 });
             }
+            try{
             if (el.querySelector('.media-box__header .interaction--upvote.active') != undefined || el.querySelector('.media-box__header .interaction--fave.active') != undefined) {
-				el.querySelector('.media-box__header .interaction--downvote').classList.add('hidden');
 				el.querySelector('.media-box__header .interaction--hide').classList.add('hidden');
+				el.querySelector('.media-box__header .interaction--downvote').classList.add('hidden');
 			}
             else {
-				el.querySelector('.media-box__header .interaction--downvote').classList.remove('hidden');
 				el.querySelector('.media-box__header .interaction--hide').classList.remove('hidden');
+				el.querySelector('.media-box__header .interaction--downvote').classList.remove('hidden');
             }
 
-			if (el.querySelector('.media-box__header .interaction--downvote.active') != undefined || (el.querySelector('.media-box__header .interaction--hide.active') != undefined ^ itsHide)) {
+			if (el.querySelector('.media-box__header .interaction--hide.active') != undefined || (el.querySelector('.media-box__header .interaction--downvote.active') != undefined ^ itsHide)) {
 				el.querySelector('.media-box__header .interaction--upvote').classList.add('hidden');
 				el.querySelector('.media-box__header .interaction--fave').classList.add('hidden');
 			}
@@ -1295,6 +1296,8 @@ color: #0a0;
 				el.querySelector('.media-box__header .interaction--upvote').classList.remove('hidden');
 				el.querySelector('.media-box__header .interaction--fave').classList.remove('hidden');
             }
+            }
+            catch (e) {}
         };
 
         let soloWork = function(el) {
