@@ -894,6 +894,7 @@ color: #555;
     }
 
     function applyColor() {
+        if (document.body.dataset.theme.startsWith('eq')) return;
         let r = function(x) {
             styles.colorAccent = styles.colorAccent.replace(new RegExp(x,'g'), 'rgb('+colors[x][0]+','+colors[x][1]+','+colors[x][2]+')');
         };
@@ -913,6 +914,7 @@ color: #555;
     }
 
     function enableColor(nrw) {
+        if (document.body.dataset.theme.startsWith('eq')) return;
         colors.isDark = isDarkF();
 
         colors._fs_color = getComputedStyle(objects.colorAccent).color;
