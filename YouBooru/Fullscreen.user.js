@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.5.24
+// @version      0.6.0
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -66,23 +66,24 @@ margin:0;
 padding:0;
 padding-left:0 !important;
 }
-#content>.block:first-child>.block__header a.js-rand,
-#content>.block:first-child>.block__header a.js-up,
-#content>.block:first-child>.block__header a.js-prev i,
-#content>.block:first-child>.block__header a.js-next i{
+.layout--narrow > h4 {display:none}
+#content>.block:first-child>* a.js-rand,
+#content>.block:first-child>* a.js-up,
+#content>.block:first-child>* a.js-prev i,
+#content>.block:first-child>* a.js-next i{
 display:none;
 }
-#content>.block:first-child>.block__header a.js-prev,
-#content>.block:first-child>.block__header a.js-next{
+#content>.block:first-child>* a.js-prev,
+#content>.block:first-child>* a.js-next{
 position:fixed;
 top:0;
 height:100%;
 width:10%;
 }
-#content>.block:first-child>.block__header a.js-prev {
+#content>.block:first-child>* a.js-prev {
 left:0;
 }
-#content>.block:first-child>.block__header a.js-next {
+#content>.block:first-child>* a.js-next {
 right:0;
 }
 .center--layout--flex .image-show-container {
@@ -139,6 +140,7 @@ display:block;
 }
 #_ydb_fs_disable {
 left:0;
+top:0;
 position:fixed;
 z-index:202;
 display:inline-block !important;
@@ -150,8 +152,8 @@ line-height: 205%;
 opacity:.7
 }
 
-#content>.block:first-child>.block__header,
-#content>.block:first-child>.block__header a:not(.active){
+#content>.block:first-child>*,
+#content>.block:first-child>* a:not(.active){
 background:none;
 }
 
@@ -176,10 +178,64 @@ width:10px;
 right:3px
 }
 `;
+    styles.keepVanila = `
+#content>.block:first-child>*>div {
+text-align:center;
+width:100%;
+font-size:150%;
+line-height:175%;
+z-index:2;
+}
+
+#content>.block:first-child>*>.interaction--comments:hover,
+#_fs_main:hover{
+color:#e0e0e0;
+}
+
+#content>.block:first-child>*>.block__header__title:hover {
+color:#000;
+transition-duration: 0.1s;
+transition-timing-function: ease-in-out;
+}
+
+#content>.block:first-child>.block__header--sub .image_uploader,
+#content>.block:first-child>.block__header--sub time,
+#content>.block:first-child>* [class*="js-notification-Image"],
+#content>.block:first-child>* [href*="/related"],
+#content>.block:first-child>* [href*="/view/"],
+#content>.block:first-child>* [href*="/download/"],
+.image-metabar>div:nth-child(3),
+.image-metabar span[data-click-preventdefault="true"]{
+display:none;
+}
+
+
+#content>.block:first-child>* a.ydb_top_right_link {
+right:0;
+position: fixed;
+z-index:202;
+opacity:0.3;
+display:inline;
+top: 0;
+}
+.image-size{
+right:0;
+position:absolute;
+z-index:202;
+opacity:0.3;
+display:inline;
+top: 2.2em;
+}
+
+#content>.block:first-child>* [href*="/download/"]:hover {
+opacity:.7;
+}
+`;
     styles.base = `
 #content>.block:first-child{
 top:0;
 height:auto;
+background:none;
 width:100%;
 }
 
@@ -197,7 +253,7 @@ line-height:175%;
 z-index:2;
 }
 
-#content>.block:first-child>.block__header>.block__header__title {
+#content>.block:first-child>*>.block__header__title {
 font-size:100%;
 line-height:100%;
 transition-duration: 0.1s;
@@ -226,8 +282,7 @@ transition-timing-function: ease-in-out;
 #content>.block:first-child>.block__header [class*="js-notification-Image"],
 #content>.block:first-child>.block__header [href*="/related"],
 #content>.block:first-child>.block__header [href*="/view/"],
-#content>.block:first-child>.block__header [href*="/download/"],
-#content>.block:first-child>.block__header .block__header__dropdown-tab {
+#content>.block:first-child>.block__header [href*="/download/"] {
 display:none;
 }
 
@@ -303,8 +358,7 @@ top:0;
 `;
 
     styles.hider = `
-._ydb_fs_static #content>.block:first-child>.block__header,
-._ydb_fs_static #content>.block:first-child>.block__header--sub,
+._ydb_fs_static #content>.block:first-child>*,
 ._ydb_fs_static ._fs_down{
 opacity:0;
 transition:.5s;
@@ -480,12 +534,16 @@ color: #555;
     }
 
     if (state.enabled == undefined) state.enabled = false;
-	if (state.NU1 == undefined) {
+	/*if (state.NU1 == undefined) {
 		state.enabled = false;
 		state.NU1 = true;
 		write();
+	}*/
+	if (state.NU1) {
+		settings.button = 'Download (short filename)';
+		state.NU1 = false;
+		write();
 	}
-
 
     if (settings.extended == undefined) settings.extended = true;
     if (settings.scrollSpeed == undefined) settings.scrollSpeed = 20;
@@ -495,7 +553,7 @@ color: #555;
     if (settings.commentLink == undefined) settings.commentLink = true;
     if (settings.colorAccent == undefined) settings.colorAccent = false;
     if (settings.style == undefined) settings.style = 'rating';
-    if (settings.button == undefined) settings.button = 'Download this image at full res with a short filename';
+    if (settings.button == undefined) settings.button = 'Download (short filename)';
     settings.scrollSpeed = parseInt(settings.scrollSpeed);
     settings.scrollMultiply = parseInt(settings.scrollMultiply);
     settings.staticTime = parseInt(settings.staticTime);
@@ -511,6 +569,7 @@ color: #555;
                 {type:'input', name:'Scroll speed', parameter:'scrollSpeed', validation:{type:'int',min:5, max:100, default:20}},
                 {type:'input', name:'Scroll multiplier', parameter:'scrollMultiply', validation:{type:'float',min:1, max:10, default:2}},
                 {type:'checkbox', name:'Remove href from comments link', parameter:'commentLink'},
+                {type:'checkbox', name:'New experimental UI', parameter:'new'},
                 {type:'breakline'},
                 {type:'checkbox', name:'Autohide UI', parameter:'staticEnabled'},
                 {type:'input', name:'Autohide timeout', parameter:'staticTime', validation:{type:'int',min:0, max:600, default:50}},
@@ -519,7 +578,7 @@ color: #555;
                     {name:'Pink', value:'oc'},
                     {name:'Red', value:'error'},
                     {name:'Orange', value:'spoiler'},
-                    {name:'Yellow', value:'episode'},
+                    {name:'Yellow', value:'content-official'},
                     {name:'Green', value:''},
                     {name:'Cyan', value:'character'},
                     {name:'Blue', value:'rating'},
@@ -529,10 +588,10 @@ color: #555;
                 {type:'checkbox', name:'Match site palette', parameter:'colorAccent'},
                 {type:'select', name:'Top right button', parameter:'button', values:[
                     {name:'none', value:''},
-                    {name:'View', value:'View this image at full res'},
-                    {name:'VS', value:'View this image at full res with a short filename'},
-                    {name:'Download', value:'Download this image at full res with tags in the filename'},
-                    {name:'DS', value:'Download this image at full res with a short filename'}
+                    {name:'View (with tags)', value:'View (tags in filename)'},
+                    {name:'View', value:'View (short filename)'},
+                    {name:'Download (with tags)', value:'Download (tags in filename)'},
+                    {name:'Download', value:'Download (short filename)'}
                 ]}
             ]
         };
@@ -557,6 +616,7 @@ color: #555;
             append('base');
             append('ex');
         }
+        if (!settings.new) append('keepVanila');
         if (settings.staticEnabled) append('hider');
     }
 
@@ -607,7 +667,7 @@ color: #555;
     }
 
     function init() {
-        objects.disable = addElem('a', {id:'_ydb_fs_disable', className:'', style:'display:none', innerHTML:'Disable', events:[{t:'click',f:function() {disable();}}]}, document.querySelector('#content>.block:first-child>.block__header'));
+        objects.disable = addElem('a', {id:'_ydb_fs_disable', className:'', style:'display:none', innerHTML:'Disable', events:[{t:'click',f:function() {disable();}}]},  document.querySelector('#content>.block:first-child'));
         objects.enable = addElem('a', {id:'_ydb_fs_enable', className:'header__link', innerHTML:'Fullscreen', events:[{t:'click',f:function() {enable(true);}}]}, document.body);
         document.getElementsByClassName('header__force-right')[0].insertBefore(objects.enable, document.getElementsByClassName('header__force-right')[0].childNodes[0]);
     }
@@ -869,10 +929,7 @@ color: #555;
     }
 
     function preEnableColor() {
-        if (settings.colorAccent &&
-			//https://derpicdn.net/media/2015/11/8/344630e545392fb6a9224d2.png
-			!document.body.dataset.theme.startsWith('eq')
-		   ) {
+        if (settings.colorAccent) {
             objects.colorAccent = addElem('div', {id:'_fs_colorAccent', className:'tag hidden', dataset:{tagCategory:settings.style}}, document.body);
             pub.isDark = isDarkF();
 
@@ -894,7 +951,6 @@ color: #555;
     }
 
     function applyColor() {
-        if (document.body.dataset.theme.startsWith('eq')) return;
         let r = function(x) {
             styles.colorAccent = styles.colorAccent.replace(new RegExp(x,'g'), 'rgb('+colors[x][0]+','+colors[x][1]+','+colors[x][2]+')');
         };
@@ -914,7 +970,6 @@ color: #555;
     }
 
     function enableColor(nrw) {
-        if (document.body.dataset.theme.startsWith('eq')) return;
         colors.isDark = isDarkF();
 
         colors._fs_color = getComputedStyle(objects.colorAccent).color;
@@ -964,14 +1019,19 @@ color: #555;
             ])
         ]);
 
-        document.querySelector('#content>.block:first-child>.block__header>div:nth-child(2)').insertBefore(objects.mainButton,document.getElementsByClassName('interaction--fave')[0]);
-        document.querySelectorAll('#content>div')[3].appendChild(document.getElementById('image_options_area'));
-        popUps.coms.appendChild(document.querySelectorAll('#content>div')[3]);
+        document.querySelector('.image-metabar').childNodes[1].insertBefore(objects.mainButton,document.querySelector('.interaction--fave'));
+        //document.querySelectorAll('#content>div')[3].appendChild(document.getElementById('image_options_area'));
+        popUps.coms.appendChild(document.getElementById('js-comment-form'));
+        popUps.coms.appendChild(document.getElementById('comments'));
         //popUps.downContainer.appendChild(document.querySelector('#content>.block:first-child').cloneNode(true));
         //if (popUps.downContainer.childNodes[0].classList.contains('center--layout')) popUps.downContainer.childNodes[0].style.textAlign='center';
         //popUps.downContainer.childNodes[0].classList.add('layout--narrow');
+		if (!settings.new) {
+			document.querySelector('.block__header--user-credit > div').classList.add('block__content');
+			popUps.downContainer.appendChild(document.querySelector('.block__header--user-credit > div'));
+		}
         popUps.downContainer.appendChild(document.querySelectorAll('#content>div')[2]);
-        popUps.downContainer.appendChild(popUps.coms.querySelector('#image_options_area'));
+        //popUps.downContainer.appendChild(popUps.coms.querySelector('#image_options_area'));
 
         document.querySelector('a[title="'+settings.button+'"]').classList.add('ydb_top_right_link');
 
@@ -991,14 +1051,14 @@ color: #555;
                 InfernoAddElem('i',{className:'fa fa-random'},[]),
                 InfernoAddElem('span',{innerHTML:' Random'},[])
             ]),
-            document.querySelectorAll('#content>.block:first-child>.block__header [class*="js-notification"')[0].cloneNode(true),
-            document.querySelectorAll('#content>.block:first-child>.block__header [class*="js-notification"')[1].cloneNode(true),
-            document.querySelector('#content>.block:first-child>.block__header .dropdown').cloneNode(true),
-            document.querySelector('#content>.block:first-child>.block__header [href*="/related/"').cloneNode(true),
-            document.querySelector('#content>.block:first-child>.block__header>div:nth-child(4)').cloneNode(true)
+            document.querySelectorAll('#content>.block:first-child>* [class*="js-notification"')[0].cloneNode(true),
+            document.querySelectorAll('#content>.block:first-child>* [class*="js-notification"')[1].cloneNode(true),
+            document.querySelector('#content>.block:first-child>* .dropdown').cloneNode(true),
+            document.querySelector('#content>.block:first-child>* [href*="/related/"').cloneNode(true),
+            document.querySelector('#content>.block:first-child>*>div:nth-child(4)').cloneNode(true)
         ]);
 		document.querySelector('#_ydb_fs_mainPopup>.block__header>div:last-child').style.display = 'inline';
-		document.querySelector('#_ydb_fs_mainPopup>.block__header>div>.image-size').style.display = 'none';
+		//document.querySelector('#_ydb_fs_mainPopup>.block__header>div>.image-size').style.display = 'none';
         popUps.main.appendChild(document.querySelector('footer'));
 
         objects.image = document.getElementById('image-display');
@@ -1039,6 +1099,7 @@ color: #555;
         remove('base');
         remove('ex');
         remove('hider');
+        remove('keepVanila');
         unscale();
 
         objects.dcontainer.removeEventListener("DOMNodeInserted",loadedImgFetch);
@@ -1049,18 +1110,23 @@ color: #555;
         document.body.removeEventListener('mousemove',mouseListener);
         objects.dcontainer.removeEventListener("wheel", wheelListener);
 
-        document.querySelector('#content>.block:first-child>.block__header>div:nth-child(2)').removeChild(objects.mainButton);
+        objects.mainButton.parentNode.removeChild(objects.mainButton);
 
+		if (!settings.new) {
+			popUps.downContainer.childNodes[0].classList.remove('block__content');
+			document.getElementsByClassName('block__header--user-credit')[0].insertBefore(popUps.downContainer.childNodes[0],document.getElementsByClassName('image-size')[0]);
+		}
         document.getElementById('content').appendChild(popUps.downContainer.childNodes[0]);
-        document.getElementById('content').appendChild(popUps.downContainer.childNodes[0]);
-        document.getElementById('content').appendChild(popUps.coms.getElementsByTagName('div')[0]);
+		document.querySelector('#content>.layout--narrow').appendChild(popUps.coms.getElementsByTagName('form')[0]);
+		document.querySelector('#content>.layout--narrow').appendChild(popUps.coms.getElementsByTagName('div')[0]);
+        //document.getElementById('content').appendChild(popUps.coms.getElementsByTagName('div')[0]);
         document.querySelector('a[title="'+settings.button+'"]').classList.remove('ydb_top_right_link');
 
         document.getElementById('container').insertBefore(document.querySelector('nav.header.header--secondary'),document.getElementById('container').firstChild);
         document.getElementById('container').insertBefore(document.querySelector('header'),document.getElementById('container').firstChild);
         document.getElementById('container').appendChild(document.querySelector('footer'));
 
-        document.querySelectorAll('#content>div')[4].insertBefore(document.getElementById('image_options_area'), document.querySelectorAll('#content>div')[4].childNodes[0]);
+        //document.querySelectorAll('#content>div')[4].insertBefore(document.getElementById('image_options_area'), document.querySelectorAll('#content>div')[4].childNodes[0]);
         pub.enabled = false;
         state.enabled = false;
 
