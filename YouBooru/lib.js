@@ -5,7 +5,7 @@ function addElem(tag, values, parent) {
 }
 
 function ChildsAddElem(tag, values,parent, childs) {
-    var t = InfernoAddElem(tag, values, []);
+    var t = InfernoAddElem(tag, values, childs);
 	parent.appendChild(t);
 	return t;
 }
