@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.5
+// @version      0.5.6
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -763,7 +763,7 @@
         feedzEvents[r.feed.internalId] = {};
 		if (pc === null) c.innerHTML = 'Empty feed';
 		else {
-			if (r.feed.postprocessors != undefined && r.feed.postprocessors.length != undefined) {
+			if (r.feed.postprocessors != undefined && r.feed.postprocessors.length != undefined && window._YDB_public.funcs.feedPP != undefined) {
 				for (let i=0; i<r.feed.postprocessors.length; i++) {
 					if (window._YDB_public.funcs.feedPP[r.feed.postprocessors[i]] != undefined) window._YDB_public.funcs.feedPP[r.feed.postprocessors[i]](r.feed);
 				}
