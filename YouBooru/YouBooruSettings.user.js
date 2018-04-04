@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.5
+// @version      0.9.6
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -700,7 +700,7 @@
 			catch(e) {console.log('Error rendering '+k+'. '+e);}
 		}
 
-		if (listCont != undefined && !s2.hidden) addElem('div', {classList:'block__content alternating-color', innerHTML:s2.name+' ver. '+s2.version}, listCont);
+		if (listCont != undefined && !s2.hidden) addElem('div', {className:'block__content alternating-color', innerHTML:s2.name+' ver. '+s2.version}, listCont);
 	}
 
 	function injectLegacyModule(k, editCont, listCont) {
@@ -713,7 +713,7 @@
 			catch(e) {console.log('Error rendering '+k.name+'. '+e);}
 		}
 
-		if (listCont != undefined && !k.hidden) addElem('div', {classList:'block__content alternating-color', innerHTML:k.name+' ver. '+k.version}, listCont);
+		if (listCont != undefined && !k.hidden) addElem('div', {className:'block__content alternating-color', innerHTML:k.name+' ver. '+k.version}, listCont);
 	}
 
 	function listModules() {
