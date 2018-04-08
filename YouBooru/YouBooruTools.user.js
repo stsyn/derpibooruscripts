@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.15
+// @version      0.5.16
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -405,97 +405,15 @@ color: #0a0;
         return y;
     }
 
-	function goodParseIngnoreParentheses(x) {
-		let yx = {};
-        yx.orig = x;
-        x = x.replace(/\|\|/g, ', ');
-        x = x.replace(/\&\&/g, ', ');
-        //x = x.replace(/^\-/g, ' ');
-        //x = x.replace(/^\!/g, ' ');
-        //x = x.replace(/[ ,\(]\-/g, function(str){return str[0]+' ';});
-        //x = x.replace(/[ ,\(]!/g, function(str){return str[0]+' ';});
-        x = x.replace(/[ ,\(]\*/g, function(str){return str[0]+' ';});
-        x = x.replace(/\"/g, ' ');
-        x = x.replace(/\~/g, ',');
-        x = x.replace(/\^/g, ',');
-        x = x.replace(new RegExp(' OR ','g'), ',   ');
-        x = x.replace(new RegExp(' AND ','g'), ',    ');
-        x = x.replace(new RegExp(' NOT ','g'), ',    ');
-        x = x.replace(new RegExp('^NOT ','g'), '    ');
-        let y = x.split(',');
-		let afix2 = 0;
-		let pcounter = 0;
-		let pstarted = false;
-        for (let i=0; i<y.length; i++) {
-			let c = y[i].length;
-			y[i] = y[i].replace(/^ +/g,'');
-			let d = c-y[i].length;
-			afix2+=d;
-			let j = 0;
-			while (y[i][j] == '(' || y[i][j] == ' ' || y[i][j] == '-') {
-				if (y[i][j] == '(') pcounter++;
-				j++;
-			}
-			j = y[i].length-1;
-			while (y[i][j] == ')' || y[i][j] == ' ') {
-				if (y[i][j] == ')') pcounter--;
-				j--;
-			}
-
-			let lx=0;
-			if (pcounter>0 || pstarted) {
-				if (!pstarted) {
-					let tag = {};
-					tag.offset = afix2;
-					tag.length = y[i].length;
-					lx = 1+tag.length;
-					tag.v = y[i];
-					y[i] = tag;
-					pstarted = true;
-				}
-				else {
-					let a = y[i-1].offset+y[i-1].length;
-					y[i-1].v += yx.orig.substr(a, afix2-a);
-					y[i-1].v += y[i];
-					y[i-1].length +=y[i].length;
-					lx = 1+y[i].length;
-					y[i-1].length +=afix2-a;
-					y.splice(i, 1);
-					i--;
-					if (pcounter == 0) {
-						pstarted = false;
-					}
-				}
-			}
-			else {
-				pstarted = false;
-				let tag = {};
-				tag.offset = afix2;
-				tag.length = y[i].length;
-				lx = 1+y[i].length;
-				let s1 = y[i].replace(/^ +/g,'');
-				tag.offset += y[i].length-s1.length;
-				tag.length -= y[i].length-s1.length;
-				let s2 = s1.replace(/ +$/g,'');
-				tag.length -= s1.length-s2.length;
-				tag.v = s2;
-				y[i] = tag;
-			}
-			afix2 += lx;
-        }
-        yx.temp = x;
-        yx.tags = y;
-        return yx;
-	}
-
     function goodParse(x) {
         let yx = {};
         yx.orig = x;
         x = x.replace(/\|\|/g, ', ');
         x = x.replace(/\&\&/g, ', ');
         x = x.replace(/^\(/g, ' ');
-        while (x.indexOf('(') >= 0) x = x.replace(/([^\\\(])\(/g, '$1 ');
-        while (x.indexOf(')') >= 0) x = x.replace(/([^\\\)])\)/g, '$1 ');
+        //while (/^(\s*)(\()/g.test(x)) x = x.replace(/^(\s*)(\()/g, '$1 ');
+        while (/([^\\\(])\(/g.test(x)) x = x.replace(/([^\\\(])\(/g, '$1 ');
+        while (/([^\\\)])\)/g.test(x)) x = x.replace(/([^\\\)])\)/g, '$1 ');
         x = x.replace(/^\-/g, ' ');
         x = x.replace(/^\!/g, ' ');
         x = x.replace(/([ ,\(])\-/g, '$1 ');
@@ -1263,6 +1181,27 @@ color: #0a0;
 
 	//compress badges
 	function compressBadges(e) {
+		let bd = getBadgesImplications();
+		let x = e.querySelectorAll('.badges:not(._ydb_b_checked)');
+		for (let i=0; i<x.length; i++) {
+			for (let j=0; j<x[i].getElementsByClassName('badge').length; j++) {
+				let y = x[i].getElementsByClassName('badge')[j];
+				let bname = y.getElementsByTagName('img')[0].title.split('-')[0].trim();
+				if (bd.normal[bname] != undefined) {
+					for (let k=0; k<bd.normal[bname].length; k++) {
+						let ax = x[i].querySelector('img[alt^="'+bd.normal[bname][k]+'"]');
+						if (ax != undefined) ax.parentNode.classList.add('hidden');
+					}
+				}
+				if (bd.extreme[bname] != undefined) {
+					for (let k=0; k<bd.extreme[bname].length; k++) {
+						let ax = x[i].querySelector('img[alt^="'+bd.extreme[bname][k]+'"]');
+						if (ax != undefined) ax.parentNode.classList.add('hidden');
+					}
+				}
+			}
+			x[i].classList.add('_ydb_b_checked');
+		}
 	}
 
     //deactivateButtons
@@ -2051,6 +1990,7 @@ color: #0a0;
 		urlSearch(targ);
 		linksPatch(targ);
 		showUploader(targ);
+		compressBadges(targ);
 		setTimeout(function() {shrinkComms(targ)},200);
 		personal_titles_have_to_be_24_characters_long(targ);
 	}
@@ -2081,6 +2021,7 @@ color: #0a0;
 	if (ls.oldHead) oldHeaders();
 	commentButtons(document, true);
 	shrinkComms(document);
+	compressBadges(document);
 	hiddenImg(document,true);
 	getArtists();
 	resizeEverything(true);
