@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.6
+// @version      0.9.7
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -110,7 +110,14 @@
 		};
 		if (window._YDB_public.funcs == undefined) window._YDB_public.funcs = {};
 		window._YDB_public.funcs.callWindow = callWindow;
-		window._YDB_public.funcs.backgroundBackup = backgroundBackup;
+		if (document.body.dataset.theme.startsWith('eq')) {
+			window._YDB_public.funcs.backgroundBackup = function() {
+				console.log('Comrade, using presonal settings in Glimmerbooru is forbidden! Our state already set you best possible setttings!');
+			};
+		}
+		else {
+			window._YDB_public.funcs.backgroundBackup = backgroundBackup;
+		}
 		window._YDB_public.funcs.log = debugLogger;
 		window._YDB_public.funcs.getNonce = function() {return settings.nonce;};
 	}
@@ -422,7 +429,7 @@
 				req.send(new FormData(s.querySelector('form')));
 			};
 			get();
-		}
+		};
 
 		let callbackS = function (r) {
 			let x = addElem('div',{style:'display:none',innerHTML:r.responseText},document.body);
@@ -700,7 +707,7 @@
 			catch(e) {console.log('Error rendering '+k+'. '+e);}
 		}
 
-		if (listCont != undefined && !s2.hidden) addElem('div', {className:'block__content alternating-color', innerHTML:s2.name+' ver. '+s2.version}, listCont);
+		if (listCont != undefined && !s2.hidden) addElem('div', {className:'block__content alternating-color', innerHTML:s2.name+' v. '+s2.version}, listCont);
 	}
 
 	function injectLegacyModule(k, editCont, listCont) {
@@ -713,7 +720,7 @@
 			catch(e) {console.log('Error rendering '+k.name+'. '+e);}
 		}
 
-		if (listCont != undefined && !k.hidden) addElem('div', {className:'block__content alternating-color', innerHTML:k.name+' ver. '+k.version}, listCont);
+		if (listCont != undefined && !k.hidden) addElem('div', {className:'block__content alternating-color', innerHTML:k.name+' v. '+k.version}, listCont);
 	}
 
 	function listModules() {
@@ -817,8 +824,14 @@
 
 		//postloading
 		ChildsAddElem('div', {className:'block__header'}, cont, [
-			InfernoAddElem('a', {innerHTML:'Backup', target:'_blank', href:'/pages/yourbooru?backup'}),
-			InfernoAddElem('a', {innerHTML:'Logs', target:'_blank', href:'/pages/yourbooru?logs'})
+			InfernoAddElem('a', {target:'_blank', href:'/pages/yourbooru?help'}, [
+				InfernoAddElem('i', {className:'fa fa-question'}, []),
+				InfernoAddElem('span', {innerHTML:' Help'}, [])
+			]),
+			InfernoAddElem('a', {target:'_blank', href:'https://ko-fi.com/C0C8BVXS'}, [
+				InfernoAddElem('i', {className:'fa fa-heart'}, []),
+				InfernoAddElem('span', {innerHTML:' Support'}, [])
+			])
 		]);
 		addElem('div', {className:'block', id:'_ydb_error_cont'}, cont);
 
@@ -909,11 +922,18 @@
 		document.querySelector('#content h1').innerHTML = 'Backup';
 		var c = document.querySelector('#content .walloftext');
 
-		var s = '';
-		c.innerHTML = 'Copy content from that textbox and save it somewhere.'+
-			'<br>If you want to "restore" backup:<br>1. Open developer console (usually F12) while browsing derpibooru;<br>2. Copypaste saved code inside;<br>3. Press Enter.';
+		var s = 'Old way of backup is outdated and now longer supported. You still may load old backups, though, by pasting it in development console of your browser. <br>'+
+			'Currently YDB automatically stores backups on Derpibooru server as extra content to "Watchlist filter string" (if you enabled that feature, of course). '+
+			'Also all your settings will be automatically synchronized between all sessions in your account, where YourBooru installed. '+
+			'<br><br>If you need to run session without synchronization, <b>directly</b> open settings pages, without visiting other ones (even main page). '+
+			'<br><br>If you want to backup manually, do the followings:<br>'+
+			'1. Enable synchronization;<br>2. Change something small in YourBooru settings to make sure that settings will be backuped;<br>3. Save settings;<br>4. Copy YDB content from "Watch list filter string".<br><br>To restore backup:<br>'+
+			'1. Copy saved content to "Watchlist filter string";<br>2. Save settings;<br>3. Click "Synch now" in YourBooru tab.';
+		c.innerHTML = s;
+		//c.innerHTML = 'Copy content from that textbox and save it somewhere.'+
+		//	'<br>If you want to "restore" backup:<br>1. Open developer console (usually F12) while browsing derpibooru;<br>2. Copypaste saved code inside;<br>3. Press Enter.';
 		//loading, stage 1
-		if (window._YDB_public != undefined) {
+		/*if (window._YDB_public != undefined) {
 			if (window._YDB_public.settings != undefined) {
 				for (let k in window._YDB_public.settings) {
 					if (k!='settings') {
@@ -944,9 +964,9 @@
 			catch (e) {
 				console.log('Error JSON processing "'+document.getElementsByClassName('_YDB_reserved_register')[i].dataset.value+'" '+e);
 			}
-		}
+		}*/
 
-		addElem('textarea',{className:'input',readonly:true,value:s,style:'width:100%; height:20em;'}, c);
+		//addElem('textarea',{className:'input',readonly:true,value:s,style:'width:100%; height:20em;'}, c);
 	}
 
 	function yourbooruPage() {
@@ -956,6 +976,7 @@
 		else {
 			let u = x.split('?');
 			if (u[0] == "backup") setTimeout(YB_backup, 100);
+			else if (u[0] == "help") setTimeout(YB_backup, 100);
 			else if (u[0] == "logs") setTimeout(YB_logs, 100);
 			else if (u[0] == "synch") setTimeout(function() {
 				document.querySelector('#content h1').innerHTML = 'Synchronizing...';
@@ -992,7 +1013,7 @@
 	};
 
 	addElem('style',{type:'text/css',innerHTML:windows},document.head);
-	if (settings.timestamp+21600 < parseInt(Date.now()/1000) && location.pathname != "/settings") getData();
+	if (settings.timestamp+21600 < parseInt(Date.now()/1000) && location.pathname != "/settings" && !(document.body.dataset.theme.startsWith('eq'))) getData();
 	if (location.pathname == "/settings") setTimeout(settingPage, 50);
 	else setTimeout(listModules, 50);
 	if (location.pathname == "/pages/yourbooru") yourbooruPage();
