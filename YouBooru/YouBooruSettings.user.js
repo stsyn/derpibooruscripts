@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.7
+// @version      0.9.8
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -105,7 +105,12 @@
 				{type:'buttonLink', name:'Synch now', href:'/pages/yourbooru?synch'},
 				{type:'breakline'},
 				{type:'breakline'},
-				{type:'input', name:'Debug log length:', parameter:'debugLength', validation:{type:'int',min:0,max:500, default:200}}
+				{type:'input', name:'Debug log length:', parameter:'debugLength', validation:{type:'int',min:0,max:500, default:200}},
+				{type:'select', name:'Log level', parameter:'debugLevel', values:[
+					{name:'Errors', value:2},
+					{name:'Score', value:1},
+					{name:'Verbose', value:0}
+				]}
 			]
 		};
 		if (window._YDB_public.funcs == undefined) window._YDB_public.funcs = {};
@@ -930,43 +935,6 @@
 			'1. Enable synchronization;<br>2. Change something small in YourBooru settings to make sure that settings will be backuped;<br>3. Save settings;<br>4. Copy YDB content from "Watch list filter string".<br><br>To restore backup:<br>'+
 			'1. Copy saved content to "Watchlist filter string";<br>2. Save settings;<br>3. Click "Synch now" in YourBooru tab.';
 		c.innerHTML = s;
-		//c.innerHTML = 'Copy content from that textbox and save it somewhere.'+
-		//	'<br>If you want to "restore" backup:<br>1. Open developer console (usually F12) while browsing derpibooru;<br>2. Copypaste saved code inside;<br>3. Press Enter.';
-		//loading, stage 1
-		/*if (window._YDB_public != undefined) {
-			if (window._YDB_public.settings != undefined) {
-				for (let k in window._YDB_public.settings) {
-					if (k!='settings') {
-						if (window._YDB_public.settings[k] != undefined && window._YDB_public.settings[k].s != undefined) {
-							let ss;
-							try {
-								ss = localStorage[window._YDB_public.settings[k].container];
-								s+='localStorage.'+window._YDB_public.settings[k].container+'=\''+ss+'\';\n';
-							}
-							catch (ex) {console.log('Warning: '+k+' has empty storage!');}
-						}
-					}
-				}
-			}
-		}
-
-		//loading, stage 2
-		for (let i=0; i<document.getElementsByClassName('_YDB_reserved_register').length; i++) {
-			try {
-				let k = JSON.parse(document.getElementsByClassName('_YDB_reserved_register')[i].dataset.value);
-				let ss;
-				try {
-					ss = localStorage[k.container];
-					s+='localStorage.'+k.container+'=\''+ss+'\';\n';
-				}
-				catch (ex) {console.log('Warning: '+k.name+' has empty storage!');}
-			}
-			catch (e) {
-				console.log('Error JSON processing "'+document.getElementsByClassName('_YDB_reserved_register')[i].dataset.value+'" '+e);
-			}
-		}*/
-
-		//addElem('textarea',{className:'input',readonly:true,value:s,style:'width:100%; height:20em;'}, c);
 	}
 
 	function yourbooruPage() {
@@ -1013,7 +981,10 @@
 	};
 
 	addElem('style',{type:'text/css',innerHTML:windows},document.head);
-	if (settings.timestamp+21600 < parseInt(Date.now()/1000) && location.pathname != "/settings" && !(document.body.dataset.theme.startsWith('eq'))) getData();
+	if (settings.timestamp+21600 < parseInt(Date.now()/1000) && location.pathname != "/settings") {
+		settings.nonce = parseInt(Math.random()*Number.MAX_SAFE_INTEGER);
+		getData();
+	}
 	if (location.pathname == "/settings") setTimeout(settingPage, 50);
 	else setTimeout(listModules, 50);
 	if (location.pathname == "/pages/yourbooru") yourbooruPage();
