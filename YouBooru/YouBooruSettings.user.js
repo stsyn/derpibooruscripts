@@ -983,6 +983,7 @@
 	addElem('style',{type:'text/css',innerHTML:windows},document.head);
 	if (settings.timestamp+21600 < parseInt(Date.now()/1000) && location.pathname != "/settings") {
 		settings.nonce = parseInt(Math.random()*Number.MAX_SAFE_INTEGER);
+		write();
 		getData();
 	}
 	if (location.pathname == "/settings") setTimeout(settingPage, 50);
