@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.16
+// @version      0.5.17
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -163,7 +163,7 @@ color: #0a0;
         if (window._YDB_public.settings == undefined) window._YDB_public.settings = {};
 		window._YDB_public.settings.toolsUB = {
             name:'Tools (Userbase)',
-            container:'_ydb_toolsUB',
+            container:'_ydb_toolsUBLocal',
             version:sversion,
 			hidden:true
 		};
@@ -180,6 +180,9 @@ color: #0a0;
                 {type:'checkbox', name:'Deactive downvote if upvoted (and reverse)', parameter:'deactivateButtons'},
                 {type:'checkbox', name:'Hide images immediately', parameter:'fastHide'},
                 {type:'checkbox', name:'Old headers style', parameter:'oldHead'},
+                {type:'breakline'},
+                {type:'checkbox', name:'Hide obvious badges ', parameter:'hideBadges'},
+                {type:'checkbox', name:'And not really obvious', parameter:'hideBadgesX'},
                 {type:'breakline'},
                 {type:'input', name:'Shrink comments and posts longer than (px)', parameter:'shrinkComms', validation:{type:'int',min:280, default:500}},
                 {type:'checkbox', name:'Button to shrink expanded posts', parameter:'shrinkButt'},
@@ -304,6 +307,11 @@ color: #0a0;
 		ls.oldHead = true;
         write(ls);
 	}
+	if (ls.hideBadges == undefined) {
+		ls.hideBadges = true;
+		ls.hideBadgesX = false;
+        write(ls);
+	}
 
 	if ((document.body.dataset.userName == 'The Frowning Pony') || (document.body.dataset.userName == 'The Smiling Pony')) {
 		ls.greenText = false;
@@ -322,13 +330,6 @@ color: #0a0;
 	}
 	let errorMessages = ['Nope', 'Nope', 'N-nope!', 'Stahp it', 'You don\'t want it', 'Go ewey', 'Look, I don\'t want permaban, so, stop it c:', 'Plz', ':c', 'why u so bad?'];
 	let errorLog = 0;
-
-    if (ls.aliases != undefined && ls.aliases.length>0) {
-        ls.aliases.sort(function(a, b){
-            return b.a.length - a.a.length;
-        });
-        write(ls);
-    }
 
     //flashes
     function flashNotifies() {
@@ -527,9 +528,9 @@ color: #0a0;
         };
 
 
-        original = original.replace('__ydb_LastYearsAlt', getYearsAltQuery());
-        original = original.replace('__ydb_LastYears', getYearsQuery());
-        original = original.replace('__ydb_Spoilered', spoileredQuery());
+        original = original.replace('__ydb_lastyearsalt', getYearsAltQuery());
+        original = original.replace('__ydb_lastyears', getYearsQuery());
+        original = original.replace('__ydb_spoilered', spoileredQuery());
         return original;
     }
 
@@ -615,8 +616,8 @@ color: #0a0;
 			else nonce = window._YDB_public.funcs.getNonce();
             let tags = goodParse(orig);
             for (let i=0; i<tags.tags.length; i++) {
-                if (tags.tags[i].v == '__ydb_Unspoil') {
-                    tags.tags[i].v = '!__ydb_Unspoil:'+md5(document.body.dataset.userName+nonce);
+                if (tags.tags[i].v == '__ydb_unspoil') {
+                    tags.tags[i].v = '!__ydb_unspoil:'+md5(document.body.dataset.userName+nonce+original);
                 }
             }
             let q2 = goodCombine(tags);
@@ -625,7 +626,8 @@ color: #0a0;
 
 		//////////////////////////////////////////////////////
 
-        let q = cycledParse(original);
+        let q2 = original.toLowerCase();
+		let q = cycledParse(q2);
         if (opt.legacy) q = legacyTagAliases(q);
 		q = artists(q);
 		if (q.length > limit) q = compressSyntax(q);
@@ -633,7 +635,7 @@ color: #0a0;
         if (q.length > limit) q = compressArtists(q);
 		q = unspoilTag(q);
 
-        if (q!=original) {
+        if (q!=q2) {
 			debug('YDB:T','Query '+original+' compressed to '+q,0);
             udata[md5(q)] = {q:original, t:getTimestamp()};
             writeTagTools(udata);
@@ -683,10 +685,29 @@ color: #0a0;
 	}
 
     function aliases() {
+		if (document.querySelector('#searchform > .block .block__header.flex') == undefined) return;
+		document.querySelector('#searchform > .block .block__header.flex').insertBefore(
+			InfernoAddElem('div',{className:'dropdown block__header__dropdown-tab'},[
+				InfernoAddElem('a',{innerHTML:'YDB tags '},[
+					InfernoAddElem('span',{dataset:{clickPreventdefault:true}},[
+						InfernoAddElem('i',{className:'fa fa-caret-down'},[])
+					])
+				]),
+				InfernoAddElem('div',{className:'dropdown__content'},[
+					InfernoAddElem('a',{dataset:{searchAdd:'__ydb_LastYears',searchShowHelp:''},innerHTML:'Created at that day of previous years'},[]),
+					InfernoAddElem('a',{dataset:{searchAdd:'__ydb_LastYearsAlt',searchShowHelp:''},innerHTML:'First seen at that day of previous years'},[]),
+					InfernoAddElem('a',{dataset:{searchAdd:'__ydb_Spoilered',searchShowHelp:''},innerHTML:'Spoilered by filter'},[]),
+					InfernoAddElem('a',{dataset:{searchAdd:'__ydb_Unspoil',searchShowHelp:''},innerHTML:'Unspoil result'},[])
+				])
+			]),
+		document.querySelector('#searchform > .block .block__header.flex .flex__right'));
 		let q = document.getElementsByClassName('header__input--search')[0].value;
 		let qc = goodParse(q);
+		let data = readTagTools();
+        let s = md5(document.getElementsByClassName('header__input--search')[0].value);
+
 		for (let i=0; i<qc.tags.length; i++) {
-			if (qc.tags[i].v.startsWith('__ydb_Unspoil')) {
+			if (qc.tags[i].v.startsWith('__ydb_unspoil')) {
 				let n = qc.tags[i].v.split(':').pop();
 				if (window._YDB_public.funcs.getNonce == undefined) {
 					document.getElementById('container').insertBefore(InfernoAddElem('div',{className:'flash flash--warning', innerHTML:'YDB:Settings 0.9.1+ strongly recommended! Using unsafe nonce.'},[]),document.getElementById('content'));
@@ -696,7 +717,12 @@ color: #0a0;
 				if (window._YDB_public.funcs.getNonce == undefined) nonce = 'unsafe_nonce';
 				else nonce = window._YDB_public.funcs.getNonce();
 
-				let hash = md5(document.body.dataset.userName+nonce);
+				if (data[s] == undefined) {
+					document.getElementById('container').insertBefore(InfernoAddElem('div',{className:'flash flash--warning', innerHTML:'Query lifetime expired. Please search again.'},[]),document.getElementById('content'));
+					break;
+				}
+
+				let hash = md5(document.body.dataset.userName+nonce+data[s].q);
 				if (hash != n) {
 					document.getElementById('container').insertBefore(InfernoAddElem('div',{className:'flash flash--warning', innerHTML:'Invalid or outdated token!'},[]),document.getElementById('content'));
 					break;
@@ -706,8 +732,6 @@ color: #0a0;
 			}
 		}
 
-        let data = readTagTools();
-        let s = md5(document.getElementsByClassName('header__input--search')[0].value);
         if (data[s] != undefined) {
             document.getElementsByClassName('header__input--search')[0].value = data[s].q;
             if (document.querySelector('#imagelist_container .block__header__title') != undefined && !ls.oldName) {
@@ -1181,6 +1205,7 @@ color: #0a0;
 
 	//compress badges
 	function compressBadges(e) {
+		if (!ls.hideBadges) return;
 		let bd = getBadgesImplications();
 		let x = e.querySelectorAll('.badges:not(._ydb_b_checked)');
 		for (let i=0; i<x.length; i++) {
@@ -1193,7 +1218,7 @@ color: #0a0;
 						if (ax != undefined) ax.parentNode.classList.add('hidden');
 					}
 				}
-				if (bd.extreme[bname] != undefined) {
+				if (bd.extreme[bname] != undefined && ls.hideBadgesX) {
 					for (let k=0; k<bd.extreme[bname].length; k++) {
 						let ax = x[i].querySelector('img[alt^="'+bd.extreme[bname][k]+'"]');
 						if (ax != undefined) ax.parentNode.classList.add('hidden');
@@ -1340,7 +1365,10 @@ color: #0a0;
         for (let i=0; i<a.length; i++) {
             for (let j=0; j<domains.length; j++)
                 if (a[i].host != location.host && a[i].host == domains[j]) a[i].host = location.host;
-            if (a[i].host != location.host && a[i].host != '') a[i].target = '_blank';
+            if (a[i].host != location.host && a[i].host != '') {
+				a[i].target = '_blank';
+				a[i].rel = 'nofollow noreferrer';
+			}
         }
     }
 
@@ -1352,19 +1380,25 @@ color: #0a0;
 		pending:[],
 		slowpending:[],
 		lost:{},
-		friendlist:[],
-		scratchpad:{},
 		artists:{},
 		idIndex:{}
+	};
+	let userbase_local = {
+		friendlist:[],
+		scratchpad:{}
 	};
 	let userbaseTS = {
 		ttu:0,
 		lastRun:0
 	};
 	let userbaseStarted = false;
-	let getUserId, addUserInBase, UAwrite, userCheck, addUserPending;
+	let getUserId, addUserInBase, UAwrite, UACLwrite, userCheck, addUserPending;
 
 	function UA(e) {
+		let nameEncode = function(name) {
+			return encodeURI(name.replace(/\+/g,'-plus-').replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/\//g,'-fwslash-').replace(/\\/g,'-bwslash-').replace(/ /g,'+'));
+		};
+
 		let createUser = function(name, aliases, id) {
 			let user;
 			if (userbase.users[name] != undefined) {
@@ -1383,9 +1417,21 @@ color: #0a0;
 					userbase.idIndex[id] = name;
 					changed = true;
 				}
-				if (changed) write();
+				if (changed) {
+					debug('YDB:UA','Updated user '+name+'.',1);
+					write();
+				}
 			}
 			else {
+				if (name == undefined) {
+					let req = new XMLHttpRequest();
+					let url = '/lists/user_comments/'+user.id;
+					req.open('GET', url, false);
+					req.send();
+					let n = document.createElement('div');
+					n.innerHTML = req.responseText;
+					name = n.getElementsByTagName('h1')[0].innerHTML.slice(0,-11);
+				}
 				user = {
 					name:name,
 					aliases:aliases,
@@ -1396,6 +1442,7 @@ color: #0a0;
 					removeUser(userbase.idIndex[id]);
 				}
 				userbase.idIndex[id] = name;
+				debug('YDB:UA','Added user '+name+'.',1);
 				write();
 			}
 			return user;
@@ -1419,6 +1466,10 @@ color: #0a0;
 
 		let write = function() {
 			localStorage._ydb_toolsUB = JSON.stringify(userbase);
+		};
+
+		let clwrite = function() {
+			localStorage._ydb_toolsUBLocal = JSON.stringify(userbase_local);
 			if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup();
 		};
 
@@ -1427,9 +1478,6 @@ color: #0a0;
 		};
 
 		let getTimestamp = function(user, regular, simplyReturn) {
-			let nameEncode = function(name) {
-				return encodeURI(name.replace(/\+/g,'-plus-').replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/\//g,'-fwslash-').replace(/\\/g,'-bwslash-').replace(/ /g,'+'));
-			};
 			let callback = function(req) {
 				try {
 					let x, nx;
@@ -1464,7 +1512,7 @@ color: #0a0;
 					}
 				}
 				catch(e) {
-					debug('YDB:T','Failed to get timestamp from name '+user.name+'. Encoded to '+nameEncode(user.name)+'. Maybe it\'s encoder issue, contact dev.', 2);
+					debug('YDB:U','Failed to get timestamp from name '+user.name+'. Encoded to '+nameEncode(user.name)+'. Maybe it\'s encoder issue, contact dev.', 2);
 				}
 			};
 			let readyHandler = function(request) {
@@ -1475,7 +1523,7 @@ color: #0a0;
 							return false;
 						}
 						else {
-							debug('YDB:T','Failed to get timestamp from name '+user.name+'. Encoded to '+nameEncode(user.name)+'. Maybe it\'s encoder issue, contact dev.', 2);
+							debug('YDB:U','Failed to get timestamp from name '+user.name+'. Encoded to '+nameEncode(user.name)+'. Maybe it\'s encoder issue, contact dev.', 2);
 							return false;
 						}
 					}
@@ -1493,10 +1541,20 @@ color: #0a0;
 					if (regular) url = '/lists/user_comments/'+user.id;
 					else url = '/profiles/'+nameEncode(user.name)+'.json';
 				}
+				debug('YDB:U','Getting user '+user.name+' info.',0);
 				req.open('GET', url, !simplyReturn);
 				req.send();
                 if (simplyReturn) {
-                    if (req.status === 200) return JSON.parse(req.responseText).id;
+                    if (req.status === 200) {
+						let id;
+						try {
+							id = JSON.parse(req.responseText).id;
+						}
+						catch(e) {
+							debug('YDB:U','Failed to get timestamp from name '+user.name+'. Encoded to '+nameEncode(user.name)+'. Maybe it\'s encoder issue, contact dev.', 2);
+						}
+						return id;
+					}
                 }
 			};
 
@@ -1524,13 +1582,29 @@ color: #0a0;
 			addUserInBase = function (name, id) {createUser(name,[],id)};
 			addUserPending = addPending;
 			UAwrite = function (name, id) {write()};
+			UACLwrite = function (name, id) {clwrite()};
 			userCheck = function (name, id) {getTimestamp({name:name, id:id},true,false)}
 			userbaseStarted = true;
+
+			//чтение
 			try {
 				let temp = JSON.parse(localStorage._ydb_toolsUB);
 				userbase = temp;
 			}
 			catch(e) {}
+			try {
+				let temp = JSON.parse(localStorage._ydb_toolsUBLocal);
+				userbase_local = temp;
+			}
+			catch(e) {
+				if (userbase.scratchpad != undefined || userbase.friendlist != undefined) {
+					userbase_local.scratchpad = userbase.scratchpad;
+					delete userbase.scratchpad;
+					userbase_local.friendlist = userbase.friendlist;
+					delete userbase.friendlist;
+					clwrite();
+				}
+			}
 			try {
 				let temp = JSON.parse(localStorage._ydb_toolsUBTS);
 				userbaseTS = temp;
@@ -1541,7 +1615,6 @@ color: #0a0;
 					userbaseTS.lastRun = userbase.lastRun;
 				}
 			}
-
 			if (userbase.ttu != undefined) {
 				delete userbase.ttu;
 				delete userbase.lastRun;
@@ -1593,8 +1666,8 @@ color: #0a0;
 			if (userbase.idIndex == undefined) {
 				//y'know, reseting time
 				if (userbase.idIndex == undefined) userbase.idIndex = {};
-				if (userbase.friendlist == undefined) userbase.friendlist = [];
-				if (userbase.scratchpad == undefined) userbase.scratchpad = {};
+				if (userbase_local.friendlist == undefined) userbase_local.friendlist = [];
+				if (userbase_local.scratchpad == undefined) userbase_local.scratchpad = {};
 				if (userbase.artists == undefined) userbase.artists = {};
 				userbase.pending = [];
 
@@ -1610,7 +1683,26 @@ color: #0a0;
 				getTimestamp(userbase.users[userbase.idIndex[userbase.pending[0]]], true);
 			}
 
-			if (!Array.isArray(userbase.friendlist)) userbase.friendlist = [];
+			if (!Array.isArray(userbase_local.friendlist)) userbase_local.friendlist = [];
+
+			let touched = false;
+			for (let i=0; i<userbase_local.friendlist.length; i++) {
+				if (userbase.idIndex[userbase_local.friendlist[i]] == undefined) createUser(undefined, [], userbase_local.friendlist[i]);
+				touched = true;
+			}
+			for (let i in userbase_local.scratchpad) {
+				if (userbase.idIndex[i] == undefined) createUser(undefined, [], i);
+				touched = true;
+			}
+			if (touched) write();
+
+			for (let i in userbase.users) {
+				if (userbase.users[i].id == undefined) {
+					userbase.users[i].id = getTimestamp(userbase.users[i],false,true);
+					write();
+					return;
+				}
+			}
 		}
 
 		if (e == undefined) return;
@@ -1622,8 +1714,8 @@ color: #0a0;
 			let ele = el.querySelector('.communication__body__sender-name');
 			let name = eln.innerHTML;
 			if (userbase.users[name] != undefined) {
-				if (userbase.scratchpad[userbase.users[name].id] != undefined) {
-					eln.title = userbase.scratchpad[userbase.users[name].id];
+				if (userbase_local.scratchpad[userbase.users[name].id] != undefined) {
+					eln.title = userbase_local.scratchpad[userbase.users[name].id];
 				}
 				if (userbase.users[name].aliases.length>0) {
 					let s = InfernoAddElem('div',{style:'width:100px;font-size:.86em'},[
@@ -1681,7 +1773,7 @@ color: #0a0;
 			let name = document.querySelector('.profile-top__name-header').innerHTML.slice(0, -10);
 			let id = document.querySelector('a[href*="/lists/user_comments"]').href.split('/').pop();
 			let content = '';
-			if (userbase.scratchpad[id] != undefined) content = userbase.scratchpad[id];
+			if (userbase_local.scratchpad[id] != undefined) content = userbase_local.scratchpad[id];
 			document.querySelector('.column-layout__left').insertBefore(
 				InfernoAddElem('div',{className:'block'},[
 					InfernoAddElem('div',{className:'block__header'},[
@@ -1691,13 +1783,13 @@ color: #0a0;
 						InfernoAddElem('textarea',{className:'input input--wide', value:content, id:'_ydb_scratchpad', placeholder:hmm?generate():''},[]),
 						InfernoAddElem('span',{innerHTML:hmm?'Thank you for your assistance.':'Do not use for passwords!'},[]),
 						InfernoAddElem('input',{type:'button', className:"button input--wide",value:'Update',events:[{t:'click',f:function(e) {
-							if (userbase.scratchpad[id] == undefined) {
+							if (userbase_local.scratchpad[id] == undefined) {
 								if (userbase.idIndex[id] == undefined) {
 									addUserInBase(name, id);
 								}
 							}
-							userbase.scratchpad[id] = document.getElementById('_ydb_scratchpad').value;
-							UAwrite();
+							userbase_local.scratchpad[id] = document.getElementById('_ydb_scratchpad').value;
+							UACLwrite();
 							e.target.classList.add('button--state-success');
 							setTimeout(function() {e.target.classList.remove('button--state-success');}, 200);
 						}}]},[])
@@ -1803,8 +1895,8 @@ color: #0a0;
 
 		if (location.pathname.startsWith('/messages/new')) {
 			let x = [];
-			for (let i=0; i<userbase.friendlist.length; i++) {
-				x.push(InfernoAddElem('span',{className:'button',innerHTML:userbase.idIndex[userbase.friendlist[i]],events:[{t:'click',f:function() {document.getElementById('recipient').value = userbase.idIndex[userbase.friendlist[i]];}}]}));
+			for (let i=0; i<userbase_local.friendlist.length; i++) {
+				x.push(InfernoAddElem('span',{className:'button',innerHTML:userbase.idIndex[userbase_local.friendlist[i]],events:[{t:'click',f:function() {document.getElementById('recipient').value = userbase.idIndex[userbase_local.friendlist[i]];}}]}));
 			}
 
 			document.querySelector('.block__tab.communication-edit__tab .field .field').insertBefore(
@@ -1815,8 +1907,8 @@ color: #0a0;
 		if (document.getElementsByClassName('profile-top__name-and-links')[0] != undefined) {
 			let uid = document.querySelector('a[href*="/lists/user_comments"]').href.split('/').pop();
 			let added = false;
-			for (let i=0; i<userbase.friendlist.length; i++) {
-				if (uid == userbase.friendlist[i]) {
+			for (let i=0; i<userbase_local.friendlist.length; i++) {
+				if (uid == userbase_local.friendlist[i]) {
 					added = true;
 					break;
 				}
@@ -1826,10 +1918,10 @@ color: #0a0;
 					InfernoAddElem('a',{href:'javascript://',innerHTML:'Add to contacts', events:[{t:'click',f:function(e) {
 						let name = document.querySelector('.profile-top__name-header').innerHTML.slice(0, -10);
 						addUserInBase(name, uid);
-						userbase.friendlist.push(uid);
+						userbase_local.friendlist.push(uid);
 						addUserPending({id:uid});
 						document.getElementsByClassName('profile-top__options__column')[0].lastChild.classList.add('hidden');
-						UAwrite();
+						UACLwrite();
 					}}]},[])
 				])
 			);
@@ -1846,8 +1938,8 @@ color: #0a0;
 		};
 
 		let removeUser = function(user) {
-			for (let i=0; i<userbase.friendlist.length; i++) if (user.id == userbase.friendlist[i]) {
-				userbase.friendlist.splice(i, 1);
+			for (let i=0; i<userbase_local.friendlist.length; i++) if (user.id == userbase_local.friendlist[i]) {
+				userbase_local.friendlist.splice(i, 1);
 				break;
 			}
 			for (let i=0; i<userbase.pending.length; i++) if (user.id == userbase.pending[i]) {
@@ -1857,7 +1949,7 @@ color: #0a0;
 		}
 
 		let generateLine = function(i) {
-			let user = userbase.users[userbase.idIndex[userbase.friendlist[i]]];
+			let user = userbase.users[userbase.idIndex[userbase_local.friendlist[i]]];
 			if (user == undefined) return InfernoAddElem('div',{className:'alternating-color block__content flex flex--center-distributed flex--centered'},[
 					InfernoAddElem('div',{style:'flex-basis: 48px;'},[]),
 					InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
@@ -1876,8 +1968,8 @@ color: #0a0;
 					InfernoAddElem('span',{innerHTML:user.name},[])
 				]),
 				InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
-					InfernoAddElem('span',{innerHTML:userbase.scratchpad[userbase.friendlist[i]]==undefined?'':
-						userbase.scratchpad[userbase.friendlist[i]].split('\n')[0].substring(0, 100)
+					InfernoAddElem('span',{innerHTML:userbase.userbase_local[userbase_local.friendlist[i]]==undefined?'':
+						userbase.userbase_local[userbase_local.friendlist[i]].split('\n')[0].substring(0, 100)
 					},[])
 				]),
 				InfernoAddElem('a',{style:'padding:0 12px', href:'/messages/new?to_id='+user.id},[
@@ -1896,15 +1988,42 @@ color: #0a0;
 		};
 		let x = [];
 
-		for (let i=0; i<userbase.friendlist.length; i++) {
+		for (let i=0; i<userbase_local.friendlist.length; i++) {
 			x.push(generateLine(i));
 		}
 
-		if (userbase.friendlist.length == 0) {
+		if (userbase_local.friendlist.length == 0) {
 			x.push(InfernoAddElem('div',{},[
 				InfernoAddElem('div',{innerHTML:'Your contact list is empty.'},[]),
 				InfernoAddElem('img',{src:'https://derpicdn.net/img/2013/4/2/285856/medium.png'},[])
 			]));
+		}
+
+		ChildsAddElem('div',{className:'block',style:'width:100%'}, c, x);
+	}
+
+	function YDB_Userlist() {
+		document.querySelector('#content h1').innerHTML = 'Userlist debug';
+		let c = document.querySelector('#content .walloftext');
+		c.innerHTML = '';
+
+		let generateLine = function(user) {
+			return InfernoAddElem('div',{className:'alternating-color block__content flex flex--center-distributed flex--centered'},[
+				InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
+					InfernoAddElem('span',{innerHTML:user.name},[])
+				]),
+				InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
+					InfernoAddElem('span',{innerHTML:user.id},[])
+				]),
+				InfernoAddElem('span',{className:'flex__grow',style:'padding:0 12px'},[
+					InfernoAddElem('span',{innerHTML:user.aliases},[])
+				])
+			]);
+		};
+		let x = [];
+
+		for (let i in userbase.users) {
+			x.push(generateLine(userbase.users[i]));
 		}
 
 		ChildsAddElem('div',{className:'block',style:'width:100%'}, c, x);
@@ -1981,6 +2100,7 @@ color: #0a0;
         else {
             let u = x.split('?');
 			if (u[0] == 'contactList') YDB_contacts();
+			else if (u[0] == 'usersDebug') YDB_Userlist();
         }
     }
 
@@ -2021,7 +2141,7 @@ color: #0a0;
 	if (ls.oldHead) oldHeaders();
 	commentButtons(document, true);
 	shrinkComms(document);
-	compressBadges(document);
+	//compressBadges(document);
 	hiddenImg(document,true);
 	getArtists();
 	resizeEverything(true);
