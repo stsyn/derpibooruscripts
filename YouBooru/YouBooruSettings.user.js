@@ -24,7 +24,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.8
+// @version      0.9.9
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -63,6 +63,7 @@
 			settings = {};
 		}
 		if (settings.debugLength == undefined) settings.debugLength = 100;
+		if (settings.debugLevel == undefined) settings.debugLevel = 1;
 		if (settings.nonce == undefined || isNaN(settings.nonce)) settings.nonce = parseInt(Math.random()*Number.MAX_SAFE_INTEGER);
 		write();
 	}
@@ -77,6 +78,13 @@
 	}
 
 	function debugLogger(id, val, level) {
+		if (settings.debugLevel>level) return;
+		if (settings.debugFilter != undefined) {
+			let filter = settings.debugFilter.split(',');
+			for (let i=0; i<filter.length; i++) {
+				if (filter[i].trim() == id) return;
+			}
+		}
 		let x = [];
 		let svd = localStorage._ydb_dlog;
 		try {
@@ -105,24 +113,18 @@
 				{type:'buttonLink', name:'Synch now', href:'/pages/yourbooru?synch'},
 				{type:'breakline'},
 				{type:'breakline'},
-				{type:'input', name:'Debug log length:', parameter:'debugLength', validation:{type:'int',min:0,max:500, default:200}},
+				{type:'input', name:'Debug log length', parameter:'debugLength', validation:{type:'int',min:0,max:500, default:200}},
 				{type:'select', name:'Log level', parameter:'debugLevel', values:[
 					{name:'Errors', value:2},
-					{name:'Score', value:1},
+					{name:'Info', value:1},
 					{name:'Verbose', value:0}
-				]}
+				]},
+				{type:'input', name:'Filter (,)', parameter:'debugFilter'}
 			]
 		};
 		if (window._YDB_public.funcs == undefined) window._YDB_public.funcs = {};
 		window._YDB_public.funcs.callWindow = callWindow;
-		if (document.body.dataset.theme.startsWith('eq')) {
-			window._YDB_public.funcs.backgroundBackup = function() {
-				console.log('Comrade, using presonal settings in Glimmerbooru is forbidden! Our state already set you best possible setttings!');
-			};
-		}
-		else {
-			window._YDB_public.funcs.backgroundBackup = backgroundBackup;
-		}
+		window._YDB_public.funcs.backgroundBackup = backgroundBackup;
 		window._YDB_public.funcs.log = debugLogger;
 		window._YDB_public.funcs.getNonce = function() {return settings.nonce;};
 	}
@@ -294,7 +296,7 @@
 
 	}
 
-	function getData(force) {
+	function getData(force, external) {
 		let t = addElem('div',{id:'_ydb_dataArrive', style:'display:none'}, document.getElementById('content'));
 		let parse = function (request) {
 			try {
@@ -311,6 +313,10 @@
 							r.push(x2);
 						}
 						let s = JSON.parse(LZMA.decompress(r));
+						if (external) {
+							document.querySelector('#content .walloftext').innerHTML = JSON.stringify(s,null,' ');
+							return;
+						}
 						if (settings.timestamp < s.timestamp || force) {
 							for (let y in s.vs) {
 								console.log(y, s.vs[y]);
@@ -894,33 +900,71 @@
 
 	///////////////////////////
 	function YB_logs() {
+		let active = {}, ex = {};
+
+		let readAll = function() {
+			let svd = localStorage._ydb_dlog;
+			try {
+				x = JSON.parse(svd);
+			}
+			catch (e) { }
+		};
+
+		let getAll = function() {
+			let ox = [];
+			for (let i=x.length-1; i>=0; i--) {
+				if (ex[x[i].id] == undefined) {
+					ex[x[i].id] = true;
+					active[x[i].id] = true;
+					ox.push(InfernoAddElem('label',{innerHTML:x[i].id+' ',style:'margin-right:9px'},[
+						InfernoAddElem('input',{type:'checkbox', dataset:{id:x[i].id}, checked:true, events:[{t:'change',f:function(e) {active[e.target.dataset.id] = e.target.checked; render();}}]},[])
+					]));
+				}
+			}
+			c3.appendChild(InfernoAddElem('span',{},ox));
+		};
+
+		let render = function() {
+			readAll();
+			getAll();
+			c2.innerHTML = '';
+			let u = [];
+			for (let i=x.length-1; i>=0; i--) {
+				if (document.getElementById('_ydb_s_level').value<=x[i].level && active[x[i].id]) {
+					let d = new Date(x[i].ts);
+					u.push(InfernoAddElem('div',{className:levelsClasses[x[i].level]},[
+						InfernoAddElem('strong',{innerHTML:'['+levels[x[i].level]+'] '},[]),
+						InfernoAddElem('strong',{innerHTML:'['+x[i].id+'] '},[]),
+						InfernoAddElem('span',{innerHTML:d.getDate()+'.'+(d.getMonth()+1)+'.'+d.getFullYear()+'@'+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds()},[]),
+						InfernoAddElem('span',{innerHTML:' '+x[i].val},[])
+					]));
+				}
+			}
+			ChildsAddElem('div',{className:'block',style:'width:100%'}, c2, u);
+		};
+
 		document.querySelector('#content h1').innerHTML = 'Debug logs';
-		var c = document.querySelector('#content .walloftext');
+		let c = document.querySelector('#content .walloftext');
+		c.innerHTML = '';
+		ChildsAddElem('div',{className:'block',style:'width:100%'}, c, [
+			InfernoAddElem('select',{id:'_ydb_s_level',className:'input header__input', style:'display:inline', events:[{t:'change',f:render}], size:1},[
+				InfernoAddElem('option',{innerHTML:'Only errors', value:'2'},[]),
+				InfernoAddElem('option',{innerHTML:'Normal', value:'1'},[]),
+				InfernoAddElem('option',{innerHTML:'Verbose', value:'0'},[])
+			]),
+			InfernoAddElem('input',{type:'button', className:'button', style:'margin-left:2em', value:'Redraw', events:[{t:'click',f:render}]},[])
+		]);
 
 		var s = '';
-		c.innerHTML = '';
 
 		let x = [];
-		let svd = localStorage._ydb_dlog;
-		try {
-			x = JSON.parse(svd);
-		}
-		catch (e) { }
 		let levels = ['.', '?', '!'];
 		let levelsClasses = ['flash--success','flash--site-notice','flash--warning'];
-		let u = [];
+		
+		let c3 = ChildsAddElem('div',{className:'block',style:'font-family: monospace;white-space: pre;width:100%'}, c, []);
+		let c2 = ChildsAddElem('div',{className:'block',style:'font-family: monospace;white-space: pre;width:100%'}, c, []);
 
-		for (let i=x.length-1; i>=0; i--) {
-			let d = new Date(x[i].ts);
-			u.push(InfernoAddElem('div',{className:levelsClasses[x[i].level]},[
-				InfernoAddElem('strong',{innerHTML:'['+levels[x[i].level]+'] '},[]),
-				InfernoAddElem('strong',{innerHTML:' ['+x[i].id+'] '},[]),
-				InfernoAddElem('span',{innerHTML:d.getDate()+'.'+(d.getMonth()+1)+'.'+d.getFullYear()+'@'+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds()},[]),
-				InfernoAddElem('span',{innerHTML:' '+x[i].val},[])
-			]));
-		}
-
-		ChildsAddElem('div',{className:'block',style:'width:100%'}, c, u);
+		render();
 	}
 
 	function YB_backup() {
@@ -943,7 +987,11 @@
 		else if (location.search == "?") YB_createEmpty();
 		else {
 			let u = x.split('?');
-			if (u[0] == "backup") setTimeout(YB_backup, 100);
+			if (u[0] == "backup") setTimeout(function() {
+				document.querySelector('#content h1').innerHTML = 'Synchronizing...';
+				document.querySelector('#content .walloftext').innerHTML = '';
+				getData(true, true);
+			}, 100);
 			else if (u[0] == "help") setTimeout(YB_backup, 100);
 			else if (u[0] == "logs") setTimeout(YB_logs, 100);
 			else if (u[0] == "synch") setTimeout(function() {
@@ -983,7 +1031,6 @@
 	addElem('style',{type:'text/css',innerHTML:windows},document.head);
 	if (settings.timestamp+21600 < parseInt(Date.now()/1000) && location.pathname != "/settings") {
 		settings.nonce = parseInt(Math.random()*Number.MAX_SAFE_INTEGER);
-		write();
 		getData();
 	}
 	if (location.pathname == "/settings") setTimeout(settingPage, 50);
