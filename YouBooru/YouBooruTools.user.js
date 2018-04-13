@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.17
+// @version      0.5.18
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -412,14 +412,15 @@ color: #0a0;
         x = x.replace(/\|\|/g, ', ');
         x = x.replace(/\&\&/g, ', ');
         x = x.replace(/^\(/g, ' ');
-        //while (/^(\s*)(\()/g.test(x)) x = x.replace(/^(\s*)(\()/g, '$1 ');
-        while (/([^\\\(])\(/g.test(x)) x = x.replace(/([^\\\(])\(/g, '$1 ');
-        while (/([^\\\)])\)/g.test(x)) x = x.replace(/([^\\\)])\)/g, '$1 ');
+        x = x.replace(/^(\s*)(\()/g, '$1 ');
+        x = x.replace(/(\))(\s*)$/g, ' $2');
+        while (/(,\s*)(\()/g.test(x)) x = x.replace(/(,\s*)(\()/g, '$1 ');
+        while (/(\))(\s*,)/g.test(x)) x = x.replace(/(\))(\s*,)/g, ' $2');
         x = x.replace(/^\-/g, ' ');
         x = x.replace(/^\!/g, ' ');
-        x = x.replace(/([ ,\(])\-/g, '$1 ');
-        x = x.replace(/([ ,\(])!/g, '$1 ');
-        x = x.replace(/([ ,\(])\*/g, '$1 ');
+        x = x.replace(/([ ,])\-/g, '$1 ');
+        x = x.replace(/([ ,])!/g, '$1 ');
+        x = x.replace(/([ ,])\*/g, '$1 ');
         x = x.replace(/\"/g, ' ');
         x = x.replace(/\~/g, ',');
         x = x.replace(/\^/g, ',');
@@ -427,6 +428,7 @@ color: #0a0;
         x = x.replace(new RegExp(' AND ','g'), ',    ');
         x = x.replace(new RegExp(' NOT ','g'), ',    ');
         x = x.replace(new RegExp('^NOT ','g'), '    ');
+		console.log(yx.orig, x);
         let y = x.split(',');
         let afix = 0;
         for (let i=0; i<y.length; i++) {
@@ -1968,8 +1970,8 @@ color: #0a0;
 					InfernoAddElem('span',{innerHTML:user.name},[])
 				]),
 				InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
-					InfernoAddElem('span',{innerHTML:userbase.userbase_local[userbase_local.friendlist[i]]==undefined?'':
-						userbase.userbase_local[userbase_local.friendlist[i]].split('\n')[0].substring(0, 100)
+					InfernoAddElem('span',{innerHTML:userbase.idIndex[userbase_local.friendlist[i]]==undefined?'':
+						userbase.idIndex[userbase_local.friendlist[i]].split('\n')[0].substring(0, 100)
 					},[])
 				]),
 				InfernoAddElem('a',{style:'padding:0 12px', href:'/messages/new?to_id='+user.id},[
