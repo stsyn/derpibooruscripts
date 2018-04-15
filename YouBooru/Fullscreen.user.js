@@ -398,7 +398,7 @@ margin:auto;
 `;
 
     styles.colorAccentTemplate = `
-.block__header--light a, .block__header--js-tabbed a, a.block__header--single-item, #container span>a,
+.block__header--light a, .block__header--js-tabbed a, a.block__header--single-item, #container span:not(.tag)>a,
 .block__header a:not(.interaction--fave):not(.interaction--upvote):not(.interaction--downvote):not(.interaction--comments):not(.interaction--hide), .image-description a,
 .block__header--sub a, .block__header--single-item a, .block__content:not(._fs_popup)>*:not(.media-box) a:not(.tag__name), .block__content>a, .profile-top__name-and-links a,
 .source_url a, #footer_content a, .button--link, .communication__body a, .comment_backlinks a, .communication__options a, a.interaction-user-list-item, .pagination a,
