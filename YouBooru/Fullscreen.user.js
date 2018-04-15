@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.6.0
+// @version      0.6.1
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -33,8 +33,8 @@
 
 (function() {
     'use strict';
-    var currentColorApi = 3;
-    var styles = {};
+    let currentColorApi = 3;
+    let styles = {};
     styles.general = `
 #_ydb_fs_mainPopup {
 position:relative;
@@ -307,13 +307,12 @@ top: 2em;
 #content>.block:first-child>.block__header [href*="/download/"]:hover {
 opacity:.7;
 }
-
-.block__header .stretched-mobile-links {
-width:0;
-}
 `;
 
     styles.ex = `
+#content .image-show-container .block--warning{
+margin-top:6em;
+}
 ._fs_down {
 transition:.3s;
 display:block;
@@ -342,6 +341,17 @@ left:0;
 z-index:-1;
 opacity:.8;
 }
+
+#_fs_top_bg {
+width:100%;
+position:absolute;
+top:0;
+left:0;
+z-index:-1;
+opacity:.5;
+height:4em;
+}
+
 
 ._fs_down.active {
 height:60vh;
@@ -388,7 +398,7 @@ margin:auto;
 `;
 
     styles.colorAccentTemplate = `
-.block__header--light a, .block__header--js-tabbed a, a.block__header--single-item,
+.block__header--light a, .block__header--js-tabbed a, a.block__header--single-item, #container span>a,
 .block__header a:not(.interaction--fave):not(.interaction--upvote):not(.interaction--downvote):not(.interaction--comments):not(.interaction--hide), .image-description a,
 .block__header--sub a, .block__header--single-item a, .block__content:not(._fs_popup)>*:not(.media-box) a:not(.tag__name), .block__content>a, .profile-top__name-and-links a,
 .source_url a, #footer_content a, .button--link, .communication__body a, .comment_backlinks a, .communication__options a, a.interaction-user-list-item, .pagination a,
@@ -397,6 +407,7 @@ a.block__header--single-item:hover, .block__header:not(.center--layout) a:hover,
 #content p strong a, #content strong a, #content li a, .quick-tag-table__tab a, .flash--site-notice.flash a, #content code a {
 color:_fs_color;
 }
+
 p>a {
 color:_fs_color !important;
 }
@@ -414,7 +425,7 @@ span.header__link-user__dropdown-arrow:hover, .header__dropdown:hover span.heade
 background-color:_fs_ccomponent;
 }
 
-.image-description, #imagespns, .block__header--js-tabbed, .block__header--js-tabbed a.selected, .block__header--js-tabbed a.selected:hover,
+.border-vertical, .block__header--js-tabbed a:hover, .image-description, #imagespns, .block__header--js-tabbed, .block__header--js-tabbed a.selected, .block__header--js-tabbed a.selected:hover,
 .button:not(.commission__category):not(.button--state-warning):not(.button--state-danger):not(.button--state-success), .toggle-box+label, .block__list a.block__list__link, .block__list, .input, .communication__toolbar__button,
 .block__header--js-tabbed a, .block__header--js-tabbed a:last-child, .block__header--js-tabbed a:first-child, .block--fixed:not(.block--success):not(.block--warning), .media-box, .filter {
 border-color:_fs_background;
@@ -464,7 +475,7 @@ a.header__link:hover, .header__dropdown:hover>a, ::selection {
 background:_fs_color;
 }
 
-a.block__header--single-item:hover, .block__header a:hover, .block__header--sub a:hover, .block__header--single-item a:hover, .rule h2 {
+.block__header__dropdown-tab:hover>a, a.block__header--single-item:hover, .block__header a:hover, .block__header--sub a:hover, .block__header--single-item a:hover, .rule h2 {
 background:_fs_3component;
 }
 
@@ -511,6 +522,7 @@ color: #555;
     let adc = {};
     let settings, state;
     let colors = {};
+    let started = false;
 
 
     function write() {
@@ -534,13 +546,8 @@ color: #555;
     }
 
     if (state.enabled == undefined) state.enabled = false;
-	/*if (state.NU1 == undefined) {
-		state.enabled = false;
-		state.NU1 = true;
-		write();
-	}*/
-	if (state.NU1) {
-		settings.button = 'Download (short filename)';
+	if (!state.NU1) {
+		settings.button = 'Download (no tags in filename)';
 		state.NU1 = false;
 		write();
 	}
@@ -589,9 +596,9 @@ color: #555;
                 {type:'select', name:'Top right button', parameter:'button', values:[
                     {name:'none', value:''},
                     {name:'View (with tags)', value:'View (tags in filename)'},
-                    {name:'View', value:'View (short filename)'},
+                    {name:'View', value:'View (no tags in filename)'},
                     {name:'Download (with tags)', value:'Download (tags in filename)'},
-                    {name:'Download', value:'Download (short filename)'}
+                    {name:'Download', value:'Download (no tags in filename'}
                 ]}
             ]
         };
@@ -667,9 +674,10 @@ color: #555;
     }
 
     function init() {
-        objects.disable = addElem('a', {id:'_ydb_fs_disable', className:'', style:'display:none', innerHTML:'Disable', events:[{t:'click',f:function() {disable();}}]},  document.querySelector('#content>.block:first-child'));
+        objects.disable = addElem('a', {id:'_ydb_fs_disable', className:'', style:'display:none', innerHTML:'Disable', events:[{t:'click',f:disable}]},  document.querySelector('#content>.block:first-child'));
         objects.enable = addElem('a', {id:'_ydb_fs_enable', className:'header__link', innerHTML:'Fullscreen', events:[{t:'click',f:function() {enable(true);}}]}, document.body);
         document.getElementsByClassName('header__force-right')[0].insertBefore(objects.enable, document.getElementsByClassName('header__force-right')[0].childNodes[0]);
+        started = true;
     }
 
     function disgustingLoadedImgFetch() {
@@ -913,7 +921,7 @@ color: #555;
     function isDarkF() {
         try {
             let c2 = document.head.querySelector('link[rel=stylesheet][media=all]').href;
-            return c2.split('/')[5].startsWith('dark');
+            return (c2.split('/')[5].startsWith('dark') || c2.split('/')[5].startsWith('red'));
         }
         catch(e) {
             return Boolean(document.querySelector('body[data-theme*="dark"]'));
@@ -967,6 +975,24 @@ color: #555;
         r('_fs_icomponent');
         r('_fs_ccomponent');
         append('colorAccent');
+
+        let kek = function() {
+            let xx = document.getElementsByClassName('theme-preview-trixie')[0];
+            if (xx != undefined) {
+                let c2 = document.head.querySelector('link[rel=stylesheet][media=all]').href;
+                if (c2.split('/')[5].startsWith('red')) {
+                    xx.href = '/1085390';
+                    xx.querySelector('img').src = 'https://camo.derpicdn.net/4526e01f52d6d5e0f47a08cd002cb8ceaee7d559?url=https%3A%2F%2Fi.imgur.com%2FN2RPrTD.png';
+                    xx.style.maxWidth = '300px';
+                }
+                else {
+                    xx.href = '/1264984';
+                    xx.querySelector('img').src = 'https://derpicdn.net/assets/theme-cdf9fc928da041617fe7ec0f9683aaae63947a51a4f4104573567cf9a889a46c.png';
+                }
+            }
+        };
+        if (document.readyState !== 'loading') kek();
+        else document.addEventListener('DOMContentLoaded', kek);
     }
 
     function enableColor(nrw) {
@@ -994,7 +1020,7 @@ color: #555;
 
     function enable(notInital) {
         if (notInital) preenable();
-        init();
+        if (!started) init();
 
         pub.mouseX = window.innerWidth/2;
         pub.mouseY = window.innerHeight/2;
@@ -1020,7 +1046,7 @@ color: #555;
         ]);
 
         document.querySelector('.image-metabar').childNodes[1].insertBefore(objects.mainButton,document.querySelector('.interaction--fave'));
-        //document.querySelectorAll('#content>div')[3].appendChild(document.getElementById('image_options_area'));
+        //document.querySelectorAll('#content>div')[3].appendChild(document.getElementById('image_options_area'));        console.log(document.getElementsByTagName('form'), document.getElementById('js-comment-form'));
         popUps.coms.appendChild(document.getElementById('js-comment-form'));
         popUps.coms.appendChild(document.getElementById('comments'));
         //popUps.downContainer.appendChild(document.querySelector('#content>.block:first-child').cloneNode(true));
@@ -1030,6 +1056,9 @@ color: #555;
 			document.querySelector('.block__header--user-credit > div').classList.add('block__content');
 			popUps.downContainer.appendChild(document.querySelector('.block__header--user-credit > div'));
 		}
+        else {
+            document.querySelector('#content .block.block__header').appendChild(InfernoAddElem('div',{id:'_fs_top_bg',style:{backgroundColor:getComputedStyle(document.getElementById('container')).backgroundColor}},[]));
+        }
         popUps.downContainer.appendChild(document.querySelectorAll('#content>div')[2]);
         //popUps.downContainer.appendChild(popUps.coms.querySelector('#image_options_area'));
 
@@ -1040,13 +1069,13 @@ color: #555;
         ChildsAddElem('div', {className:'block__header'}, popUps.main, [
             InfernoAddElem('span',{innerHTML:'Image Tools:',style:'margin-left:1em'}, []),
             InfernoAddElem('a',{className:'js-up', events:[{t:'click',f:function() {
-                document.querySelector('#content>.block:first-child>.block__header .js-up').click();
+                document.querySelector('.image-metabar .js-up').click();
             }}]}, [
                 InfernoAddElem('i',{className:'fa fa-chevron-up'},[]),
                 InfernoAddElem('span',{innerHTML:' Find'},[])
             ]),
             InfernoAddElem('a',{className:'js-random', events:[{t:'click',f:function() {
-                document.querySelector('#content>.block:first-child>.block__header .js-random').click();
+                document.querySelector('.image-metabar .js-random').click();
             }}]}, [
                 InfernoAddElem('i',{className:'fa fa-random'},[]),
                 InfernoAddElem('span',{innerHTML:' Random'},[])
@@ -1110,15 +1139,19 @@ color: #555;
         document.body.removeEventListener('mousemove',mouseListener);
         objects.dcontainer.removeEventListener("wheel", wheelListener);
 
-        objects.mainButton.parentNode.removeChild(objects.mainButton);
+        //objects.mainButton.parentNode.removeChild(objects.mainButton);
 
 		if (!settings.new) {
 			popUps.downContainer.childNodes[0].classList.remove('block__content');
 			document.getElementsByClassName('block__header--user-credit')[0].insertBefore(popUps.downContainer.childNodes[0],document.getElementsByClassName('image-size')[0]);
 		}
+        else {
+            document.getElementById('_fs_top_bg').parentNode.removeChild(document.getElementById('_fs_top_bg'));
+        }
+
         document.getElementById('content').appendChild(popUps.downContainer.childNodes[0]);
-		document.querySelector('#content>.layout--narrow').appendChild(popUps.coms.getElementsByTagName('form')[0]);
-		document.querySelector('#content>.layout--narrow').appendChild(popUps.coms.getElementsByTagName('div')[0]);
+		document.querySelector('#content>.layout--narrow').appendChild(document.getElementById('js-comment-form'));
+		document.querySelector('#content>.layout--narrow').appendChild(document.getElementById('comments'));
         //document.getElementById('content').appendChild(popUps.coms.getElementsByTagName('div')[0]);
         document.querySelector('a[title="'+settings.button+'"]').classList.remove('ydb_top_right_link');
 
