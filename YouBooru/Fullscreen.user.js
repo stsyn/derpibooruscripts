@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.6.1
+// @version      0.6.2
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -36,6 +36,9 @@
     let currentColorApi = 3;
     let styles = {};
     styles.general = `
+#_ydb_fs_enable {
+display:none
+}
 #_ydb_fs_mainPopup {
 position:relative;
 display: flex;
@@ -548,7 +551,7 @@ color: #555;
     if (state.enabled == undefined) state.enabled = false;
 	if (!state.NU1) {
 		settings.button = 'Download (no tags in filename)';
-		state.NU1 = false;
+		state.NU1 = true;
 		write();
 	}
 
