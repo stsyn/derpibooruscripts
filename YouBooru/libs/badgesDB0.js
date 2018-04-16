@@ -19,6 +19,16 @@ function getBadgesImplications() {
 			'Helpful Owl':['Friendly Griffon'],
 			'Equality':['Not a Llama'],
 			'Condensed Milk':['Not a Llama']
+		},
+		donations:{
+			'Platinum Patron':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity'],
+			'Gold Patron':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity'],
+			'Silver Patron':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity'],
+			'Bronze Patron':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity'],
+			'Platinum Bit':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity'],
+			'Gold Bit':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity'],
+			'Silver Bit':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity'],
+			'Bronze Bit':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity']
 		}
 	};
 }
