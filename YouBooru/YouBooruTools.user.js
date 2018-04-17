@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.18
+// @version      0.5.19
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -114,7 +114,7 @@ color: #0a0;
 }
 `;
 
-    let tagDB ={normal:{character:[],episode:[],error:[],oc:[],origin:[],rating:[],spoiler:[]},regulars:{},list:{oc:[],origin:[]}};
+    let tagDB ={normal:{character:[],'content-official':[],error:["artist needed","source needed","dead source","useless source url"],oc:["oc","oc only","unnamed oc"],origin:["screencap","edit","edited screencap","derpibooru exclusive","alternate version","color edit","them's fightin' herds"],rating:["safe","explicit","questionable","suggestive","grimdark","semi-grimdark", "grotesque"],spoiler:["leak"]},regulars:{oc:/^oc:/g,origin:/^(artist:|editor:|colorist:)/g,spoiler:/^spoiler:/g},list:{oc:[],origin:[]}};
     function _getTagDB() {
         try {
             tagDB = getTagDB();
@@ -181,8 +181,9 @@ color: #0a0;
                 {type:'checkbox', name:'Hide images immediately', parameter:'fastHide'},
                 {type:'checkbox', name:'Old headers style', parameter:'oldHead'},
                 {type:'breakline'},
-                {type:'checkbox', name:'Hide obvious badges ', parameter:'hideBadges'},
-                {type:'checkbox', name:'And not really obvious', parameter:'hideBadgesX'},
+                {type:'checkbox', name:'Hide obvious badges', parameter:'hideBadges'},
+                {type:'checkbox', name:' and not really obvious', parameter:'hideBadgesX'},
+                {type:'checkbox', name:' and donation based implications', parameter:'hideBadgesP'},
                 {type:'breakline'},
                 {type:'input', name:'Shrink comments and posts longer than (px)', parameter:'shrinkComms', validation:{type:'int',min:280, default:500}},
                 {type:'checkbox', name:'Button to shrink expanded posts', parameter:'shrinkButt'},
@@ -687,22 +688,23 @@ color: #0a0;
 	}
 
     function aliases() {
-		if (document.querySelector('#searchform > .block .block__header.flex') == undefined) return;
-		document.querySelector('#searchform > .block .block__header.flex').insertBefore(
-			InfernoAddElem('div',{className:'dropdown block__header__dropdown-tab'},[
-				InfernoAddElem('a',{innerHTML:'YDB tags '},[
-					InfernoAddElem('span',{dataset:{clickPreventdefault:true}},[
-						InfernoAddElem('i',{className:'fa fa-caret-down'},[])
+		if (document.querySelector('#searchform > .block .block__header.flex') != undefined) {
+			document.querySelector('#searchform > .block .block__header.flex').insertBefore(
+				InfernoAddElem('div',{className:'dropdown block__header__dropdown-tab'},[
+					InfernoAddElem('a',{innerHTML:'YDB tags '},[
+						InfernoAddElem('span',{dataset:{clickPreventdefault:true}},[
+							InfernoAddElem('i',{className:'fa fa-caret-down'},[])
+						])
+					]),
+					InfernoAddElem('div',{className:'dropdown__content'},[
+						InfernoAddElem('a',{dataset:{searchAdd:'__ydb_LastYears',searchShowHelp:''},innerHTML:'Created at that day of previous years'},[]),
+						InfernoAddElem('a',{dataset:{searchAdd:'__ydb_LastYearsAlt',searchShowHelp:''},innerHTML:'First seen at that day of previous years'},[]),
+						InfernoAddElem('a',{dataset:{searchAdd:'__ydb_Spoilered',searchShowHelp:''},innerHTML:'Spoilered by filter'},[]),
+						InfernoAddElem('a',{dataset:{searchAdd:'__ydb_Unspoil',searchShowHelp:''},innerHTML:'Unspoil result'},[])
 					])
 				]),
-				InfernoAddElem('div',{className:'dropdown__content'},[
-					InfernoAddElem('a',{dataset:{searchAdd:'__ydb_LastYears',searchShowHelp:''},innerHTML:'Created at that day of previous years'},[]),
-					InfernoAddElem('a',{dataset:{searchAdd:'__ydb_LastYearsAlt',searchShowHelp:''},innerHTML:'First seen at that day of previous years'},[]),
-					InfernoAddElem('a',{dataset:{searchAdd:'__ydb_Spoilered',searchShowHelp:''},innerHTML:'Spoilered by filter'},[]),
-					InfernoAddElem('a',{dataset:{searchAdd:'__ydb_Unspoil',searchShowHelp:''},innerHTML:'Unspoil result'},[])
-				])
-			]),
-		document.querySelector('#searchform > .block .block__header.flex .flex__right'));
+			document.querySelector('#searchform > .block .block__header.flex .flex__right'));
+		}
 		let q = document.getElementsByClassName('header__input--search')[0].value;
 		let qc = goodParse(q);
 		let data = readTagTools();
@@ -1223,6 +1225,12 @@ color: #0a0;
 				if (bd.extreme[bname] != undefined && ls.hideBadgesX) {
 					for (let k=0; k<bd.extreme[bname].length; k++) {
 						let ax = x[i].querySelector('img[alt^="'+bd.extreme[bname][k]+'"]');
+						if (ax != undefined) ax.parentNode.classList.add('hidden');
+					}
+				}
+				if (bd.donations[bname] != undefined && ls.hideBadgesP) {
+					for (let k=0; k<bd.donations[bname].length; k++) {
+						let ax = x[i].querySelector('img[alt^="'+bd.donations[bname][k]+'"]');
 						if (ax != undefined) ax.parentNode.classList.add('hidden');
 					}
 				}
@@ -1970,8 +1978,8 @@ color: #0a0;
 					InfernoAddElem('span',{innerHTML:user.name},[])
 				]),
 				InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
-					InfernoAddElem('span',{innerHTML:userbase.idIndex[userbase_local.friendlist[i]]==undefined?'':
-						userbase.idIndex[userbase_local.friendlist[i]].split('\n')[0].substring(0, 100)
+					InfernoAddElem('span',{innerHTML:userbase_local.scratchpad[userbase_local.friendlist[i]]==undefined?'':
+						userbase_local.scratchpad[userbase_local.friendlist[i]].split('\n')[0].substring(0, 100)
 					},[])
 				]),
 				InfernoAddElem('a',{style:'padding:0 12px', href:'/messages/new?to_id='+user.id},[
@@ -2143,7 +2151,6 @@ color: #0a0;
 	if (ls.oldHead) oldHeaders();
 	commentButtons(document, true);
 	shrinkComms(document);
-	//compressBadges(document);
 	hiddenImg(document,true);
 	getArtists();
 	resizeEverything(true);
