@@ -21,14 +21,14 @@ function getBadgesImplications() {
 			'Condensed Milk':['Not a Llama']
 		},
 		donations:{
-			'Platinum Patron':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity'],
-			'Gold Patron':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity'],
-			'Silver Patron':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity'],
+			'Platinum Patron':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity','Gold Bit','Silver Bit','Bronze Bit'],
+			'Gold Patron':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity','Silver Bit','Bronze Bit'],
+			'Silver Patron':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity','Bronze Bit'],
 			'Bronze Patron':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity'],
-			'Platinum Bit':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity'],
-			'Gold Bit':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity'],
-			'Silver Bit':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity'],
-			'Bronze Bit':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity']
+			'Platinum Bit':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity','Platinum Patron','Gold Patron','Silver Patron','Bronze Patron'],
+			'Gold Bit':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity','Gold Patron','Silver Patron','Bronze Patron'],
+			'Silver Bit':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity','Silver Patron','Bronze Patron'],
+			'Bronze Bit':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity','Bronze Patron']
 		}
 	};
 }
