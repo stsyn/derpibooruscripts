@@ -24,7 +24,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.3.10
+// @version      0.3.11
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -201,13 +201,13 @@
 	function gainParams(arr) {
         if (arr) return {
             score:parseInt(document.getElementsByClassName('score')[0].innerHTML),
-            width:document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[0],
-            height:document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[1],
+            width:document.querySelector('.image-show-container').dataset.width,
+            height:document.querySelector('.image-show-container').dataset.height,
             comments:document.querySelectorAll('.comments_count')[0].innerHTML
         };
 		if (myURL.params.sf == 'score') return parseInt(document.getElementsByClassName('score')[0].innerHTML);
-		if (myURL.params.sf == 'width') return document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[0];
-		if (myURL.params.sf == 'height') return document.querySelectorAll('#extrameta strong')[document.querySelectorAll('#extrameta strong').length-1].innerHTML.split('x')[1];
+		if (myURL.params.sf == 'width') return document.querySelector('.image-show-container').dataset.width;
+		if (myURL.params.sf == 'height') return document.querySelector('.image-show-container').dataset.height;
 		if (myURL.params.sf == 'comments') return document.querySelectorAll('.comments_count')[0].innerHTML;
 	}
 
@@ -629,7 +629,7 @@
 			]);
 		}
 
-		document.getElementById('_ydb_s_finder').addEventListener('click',function(e) {
+		if (document.getElementById('_ydb_s_finder') != undefined) document.getElementById('_ydb_s_finder').addEventListener('click',function(e) {
 			commonClickAction(e);
 			myURL = parseURL(document.getElementById('_ydb_s_qpusher').href);
             console.log(myURL);
