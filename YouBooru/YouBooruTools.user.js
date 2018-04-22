@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.20
+// @version      0.5.21
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -499,8 +499,16 @@ color: #0a0;
     }
 
     function legacyTagAliases(original) {
-        let getYearsQuery = function() {
-            let date = new Date();
+		let getYesterdayQuery = function(param) {
+			let date = new Date(Date.now()-param*24*60*60*1000);
+			let c = '(';
+			let cc = 'created_at:';
+			c+=cc+date.getFullYear()+'-'+((date.getMonth()+1)<10?('0'+(date.getMonth()+1)):(date.getMonth()+1))+'-'+(date.getDate()<10?('0'+date.getDate()):date.getDate());
+			return c+')';
+		};
+		
+        let getYearsQuery = function(param) {
+            let date = new Date(Date.now()-param*24*60*60*1000);
             let c = '(';
             let cc = 'created_at:';
             for (let i = date.getFullYear() - 1; i>2011; i--)
@@ -508,8 +516,8 @@ color: #0a0;
             return c+')';
         };
 
-        let getYearsAltQuery = function() {
-            let date = new Date();
+        let getYearsAltQuery = function(param) {
+            let date = new Date(Date.now()-param*24*60*60*1000);
             let c = '(';
             let cc = 'first_seen_at:';
             for (let i = date.getFullYear() - 1; i>2011; i--)
@@ -529,10 +537,15 @@ color: #0a0;
             return tags;
         };
 
-
-        original = original.replace('__ydb_lastyearsalt', getYearsAltQuery());
-        original = original.replace('__ydb_lastyears', getYearsQuery());
-        original = original.replace('__ydb_spoilered', spoileredQuery());
+		if (original.startsWith('__ydb')) {
+			let param = 0;
+			if (!isNaN(parseInt(original.split(':')[1]))) param = parseInt(original.split(':')[1]);
+			if (original.startsWith('__ydb_lastyearsalt')) original = getYearsAltQuery(param);
+			else if (original.startsWith('__ydb_lastyears')) original = getYearsQuery(param);
+			else if (original.startsWith('__ydb_spoilered')) original = spoileredQuery();
+			else if (original.startsWith('__ydb_yesterday')) original = getYesterdayQuery(1);
+			else if (original.startsWith('__ydb_daysago')) original = getYesterdayQuery(param);
+		}
         return original;
     }
 
@@ -625,12 +638,21 @@ color: #0a0;
             let q2 = goodCombine(tags);
             return q2;
         };
+		
+		let smartLegacy = function (orig) {
+			let tags = goodParse(orig);
+            for (let i=0; i<tags.tags.length; i++) {
+                tags.tags[i].v = legacyTagAliases(tags.tags[i].v);
+            }
+            let q2 = goodCombine(tags);
+            return q2;
+		};
 
 		//////////////////////////////////////////////////////
 
         let q2 = original.toLowerCase();
 		let q = cycledParse(q2);
-        if (opt.legacy) q = legacyTagAliases(q);
+        if (opt.legacy) q = smartLegacy(q);
 		q = artists(q);
 		if (q.length > limit) q = compressSyntax(q);
         if (q.length > limit) q = compressAliases(q);
@@ -696,10 +718,12 @@ color: #0a0;
 						])
 					]),
 					InfernoAddElem('div',{className:'dropdown__content'},[
-						InfernoAddElem('a',{dataset:{searchAdd:'__ydb_LastYears',searchShowHelp:''},innerHTML:'Created at that day of previous years'},[]),
-						InfernoAddElem('a',{dataset:{searchAdd:'__ydb_LastYearsAlt',searchShowHelp:''},innerHTML:'First seen at that day of previous years'},[]),
+						InfernoAddElem('a',{dataset:{searchAdd:'__ydb_LastYears:0',searchShowHelp:''},innerHTML:'Created at that day of previous years'},[]),
+						InfernoAddElem('a',{dataset:{searchAdd:'__ydb_LastYearsAlt:0',searchShowHelp:''},innerHTML:'First seen at that day of previous years'},[]),
 						InfernoAddElem('a',{dataset:{searchAdd:'__ydb_Spoilered',searchShowHelp:''},innerHTML:'Spoilered by filter'},[]),
-						InfernoAddElem('a',{dataset:{searchAdd:'__ydb_Unspoil',searchShowHelp:''},innerHTML:'Unspoil result'},[])
+						InfernoAddElem('a',{dataset:{searchAdd:'__ydb_Unspoil',searchShowHelp:''},innerHTML:'Unspoil result'},[]),
+						InfernoAddElem('a',{dataset:{searchAdd:'__ydb_Yesterday',searchShowHelp:''},innerHTML:'Uploaded yesterday'},[]),
+						InfernoAddElem('a',{dataset:{searchAdd:'__ydb_DaysAgo:2',searchShowHelp:''},innerHTML:'Uploaded X days ago'},[])
 					])
 				]),
 			document.querySelector('#searchform > .block .block__header.flex .flex__right'));
@@ -1941,7 +1965,7 @@ color: #0a0;
 		document.querySelector('#content h1').innerHTML = 'Contact list';
 		let c = document.querySelector('#content .walloftext');
 		c.innerHTML = '';
-		
+
 		let users = [];
 
 		let nameEncode = function(name) {
@@ -1958,7 +1982,7 @@ color: #0a0;
 				break;
 			}
 		};
-		
+
 		let fetchAvatara = function(user, target) {
 			let callback = function(req) {
 				try {
@@ -2042,7 +2066,7 @@ color: #0a0;
 				])
 			]);
 		};
-		
+
 		let render = function () {
 			cont.innerHTML = '';
 			let x = [];
@@ -2066,14 +2090,14 @@ color: #0a0;
 			}
 			cont.appendChild(InfernoAddElem('div',{},x))
 		};
-		
+
 		for (let i=0; i<userbase_local.friendlist.length; i++) {
 			let user = userbase.users[userbase.idIndex[userbase_local.friendlist[i]]];
 			users.push(user);
 		}
-		
+
 		users.sort(function(a,b) {return a.name<b.name?-1:(a.name>b.name?1:0)});
-		
+
 		let cont = addElem('div',{className:'block',style:'width:100%'}, c);
 		render();
 	}
