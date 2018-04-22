@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.7
+// @version      0.5.8
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -432,6 +432,14 @@
 
 	/*********************************/
 
+	function getYesterdayQuery() {
+		let date = new Date(Date.now()-24*60*60*1000);
+		let c = '(';
+		let cc = 'created_at:';
+		c+=cc+date.getFullYear()+'-'+((date.getMonth()+1)<10?('0'+(date.getMonth()+1)):(date.getMonth()+1))+'-'+(date.getDate()<10?('0'+date.getDate()):date.getDate());
+		return c+')';
+	}
+
 	function getYearsQuery() {
 		let date = new Date();
 		let c = '(';
@@ -484,6 +492,7 @@
 	function customQueries(f) {
 		let tx = f.query;
 		if (window._YDB_public.funcs == undefined || window._YDB_public.funcs.tagAliases == undefined) {
+			tx = tx.replace('__ydb_Yesterday', getYesterdayQuery());
 			tx = tx.replace('__ydb_LastYearsAlt', getYearsAltQuery());
 			tx = tx.replace('__ydb_LastYears', getYearsQuery());
 			tx = tx.replace('__ydb_Spoilered', spoileredQuery());
