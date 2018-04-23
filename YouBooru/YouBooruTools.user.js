@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.21
+// @version      0.5.22
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -213,11 +213,6 @@ color: #0a0;
             onChanges:{
                 aliases:{
                     _:function(module,data, cb) {
-                        if (data != undefined && data.length>0) {
-                            data.sort(function(a, b){
-                                return b.a.length - a.a.length;
-                            });
-                        }
                         for (let i=0; i<data.length; i++) {
                             if (data[i].changed) {
                                 data[i].changed = false;
@@ -506,7 +501,7 @@ color: #0a0;
 			c+=cc+date.getFullYear()+'-'+((date.getMonth()+1)<10?('0'+(date.getMonth()+1)):(date.getMonth()+1))+'-'+(date.getDate()<10?('0'+date.getDate()):date.getDate());
 			return c+')';
 		};
-		
+
         let getYearsQuery = function(param) {
             let date = new Date(Date.now()-param*24*60*60*1000);
             let c = '(';
@@ -638,7 +633,7 @@ color: #0a0;
             let q2 = goodCombine(tags);
             return q2;
         };
-		
+
 		let smartLegacy = function (orig) {
 			let tags = goodParse(orig);
             for (let i=0; i<tags.tags.length; i++) {
@@ -2149,6 +2144,7 @@ color: #0a0;
             }
             catch (e) {
                 c.innerHTML += '[PARSE ERROR] '+e+'<br>';
+				debug('YDB:T','[PARSE ERROR] '+e+' for '+y[i],2);
             }
             if (request.id < y.length) get(request.id+1);
             return;
