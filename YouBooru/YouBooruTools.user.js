@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.22
+// @version      0.5.23
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -620,6 +620,15 @@ color: #0a0;
             return q2;
         };
 
+        let toLowerCase = function (orig) {
+            let tags = goodParse(orig);
+            for (let i=0; i<tags.tags.length; i++) {
+					tags.tags[i].v = tags.tags[i].v.toLowerCase();
+            }
+            let q2 = goodCombine(tags);
+            return q2;
+        };
+
 		let unspoilTag = function (orig) {
 			let nonce;
 			if (window._YDB_public.funcs.getNonce == undefined) nonce = 'unsafe_nonce';
@@ -645,7 +654,7 @@ color: #0a0;
 
 		//////////////////////////////////////////////////////
 
-        let q2 = original.toLowerCase();
+        let q2 = toLowerCase(original);
 		let q = cycledParse(q2);
         if (opt.legacy) q = smartLegacy(q);
 		q = artists(q);
