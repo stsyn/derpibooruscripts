@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.6.2
+// @version      0.6.3
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -401,7 +401,7 @@ margin:auto;
 `;
 
     styles.colorAccentTemplate = `
-.block__header--light a, .block__header--js-tabbed a, a.block__header--single-item, #container span:not(.tag)>a,
+.block__header--light a, .block__header--js-tabbed a, a.block__header--single-item, #container span:not(.tag)>a, a.profile-block, table.table td>a,
 .block__header a:not(.interaction--fave):not(.interaction--upvote):not(.interaction--downvote):not(.interaction--comments):not(.interaction--hide), .image-description a,
 .block__header--sub a, .block__header--single-item a, .block__content:not(._fs_popup)>*:not(.media-box) a:not(.tag__name), .block__content>a, .profile-top__name-and-links a,
 .source_url a, #footer_content a, .button--link, .communication__body a, .comment_backlinks a, .communication__options a, a.interaction-user-list-item, .pagination a,
@@ -507,15 +507,15 @@ image-rendering: pixelated;
 
     styles.noneTag = `
 body[data-theme*="dark"] .tag[data-tag-category="none"] {
-background: #444;
-border-color: #888;
+background: #333;
+border-color: #555;
 color: #888;
 }
 
 .tag[data-tag-category="none"] {
-background: #bbb;
-border-color: #555;
-color: #555;
+background: #ccc;
+border-color: #888;
+color: #777;
 }
 `;
 
@@ -579,6 +579,7 @@ color: #555;
                 {type:'input', name:'Scroll speed', parameter:'scrollSpeed', validation:{type:'int',min:5, max:100, default:20}},
                 {type:'input', name:'Scroll multiplier', parameter:'scrollMultiply', validation:{type:'float',min:1, max:10, default:2}},
                 {type:'checkbox', name:'Remove href from comments link', parameter:'commentLink'},
+                {type:'breakline'},
                 {type:'checkbox', name:'New experimental UI', parameter:'new'},
                 {type:'breakline'},
                 {type:'checkbox', name:'Autohide UI', parameter:'staticEnabled'},
@@ -1179,7 +1180,7 @@ color: #555;
 
         if (document.getElementById('user_theme') != undefined) document.getElementById('user_theme').addEventListener('change',function() {
             remove('colorAccent');
-            setTimeout(function() {enableColor(true);},300);
+            setTimeout(function() {enableColor(true);},777);
         });
         setTimeout(function() {if (document.getElementById('_fs_color_setting') != undefined) document.getElementById('_fs_color_setting').addEventListener('change',function(e) {
             remove('colorAccent');
