@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.1.4
+// @version      0.1.5
 // @author       stsyn
 
 // @include      *://trixiebooru.org/*
@@ -104,7 +104,7 @@
 			document.getElementById('_ydb_preview').src = url.params.originView;
 		}
 		if (decodeURIComponent(url.params.description) != 'undefined') {
-			document.getElementById('image_description').value = decodeURIComponent(url.params.description);
+			document.getElementById('image_description').value = decodeURIComponent(url.params.description).replace(/\n\s*\n/g, '\n').replace(/^\s*/mg, '');
 		}
 	}
 
