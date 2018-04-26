@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Tumblr YDB:ADUp module
 // @namespace    http://tampermonkey.net/
-// @version      0.0.2
+// @version      0.0.3
 // @author       stsyn
 // @match        *://*/*
 // @exclude      *://trixiebooru.org/*
@@ -48,6 +48,9 @@
 		let url = location.href;
 		let artist = '';
 		let desc = '';
+		if (url.indexOf('/photoset_iframe/')>-1) {
+			url = url.replace(/(^.*)(photoset_iframe\/)(.*$)/,'$1');
+		}
 		if (location.hostname == "www.tumblr.com") {
 			let parent = x.parentNode;
 			while (!parent.classList.contains('post_full')) parent = parent.parentNode;
@@ -74,22 +77,34 @@
 		}}]},y);
 	}
 
-	for (let i=0;i<document.querySelectorAll('div.photoset[id*="photoset_"]').length;i++) {
-		let x = document.querySelectorAll('div.photoset[id*="photoset_"]')[i];
-		for (let j=0; j<x.querySelectorAll('a.photoset_photo').length;j++) {
-			let y = x.querySelectorAll('a.photoset_photo')[j];
-			createLink(y, x, y.pathname);
-		}
+	function main() {
+		document.querySelectorAll('div.photoset[id*="photoset_"]:not(._ydb_adup_parsed)').forEach(function(x) {
+			for (let j=0; j<x.querySelectorAll('a.photoset_photo').length;j++) {
+				let y = x.querySelectorAll('a.photoset_photo')[j];
+				createLink(y, x, y.pathname);
+			}
+			x.classList.add('_ydb_adup_parsed');
+		});
+
+		document.querySelectorAll('div.post.is_photo div.post_media a.post_media_photo_anchor:not(._ydb_adup_parsed), a[href*="'+location.hostname+'/image/"]:not(._ydb_adup_parsed)').forEach(function(y) {
+			let img = y.querySelector('img');
+			if (img == undefined) {
+				y = y.parentNode;
+				img = y.querySelector('img[src*="media.tumblr"]');
+			}
+			createLink(y, y, parseURL(img.src).path);
+			y.classList.add('_ydb_adup_parsed');
+		});
+
+		document.querySelectorAll('img[src*="/tumblr_inline_"]:not(._ydb_adup_parsed)').forEach(function(img) {
+			let y = img.parentNode;
+			if (y.getElementsByTagName('img').length>1) return;
+			createLink(y, y, parseURL(img.src).path);
+			img.classList.add('_ydb_adup_parsed');
+		});
+		setTimeout(main, 2000);
+
 	}
 
-	for (let i=0;i<document.querySelectorAll('div.post.is_photo div.post_media a.post_media_photo_anchor, a[href*="'+location.hostname+'/image/"]').length;i++) {
-		let y = document.querySelectorAll('div.post.is_photo div.post_media a.post_media_photo_anchor, a[href*="'+location.hostname+'/image/"]')[i];
-        let img = y.querySelector('img');
-        if (img == undefined) {
-            y = y.parentNode;
-            img = y.querySelector('img[src*="media.tumblr"]');
-        }
-		createLink(y, y, parseURL(img.src).path);
-	}
-
+	main();
 })();
