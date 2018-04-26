@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.1.3
+// @version      0.1.4
 // @author       stsyn
 
 // @include      *://trixiebooru.org/*
@@ -31,6 +31,7 @@
 (function() {
     'use strict';
 
+	let overRideSize = false;
 
 	//srsly?..
 	function parseURL(url) {
@@ -95,6 +96,10 @@
 		if (decodeURIComponent(url.params.originWidth) != 'undefined') {
 			document.getElementById('_ydb_old').innerHTML = url.params.originWidth+'x'+url.params.originHeight;
 		}
+		if (decodeURIComponent(url.params.newWidth) != 'undefined') {
+			overRideSize = true;
+			document.getElementById('_ydb_new').innerHTML = url.params.newWidth+'x'+url.params.newHeight;
+		}
 		if (decodeURIComponent(url.params.originView) != 'undefined') {
 			document.getElementById('_ydb_preview').src = url.params.originView;
 		}
@@ -112,7 +117,7 @@
 		ctx.globalCompositeOperation = 'difference';
 		img = document.getElementById('js-image-upload-preview');
 		ctx.drawImage(img, 0, 0, document.getElementById('_ydb_preview').naturalWidth, document.getElementById('_ydb_preview').naturalHeight);
-		document.getElementById('_ydb_new').innerHTML = img.naturalWidth + 'x' + img.naturalHeight;
+		if (!overRideSize) document.getElementById('_ydb_new').innerHTML = img.naturalWidth + 'x' + img.naturalHeight;
 		if (decodeURIComponent(url.params.src) != 'undefined') {
 			document.getElementById('image_source_url').value = decodeURIComponent(url.params.src);
 		}
@@ -249,7 +254,9 @@
 			document.getElementById('_ydb_diff').style.height = document.getElementById('_ydb_preview').clientHeight+'px';
 			diff(url);
 		};
+		document.getElementById('js-scraper-preview').addEventListener('click',function() {overRideSize = false;});
 		document.getElementById('js-image-upload-preview').onload = function() {
+			if (document.getElementById('image_image').files.length > 0) overRideSize = false;
 			diff(url);
 		};
 		fillData1(url);
