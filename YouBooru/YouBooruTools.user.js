@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.23
+// @version      0.5.24
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -928,10 +928,10 @@ color: #0a0;
 		};
 
 		setTimeout(function() {
-			for (let i=0; i<e.querySelectorAll('._ydb_spoil:not(._ydb_spoil_patched)').length; i++) {
-				e.querySelectorAll('._ydb_spoil:not(._ydb_spoil_patched)')[i].addEventListener('click', hideBlock);
-				e.querySelectorAll('._ydb_spoil:not(._ydb_spoil_patched)')[i].classList.add('_ydb_spoil_patched');
-			}
+			e.querySelectorAll('._ydb_spoil:not(._ydb_spoil_patched)').forEach(function(x) {
+				x.addEventListener('click', hideBlock);
+				x.classList.add('_ydb_spoil_patched');
+			});
 		}, 100);
 
 		for (let i=0; i<e.querySelectorAll('ins').length; i++) {
