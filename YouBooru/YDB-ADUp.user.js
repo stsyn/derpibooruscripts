@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.1.2
+// @version      0.1.3
 // @author       stsyn
 
 // @include      *://trixiebooru.org/*
@@ -118,71 +118,39 @@
 		}
 	}
 
-	if ((parseInt(location.pathname.slice(1))>=0 && location.pathname.split('/')[2] == undefined) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && location.pathname.split('/')[3] == undefined)) {
-		let url;
-		url = '?';
-		url += 'tags='+encodeURIComponent(document.getElementById('image_old_tag_list').value);
-		let src = document.querySelector('span.source_url a');
-		if (src) url += '&src='+encodeURIComponent(src.innerHTML);
-		url += '&origin='+document.getElementsByClassName('image-show-container')[0].dataset.imageId;
-		url += '&originView='+encodeURIComponent(JSON.parse(document.getElementsByClassName('image-show-container')[0].dataset.uris).large);
-		url += '&originWidth='+document.getElementsByClassName('image-show-container')[0].dataset.width;
-		url += '&originHeight='+document.getElementsByClassName('image-show-container')[0].dataset.height;
-		ChildsAddElem('li',{style:'float:right'},document.querySelector('ul.image_menu.horizontal-list'), [
-			InfernoAddElem('a',{href:'/images/new'+url},[
-				InfernoAddElem('button',{className:'button button--link',innerHTML:'Upload copy'},[])
-			])
-		]);
-	}
-	else if (location.pathname == '/images/new') {
-		let url = parseURL(location.href);
-		//if (location.search == '') return;
-		if (url.params.origin != undefined) {
-			fetchExtData(url);
-		}
-		document.getElementById('js-image-upload-preview').style.display = 'inline-block';
-		document.getElementById('js-image-upload-preview').style.width = '320px';
-		document.getElementById('js-image-upload-preview').style.marginBottom = '0';
-		document.querySelector('.image-other').insertBefore(InfernoAddElem('div',{},[
-			InfernoAddElem('div',{className:'block__content '+(url.params.origin!=undefined?'hidden':'')},[
-				InfernoAddElem('strong',{innerHTML:'Similar images'},[]),
-				InfernoAddElem('div',{id:'_ydb_similarGallery'},[
-					InfernoAddElem('strong',{innerHTML:'Fetching...'},[])
-				])
-			]),
-			InfernoAddElem('div',{style:'padding-bottom:1em;font-size:1.1em;text-align:center'},[
-				InfernoAddElem('strong',{id:'_ydb_old',innerHTML:'??? x ???'},[]),
-				InfernoAddElem('span',{innerHTML:' => '},[]),
-				InfernoAddElem('strong',{id:'_ydb_new',innerHTML:'??? x ???'},[])
-			]),
-			InfernoAddElem('img',{id:'_ydb_preview',style:'display:inline-block;width:320px;margin-right:10px'},[]),
-			InfernoAddElem('canvas',{id:'_ydb_diff',style:'display:inline-block;width:320px;margin-right:10px'},[]),
-			document.getElementById('js-image-upload-preview')
-		]),document.querySelector('.image-other').childNodes[0]);
-		document.getElementById('_ydb_preview').onload = function() {
-			document.getElementById('_ydb_diff').style.height = document.getElementById('_ydb_preview').clientHeight+'px';
-			diff(url);
-		};
-		document.getElementById('js-image-upload-preview').onload = function() {
-			diff(url);
-		};
-		fillData1(url);
-		/*if (url.params.origin == undefined && url.params.src != undefined && url.params.src != "undefined" && url.params.src != "")*/ {
+	function reverse(url) {
 			let build = function(req) {
+				let ux;
+				if (url.params.newImg == undefined) {
+					if (document.getElementById('image_image').files.length > 0) {
+						ux = document.querySelector('.input.js-scraper').cloneNode(true);
+						ux.id = 'image';
+						ux.name = 'image';
+						document.querySelector('#_ydb_similarGallery strong').innerHTML += ' (It may take a while)';
+					}
+					else {
+						document.querySelector('#_ydb_similarGallery strong').innerHTML = 'You hadn\'t specified either local file or url.';
+						document.getElementById('reverseButton').style.display = 'inline-block';
+						return;
+					}
+				}
 				let s = InfernoAddElem('div',{style:'display:none',innerHTML:req.responseText},[]);
-				document.body.appendChild(s);
-				document.body.appendChild(InfernoAddElem('form',{id:'_ydb_reverse',enctype:"multipart/form-data",action:"/search/reverse",acceptCharset:"UTF-8",method:"post"},[
+				//document.body.appendChild(s);
+				document.body.appendChild(InfernoAddElem('form',{className:'hidden',id:'_ydb_reverse',enctype:"multipart/form-data",action:"/search/reverse",acceptCharset:"UTF-8",method:"post"},[
 					InfernoAddElem('input',{name:"utf8",value:"✓",type:'hidden'},[]),
 					InfernoAddElem('input',{name:"authenticity_token",value:s.querySelector('input[name="authenticity_token"]').value,type:'hidden'},[]),
 					InfernoAddElem('input',{name:"fuzziness",value:'0.45',type:'hidden'},[]),
-					InfernoAddElem('input',{name:"scraper_url",value:decodeURIComponent(url.params.newImg),type:'hidden'},[])
+					(url.params.newImg == undefined?
+					 	ux:
+						InfernoAddElem('input',{name:"scraper_url",value:decodeURIComponent(url.params.newImg),type:'hidden'},[])
+					)
 				]));
 				let callback = function(rq) {
+					document.getElementById('reverseButton').style.display = 'inline-block';
 					s.innerHTML = rq.responseText;
 					let t = document.getElementById('_ydb_similarGallery');
 					t.innerHTML = '';
 					let e = s.querySelector('table');
-					console.log(e);
 					if (e!=undefined) for (let i=1; i<e.querySelectorAll('tr').length; i++) {
 						let x = e.querySelectorAll('tr')[i];
 						let ix = x.querySelector('.image-container.thumb');
@@ -234,5 +202,56 @@
 			req.send();
 			build(req);
 		}
+
+	if ((parseInt(location.pathname.slice(1))>=0 && location.pathname.split('/')[2] == undefined) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && location.pathname.split('/')[3] == undefined)) {
+		let url;
+		url = '?';
+		url += 'tags='+encodeURIComponent(document.getElementById('image_old_tag_list').value);
+		let src = document.querySelector('span.source_url a');
+		if (src) url += '&src='+encodeURIComponent(src.innerHTML);
+		url += '&origin='+document.getElementsByClassName('image-show-container')[0].dataset.imageId;
+		url += '&originView='+encodeURIComponent(JSON.parse(document.getElementsByClassName('image-show-container')[0].dataset.uris).large);
+		url += '&originWidth='+document.getElementsByClassName('image-show-container')[0].dataset.width;
+		url += '&originHeight='+document.getElementsByClassName('image-show-container')[0].dataset.height;
+		ChildsAddElem('li',{style:'float:right'},document.querySelector('ul.image_menu.horizontal-list'), [
+			InfernoAddElem('a',{href:'/images/new'+url},[
+				InfernoAddElem('button',{className:'button button--link',innerHTML:'Upload copy'},[])
+			])
+		]);
+	}
+	else if (location.pathname == '/images/new') {
+		let url = parseURL(location.href);
+		//if (location.search == '') return;
+		if (url.params.origin != undefined) {
+			fetchExtData(url);
+		}
+		document.getElementById('js-image-upload-preview').style.display = 'inline-block';
+		document.getElementById('js-image-upload-preview').style.width = '320px';
+		document.getElementById('js-image-upload-preview').style.marginBottom = '0';
+		document.querySelector('.image-other').insertBefore(InfernoAddElem('div',{},[
+			InfernoAddElem('div',{className:'block__header'},[
+				InfernoAddElem('strong',{innerHTML:'Similar images',className:'block__header__title'},[]),
+				InfernoAddElem('a',{id:'reverseButton',innerHTML:'Check', events:[{t:'click',f:function(e) {e.target.style.display = 'none';document.getElementById('_ydb_similarGallery').innerHTML = ''; document.getElementById('_ydb_similarGallery').appendChild(InfernoAddElem('strong',{innerHTML:'Fetching...'},[]));reverse(url);}}]},[]),
+			]),
+			InfernoAddElem('div',{className:'block__content '+(url.params.origin!=undefined?'hidden':'')},[
+				InfernoAddElem('div',{id:'_ydb_similarGallery'},[])
+			]),
+			InfernoAddElem('div',{style:'padding-bottom:1em;font-size:1.1em;text-align:center'},[
+				InfernoAddElem('strong',{id:'_ydb_old',innerHTML:'??? x ???'},[]),
+				InfernoAddElem('span',{innerHTML:' => '},[]),
+				InfernoAddElem('strong',{id:'_ydb_new',innerHTML:'??? x ???'},[])
+			]),
+			InfernoAddElem('img',{id:'_ydb_preview',style:'display:inline-block;width:320px;margin-right:10px'},[]),
+			InfernoAddElem('canvas',{id:'_ydb_diff',style:'display:inline-block;width:320px;margin-right:10px'},[]),
+			document.getElementById('js-image-upload-preview')
+		]),document.querySelector('.image-other').childNodes[0]);
+		document.getElementById('_ydb_preview').onload = function() {
+			document.getElementById('_ydb_diff').style.height = document.getElementById('_ydb_preview').clientHeight+'px';
+			diff(url);
+		};
+		document.getElementById('js-image-upload-preview').onload = function() {
+			diff(url);
+		};
+		fillData1(url);
 	}
 })();
