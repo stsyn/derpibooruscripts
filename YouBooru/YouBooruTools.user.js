@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.24
+// @version      0.5.25
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -82,7 +82,7 @@ background: #5b9b26;
 color: #e0e0e0  !important;
 }
 
-body[ ._ydb_green {
+body ._ydb_green {
 background: #67af2b !important;
 color: #fff !important;
 }
