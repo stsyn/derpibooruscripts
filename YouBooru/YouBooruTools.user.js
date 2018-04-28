@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.25
+// @version      0.5.26
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1462,7 +1462,7 @@ color: #0a0;
 			else {
 				if (name == undefined) {
 					let req = new XMLHttpRequest();
-					let url = '/lists/user_comments/'+user.id;
+					let url = '/lists/user_comments/'+id;
 					req.open('GET', url, false);
 					req.send();
 					let n = document.createElement('div');
@@ -1488,7 +1488,7 @@ color: #0a0;
 		let addPending = function(user) {
 			//for (let i=0; i<userbase.pending.length; i++) if (user.id == userbase.pending[i]) return;
 			userbase.pending.push(user.id);
-		}
+		};
 
 		let removeUser = function(username) {
 			if (username == userbase.idIndex[userbase.users[username].id]) delete userbase.idIndex[userbase.users[username].id];
@@ -1615,12 +1615,12 @@ color: #0a0;
 		};
 
 		if (!userbaseStarted) {
-			getUserId = function (name) {return getTimestamp({name:name},false,true)};
-			addUserInBase = function (name, id) {createUser(name,[],id)};
+			getUserId = function (name) {return getTimestamp({name:name},false,true);};
+			addUserInBase = function (name, id) {createUser(name,[],id);};
 			addUserPending = addPending;
-			UAwrite = function (name, id) {write()};
-			UACLwrite = function (name, id) {clwrite()};
-			userCheck = function (name, id) {getTimestamp({name:name, id:id},true,false)}
+			UAwrite = function (name, id) {write();};
+			UACLwrite = function (name, id) {clwrite();};
+			userCheck = function (name, id) {getTimestamp({name:name, id:id},true,false);}
 			userbaseStarted = true;
 
 			//чтение
@@ -1843,16 +1843,16 @@ color: #0a0;
 				InfernoAddElem('a',{innerHTML:'Read all',href:'#',events:[{t:'click', f:function() {
 					document.querySelectorAll('a[data-click-markread]').forEach(function(e,i,a) {
 						e.click();
-					})
+					});
 				}}]},[]),
 				InfernoAddElem('span',{innerHTML:' | '},[]),
 				InfernoAddElem('a',{innerHTML:'Read merging',href:'#',events:[{t:'click', f:function() {
 					document.querySelectorAll('a[data-click-markread]').forEach(function(e,i,a) {
 						if (e.previousSibling.previousSibling.previousSibling.previousSibling.previousSibling.wholeText.startsWith(' merged image'))
 							e.click();
-					})
+					});
 				}}]},[])
-			]),document.getElementById('content').childNodes[1])
+			]),document.getElementById('content').childNodes[1]);
 		}
 	}
 
@@ -2039,7 +2039,7 @@ color: #0a0;
 					InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
 						InfernoAddElem('span',{innerHTML:'[USER NOT FOUND]'},[])
 					]),
-					InfernoAddElem('a',{className:'interaction--downvote',style:'padding:0 12px', events:[{t:'click',f:function(){removeUser(user)}}]},[
+					InfernoAddElem('a',{className:'interaction--downvote',style:'padding:0 12px', events:[{t:'click',f:function(){removeUser(user);}}]},[
 						InfernoAddElem('i',{className:'fa fa-trash-alt'},[]),
 						InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Remove'},[])
 					])
@@ -2064,7 +2064,7 @@ color: #0a0;
 					InfernoAddElem('i',{className:'fa fa-clock'},[]),
 					InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Chat history'},[])
 				]),
-				InfernoAddElem('a',{className:'interaction--downvote',style:'padding:0 12px', href:'javascript://', events:[{t:'click',f:function(){removeUser(user)}}]},[
+				InfernoAddElem('a',{className:'interaction--downvote',style:'padding:0 12px', href:'javascript://', events:[{t:'click',f:function(){removeUser(user);}}]},[
 					InfernoAddElem('i',{className:'fa fa-trash-alt'},[]),
 					InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Remove'},[])
 				])
@@ -2092,7 +2092,7 @@ color: #0a0;
 					InfernoAddElem('img',{src:'https://derpicdn.net/img/2013/4/2/285856/medium.png'},[])
 				]));
 			}
-			cont.appendChild(InfernoAddElem('div',{},x))
+			cont.appendChild(InfernoAddElem('div',{},x));
 		};
 
 		for (let i=0; i<userbase_local.friendlist.length; i++) {
@@ -2100,7 +2100,7 @@ color: #0a0;
 			users.push(user);
 		}
 
-		users.sort(function(a,b) {return a.name<b.name?-1:(a.name>b.name?1:0)});
+		users.sort(function(a,b) {return a.name<b.name?-1:(a.name>b.name?1:0);});
 
 		let cont = addElem('div',{className:'block',style:'width:100%'}, c);
 		render();
