@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.8
+// @version      0.5.9
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -202,6 +202,7 @@
 			name:'Feeds',
 			container:'_ydb_feeds',
 			version:version,
+			link:'/meta/userscript-youbooru-feeds-on-main-page',
 			s:[
 				{type:'checkbox', name:'Do not remove watchlist', parameter:'doNotRemoveWatchList'},
 				{type:'breakline'},
@@ -949,7 +950,6 @@
 			let shitcontainer = document.createElement('div');
 			shitcontainer.style.display = 'none';
 			feedz[i].temp = shitcontainer;
-			elem.appendChild(shitcontainer);
 			cont.appendChild(elem);
 
 			let ut2 = document.createElement('span');
@@ -983,32 +983,32 @@
             if (f.eventCont == undefined) f.eventCont = {};
 			if (feedzCache[i] == undefined) {
 				getFeed(f, i, true);
-				debug('YDB:F','Requested update to feed "'+f.name+'". Reason "No cache found"', '1');
+				debug('YDB:F','Requested update to feed "'+f.name+'". Reason "No cache found"', 1);
 			}
 			else if (feedzCache[i].startsWith('Server timeout.')) {
 				getFeed(f, i, true);
-				debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Not finished loading"', '1');
+				debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Not finished loading"', 1);
 			}
 			else if (compileURL(f) != feedzURLs[i]) {
 				getFeed(f, i, true);
-				debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Feed url changed"', '1');
+				debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Feed url changed"', 1);
 			}
 			else if (parseInt(config.imagesInFeeds*1.2) != feedz[i].responsed) {
 				getFeed(f, i, true);
-				debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Changed setting imageInFeeds"', '1');
+				debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Changed setting imageInFeeds"', 1);
 			}
 			else if (ptime > (f.saved+f.cache))
 			{
 				if ((f.ccache !== undefined) && (f.ccache>0) && (!isNaN(f.ccache))) {
 					if (parseInt(ptime/f.ccache) > parseInt(f.saved/f.ccache)) {
 						getFeed(f, i, true);
-						debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Scheduled update"', '1');
+						debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Scheduled update"', 1);
 					}
 					else fillParsed(f, i);
 				}
 				else {
 					getFeed(f, i, true);
-					debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Cache lifetime expired"', '1');
+					debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Cache lifetime expired"', 1);
 				}
 			}
 			else if (feedzURLs[i] == undefined) getFeed(f, i, true);
