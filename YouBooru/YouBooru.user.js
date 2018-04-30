@@ -23,7 +23,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.9
+// @version      0.5.10
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -588,6 +588,7 @@
 					}
 				}
 			}
+            if (mx == 999999999) return;
 			let ux = x.querySelector('.media-box__overlay.js-spoiler-info-overlay');
 			ux.classList.remove('hidden');
 			ux.innerHTML = n;
