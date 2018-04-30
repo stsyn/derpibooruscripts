@@ -570,6 +570,7 @@
 			let spx = JSON.parse(x.getAttribute('data-image-tags'));
 			let fls = data.spoilers;
 			let mx = 999999999;
+            let hasSpoiler = false;
 			let n = '', s = null;
 			for (let i=0; i<spx.length; i++) {
 				for (let j=0; j<fls.length; j++) {
@@ -578,6 +579,7 @@
 							let u = JSON.parse(localStorage['bor_tags_'+spx[i]]);
 							let a = u.images;
 							n += (n==''?'':', ')+u.name;
+                            hasSpoiler = true;
 							if (a < mx) {
 								if (u.spoiler_image_uri != null) {
 									mx = a;
@@ -588,7 +590,7 @@
 					}
 				}
 			}
-            if (mx == 999999999) return;
+            if (!hasSpoiler) return;
 			let ux = x.querySelector('.media-box__overlay.js-spoiler-info-overlay');
 			ux.classList.remove('hidden');
 			ux.innerHTML = n;
