@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Tumblr YDB:ADUp module
 // @namespace    http://tampermonkey.net/
-// @version      0.0.3
+// @version      0.0.4
 // @author       stsyn
 // @match        *://*/*
 // @exclude      *://trixiebooru.org/*
@@ -86,7 +86,7 @@
 			x.classList.add('_ydb_adup_parsed');
 		});
 
-		document.querySelectorAll('div.post.is_photo div.post_media a.post_media_photo_anchor:not(._ydb_adup_parsed), a[href*="'+location.hostname+'/image/"]:not(._ydb_adup_parsed)').forEach(function(y) {
+		document.querySelectorAll('div.post.is_photo div.post_media a.post_media_photo_anchor:not(._ydb_adup_parsed), a[href*="media.tumblr.com/"][href*="/tumblr_"]:not(._ydb_adup_parsed), a[href*="'+location.hostname+'/image/"]:not(._ydb_adup_parsed)').forEach(function(y) {
 			let img = y.querySelector('img');
 			if (img == undefined) {
 				y = y.parentNode;
