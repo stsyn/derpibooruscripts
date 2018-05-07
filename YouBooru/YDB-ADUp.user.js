@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.1.6
+// @version      0.1.7
 // @author       stsyn
 
 // @include      *://trixiebooru.org/*
@@ -137,7 +137,7 @@
 				}
 				else {
 					document.querySelector('#_ydb_similarGallery strong').innerHTML = 'You hadn\'t specified either local file or url.';
-					document.getElementById('reverseButton').style.display = 'inline-block';
+					document.getElementById('ydb_head_hiddenable').style.display = 'inline';
 					return;
 				}
 			}
@@ -146,14 +146,14 @@
 			document.body.appendChild(InfernoAddElem('form',{className:'hidden',id:'_ydb_reverse',enctype:"multipart/form-data",action:"/search/reverse",acceptCharset:"UTF-8",method:"post"},[
 				InfernoAddElem('input',{name:"utf8",value:"✓",type:'hidden'},[]),
 				InfernoAddElem('input',{name:"authenticity_token",value:s.querySelector('input[name="authenticity_token"]').value,type:'hidden'},[]),
-				InfernoAddElem('input',{name:"fuzziness",value:'0.45',type:'hidden'},[]),
-				(url.params.newImg == undefined?
+				InfernoAddElem('input',{name:"fuzziness",value:document.getElementById('ydb_fuzzyness').value,type:'hidden'},[]),
+				(document.getElementById('scraper_url').value == undefined?
 				 ux:
 				 InfernoAddElem('input',{name:"scraper_url",value:decodeURIComponent(document.getElementById('scraper_url').value),type:'hidden'},[])
 				)
 			]));
 			let callback = function(rq) {
-				document.getElementById('reverseButton').style.display = 'inline-block';
+				document.getElementById('ydb_head_hiddenable').style.display = 'inline';
 				s.innerHTML = rq.responseText;
 				let t = document.getElementById('_ydb_similarGallery');
 				t.innerHTML = '';
@@ -239,7 +239,11 @@
 			InfernoAddElem('div',{className:'block'},[
 				InfernoAddElem('div',{className:'block__header'},[
 					InfernoAddElem('strong',{innerHTML:'Similar images',className:'block__header__title'},[]),
-					InfernoAddElem('a',{id:'reverseButton',innerHTML:'Check', events:[{t:'click',f:function(e) {e.target.style.display = 'none';document.getElementById('_ydb_similarGallery').innerHTML = ''; document.getElementById('_ydb_similarGallery').appendChild(InfernoAddElem('strong',{innerHTML:'Fetching...'},[]));reverse(url);}}]},[]),
+					InfernoAddElem('span',{id:'ydb_head_hiddenable'},[
+						InfernoAddElem('a',{id:'reverseButton',innerHTML:'Check', events:[{t:'click',f:function(e) {e.target.parentNode.style.display = 'none';document.getElementById('_ydb_similarGallery').innerHTML = ''; document.getElementById('_ydb_similarGallery').appendChild(InfernoAddElem('strong',{innerHTML:'Fetching...'},[]));reverse(url);}}]},[]),
+						InfernoAddElem('strong',{innerHTML:'Fuzziness',className:'block__header__title'},[]),
+						InfernoAddElem('input',{id:'ydb_fuzzyness',className:'header__input input',value:0.45},[])
+					])
 				]),
 				InfernoAddElem('div',{className:'block__content'},[
 					InfernoAddElem('div',{id:'_ydb_similarGallery'},[
@@ -267,12 +271,14 @@
 				return;
 			}
 			overRideSize = false;
-			document.getElementById('_ydb_similarGallery').appendChild(InfernoAddElem('strong',{innerHTML:'<br>Not executed'},[]));
+			if (document.querySelector('#_ydb_similarGallery strong') != undefined) document.querySelector('#_ydb_similarGallery strong').innerHTML = 'Not executed';
+			else document.getElementById('_ydb_similarGallery').appendChild(InfernoAddElem('strong',{innerHTML:'<br>Not executed'},[]));
 		});
 		document.getElementById('js-image-upload-preview').onload = function() {
 			if (document.getElementById('image_image').files.length > 0) {
 				overRideSize = false;
-				document.getElementById('_ydb_similarGallery').appendChild(InfernoAddElem('strong',{innerHTML:'<br>Not executed'},[]));
+				if (document.querySelector('#_ydb_similarGallery strong') != undefined) document.querySelector('#_ydb_similarGallery strong').innerHTML = 'Not executed';
+				else document.getElementById('_ydb_similarGallery').appendChild(InfernoAddElem('strong',{innerHTML:'<br>Not executed'},[]));
 			}
 			diff(url);
 		};
