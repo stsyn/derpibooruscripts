@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.0.4
+// @version      0.0.5
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
@@ -13,9 +13,10 @@
 	'use strict';
 
 	var l, ds, i=0;
-	var req;
+	var req = false;
 
 	function DA(p, link) {
+		req = true;
 		if (l.indexOf('/art/') !== 0) {
 			console.log('[DAD]: Not art');
 			return;
@@ -67,9 +68,8 @@
 		setTimeout(DA_check, 1000);
 		if (window.location.pathname !== l) {
 			if (document.getElementsByClassName('dev-meta-actions')[i] !== undefined) {
-				if (i==1 && req.readyState !== 4) {
-					aborted = true;
-					req.abort();
+				if (i==1 && !req) {
+					req = false;
 					return;
 				}
 				l = window.location.pathname;
