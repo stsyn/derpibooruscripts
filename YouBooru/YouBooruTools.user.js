@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.26
+// @version      0.5.27
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -151,6 +151,24 @@ color: #0a0;
 			relative: (a.href.match(/tps?:\/\/[^\/]+(.+)/) || [,''])[1],
 			segments: a.pathname.replace(/^\//,'').split('/')
 		};
+	}
+
+	function fetchJson(verb, endpoint, body) {
+		const data = {
+			method: verb,
+			credentials: 'same-origin',
+			headers: {
+				'Content-Type': 'application/json',
+				'X-CSRF-Token': window.booru.csrfToken,
+			},
+		};
+
+		if (body) {
+			body._method = verb;
+			data.body = JSON.stringify(body);
+		}
+
+		return fetch(endpoint, data);
 	}
 
     function write(ls2) {
@@ -1799,26 +1817,39 @@ color: #0a0;
 	/////////////////////////////////////////////
 
 	function scratchPad() {
+		let getPreview = function() {
+			let previewTab = document.querySelector('.ydb_scratchpad .communication__body__text');
+			let body = document.getElementById('_ydb_scratchpad').value;
+			let path = '/posts/preview';
+			fetchJson('POST', path, { body, anonymous:false })
+			.then(function (response) {
+				const errorMessage = '<div>Preview failed to load!</div>';
+				if (!response.ok)
+					return errorMessage;
+				return response.text();
+				})
+			.then(data => {
+				let cc = InfernoAddElem('div',{innerHTML:data},[]);
+				previewTab.innerHTML = cc.getElementsByClassName('communication__body__text')[0].innerHTML;
+				listRunInComms(previewTab.parentNode);
+			});
+		}
 		if (document.querySelector('.profile-top__name-header') != undefined) {
-			let hmm;
-			if (document.body.dataset.theme.startsWith('eq')) hmm = true;
-			let generate = function() {
-				let s = ['Provide as much detail as possible.','All glory to Glimmerbooru!','Denunciations left here are accepted for consideration.',
-						'The NKVD carefully investigates the information written here.', 'Stay alert, Comrade! Western spies everywhere.'];
-				return s[parseInt(Math.random()*s.length)];
-			};
 			let name = document.querySelector('.profile-top__name-header').innerHTML.slice(0, -10);
 			let id = document.querySelector('a[href*="/lists/user_comments"]').href.split('/').pop();
 			let content = '';
 			if (userbase_local.scratchpad[id] != undefined) content = userbase_local.scratchpad[id];
 			document.querySelector('.column-layout__left').insertBefore(
-				InfernoAddElem('div',{className:'block'},[
+				InfernoAddElem('div',{className:'block ydb_scratchpad'},[
 					InfernoAddElem('div',{className:'block__header'},[
 						InfernoAddElem('span',{className:'block__header__title',innerHTML:'Private scratchpad'},[])
 					]),
 					InfernoAddElem('div',{className:'block__content'},[
-						InfernoAddElem('textarea',{className:'input input--wide', value:content, id:'_ydb_scratchpad', placeholder:hmm?generate():''},[]),
-						InfernoAddElem('span',{innerHTML:hmm?'Thank you for your assistance.':'Do not use for passwords!'},[]),
+						InfernoAddElem('div',{className:'block'},[
+							InfernoAddElem('div',{className:'communication__body__text'},[])
+						]),
+						InfernoAddElem('textarea',{className:'input input--wide', value:content, id:'_ydb_scratchpad', placeholder:''},[]),
+						InfernoAddElem('span',{innerHTML:'Do not use for passwords!'},[]),
 						InfernoAddElem('input',{type:'button', className:"button input--wide",value:'Update',events:[{t:'click',f:function(e) {
 							if (userbase_local.scratchpad[id] == undefined) {
 								if (userbase.idIndex[id] == undefined) {
@@ -1827,12 +1858,14 @@ color: #0a0;
 							}
 							userbase_local.scratchpad[id] = document.getElementById('_ydb_scratchpad').value;
 							UACLwrite();
+							getPreview();
 							e.target.classList.add('button--state-success');
 							setTimeout(function() {e.target.classList.remove('button--state-success');}, 200);
 						}}]},[])
 					])
 				])
 			,document.querySelector('.column-layout__left').firstChild);
+			getPreview();
 		}
 	}
 
