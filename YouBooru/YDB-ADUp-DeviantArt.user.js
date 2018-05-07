@@ -7,6 +7,7 @@
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp-DeviantArt.user.js
 // @run-at       document-end
 // @grant        GM_xmlhttpRequest
+// @connect      deviantart.com 
 // ==/UserScript==
 
 (function() {
