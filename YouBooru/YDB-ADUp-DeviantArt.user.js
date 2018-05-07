@@ -8,6 +8,7 @@
 // @run-at       document-end
 // @grant        GM_xmlhttpRequest
 // @connect      deviantart.com 
+// @connect      deviantart.net 
 // ==/UserScript==
 
 (function() {
