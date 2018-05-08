@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Tumblr YDB:ADUp module
 // @namespace    http://tampermonkey.net/
-// @version      0.0.4
+// @version      0.0.5
 // @author       stsyn
 // @match        *://*/*
 // @exclude      *://trixiebooru.org/*
@@ -62,7 +62,6 @@
 			let x = location.hostname.split('.');
 			let u = x.shift();
 			while (u=='www' || u=='nsfw' || u=='art') {
-				console.log(u, x);
 				u = x.shift();
 			}
 			artist = u;
@@ -92,6 +91,7 @@
 				y = y.parentNode;
 				img = y.querySelector('img[src*="media.tumblr"]');
 			}
+			if (img == undefined) return;
 			createLink(y, y, parseURL(img.src).path);
 			y.classList.add('_ydb_adup_parsed');
 		});
