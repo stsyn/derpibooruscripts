@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.1.7
+// @version      0.1.8
 // @author       stsyn
 
 // @include      *://trixiebooru.org/*
@@ -33,6 +33,7 @@
 
 	let overRideSize = false;
 	let onceLoaded = false;
+	let checkedArtists = {};
 
 	//srsly?..
 	function parseURL(url) {
@@ -186,7 +187,10 @@
 						])
 					);
 				}
-				document.body.removeChild(s);
+				else {
+					if (document.querySelector('#_ydb_similarGallery strong') != undefined) document.querySelector('#_ydb_similarGallery strong').innerHTML = 'Nothing is found';
+					else document.getElementById('_ydb_similarGallery').appendChild(InfernoAddElem('strong',{innerHTML:'Nothing is found'},[]));
+				}
 			};
 			let readyHandler = function(rq) {
 				return function () {
@@ -208,6 +212,117 @@
 		req.open('GET', '/search/reverse', false);
 		req.send();
 		build(req);
+	}
+
+	function tagCheck() {
+		let render = function (d) {
+			let color = '', suggestion = '';
+			if (d.dnp_type=='Artist Upload Only') color = 'flash--warning';
+			if (d.dnp_type=='With Permission Only') {
+				suggestion = 'You should be ready to provide proofs of permission!';
+				color = 'flash--warning';
+			}
+			if (d.dnp_type=='Certain Type/Location Only') color = 'flash--warning';
+			if (d.dnp_type=='No Edits') {
+				suggestion = 'If you have permission to upload, remove "edit" tag for now and add it after uploading';
+				color = 'flash--warning';
+			}
+			if (d.dnp_type=='Other') color = 'flash--warning';
+			return InfernoAddElem('div',{className:'alternating-color block__content'},[
+				InfernoAddElem('div',{className:'flash '+color},[
+					InfernoAddElem('strong',{innerHTML:d.name},[]),
+					InfernoAddElem('span',{innerHTML:' — '},[]),
+					InfernoAddElem('strong',{innerHTML:d.dnp_type, style:{color:color}},[]),
+					InfernoAddElem('span',{innerHTML:suggestion==''?'':' — '},[]),
+					InfernoAddElem('span',{innerHTML:suggestion},[])
+				]),
+				InfernoAddElem('span',{innerHTML:' '+d.conditions},[]),
+				InfernoAddElem('br',{},[]),
+				InfernoAddElem('em',{innerHTML:d.reason},[])
+			]);
+		};
+		let checker = function (target, method) {
+            for (let i=0; i<document.querySelectorAll(target).length; i++) {
+                let x = document.querySelectorAll(target)[i];
+				let gotten;
+				for (let x in checkedArtists) checkedArtists[x].shouldDraw = false;
+                for (let i=0; i<x.getElementsByClassName('tag').length; i++) {
+                    let y = x.getElementsByClassName('tag')[i];
+                    let z;
+                    z = y.getElementsByTagName('a')[0].dataset.tagName;
+                    if (z.startsWith('artist:')) {
+						let name = z.slice(7);
+						if (checkedArtists[name] == undefined) {
+							fetch('/tags/'+encodeURIComponent(('artist:'+name).replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/ /g,'+').replace(/\:/g,'-colon-'))+'.json',{method:'GET'})
+							.then(function (response) {
+								const errorMessage = {fail:true};
+								if (!response.ok)
+									return errorMessage;
+								if (response.redirected) {
+									let newTag = response.url.split('/').pop();
+									newTag = newTag.replace(/\-dash\-/g,'-').replace(/\-dot\-/g,'.').replace(/\+/g,' ').replace(/\-colon\-/g,':');
+									y.getElementsByTagName('a')[0].dataset.tagName = newTag;
+									y.firstChild.textContent = newTag+' ';
+									return errorMessage;
+								}
+								return response.json();
+								})
+							.then(data => {
+								if (data.fail) return;
+								let dnp = data.dnp_entries;
+								for (let j=0; j<dnp.length; j++) {
+									let d = dnp[j];
+									d.name = name;
+									checkedArtists[name] = d;
+									container.appendChild(render(d));
+									gotten = true;
+									checkedArtists[name].shouldDraw = true;
+								}
+								//console.log(dnp);
+								if (dnp.length == 0) checkedArtists[name] = {ok:true};
+							});
+						}
+						else if (!checkedArtists[name].ok) {
+							checkedArtists[name].shouldDraw = true;
+							if (!checkedArtists[name].drawn) gotten = true;
+						}
+					}
+                }
+				for (let x in checkedArtists) {
+					if (checkedArtists[x].drawn != checkedArtists[x].shouldDraw) {
+						gotten = true;
+						break;
+					}
+				}
+				if (gotten) {
+					for (let x in checkedArtists) checkedArtists[x].drawn = false;
+					let container = document.getElementById('ydb_dnp_container');
+					container.innerHTML = '';
+					let drawn = false;
+					for (let i=0; i<x.getElementsByClassName('tag').length; i++) {
+						let y = x.getElementsByClassName('tag')[i];
+						let z;
+						z = y.getElementsByTagName('a')[0].dataset.tagName;
+						if (z.startsWith('artist:')) {
+							let name = z.slice(7);
+							if (checkedArtists[name] == undefined) continue;
+							else {
+								checkedArtists[name].drawn = true;
+								container.appendChild(render(checkedArtists[name]));
+								drawn = true;
+							}
+						}
+					}
+					if (!drawn) {
+						container.appendChild(InfernoAddElem('div',{className:'block__content'},[
+							InfernoAddElem('span',{innerHTML:'Nothing'},[]),
+						]));
+					}
+				}
+            }
+        };
+        checker('.js-taginput');
+        setTimeout(tagCheck,500);
 	}
 
 	if ((parseInt(location.pathname.slice(1))>=0 && location.pathname.split('/')[2] == undefined) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && location.pathname.split('/')[3] == undefined)) {
@@ -283,5 +398,17 @@
 			diff(url);
 		};
 		fillData1(url);
+		document.getElementById('new_image').insertBefore(InfernoAddElem('div',{className:'block'},[
+			InfernoAddElem('div',{className:'block__header'},[
+				InfernoAddElem('span',{className:'block__header__title',innerHTML:'DNP entries'},[])
+			]),
+			InfernoAddElem('div',{id:'ydb_dnp_container'},[
+				InfernoAddElem('div',{className:'block__content'},[
+					InfernoAddElem('span',{innerHTML:'Nothing'},[]),
+				])
+			])
+		]),
+		document.querySelector('h4+.field'));
+		tagCheck();
 	}
 })();
