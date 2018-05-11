@@ -21,10 +21,11 @@
 // @exclude      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
 
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/SettingsData0.js
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.9
+// @version      0.9.11
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -62,6 +63,8 @@
 		catch (e) {
 			settings = {};
 		}
+		if (settings.synch == undefined) settings.synch = true;
+		if (settings.downsynch == undefined) settings.downsynch = settings.synch;
 		if (settings.debugLength == undefined) settings.debugLength = 100;
 		if (settings.debugLevel == undefined) settings.debugLevel = 1;
 		if (settings.nonce == undefined || isNaN(settings.nonce)) settings.nonce = parseInt(Math.random()*Number.MAX_SAFE_INTEGER);
@@ -100,19 +103,32 @@
 	function register() {
 		if (window._YDB_public == undefined) window._YDB_public = {};
 		if (window._YDB_public.settings == undefined) window._YDB_public.settings = {};
+		let xversion;
+		if (version.indexOf('aE') == -1) {
+			if (GM_info.script.name == 'YourBooru:Settings') xversion = version+' (standalone)';
+			else xversion = version+' (served by '+GM_info.script.name+')';
+		}
+		else xversion = version;
 		window._YDB_public.settings.settings = {
 			name:'Settings',
 			container:'_ydb_config',
-			version:version,
+			version:xversion,
 			s:[
-				{type:'checkbox', name:'Synchronize (settings will be duplicated at watchlist string filter, this will not affect watchlist)', parameter:'synch'},
+				{type:'header', name:'Synchronization'},
+				{type:'text', name:'Allows settings to be duplicated at watchlist string filter. This will not affect watchlist.', styleS:{fontStyle:'italic'}},
 				{type:'breakline'},
-				{type:'text', name:'Newer settings from backup will be loaded even if synchronizing is disabled. So, first enabling of this option should be done when all the settings is actual.<br>', styleS:{fontStyle:'italic'}},
+				{type:'breakline'},
+				{type:'checkbox', name:'Allow to upload settings', parameter:'synch'},
+				{type:'breakline'},
+				{type:'checkbox', name:'Allow to download settings', parameter:'downsynch'},
+				{type:'breakline'},
+				{type:'breakline'},
 				{type:'text', name:'If you don\'t need backup anymore, remove added text in "Watch list filter string" at the "Watch list" tab.', styleS:{fontStyle:'italic'}},
 				{type:'breakline'},
-				{type:'buttonLink', name:'Synch now', href:'/pages/yourbooru?synch'},
 				{type:'breakline'},
+				{type:'buttonLink', name:'Sync now', href:'/pages/yourbooru?synch'},
 				{type:'breakline'},
+				{type:'header', name:'Logs'},
 				{type:'input', name:'Debug log length', parameter:'debugLength', validation:{type:'int',min:0,max:500, default:200}},
 				{type:'select', name:'Log level', parameter:'debugLevel', values:[
 					{name:'Errors', value:2},
@@ -297,6 +313,7 @@
 	}
 
 	function getData(force, external) {
+		let win;
 		let t = addElem('div',{id:'_ydb_dataArrive', style:'display:none'}, document.getElementById('content'));
 		let parse = function (request) {
 			try {
@@ -317,7 +334,7 @@
 							document.querySelector('#content .walloftext').innerHTML = JSON.stringify(s,null,' ');
 							return;
 						}
-						if (settings.timestamp < s.timestamp || force) {
+						if (settings.timestamp+60 < s.timestamp || force) {
 							for (let y in s.vs) {
 								console.log(y, s.vs[y]);
 								localStorage[y] = s.vs[y];
@@ -329,15 +346,20 @@
 						}
 						settings.timestamp = parseInt(Date.now()/1000);
 						write();
+						win.parentNode.removeChild(win);
 						return;
 					}
 				}
 				errorCode = 2;
+				settings.timestamp = parseInt(Date.now()/1000);
+				write();
+				win.parentNode.removeChild(win);
 				return;
 			}
 			catch (e) {
 				settings.timestamp = parseInt(Date.now()/1000);
 				write();
+				win.parentNode.removeChild(win);
 			}
 			return;
 		};
@@ -362,6 +384,8 @@
 			req.open('GET', '/settings');
 			req.send();
 		};
+		if (!settings.downsynch && !force && !external) return;
+		if (!external) win = callWindow([InfernoAddElem('h1',{innerHTML:'Fetching last settings, please wait a bit...'},[])]);
 		get();
 	}
 
@@ -718,7 +742,7 @@
 			catch(e) {console.log('Error rendering '+k+'. '+e);}
 		}
 
-		if (listCont != undefined && !s2.hidden) addElem('div', {className:'block__content alternating-color', innerHTML:s2.name+' v. '+s2.version}, listCont);
+		if (listCont != undefined && !s2.hidden) addElem(s2.link!=undefined?'a':'div', {href:s2.link!=undefined?s2.link:'', style:'display:block', className:'block__content alternating-color', innerHTML:s2.name+' v. '+s2.version}, listCont);
 	}
 
 	function injectLegacyModule(k, editCont, listCont) {
@@ -835,13 +859,24 @@
 
 		//postloading
 		ChildsAddElem('div', {className:'block__header'}, cont, [
+
+			InfernoAddElem('a', {target:'_blank', href:'javscript://', events:[{t:'click',f:function() {
+				window.open(getDonateLink()!=undefined?getDonateLink():'https://ko-fi.com/C0C8BVXS');
+			}}]}, [
+				InfernoAddElem('i', {className:'fa fa-heart', style:'color:red'}, []),
+				InfernoAddElem('span', {innerHTML:' Support'}, [])
+			]),
 			InfernoAddElem('a', {target:'_blank', href:'/pages/yourbooru?help'}, [
 				InfernoAddElem('i', {className:'fa fa-question'}, []),
 				InfernoAddElem('span', {innerHTML:' Help'}, [])
 			]),
-			InfernoAddElem('a', {target:'_blank', href:'https://ko-fi.com/C0C8BVXS'}, [
-				InfernoAddElem('i', {className:'fa fa-heart'}, []),
-				InfernoAddElem('span', {innerHTML:' Support'}, [])
+			InfernoAddElem('a', {target:'_blank', href:'/pages/yourbooru?logs'}, [
+				InfernoAddElem('i', {className:'fa fa-bug'}, []),
+				InfernoAddElem('span', {innerHTML:' Debug logs'}, [])
+			]),
+			InfernoAddElem('a', {target:'_blank', href:'/pages/yourbooru?backup'}, [
+				InfernoAddElem('i', {className:'fa fa-bug'}, []),
+				InfernoAddElem('span', {innerHTML:' Test backup'}, [])
 			])
 		]);
 		addElem('div', {className:'block', id:'_ydb_error_cont'}, cont);
@@ -968,17 +1003,17 @@
 	}
 
 	function YB_backup() {
-		document.querySelector('#content h1').innerHTML = 'Backup';
+		document.querySelector('#content h1').innerHTML = 'Help';
 		var c = document.querySelector('#content .walloftext');
+		c.innerHTML = '';
 
-		var s = 'Old way of backup is outdated and now longer supported. You still may load old backups, though, by pasting it in development console of your browser. <br>'+
-			'Currently YDB automatically stores backups on Derpibooru server as extra content to "Watchlist filter string" (if you enabled that feature, of course). '+
-			'Also all your settings will be automatically synchronized between all sessions in your account, where YourBooru installed. '+
-			'<br><br>If you need to run session without synchronization, <b>directly</b> open settings pages, without visiting other ones (even main page). '+
-			'<br><br>If you want to backup manually, do the followings:<br>'+
-			'1. Enable synchronization;<br>2. Change something small in YourBooru settings to make sure that settings will be backuped;<br>3. Save settings;<br>4. Copy YDB content from "Watch list filter string".<br><br>To restore backup:<br>'+
-			'1. Copy saved content to "Watchlist filter string";<br>2. Save settings;<br>3. Click "Synch now" in YourBooru tab.';
-		c.innerHTML = s;
+		var error = 'Help text is not available right now. Try again later.<br>';
+		try {
+			renderHelp(c);
+		}
+		catch(e) {
+			c.innerHTML = error;
+		}
 	}
 
 	function yourbooruPage() {
@@ -1024,13 +1059,14 @@
 			let checker = function() {
 				if (window._YDB_public.bgCalled) setTimeout(checker, 100);
 			};
-			callWindow(addElem('h1',{innerHTML:'Background copy in process...'},[]));
+			callWindow([InfernoAddElem('h1',{innerHTML:'Background copy in process...'},[])]);
 		}
 	};
 
 	addElem('style',{type:'text/css',innerHTML:windows},document.head);
 	if (settings.timestamp+21600 < parseInt(Date.now()/1000) && location.pathname != "/settings") {
 		settings.nonce = parseInt(Math.random()*Number.MAX_SAFE_INTEGER);
+		try { telemetry();} catch(e) {}
 		getData();
 	}
 	if (location.pathname == "/settings") setTimeout(settingPage, 50);
