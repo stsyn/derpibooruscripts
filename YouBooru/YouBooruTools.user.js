@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.27
+// @version      0.5.28
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -28,6 +28,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagDB0.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagShortAliases0.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/badgesDB0.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
@@ -51,8 +52,8 @@
     let result;
 	let version = 0;
 	let artists = [];
-	let bps = ['princess luna','tempest shadow','starlight glimmer','oc:blackjack','princess celestia','rarity'];
-	let best_pony_for_today = bps[parseInt(Math.random()*bps.length)];
+	let bps = ['princess luna','tempest shadow','starlight glimmer','rarity','oc:blackjack','princess celestia'];
+	let best_pony_for_today = bps[parseInt(Math.random()*Math.random()*bps.length)];
 	let hidden = {
 		normal:[
 			{
@@ -188,6 +189,7 @@ color: #0a0;
 		window._YDB_public.settings.tools = {
             name:'Tools',
             container:'_ydb_tools',
+			link:'',
             version:sversion,
             s:[
                 {type:'header', name:'Notifications'},
@@ -849,8 +851,8 @@ color: #0a0;
     //colored tags
     function colorTags() {
         let checker = function (target, method) {
-            if (document.querySelectorAll(target).length>0) {
-                let x = document.querySelectorAll(target)[0];
+            for (let i=0; i<document.querySelectorAll(target).length; i++) {
+                let x = document.querySelectorAll(target)[i];
                 for (let i=0; i<x.getElementsByClassName('tag').length; i++) {
                     let gotten = false;
                     let y = x.getElementsByClassName('tag')[i];
@@ -883,8 +885,7 @@ color: #0a0;
                 }
             }
         };
-        checker('.js-taginput-fancy-tag_input', 'standart');
-        checker('.js-taginput-fancy-watched_tag_list', 'standart');
+        checker('.js-taginput', 'standart');
         checker('.suggested_tags', 'suggested');
         setTimeout(colorTags,500);
     }
@@ -1150,7 +1151,7 @@ color: #0a0;
 
 		for (let i=0; i<document.querySelectorAll('.tag.dropdown[data-tag-category="origin"] .tag__name').length; i++) {
 			let el = document.querySelectorAll('.tag.dropdown[data-tag-category="origin"] .tag__name')[i];
-			if (el.innerHTML == 'edit' || el.innerHTML == 'alternate version' || el.innerHTML == 'derpibooru exclusive') continue;
+			if (el.innerHTML == 'edit' || el.innerHTML == 'alternate version' || el.innerHTML == 'them\'s fightin\' herds' || el.innerHTML == 'derpibooru exclusive') continue;
 			get(el);
 		}
 	}
