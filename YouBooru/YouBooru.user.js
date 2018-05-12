@@ -21,9 +21,11 @@
 // @exclude      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
 
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings.lib.js
+
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.10
+// @version      0.5.12
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -45,7 +47,7 @@
 	
 	let privated = false;
 	let feedCSS = '._ydb_feedloading {display:none} ._ydb_feedshadow .block__content {opacity:0.5} ._ydb_feedshadow ._ydb_feedloading{display:block !important; position:absolute; width:100%; top:48%; pointer-events:none; text-align:center}';
-	var data={};
+	let data={};
 
 	/*
        Please install YourBooru:Settings to adjust feeds and settings in normal way.
@@ -56,7 +58,7 @@
 	   But it's still strongly recommended to install it, old way of configuring is no longer supported!
     */
 
-	var config = {
+	let config = {
 		/* Enable if you need to override YourBooru:Settings */
 		/* Deprecated since 0.4 */
 		//forceScriptConfig:false,
@@ -67,11 +69,9 @@
 		/* Trying to keep image controls alive. But it works ugly :c */
 		doNotRemoveControls:true,
 		/* This one is pretty clear */
-		watchFeedLinkOnRightSide:true,
-		/* Removing unneeded content from HTML. Disable if you meet some problems or if you just want to shit up your localstorage */
-		optimizeLS:true
+		watchFeedLinkOnRightSide:true
 	};
-	var feedz = [
+	let feedz = [
 		{
 			name:'Hot',
 			query:'first_seen_at.gte:6 hours ago',
@@ -131,11 +131,11 @@
 		}
 	];
 
-	var feedzCache = [];
-	var feedzURLs = [];
-    var feedzEvents = [];
-	var f_s_c;
-	var debug = function(id, value, level) {
+	let feedzCache = [];
+	let feedzURLs = [];
+    let feedzEvents = [];
+	let f_s_c;
+	let debug = function(id, value, level) {
 		try {
 			window._YDB_public.funcs.log(id, value, level);
 		}
@@ -153,7 +153,7 @@
 	 ********************/
 
     function parseURL(url) {
-		var a = document.createElement('a');
+		let a = document.createElement('a');
 		a.href = url;
 		return {
 			source: url,
@@ -162,7 +162,7 @@
 			port: a.port,
 			query: a.search,
 			params: (function(){
-				var ret = {},
+				let ret = {},
 					seg = a.search.replace(/^\?/,'').split('&'),
 					len = seg.length, i = 0, s;
 				for (;i<len;i++) {
@@ -204,14 +204,14 @@
 			version:version,
 			link:'/meta/userscript-youbooru-feeds-on-main-page',
 			s:[
-				{type:'checkbox', name:'Do not remove watchlist', parameter:'doNotRemoveWatchList'},
+				{type:'checkbox', name:'Keep watchlist', parameter:'doNotRemoveWatchList'},
 				{type:'breakline'},
-				{type:'input', name:'Images in each feed:', parameter:'imagesInFeeds', validation:{type:'int',min:1,max:25}},
+				{type:'input', name:'Amount of images in a feed:', parameter:'imagesInFeeds', validation:{type:'int',min:1,max:25}},
 				{type:'input', name:'Minimum feeds loaded at once:', parameter:'oneTimeLoad', validation:{type:'int',min:1,max:10}},
 				{type:'breakline'},
-				{type:'checkbox', name:'Watch link on the right side', parameter:'watchFeedLinkOnRightSide'},
+				{type:'checkbox', name:'Right-aligned layout', parameter:'watchFeedLinkOnRightSide'},
 				{type:'breakline'},
-				{type:'checkbox', name:'Remove unneeded content from HTML', parameter:'optimizeLS'},
+				{type:'checkbox', name:'Trim garbage from HTML', parameter:'optimizeLS', styleS:{display:'none'}},
 				{type:'array', parameter:'feedz', addText:'Add feed', customOrder:true, s:[
 					[
 						{type:'input', name:'Name', parameter:'name',styleI:{width:'33em', marginRight:'.5em'},validation:{type:'unique'}},
@@ -242,11 +242,11 @@
 						]}
 					],
 					[
-						{type:'input', name:'Cache (minutes)', parameter:'cache',styleI:{width:'3em', marginRight:'.4em'}, validation:{type:'int',min:0,max:99999}},
-						{type:'input', name:'... or update each (used if previous is 0)', parameter:'ccache',styleI:{width:'3.2em', marginRight:'.4em'}, validation:{type:'int',min:0,max:99999}},
+						{type:'input', name:'Caching delay (minutes)', parameter:'cache',styleI:{width:'3em', marginRight:'.4em'}, validation:{type:'int',min:0,max:99999}},
+						{type:'input', name:'...or caching interval', parameter:'ccache',styleI:{width:'3.2em', marginRight:'.4em'}, validation:{type:'int',min:0,max:99999}},
 						{type:'checkbox', name:'Double size', parameter:'double',styleI:{marginRight:'.4em'}},
-						{type:'checkbox', name:'Show on mainpage', parameter:'mainPage',styleI:{marginRight:'.4em'}},
-						{type:'buttonLink', attrI:{title:'Copy this link and paste it somewhere to share that feed!',target:'_blank'},styleI:{marginRight:'.5em'}, name:'Share', i:function(module,elem) {
+						{type:'checkbox', name:'Show on home page', parameter:'mainPage',styleI:{marginRight:'.4em'}},
+						{type:'buttonLink', attrI:{title:'Copy-paste this link somewhere to share this feed!',target:'_blank'},styleI:{marginRight:'.5em'}, name:'Share', i:function(module,elem) {
 							let f = module.saved.feedz[elem.parentNode.dataset.id];
 							if (f == undefined) {
 								elem.innerHTML = '------';
@@ -257,7 +257,7 @@
 								q = encodeURIComponent(window._YDB_public.funcs.tagAliases(f.query, {legacy:false}));
 							elem.href = '/search?name='+encodeURIComponent(f.name)+'&q='+q.replace(/\%20/g,'+')+'&sf='+f.sort+'&sd='+f.sd+'&cache='+f.cache+'&ccache='+f.ccache;
 						}},
-						{type:'button', name:'Reset cache', action:resetCache}
+						{type:'button', name:'Nuke cache  (╯°□°）╯', action:resetCache}
 					],[
 						{type:'textarea', name:'Query', parameter:'query',styleI:{width:'calc(100% - 11em)'}}
 					]
@@ -728,7 +728,7 @@
     }
 
     function applyEvents(elem,feed) {
-        let obj = feed.eventCont[elem.dataset.imageId];
+        let obj = feedzEvents[elem.dataset.imageId];
         if (obj == undefined) return;
         try {
         elem.getElementsByClassName('favourites')[0].innerHTML = obj.fcount;
@@ -796,19 +796,17 @@
 				else if (act == 'down') elem.querySelector('.media-box__header .interaction--downvote').classList.add('active');
 				if (faved) elem.querySelector('.media-box__header .interaction--fave').classList.add('active');
 
-				if (config.optimizeLS) {
-					let temp = (JSON.parse(elem.querySelector('.media-box__content .image-container').getAttribute('data-uris')));
-					elem.querySelector('.media-box__content .image-container').setAttribute('data-thumb', temp.thumb.replace('webm','gif'));
-					elem.querySelector('.media-box__content .image-container').removeAttribute('data-download-uri');
-					elem.querySelector('.media-box__content .image-container').removeAttribute('data-image-tag-aliases');
-					elem.querySelector('.media-box__content .image-container').removeAttribute('data-orig-sha512');
-					elem.querySelector('.media-box__content .image-container').removeAttribute('data-sha512');
-					elem.querySelector('.media-box__content .image-container').removeAttribute('data-source-url');
-					elem.querySelector('.media-box__content .image-container').removeAttribute('data-uris');
-					elem.querySelector('.media-box__content .image-container').removeAttribute('data-aspect-ratio');
-					elem.querySelector('.media-box__content .image-container').removeAttribute('data-created-at');
-					if (elem.querySelector('.media-box__content .image-container img') != null) elem.querySelector('.media-box__content .image-container img').removeAttribute('alt');
-				}
+				let temp = (JSON.parse(elem.querySelector('.media-box__content .image-container').getAttribute('data-uris')));
+				elem.querySelector('.media-box__content .image-container').setAttribute('data-thumb', temp.thumb.replace(/webm$/,'gif'));
+				elem.querySelector('.media-box__content .image-container').removeAttribute('data-download-uri');
+				elem.querySelector('.media-box__content .image-container').removeAttribute('data-image-tag-aliases');
+				elem.querySelector('.media-box__content .image-container').removeAttribute('data-orig-sha512');
+				elem.querySelector('.media-box__content .image-container').removeAttribute('data-sha512');
+				elem.querySelector('.media-box__content .image-container').removeAttribute('data-source-url');
+				elem.querySelector('.media-box__content .image-container').removeAttribute('data-uris');
+				elem.querySelector('.media-box__content .image-container').removeAttribute('data-aspect-ratio');
+				elem.querySelector('.media-box__content .image-container').removeAttribute('data-created-at');
+				if (elem.querySelector('.media-box__content .image-container img') != null) elem.querySelector('.media-box__content .image-container img').removeAttribute('alt');
 
 				elem.querySelector('.media-box__content .image-container').classList.remove('thumb_small');
 				elem.querySelector('.media-box__content .image-container').classList.add('thumb');
@@ -982,8 +980,7 @@
 			f.saved = parseInt(f.saved);
 			f.cache = parseInt(f.cache);
 			f.ccache = parseInt(f.ccache);
-            f.eventCont = feedzEvents[i];
-            if (f.eventCont == undefined) f.eventCont = {};
+            if (feedzEvents[i] == undefined) feedzEvents[i] = {};
 			if (feedzCache[i] == undefined) {
 				getFeed(f, i, true);
 				debug('YDB:F','Requested update to feed "'+f.name+'". Reason "No cache found"', 1);
@@ -1025,7 +1022,7 @@
 	/*********************************/
 
 	function YB_insertFeed(u) {
-		var f = {};
+		let f = {};
 		let i;
 		for (i=0; i<feedz.length; i++) {
 			if (feedz[i].name == decodeURIComponent(u[1])) {
@@ -1051,7 +1048,7 @@
 
 
 	function YB_insertFeed2(u) {
-		var f = {};
+		let f = {};
 		let i;
 		for (i=0; i<feedz.length; i++) {
 			if (feedz[i].name == document.querySelector('#searchform [name="name"]').value) {
@@ -1093,7 +1090,7 @@
 
 	function YB_addFeed(u) {
 		document.querySelector('#content h1').innerHTML = 'Add feed';
-		var c = document.querySelector('#content .walloftext');
+		let c = document.querySelector('#content .walloftext');
 		if (u.length>6) {
 			c.innerHTML = 'Name: '+decodeURIComponent(u[1]);
 			c.innerHTML += '<br>Query: <a href="/search?q='+u[2]+'&sf='+u[3]+'&sd='+u[4]+'">'+decodeURIComponent(u[2]).replace(/\\+/g,' ')+'</a>';
@@ -1265,8 +1262,8 @@
 
 	function YDB() {
 		let x = location.search.slice(1);
-		if (location.search == "") YB_createEmpty();
-		else if (location.search == "?") YB_createEmpty();
+		if (location.search == "") return;
+		else if (location.search == "?") return;
 		else {
 			let u = x.split('?');
 			if (u[0] == "addFeed") YB_addFeed(u);
@@ -1275,7 +1272,7 @@
 	}
 
 	addElem('a',{className:'header__link',href:'/pages/yourbooru?feeds', innerHTML:'Feeds'},document.querySelector('.header--secondary .header__dropdown .dropdown__content'));
-	var cont = document.getElementsByClassName('column-layout__main')[0];
+	let cont = document.getElementsByClassName('column-layout__main')[0];
 	if (location.pathname == '/' || location.pathname == '') setTimeout(init, 10);
 	else {
 		if (location.pathname == "/pages/yourbooru") {
