@@ -132,6 +132,7 @@
 			name:'Search Sorting Fixer',
 			version:sversion,
 			container:'_ssf',
+			link:'/meta/userscript-search-sorting-fixer-003',
 			s:[
 				{type:'checkbox', name:'Fix score sorting', parameter:'score'},
 				{type:'checkbox', name:'Fix random sorting', parameter:'random'},
