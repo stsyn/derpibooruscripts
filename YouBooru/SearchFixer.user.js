@@ -21,10 +21,11 @@
 // @exclude      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
 
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings.lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.3.11
+// @version      0.3.12
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -134,12 +135,12 @@
 			s:[
 				{type:'checkbox', name:'Fix score sorting', parameter:'score'},
 				{type:'checkbox', name:'Fix random sorting', parameter:'random'},
-				{type:'checkbox', name:'Fix sizes sorting', parameter:'sizes'},
+				{type:'checkbox', name:'Fix size sorting', parameter:'sizes'},
 				{type:'checkbox', name:'Fix comments sorting', parameter:'comments'},
 				{type:'checkbox', name:'Fix gallery sorting', parameter:'gallery'},
 				{type:'breakline'},
 				{type:'checkbox', name:'Fix random button', parameter:'randomButton'},
-				{type:'checkbox', name:'Blink on completion', parameter:'blink'},
+				{type:'checkbox', name:'Flash on completion', parameter:'blink'},
 				{type:'checkbox', name:'Fix buttons on start (except "Find" button)', parameter:'preloading'},
 				{type:'breakline'},
 				{type:'checkbox', name:'Smart Find button at: score sorting', parameter:'scoreUp'},
