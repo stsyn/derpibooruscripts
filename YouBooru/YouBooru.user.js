@@ -25,7 +25,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.13
+// @version      0.5.14
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -728,7 +728,7 @@
     }
 
     function applyEvents(elem,feed) {
-        let obj = feedzEvents[elem.dataset.imageId];
+        let obj = feedzEvents[feed.internalId][elem.dataset.imageId];
         if (obj == undefined) return;
         try {
         elem.getElementsByClassName('favourites')[0].innerHTML = obj.fcount;
@@ -823,18 +823,22 @@
 			}
 		}
 
-		r.feed.observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.type == 'attributes') {
-                    let u = mutation.target.classList;
-                    if (u.contains('interaction--fave') || u.contains('interaction--upvote') || u.contains('interaction--downvote') || u.contains('interaction--hide')) {
-                        updateEvents(r.feed.container.querySelector('.media-box[data-image-id="'+mutation.target.dataset.imageId+'"]'), r.feed);
-                        localStorage._ydb_cachesEvents = JSON.stringify(feedzEvents);
+		setTimeout(function() {
+            r.feed.observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type == 'attributes') {
+                        let u = mutation.target.classList;
+                        if (u.contains('interaction--fave') || u.contains('interaction--upvote') || u.contains('interaction--downvote') || u.contains('interaction--hide')) {
+                            updateEvents(r.feed.container.querySelector('.media-box[data-image-id="'+mutation.target.dataset.imageId+'"]'), r.feed);
+                            console.log(feedzEvents);
+                            localStorage._ydb_cachesEvents = JSON.stringify(feedzEvents);
+                        }
                     }
-                }
+                });
             });
-        });
-        setTimeout(function() {r.feed.observer.observe(r.feed.container, {attributes: true, childList: true, characterData: true, subtree:true });},250);
+            setTimeout(function() {r.feed.observer.observe(r.feed.container, {attributes: true, childList: true, characterData: true, subtree:true });},250);
+        },1000);
+        
 
 		feedAfterload(r, c.innerHTML, id);
         if (window._YDB_public.funcs != undefined && window._YDB_public.funcs.upvoteDownvoteDisabler != undefined) window._YDB_public.funcs.upvoteDownvoteDisabler(c, true);
@@ -870,18 +874,21 @@
                 applyEvents(elem,feed);
 			}
 		}
-		feed.observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.type == 'attributes') {
-                    let u = mutation.target.classList;
-                    if (u.contains('interaction--fave') || u.contains('interaction--upvote') || u.contains('interaction--downvote') || u.contains('interaction--hide')) {
-                        updateEvents(feed.container.querySelector('.media-box[data-image-id="'+mutation.target.dataset.imageId+'"]'), feed);
-                        localStorage._ydb_cachesEvents = JSON.stringify(feedzEvents);
+		setTimeout(function() {
+            feed.observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type == 'attributes') {
+                        let u = mutation.target.classList;
+                        if (u.contains('interaction--fave') || u.contains('interaction--upvote') || u.contains('interaction--downvote') || u.contains('interaction--hide')) {
+                            updateEvents(feed.container.querySelector('.media-box[data-image-id="'+mutation.target.dataset.imageId+'"]'), feed);
+                            console.log(feedzEvents);
+                            localStorage._ydb_cachesEvents = JSON.stringify(feedzEvents);
+                        }
                     }
-                }
+                });
             });
-        });
-        feed.observer.observe(feed.container, {attributes: true, childList: true, characterData: true, subtree:true });
+            feed.observer.observe(feed.container, {attributes: true, childList: true, characterData: true, subtree:true });
+        },1000);
 
         if (window._YDB_public.funcs != undefined && window._YDB_public.funcs.upvoteDownvoteDisabler != undefined) window._YDB_public.funcs.upvoteDownvoteDisabler(c, true);
 		feed.temp.innerHTML = '';
