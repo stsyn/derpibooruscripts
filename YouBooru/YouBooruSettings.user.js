@@ -25,7 +25,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.11
+// @version      0.9.12
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -37,6 +37,7 @@
 
 	let main = function() {
 	let scriptId = 'settings';
+	let internalVersion = '0.9.12';
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
@@ -63,8 +64,10 @@
 		catch (e) {
 			settings = {};
 		}
-		if (settings.synch == undefined) settings.synch = true;
-		if (settings.downsynch == undefined) settings.downsynch = settings.synch;
+		if (settings.sync == undefined) settings.sync = settings.synch;
+        if (settings.downsync == undefined) settings.downsync = settings.downsynch;
+		if (settings.sync == undefined) settings.sync = true;
+		if (settings.downsync == undefined) settings.downsync = settings.sync;
 		if (settings.debugLength == undefined) settings.debugLength = 100;
 		if (settings.debugLevel == undefined) settings.debugLevel = 1;
 		if (settings.nonce == undefined || isNaN(settings.nonce)) settings.nonce = parseInt(Math.random()*Number.MAX_SAFE_INTEGER);
@@ -106,7 +109,7 @@
 		let xversion;
 		if (version.indexOf('aE') == -1) {
 			if (GM_info.script.name == 'YourBooru:Settings') xversion = version+' (standalone)';
-			else xversion = version+' (served by '+GM_info.script.name+')';
+			else xversion = internalVersion+' (served by '+GM_info.script.name+')';
 		}
 		else xversion = version;
 		window._YDB_public.settings.settings = {
@@ -114,19 +117,19 @@
 			container:'_ydb_config',
 			version:xversion,
 			s:[
-				{type:'header', name:'Synchronization'},
-				{type:'text', name:'Allows settings to be duplicated at watchlist string filter. This will not affect watchlist.', styleS:{fontStyle:'italic'}},
+				{type:'header', name:'Syncronization'},
+				{type:'text', name:'Writes a copy of the settings to your watch list. This does not affect your watched tags.', styleS:{fontStyle:'italic'}},
 				{type:'breakline'},
 				{type:'breakline'},
-				{type:'checkbox', name:'Allow to upload settings', parameter:'synch'},
+				{type:'checkbox', name:'Allow setting uploading', parameter:'sync'},
 				{type:'breakline'},
-				{type:'checkbox', name:'Allow to download settings', parameter:'downsynch'},
-				{type:'breakline'},
-				{type:'breakline'},
-				{type:'text', name:'If you don\'t need backup anymore, remove added text in "Watch list filter string" at the "Watch list" tab.', styleS:{fontStyle:'italic'}},
+				{type:'checkbox', name:'Allow setting downloading', parameter:'downsync'},
 				{type:'breakline'},
 				{type:'breakline'},
-				{type:'buttonLink', name:'Sync now', href:'/pages/yourbooru?synch'},
+				{type:'text', name:'If you do not wish to backup anymore, simply remove ydb-related strings from your "Watched tags string".', styleS:{fontStyle:'italic'}},
+				{type:'breakline'},
+				{type:'breakline'},
+				{type:'buttonLink', name:'Sync', href:'/pages/yourbooru?sync'},
 				{type:'breakline'},
 				{type:'header', name:'Logs'},
 				{type:'input', name:'Debug log length', parameter:'debugLength', validation:{type:'int',min:0,max:500, default:200}},
@@ -341,25 +344,25 @@
 							}
 							settings.timestamp = parseInt(Date.now()/1000);
 							write();
-							if (location.pathname != "/pages/yourbooru" && location.search != '?synch') location.reload();
+							if (location.pathname != "/pages/yourbooru" && location.search != '?sync') location.reload();
 							return;
 						}
 						settings.timestamp = parseInt(Date.now()/1000);
 						write();
-						win.parentNode.removeChild(win);
+						if (!external) win.parentNode.removeChild(win);
 						return;
 					}
 				}
 				errorCode = 2;
 				settings.timestamp = parseInt(Date.now()/1000);
 				write();
-				win.parentNode.removeChild(win);
+				if (!external) win.parentNode.removeChild(win);
 				return;
 			}
 			catch (e) {
 				settings.timestamp = parseInt(Date.now()/1000);
 				write();
-				win.parentNode.removeChild(win);
+				if (!external) win.parentNode.removeChild(win);
 			}
 			return;
 		};
@@ -384,7 +387,7 @@
 			req.open('GET', '/settings');
 			req.send();
 		};
-		if (!settings.downsynch && !force && !external) return;
+		if (!settings.downsync && !force && !external) return;
 		if (!external) win = callWindow([InfernoAddElem('h1',{innerHTML:'Fetching last settings, please wait a bit...'},[])]);
 		get();
 	}
@@ -507,7 +510,7 @@
 
 	function backup() {
 		read();
-		if (!settings.synch) {
+		if (!settings.sync) {
 			//removeBackup();
 			return;
 		}
@@ -554,9 +557,9 @@
                             }
 							if (el.value != parseInt(el.value) || el.value<v.min || el.value>v.max) {
 								let reason = '';
-								if (el.value != parseInt(el.value)) reason = ' should be valid integer number!';
-								else if (el.value<v.min) reason = ' is too small! Should be at least '+v.min;
-								else if (el.value>v.max) reason = ' is too big! Should be at most '+v.max;
+								if (el.value != parseInt(el.value)) reason = ' must be an integer!';
+								else if (el.value < v.min) reason = ` must be at least ${v.min}`;
+								else if (el.value > v.max) reason = ` must be no more than ${v.max}`;
 								addElem('div',{className:'flash flash--warning', innerHTML:'>'+mm.name+': '+x.name+reason}, ec);
 								errorlevel++;
 								el.classList.add('_ydb_warn');
@@ -570,9 +573,9 @@
                             }
 							if (el.value != parseFloat(el.value) || el.value<v.min || el.value>v.max) {
 								let reason = '';
-								if (el.value != parseInt(el.value)) reason = ' should be valid real number!';
-								else if (el.value<v.min) reason = ' is too small! Should be at least '+v.min;
-								else if (el.value>v.max) reason = ' is too big! Should be at most '+v.max;
+								if (el.value != parseInt(el.value)) reason = ' must be a real number!';
+								else if (el.value<v.min) reason = ' must be at least '+v.min;
+								else if (el.value>v.max) reason = ' must not be more than '+v.max;
 								addElem('div',{className:'flash flash--warning', innerHTML:'>'+mm.name+': '+x.name+reason}, ec);
 								errorlevel++;
 								el.classList.add('_ydb_warn');
@@ -610,7 +613,7 @@
 			}
 
 			if (errorlevel>0) {
-				let x = addElem('div',{className:'flash flash--warning', style:'font-weight:500', innerHTML:'There is '+errorlevel+' errors preventing settings to be saved:'}, ec);
+				let x = addElem('div',{className:'flash flash--warning', style:'font-weight:500', innerHTML:errorlevel+' error(s) are preventing the settings from saving:'}, ec);
 				ec.insertBefore(x,ec.childNodes[0]);
 			}
 		}
@@ -619,7 +622,7 @@
 			let mx = modules[e.dataset.parent];
 			errorlevel += (validateChilds(e, mx.options, mx));
 			if (errorlevel>0 && virgin) {
-				let x = addElem('div',{className:'flash flash--warning', style:'font-weight:500', innerHTML:'There is '+errorlevel+' errors preventing settings to be saved:'}, ec);
+				let x = addElem('div',{className:'flash flash--warning', style:'font-weight:500', innerHTML:errorlevel+' error(s) are preventing the settings from saving:'}, ec);
 				ec.insertBefore(x,ec.childNodes[0]);
 			}
 		}
@@ -778,7 +781,7 @@
 				loadedList[k.name] = true;
 			}
 			catch (e) {
-				console.log('Error JSON processing "'+document.getElementsByClassName('_YDB_reserved_register')[i].dataset.value+'" '+e);
+				console.log('JSON failed to parse: "'+document.getElementsByClassName('_YDB_reserved_register')[i].dataset.value+'" '+e);
 			}
 		}
 
@@ -826,7 +829,7 @@
 		]);
 
 		let el;
-		if (!settings.synch) {
+		if (!settings.sync) {
 			el = document.createElement('div');
 			el.className = 'block block--fixed block--warning';
 			el.innerHTML = 'Settings on this tab are saved in the current browser. They are independent of whether you are logged in or not.';
@@ -853,7 +856,7 @@
 				loadedList[k.name] = true;
 			}
 			catch (e) {
-				console.log('Error JSON processing "'+document.getElementsByClassName('_YDB_reserved_register')[i].dataset.value+'" '+e);
+				console.log('JSON failed to parse "'+document.getElementsByClassName('_YDB_reserved_register')[i].dataset.value+'" '+e);
 			}
 		}
 
@@ -929,8 +932,8 @@
 	////////////////////////////
 
 	function YB_createEmpty() {
-		document.querySelector('#content h1').innerHTML = 'Ooops!';
-		document.querySelector('#content .walloftext').innerHTML = '<p>YourBooru cannot get what you want. Sorry :(</p><p>Try to check url you used. If you believe that you found a bug report to me please!</p>';
+		document.querySelector('#content h1').innerHTML = 'Derp!';
+		document.querySelector('#content .walloftext').innerHTML = '<p>I know the script is callled "YourBooru", but as much as I would want it to be truly yours, I could not find a page you specified. Nope. Nothing at all! I tried though.</p><p>Make sure that the URL you are trying to access is valid and that you aren\'t trying to hunt ghosts here. Otherwise you might have hit a bug and it would be a good idea to report it to me!</p>';
 	}
 
 	///////////////////////////
@@ -978,7 +981,7 @@
 			ChildsAddElem('div',{className:'block',style:'width:100%'}, c2, u);
 		};
 
-		document.querySelector('#content h1').innerHTML = 'Debug logs';
+		document.querySelector('#content h1').innerHTML = 'Debug Logs';
 		let c = document.querySelector('#content .walloftext');
 		c.innerHTML = '';
 		ChildsAddElem('div',{className:'block',style:'width:100%'}, c, [
@@ -990,7 +993,7 @@
 			InfernoAddElem('input',{type:'button', className:'button', style:'margin-left:2em', value:'Redraw', events:[{t:'click',f:render}]},[])
 		]);
 
-		var s = '';
+		let s = '';
 
 		let x = [];
 		let levels = ['.', '?', '!'];
@@ -1004,10 +1007,10 @@
 
 	function YB_backup() {
 		document.querySelector('#content h1').innerHTML = 'Help';
-		var c = document.querySelector('#content .walloftext');
+		let c = document.querySelector('#content .walloftext');
 		c.innerHTML = '';
 
-		var error = 'Help text is not available right now. Try again later.<br>';
+		let error = 'Ha, you thought there is help, how adorable.<br><br><br>Help is available only for standalone versions of YDB:Settings.';
 		try {
 			renderHelp(c);
 		}
@@ -1023,20 +1026,20 @@
 		else {
 			let u = x.split('?');
 			if (u[0] == "backup") setTimeout(function() {
-				document.querySelector('#content h1').innerHTML = 'Synchronizing...';
+				document.querySelector('#content h1').innerHTML = 'Syncing...';
 				document.querySelector('#content .walloftext').innerHTML = '';
 				getData(true, true);
 			}, 100);
 			else if (u[0] == "help") setTimeout(YB_backup, 100);
 			else if (u[0] == "logs") setTimeout(YB_logs, 100);
-			else if (u[0] == "synch") setTimeout(function() {
-				document.querySelector('#content h1').innerHTML = 'Synchronizing...';
+			else if (u[0] == "sync") setTimeout(function() {
+				document.querySelector('#content h1').innerHTML = 'Syncing...';
 				document.querySelector('#content .walloftext').innerHTML = '';
 				getData(true);
 				let c = function() {
 					if (errorCode>0) {
 						if (errorCode == 2) {
-							document.querySelector('#content .walloftext').innerHTML = 'No backup found.';
+							document.querySelector('#content .walloftext').innerHTML = 'No backups for you!';
 							setTimeout(function() {
 								if (history.length == 1) close();
 								else history.back();
