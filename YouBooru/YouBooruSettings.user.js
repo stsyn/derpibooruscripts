@@ -932,6 +932,7 @@
 	////////////////////////////
 
 	function YB_createEmpty() {
+		if (document.querySelector('#content h1').innerHTML != 'Schrödinger\'s Pony') return;
 		document.querySelector('#content h1').innerHTML = 'Derp!';
 		document.querySelector('#content .walloftext').innerHTML = '<p>I know the script is callled "YourBooru", but as much as I would want it to be truly yours, I could not find a page you specified. Nope. Nothing at all! I tried though.</p><p>Make sure that the URL you are trying to access is valid and that you aren\'t trying to hunt ghosts here. Otherwise you might have hit a bug and it would be a good idea to report it to me!</p>';
 	}
@@ -1054,6 +1055,7 @@
 				};
 				c();
 			}, 100);
+			else YB_createEmpty();
 		}
 	}
 
