@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.1.8
+// @version      0.1.9
 // @author       stsyn
 
 // @include      *://trixiebooru.org/*
@@ -216,18 +216,24 @@
 
 	function tagCheck() {
 		let render = function (d) {
-			let color = '', suggestion = '';
-			if (d.dnp_type=='Artist Upload Only') color = 'flash--warning';
+			let color = 'flash--site-notice', suggestion = '';
+			if (d.dnp_type=='Artist Upload Only') {
+				suggestion = 'You won\'t be able to finish uploading.';
+                color = 'flash--warning';
+            }
 			if (d.dnp_type=='With Permission Only') {
-				suggestion = 'You should be ready to provide proofs of permission!';
+				suggestion = 'You should be ready to provide proof of permission!';
 				color = 'flash--warning';
 			}
 			if (d.dnp_type=='Certain Type/Location Only') color = 'flash--warning';
 			if (d.dnp_type=='No Edits') {
-				suggestion = 'If you have permission to upload, remove "edit" tag for now and add it after uploading';
+				suggestion = 'If you have permission to upload, remove "edit" tag for now and add it after uploading.';
 				color = 'flash--warning';
 			}
 			if (d.dnp_type=='Other') color = 'flash--warning';
+            if (d.dnp_type=='Tag does not exist' || d.dnp_type=='Tag has no images') {
+                suggestion = 'You may have mistyped.';
+            }
 			return InfernoAddElem('div',{className:'alternating-color block__content'},[
 				InfernoAddElem('div',{className:'flash '+color},[
 					InfernoAddElem('strong',{innerHTML:d.name},[]),
@@ -236,7 +242,8 @@
 					InfernoAddElem('span',{innerHTML:suggestion==''?'':' — '},[]),
 					InfernoAddElem('span',{innerHTML:suggestion},[])
 				]),
-				InfernoAddElem('span',{innerHTML:' '+d.conditions},[]),
+				InfernoAddElem('span',{innerHTML:' '},[]),
+				InfernoAddElem('span',{innerHTML:d.conditions},[]),
 				InfernoAddElem('br',{},[]),
 				InfernoAddElem('em',{innerHTML:d.reason},[])
 			]);
@@ -250,43 +257,48 @@
                     let y = x.getElementsByClassName('tag')[i];
                     let z;
                     z = y.getElementsByTagName('a')[0].dataset.tagName;
-                    if (z.startsWith('artist:')) {
-						let name = z.slice(7);
-						if (checkedArtists[name] == undefined) {
-							fetch('/tags/'+encodeURIComponent(('artist:'+name).replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/ /g,'+').replace(/\:/g,'-colon-'))+'.json',{method:'GET'})
-							.then(function (response) {
-								const errorMessage = {fail:true};
-								if (!response.ok)
-									return errorMessage;
-								if (response.redirected) {
-									let newTag = response.url.split('/').pop();
-									newTag = newTag.replace(/\-dash\-/g,'-').replace(/\-dot\-/g,'.').replace(/\+/g,' ').replace(/\-colon\-/g,':');
-									y.getElementsByTagName('a')[0].dataset.tagName = newTag;
-									y.firstChild.textContent = newTag+' ';
-									return errorMessage;
-								}
-								return response.json();
-								})
-							.then(data => {
-								if (data.fail) return;
-								let dnp = data.dnp_entries;
-								for (let j=0; j<dnp.length; j++) {
-									let d = dnp[j];
-									d.name = name;
-									checkedArtists[name] = d;
-									container.appendChild(render(d));
-									gotten = true;
-									checkedArtists[name].shouldDraw = true;
-								}
-								//console.log(dnp);
-								if (dnp.length == 0) checkedArtists[name] = {ok:true};
-							});
-						}
-						else if (!checkedArtists[name].ok) {
-							checkedArtists[name].shouldDraw = true;
-							if (!checkedArtists[name].drawn) gotten = true;
-						}
-					}
+
+                    let name = z;
+                    if (checkedArtists[name] == undefined) {
+                        fetch('/tags/'+encodeURIComponent((name).replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/ /g,'+').replace(/\:/g,'-colon-'))+'.json',{method:'GET'})
+                            .then(function (response) {
+                            const errorMessage = {fail:true};
+                            if (!response.ok)
+                                return errorMessage;
+                            if (response.redirected) {
+                                let newTag = response.url.split('/').pop();
+                                newTag = newTag.replace(/\-dash\-/g,'-').replace(/\-dot\-/g,'.').replace(/\+/g,' ').replace(/\-colon\-/g,':');
+                                y.getElementsByTagName('a')[0].dataset.tagName = newTag;
+                                y.firstChild.textContent = newTag+' ';
+                                return errorMessage;
+                            }
+                            return response.json();
+                        })
+                            .then(data => {
+                            if (data.fail) return;
+                            let dnp = data.dnp_entries;
+                            if (dnp == undefined) {
+                                checkedArtists[name] = {dnp_type:'Tag does not exist',name:name};
+                            }
+                            else if (dnp.length>0) for (let j=0; j<dnp.length; j++) {
+                                let d = dnp[j];
+                                d.name = name;
+                                checkedArtists[name] = d;
+                                container.appendChild(render(d));
+                                gotten = true;
+                                checkedArtists[name].shouldDraw = true;
+                            }
+                            else if (data.tag.images == 0) {
+                                checkedArtists[name] = {dnp_type:'Tag has no images',name:name};
+                            }
+                            else checkedArtists[name] = {ok:true};
+                        });
+                    }
+                    else if (!checkedArtists[name].ok) {
+                        checkedArtists[name].shouldDraw = true;
+                        if (!checkedArtists[name].drawn) gotten = true;
+                    }
+					
                 }
 				for (let x in checkedArtists) {
 					if (checkedArtists[x].drawn != checkedArtists[x].shouldDraw) {
@@ -303,15 +315,15 @@
 						let y = x.getElementsByClassName('tag')[i];
 						let z;
 						z = y.getElementsByTagName('a')[0].dataset.tagName;
-						if (z.startsWith('artist:')) {
-							let name = z.slice(7);
-							if (checkedArtists[name] == undefined) continue;
-							else {
-								checkedArtists[name].drawn = true;
-								container.appendChild(render(checkedArtists[name]));
-								drawn = true;
-							}
-						}
+						
+                        let name = z;
+                        if (checkedArtists[name] == undefined) continue;
+                        else if (!checkedArtists[name].ok) {
+                            checkedArtists[name].drawn = true;
+                            container.appendChild(render(checkedArtists[name]));
+                            drawn = true;
+                        }
+						
 					}
 					if (!drawn) {
 						container.appendChild(InfernoAddElem('div',{className:'block__content'},[
@@ -321,7 +333,7 @@
 				}
             }
         };
-        checker('.js-taginput');
+        checker('.js-taginput-fancy-tag_input');
         setTimeout(tagCheck,500);
 	}
 
@@ -400,7 +412,7 @@
 		fillData1(url);
 		document.getElementById('new_image').insertBefore(InfernoAddElem('div',{className:'block'},[
 			InfernoAddElem('div',{className:'block__header'},[
-				InfernoAddElem('span',{className:'block__header__title',innerHTML:'DNP entries'},[])
+				InfernoAddElem('span',{className:'block__header__title',innerHTML:'DNP entries and warnings'},[])
 			]),
 			InfernoAddElem('div',{id:'ydb_dnp_container'},[
 				InfernoAddElem('div',{className:'block__content'},[
