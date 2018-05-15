@@ -20,7 +20,7 @@
 // @exclude      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
 // @exclude      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
 
-// @version      0.9.12L
+// @version      0.9.14L
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -38,7 +38,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 
 	let main = function() {
 	let scriptId = 'settings';
-	let internalVersion = '0.9.12L';
+	let internalVersion = '0.9.14L';
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
@@ -416,7 +416,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 		content.vs = {};
 
 		for (let m in modules) {
-			content.vs[modules[m].container] = localStorage[modules[m].container];
+			if (modules[m].container != '_ydb_config') content.vs[modules[m].container] = localStorage[modules[m].container];
 		}
 
 		let r2 = LZMA.compress(JSON.stringify(content),9);
@@ -759,7 +759,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 			catch(e) {console.log('Error rendering '+k.name+'. '+e);}
 		}
 
-		if (listCont != undefined && !k.hidden) addElem('div', {className:'block__content alternating-color', innerHTML:k.name+' v. '+k.version}, listCont);
+		if (listCont != undefined && !k.hidden) addElem(k.link!=undefined?'a':'div',  {href:k.link!=undefined?k.link:'', style:'display:block', className:'block__content alternating-color', innerHTML:k.name+' v. '+k.version}, listCont);
 	}
 
 	function listModules() {
