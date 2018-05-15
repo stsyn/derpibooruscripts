@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.6.3
+// @version      0.6.4
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -407,7 +407,7 @@ margin:auto;
 .source_url a, #footer_content a, .button--link, .communication__body a, .comment_backlinks a, .communication__options a, a.interaction-user-list-item, .pagination a,
 a.block__header--single-item:hover, .block__header:not(.center--layout) a:hover, .block__header--sub a:hover, .block__header--single-item a:hover, .autocomplete__item--selected,
 .block--fixed a, .rule a, a.togglable-faq-item, .field a:not([data-tag-name]), a.media-box__header--link, a.media-box__header--link:hover, #content h1 a, #content h3 a, .flash a,
-#content p strong a, #content strong a, #content li a, .quick-tag-table__tab a, .flash--site-notice.flash a, #content code a {
+#content p strong a, #content strong a, #content li a, .quick-tag-table__tab a, .flash--site-notice.flash a, #content code a, a.alternating-color {
 color:_fs_color;
 }
 
@@ -574,6 +574,7 @@ color: #777;
             name:'Fullscreen',
             container:'_ydb_fs',
             version:GM_info.script.version,
+			link:'/meta/topics/userscript-derp-fullscreen-viewer',
             s:[
                 {type:'checkbox', name:'Show UI', parameter:'extended'},
                 {type:'input', name:'Scroll speed', parameter:'scrollSpeed', validation:{type:'int',min:5, max:100, default:20}},
@@ -586,7 +587,8 @@ color: #777;
                 {type:'input', name:'Autohide timeout', parameter:'staticTime', validation:{type:'int',min:0, max:600, default:50}},
                 {type:'breakline'},
                 {type:'select', name:'Panel color', parameter:'style', values:[
-                    {name:'Pink', value:'oc'},
+                    {name:'Pink', value:'content-fanmade'},
+                    {name:'Magenta', value:'oc'},
                     {name:'Red', value:'error'},
                     {name:'Orange', value:'spoiler'},
                     {name:'Yellow', value:'content-official'},
@@ -1079,7 +1081,7 @@ color: #777;
                 InfernoAddElem('span',{innerHTML:' Find'},[])
             ]),
             InfernoAddElem('a',{className:'js-random', events:[{t:'click',f:function() {
-                document.querySelector('.image-metabar .js-random').click();
+                document.querySelector('.image-metabar .js-rand').click();
             }}]}, [
                 InfernoAddElem('i',{className:'fa fa-random'},[]),
                 InfernoAddElem('span',{innerHTML:' Random'},[])
