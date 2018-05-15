@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.29
+// @version      0.5.30
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -592,6 +592,7 @@ color: #0a0;
             let tags = goodParse(orig);
             for (let i=0; i<tags.tags.length; i++) {
                 if (tags.tags[i].v.startsWith('@')) {
+					if (tags.tags[i].v == '@everyone') continue;
                     tags.tags[i].v = tags.tags[i].v.replace('@','artist:');
                 }
             }
