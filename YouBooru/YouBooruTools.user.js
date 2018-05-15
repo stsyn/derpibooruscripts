@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.28
+// @version      0.5.29
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -189,7 +189,7 @@ color: #0a0;
 		window._YDB_public.settings.tools = {
             name:'Tools',
             container:'_ydb_tools',
-			link:'',
+			link:'/meta/youboorutools-0524-everything-what-you-ever-imagined-and-even-more',
             version:sversion,
             s:[
                 {type:'header', name:'Notifications'},
@@ -1308,7 +1308,7 @@ color: #0a0;
 				el.querySelector('.media-box__header .interaction--downvote').classList.remove('hidden');
             }
 
-			if (el.querySelector('.media-box__header .interaction--hide.active') != undefined || (el.querySelector('.media-box__header .interaction--downvote.active') != undefined ^ itsHide)) {
+			if (el.querySelector('.media-box__header .interaction--downvote.active') != undefined || ((el.querySelector('.media-box__header .interaction--downvote.active') == undefined ^ el.querySelector('.media-box__header .interaction--hide.active') == undefined) ^ itsHide)) {
 				el.querySelector('.media-box__header .interaction--upvote').classList.add('hidden');
 				el.querySelector('.media-box__header .interaction--fave').classList.add('hidden');
 			}
@@ -1321,10 +1321,12 @@ color: #0a0;
         };
 
         let soloWork = function(el) {
-            if (el.querySelector('.interaction--hide') == undefined) return;
             if (inital) {
                 el.addEventListener('DOMNodeInserted',function(e) {
                     setTimeout(function() {deactivateButtons(el,false);}, 100);
+                });
+                el.querySelector('.interaction--hide').addEventListener('click',function(e) {
+                    deactivateButtons(el,false,true);
                 });
             }
             if (el.querySelector('.interaction--upvote.active[href="#"]') != undefined || el.querySelector('.interaction--fave.active[href="#"]') != undefined) {
@@ -1336,7 +1338,7 @@ color: #0a0;
 				el.querySelector('.interaction--hide[href="#"]').classList.remove('hidden');
             }
 
-			if (el.querySelector('.interaction--downvote.active[href="#"]') != undefined || el.querySelector('.interaction--hide.active[href="#"]') != undefined) {
+			if (el.querySelector('.interaction--downvote.active[href="#"]') != undefined || el.querySelector('.interaction--hide.active[href="#"]') != undefined ^ itsHide) {
 				el.querySelector('.interaction--upvote[href="#"]').classList.add('hidden');
 				el.querySelector('.interaction--fave[href="#"]').classList.add('hidden');
 			}
@@ -1346,7 +1348,7 @@ color: #0a0;
             }
         };
         if (e.classList!=undefined && e.classList.contains('media-box')) work(e);
-        else if ((e.classList != undefined && e.classList.contains('block__header')) || e.getElementsByClassName('media-box').length == 0) soloWork(e);
+        else if (document.querySelector('.image-metabar .stretched-mobile-links:nth-child(2)') != undefined) soloWork(document.querySelector('.image-metabar .stretched-mobile-links:nth-child(2)'));
 		else for (let i=0; i<e.getElementsByClassName('media-box').length; i++) {
 			work(e.getElementsByClassName('media-box')[i]);
 		}
