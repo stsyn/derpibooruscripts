@@ -25,7 +25,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.12
+// @version      0.9.14
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -37,7 +37,7 @@
 
 	let main = function() {
 	let scriptId = 'settings';
-	let internalVersion = '0.9.12';
+	let internalVersion = '0.9.14';
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
@@ -415,7 +415,7 @@
 		content.vs = {};
 
 		for (let m in modules) {
-			content.vs[modules[m].container] = localStorage[modules[m].container];
+			if (modules[m].container != '_ydb_config') content.vs[modules[m].container] = localStorage[modules[m].container];
 		}
 
 		let r2 = LZMA.compress(JSON.stringify(content),9);
@@ -758,7 +758,7 @@
 			catch(e) {console.log('Error rendering '+k.name+'. '+e);}
 		}
 
-		if (listCont != undefined && !k.hidden) addElem('div', {className:'block__content alternating-color', innerHTML:k.name+' v. '+k.version}, listCont);
+		if (listCont != undefined && !k.hidden) addElem(k.link!=undefined?'a':'div',  {href:k.link!=undefined?k.link:'', style:'display:block', className:'block__content alternating-color', innerHTML:k.name+' v. '+k.version}, listCont);
 	}
 
 	function listModules() {
