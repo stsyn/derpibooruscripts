@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.30
+// @version      0.5.31
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -214,8 +214,10 @@ color: #0a0;
 						e.target.checked = false;
 					}
 				}}},
+                {type:'breakline'},
+                {type:'checkbox', name:'Use endless related images search', parameter:'similar'},
                 {type:'header', name:'Tag aliases'},
-                {type:'checkbox', name:'Do not parse page name', parameter:'oldName'},
+                {type:'checkbox', name:'Show actual query in page header', parameter:'oldName'},
                 {type:'checkbox', name:'As short queries as possible', parameter:'compress', styleS:{display:'none'}},
                 {type:'breakline'},
                 {type:'breakline'},
@@ -1355,6 +1357,13 @@ color: #0a0;
 		}
 	}
 
+	//similar images
+	function similar() {
+		if (document.getElementById('image_old_tag_list') == undefined) return;
+		let tags = '('+document.getElementById('image_old_tag_list').value.replace(/\, /g,' || ')+' || *), -(id:'+document.getElementsByClassName('image-show-container')[0].dataset.imageId+')';
+		document.querySelectorAll('a[href*="/related/"]').forEach(function(e,i,a) {e.href = '/search?q='+encodeURIComponent(tags).replace(/%20/g,'+')+'&sd=desc&sf=random';});
+	}
+
 	function commentButtons(e) {
         let work = function(el) {
 			if (el.querySelector('.media-box__header--link-row') == undefined) return;
@@ -2278,6 +2287,7 @@ color: #0a0;
     aliases();
     asWatchlist();
 	YDBSpoilersHelp();
+	if (ls.similar) similar();
     listRunInComms(document);
     if (ls.deactivateButtons) deactivateButtons(document, true);
 	if (ls.oldHead) oldHeaders();
