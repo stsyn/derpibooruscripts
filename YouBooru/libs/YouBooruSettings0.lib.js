@@ -20,7 +20,7 @@
 // @exclude      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
 // @exclude      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
 
-// @version      0.9.14L
+// @version      0.9.15L
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -38,7 +38,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 
 	let main = function() {
 	let scriptId = 'settings';
-	let internalVersion = '0.9.14L';
+	let internalVersion = '0.9.15L';
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
@@ -477,12 +477,10 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 				x.querySelector('form.edit_user')
 			]);
 			document.body.removeChild(x);
-            console.log(s);
             s.querySelector('#serve_hidpi').checked = localStorage.serve_hidpi;
             s.querySelector('#serve_webm').checked = localStorage.serve_webm;
             s.querySelector('#webm').checked = localStorage.webm;
             s.querySelector('#hide_uploader').checked = localStorage.hide_uploader;
-            s.querySelector('#dont_track').checked = localStorage.dont_track;
 			process();
 		};
 
