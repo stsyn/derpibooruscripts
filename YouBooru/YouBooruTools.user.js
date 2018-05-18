@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.31
+// @version      0.5.32
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -48,7 +48,7 @@
 	if (aE) {if (!window._YDB_public.allowedToRun[scriptId]) return;}
 	let sversion = aE?window._YDB_public.version:GM_info.script.version;
 
-    let processing = false;
+    let processing = {};
     let result;
 	let version = 0;
 	let artists = [];
@@ -245,10 +245,10 @@ color: #0a0;
                                         InfernoAddElem('div',{className:'walloftext'},[])
                                     ]);
                                     t = window._YDB_public.funcs.callWindow([t]);
-                                    processing = true;
+                                    processing[data[i].a] = true;
                                     YB_checkList(data[i], t);
                                     let process = function() {
-                                        if (!processing) {
+                                        if (!processing[data[i].a]) {
                                             data[i] = result;
                                             window._YDB_public.handled--;
                                             t.classList.add('hidden');
@@ -2181,24 +2181,28 @@ color: #0a0;
 
     //fixing watchlist
     function YB_checkList(o, elems) {
+		let stop = false;
         elems.querySelector('h1').innerHTML = 'Checking watchlist tags...';
         let c = elems.querySelector('.walloftext');
         let t = addElem('div',{id:'_ydb_temp', style:'display:none'}, document.getElementById('content'));
         c.innerHTML = 'This may take few seconds. Do not close this page until finished<br><br>';
+		c.appendChild(InfernoAddElem('a',{innerHTML:'Abort', events:[{t:'click',f:function(e) {stop = true;console.log(stop+' x');}}]},[]));
+		c.appendChild(InfernoAddElem('br',{},[]));
+		c.appendChild(InfernoAddElem('br',{},[]));
 
         let y = simpleParse(o.b);
         for (let i=0; i<y.length; i++) y[i] = y[i].trim();
-        c.innerHTML += y.length+' tags detected.<br>';
+		c.appendChild(InfernoAddElem('span',{innerHTML:y.length+' tags detected.<br>'},[]));
 
         let parse = function (request) {
             try {
                 t.innerHTML = request.responseText;
                 y[request.id] = t.getElementsByClassName('tag')[0].dataset.tagName;
-                c.innerHTML += y[request.id]+'<br>';
+				c.appendChild(InfernoAddElem('span',{innerHTML:y[request.id]+'<br>'},[]));
                 t.innerHTML = '';
             }
             catch (e) {
-                c.innerHTML += '[PARSE ERROR] '+e+'<br>';
+				c.appendChild(InfernoAddElem('span',{innerHTML:'[PARSE ERROR] '+e+'<br>'},[]));
 				debug('YDB:T','[PARSE ERROR] '+e+' for '+y[i],2);
             }
             if (request.id < y.length) get(request.id+1);
@@ -2210,12 +2214,12 @@ color: #0a0;
                 if (request.readyState === 4) {
                     if (request.status === 200) return parse(request);
                     else if (request.status === 0) {
-                        c.innerHTML += '[ERROR]<br>';
+						c.appendChild(InfernoAddElem('span',{innerHTML:'[ERROR]<br>'},[]));
                         if (request.id < y.length) return get(request.id+1);
                         return false;
                     }
                     else {
-                        c.innerHTML += '[ERROR]<br>';
+						c.appendChild(InfernoAddElem('span',{innerHTML:'[ERROR]<br>'},[]));
                         if (request.id < y.length) return get(request.id+1);
                         return false;
                     }
@@ -2224,11 +2228,12 @@ color: #0a0;
         };
 
         let get = function(i) {
-            if (i == y.length) {
+			console.log(stop);
+            if (i == y.length || stop) {
                 finish();
                 return;
             }
-            c.innerHTML += y[i]+' -> ';
+			c.appendChild(InfernoAddElem('span',{innerHTML:y[i]+' -> '},[]));
             let req = new XMLHttpRequest();
             req.id = i;
             req.onreadystatechange = readyHandler(req);
@@ -2239,7 +2244,7 @@ color: #0a0;
         let finish = function() {
             o.b = simpleCombine(y);
             result = o;
-            processing = false;
+            processing[o.a] = false;
         };
         if (y.length>0) get(0);
     }
