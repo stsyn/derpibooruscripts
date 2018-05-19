@@ -21,7 +21,7 @@ Here are the userscripts related to the https://derpibooru.org. Most of them are
 Main settings provider which allows to construct UI-based settings for userscript on Derpibooru settings page. Can be used as separate userscript, since 0.9.12 can be used as library, through.
 
 #### Implementing
-Despite the fact that the script was developed for the internal needs of the YDB (this is evident in some elements of the design), you can use it for your own purposes. Due to the nature of its development, always no more than one instance of the script is active (which was launched first). 
+Despite the fact that the script was developed for the internal needs of the YDB (this is evident in some elements of the design), you can use it for your own purposes. Due to the nature of its development, it's always working realtime as normal userscript (not as function-library), but always no more than one instance of the script is active (which was launched first). See YDB tab in settings to make sure, which instantion works right now.
 
 If you want to guarantee it's startup in your work, you need to require special library-based build of YDB:S:
 
