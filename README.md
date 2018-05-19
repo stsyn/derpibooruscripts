@@ -23,10 +23,10 @@ Main settings provider which allows to construct UI-based settings for userscrip
 #### Implementing
 Despite the fact that the script was developed for the internal needs of the YDB (this is evident in some elements of the design), you can use it for your own purposes. Due to the nature of its development, it's always working realtime as normal userscript (not as function-library), but always no more than one instance of the script is active (which was launched first). See YDB tab in settings to make sure, which instantion works right now.
 
-If you want to guarantee it's startup in your work, you need to require special library-based build of YDB:S:
+If you want to guarantee it's startup in your work without having standalone installation of YDB:S, you need to require special library-based build of YDB:S:
 
 ``` javascript
-// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0.lib.js
 ```
 
 You **must not** do that if your script has run-at property set as **document-start**.
@@ -187,7 +187,7 @@ onChanges:{
 
 Functions executes when user clicks "Save settings" right before being written.
 
-#### Usage for *// @run-at document-start scripts*
+#### Usage for *// @run-at document-start* scripts
 Since there is different **window** object in that case, you should use other method to implement settings:
 
 ``` javascript
