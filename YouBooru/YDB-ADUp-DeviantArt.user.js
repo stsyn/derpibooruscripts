@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.0.6
+// @version      0.0.7
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
@@ -26,8 +26,8 @@
 		let dlink, width, height, text = '';
 		if (hasFull) {
 			let xlink = document.querySelector('.dev-page-download').href;
-			width = document.querySelector('div.dev-metainfo-details dl dd:last-child').innerHTML.split('×')[0];
-			height = document.querySelector('div.dev-metainfo-details dl dd:last-child').innerHTML.split('×')[1];
+			width = document.querySelector('div.dev-metainfo-details dl dd:nth-child(6)').innerHTML.split('×')[0];
+			height = document.querySelector('div.dev-metainfo-details dl dd:nth-child(6)').innerHTML.split('×')[1];
 			if (link == undefined) {
 				GM_xmlhttpRequest({
 					method:   "GET",
