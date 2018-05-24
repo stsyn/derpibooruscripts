@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.2.0
+// @version      0.2.1
 // @author       stsyn
 
 // @include      *://trixiebooru.org/*
@@ -274,8 +274,10 @@
 			if (checkedTags[implies[i]] == undefined || checkedTags[implies[i]].impliedBy != undefined) {
 				if (checkedTags[implies[i]] == undefined) {
 					addTag(x, implies[i]);
-					if (settings.implicationDefaultRecursive) document.querySelector('.input.input--wide.tagsinput.js-image-input.js-taginput.js-taginput-plain-tag_input').value += ', '+implies[i];
-					x.querySelector('a[data-tag-name="'+implies[i]+'"]').parentNode.style.opacity = '1';
+					if (settings.implicationDefaultRecursive) {
+						document.querySelector('.input.input--wide.tagsinput.js-image-input.js-taginput.js-taginput-plain-tag_input').value += ', '+implies[i];
+						x.querySelector('a[data-tag-name="'+implies[i]+'"]').parentNode.style.opacity = '1';
+					}
 					checkedTags[implies[i]] = {
 						needInfo:true,
 						impliedBy:[tagName]
