@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.2.1
+// @version      0.2.2
 // @author       stsyn
 
 // @include      *://trixiebooru.org/*
@@ -284,7 +284,14 @@
 					};
 				}
 				else {
-					checkedTags[implies[i]].impliedBy.push(tagName);
+					let ax = false;
+					for (let j=0; j<checkedTags[implies[i]].impliedBy.length; j++) {
+						if (checkedTags[implies[i]].impliedBy[j] == tagName) {
+							ax = true;
+							break;
+						}
+					}
+					if (!ax) checkedTags[implies[i]].impliedBy.push(tagName);
 				}
 			}
 			else {
@@ -302,12 +309,14 @@
 	function removeRecursive(tag, parent) {
 		let xc = document.querySelector('.input.input--wide.tagsinput.js-image-input.js-taginput.js-taginput-plain-tag_input');
 		let x = xc.value.split(', ');
+		console.log(x);
 		for (let i=0; i<x.length; i++) {
 			if (x[i] == tag.name) {
 				x.splice(i,1);
 				break;
 			}
 		}
+		console.log(x);
 		xc.value = x.join(', ');
 		if (tag.impliedBy == undefined) tag.impliedBy = [parent.name];
 		else {
@@ -325,8 +334,19 @@
 
 	function removeTag(tag, parent, nr) {
 		if (tag == undefined) return;
+
+		console.log(tag, tag.name);
+		if (tag.implies != undefined) {
+			for (let j=0; j<tag.implies.length; j++) {
+				if (tag.container.querySelector('a[data-tag-name="'+tag.implies[j]+'"]') == undefined) tag.implies.splice(j,1);
+				else {
+					removeTag(checkedTags[tag.implies[j]], tag);
+					j--;
+				}
+			}
+		}
 		let x = tag.impliedBy;
-		if (x!= undefined) {
+		if (x!= undefined && parent != undefined) {
 			for (let i=0; i<x.length; i++) {
 				if (x[i] == parent.name) {
 					let y = parent.implies;
@@ -334,17 +354,17 @@
 						for (let j=0; j<y.length; j++) {
 							if (y[j] == tag.name) {
 								y.splice(j,1);
+								x.splice(i,1);
 								break;
 							}
 						}
 					}
-					x.splice(i,1);
 					break;
 				}
 			}
 		}
-
-		if (x == undefined || x.length==0) {
+		console.log(x, tag.name, parent);
+		if (x == undefined || x.length==0 || parent == undefined) {
 			if (tag.container.querySelector('a[data-tag-name="'+tag.name+'"]') != undefined) tag.container.querySelector('a[data-tag-name="'+tag.name+'"]').click();
 		}
 	}
@@ -429,7 +449,7 @@
 				else {
 					actions.push(InfernoAddElem('a',{innerHTML:'Undo implication',style:'margin-right:0.85em;cursor:pointer',dataset:{clickFocus:'.js-taginput-input-tag_input'}, events:[{t:'click',f:function() {
 						d.mutedImplication = true;
-						for (let i=d.implies.length-1; i>=0; i--) delete removeTag(checkedTags[d.implies[i]], d);
+						for (let i=d.implies.length-1; i>=0; i--) removeTag(checkedTags[d.implies[i]], d);
 					}}]},[]));
 					if (!settings.implicationDefaultRecursive) {
 						actions.push(InfernoAddElem('a',{innerHTML:'Allow recursive',style:'margin-right:0.85em;cursor:pointer',dataset:{clickFocus:'.js-taginput-input-tag_input'}, events:[{t:'click',f:function() {
@@ -449,7 +469,15 @@
 					}
 					else {
 						actions.push(InfernoAddElem('a',{innerHTML:'Disallow recursive',style:'margin-right:0.85em;cursor:pointer',dataset:{clickFocus:'.js-taginput-input-tag_input'}, events:[{t:'click',f:function() {
-							for (let i=0; i<d.implies.length; i++) removeRecursive(checkedTags[d.implies[i]], d);
+							for (let i=0; i<d.implies.length; i++) {
+								removeRecursive(checkedTags[d.implies[i]], d);
+								if (checkedTags[d.implies[i]].implies != undefined) {
+									for (let j=checkedTags[d.implies[i]].implies.length-1; j>=0; j--) {
+										removeTag(checkedTags[checkedTags[d.implies[i]].implies[j]], checkedTags[d.implies[i]]);
+									}
+									checkedTags[d.implies[i]].mutedImplication = true;
+								}
+							}
 							d.mutedImplication = true;
 						}}]},[]));
 					}
@@ -540,17 +568,17 @@
 								if (implies.length > 0) {
 									implies = implies.split(',');
 									implies = implies.map(function(c) {return c.trim();});
-									implies.forEach(function (v,i,a) {
+									/*implies.forEach(function (v,i,a) {
 										if (!(checkedTags[v] == undefined || checkedTags[v].impliedBy != undefined)) {
 											a.splice(i,1);
 										}
-									})
+									})*/
 									if (implies.length > 0) {
 										checkedTags[name].implies = implies;
 
 										let inserted = false;
-										if ((checkedTags[name].impliedBy == undefined || (settings.implicationDefaultRecursive && checkedTags[name] == undefined)) && (settings.implicationDefaultInsert)) insertImpliedTags(x, name);
-										if ((settings.implicationNotify) && (checkedTags[name].impliedBy == undefined || (settings.implicationDefaultRecursive && checkedTags[name] == undefined))) {
+										if ((checkedTags[name].impliedBy == undefined || settings.implicationDefaultRecursive) && (settings.implicationDefaultInsert)) insertImpliedTags(x, name);
+										if ((settings.implicationNotify) && (checkedTags[name].impliedBy == undefined || (settings.implicationDefaultRecursive))) {
 											checkedTags[name].imply_notify = true;
 											checkedTags[name].shouldDraw = true;
 											checkedTags[name].mutedImplication = false;
@@ -618,9 +646,6 @@
 				//removing
 				if (!checkedTags[x].present) {
 					if (settings.implicationAutoDelete && (checkedTags[x].implies != undefined && checkedTags[x].implies.length > 0)) {
-						checkedTags[x].implies.forEach(function(v,i,a) {
-							removeTag(checkedTags[v],checkedTags[x], true);
-						});
 						if (checkedTags[x].impliedBy != undefined) {
 							checkedTags[x].impliedBy.forEach(function(v,i,a) {
 								let y = checkedTags[v].implies;
@@ -634,6 +659,7 @@
 								forceRedraw = true;
 							});
 						}
+						removeTag(checkedTags[x]);
 						delete checkedTags[x];
 					}
 					else delete checkedTags[x];
