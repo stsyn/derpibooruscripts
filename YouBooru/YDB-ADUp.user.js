@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.1.9
+// @version      0.2.0
 // @author       stsyn
 
 // @include      *://trixiebooru.org/*
@@ -22,6 +22,7 @@
 // @exclude      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
 
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0.lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp.user.js
 
 // @grant        none
@@ -33,7 +34,37 @@
 
 	let overRideSize = false;
 	let onceLoaded = false;
-	let checkedArtists = {};
+	let checkedTags = {};
+	let forceRedraw = false;
+	let settings = {
+		implicationDisallow:false,
+		implicationDefaultInsert:true,
+		implicationNotify:true,
+		implicationDefaultRecursive:false,
+		implicationAutoDelete:true
+	};
+
+	function register() {
+		if (window._YDB_public == undefined) window._YDB_public = {};
+		if (window._YDB_public.settings == undefined) window._YDB_public.settings = {};
+		window._YDB_public.settings._adup = {
+			name:'ADUp',
+			version:GM_info.script.version,
+			container:'_adup',
+			link:'/meta/topics/userscript-semi-automated-derpibooru-uploader',
+			s:[
+				{type:'checkbox', name:'Turn off implication predictor', parameter:'implicationDisallow'},
+				{type:'breakline'},
+				{type:'checkbox', name:'Notify about implication', parameter:'implicationNotify'},
+				{type:'breakline'},
+				{type:'breakline'},
+				{type:'checkbox', name:'Show implied tags by default', parameter:'implicationDefaultInsert'},
+				{type:'checkbox', name:'Insert implied tags by default', parameter:'implicationDefaultRecursive'},
+				{type:'breakline'},
+				{type:'text', name:'Please refer to the script forum topic to understand the difference.',styleS:{fontStyle:'italic'}}
+			]
+		};
+	}
 
 	//srsly?..
 	function parseURL(url) {
@@ -64,6 +95,21 @@
 		};
 	}
 
+	if (localStorage._adup == undefined || settings.override) {
+		localStorage._adup = JSON.stringify(settings);
+	}
+	else {
+		try {
+			var settings2 = JSON.parse(localStorage._adup);
+			settings = settings2;
+		}
+		catch(e) {
+			localStorage._adup = JSON.stringify(settings);
+		}
+	}
+	register();
+
+	window.checkedTags = checkedTags;
 
 	function fetchExtData(url) {
 		let req = new XMLHttpRequest();
@@ -214,100 +260,331 @@
 		build(req);
 	}
 
+	function addTag(x, tag) {
+		if (x.querySelector('a[data-tag-name="'+tag+'"]') != undefined) return;
+		x.insertBefore(InfernoAddElem('span',{className:'tag',style:'opacity:0.75',innerHTML:tag+' '},[
+			InfernoAddElem('a',{href:'javascript://', innerHTML:'x',dataset:{clickFocus:'.js-taginput-input-tag_input',tagName:tag}},[
+			])
+		]), x.querySelector('.js-taginput-input-tag_input'));
+	}
+
+	function insertImpliedTags(x, tagName) {
+		let implies = checkedTags[tagName].implies;
+		for (let i=0; i<implies.length; i++) {
+			if (checkedTags[implies[i]] == undefined || checkedTags[implies[i]].impliedBy != undefined) {
+				if (checkedTags[implies[i]] == undefined) {
+					addTag(x, implies[i]);
+					if (settings.implicationDefaultRecursive) document.querySelector('.input.input--wide.tagsinput.js-image-input.js-taginput.js-taginput-plain-tag_input').value += ', '+implies[i];
+					x.querySelector('a[data-tag-name="'+implies[i]+'"]').parentNode.style.opacity = '1';
+					checkedTags[implies[i]] = {
+						needInfo:true,
+						impliedBy:[tagName]
+					};
+				}
+				else {
+					checkedTags[implies[i]].impliedBy.push(tagName);
+				}
+			}
+			else {
+				implies.splice(i,1);
+				i--;
+				if (implies.length == 0) {
+					delete checkedTags[tagName].implies;
+					delete checkedTags[tagName].imply_notify;
+					return;
+				}
+			}
+		}
+	}
+
+	function removeRecursive(tag, parent) {
+		let xc = document.querySelector('.input.input--wide.tagsinput.js-image-input.js-taginput.js-taginput-plain-tag_input');
+		let x = xc.value.split(', ');
+		for (let i=0; i<x.length; i++) {
+			if (x[i] == tag.name) {
+				x.splice(i,1);
+				break;
+			}
+		}
+		xc.value = x.join(', ');
+		if (tag.impliedBy == undefined) tag.impliedBy = [parent.name];
+		else {
+			let ax = false;
+			for (let i=0; i<tag.impliedBy.length; i++) {
+				if (tag.impliedBy[i] == parent.name) {
+					ax = true;
+					break;
+				}
+			}
+			if (!ax) tag.impliedBy.push(parent.name);
+		}
+		parent.container.querySelector('a[data-tag-name="'+tag.name+'"]').parentNode.style.opacity = '0.75';
+	}
+
+	function removeTag(tag, parent, nr) {
+		if (tag == undefined) return;
+		let x = tag.impliedBy;
+		if (x!= undefined) {
+			for (let i=0; i<x.length; i++) {
+				if (x[i] == parent.name) {
+					let y = parent.implies;
+					if (!nr) {
+						for (let j=0; j<y.length; j++) {
+							if (y[j] == tag.name) {
+								y.splice(j,1);
+								break;
+							}
+						}
+					}
+					x.splice(i,1);
+					break;
+				}
+			}
+		}
+
+		if (x == undefined || x.length==0) {
+			if (tag.container.querySelector('a[data-tag-name="'+tag.name+'"]') != undefined) tag.container.querySelector('a[data-tag-name="'+tag.name+'"]').click();
+		}
+	}
+
 	function tagCheck() {
 		let render = function (d) {
-			let color = 'flash--site-notice', suggestion = '';
-			if (d.dnp_type=='Artist Upload Only') {
-				suggestion = 'You won\'t be able to finish uploading.';
-                color = 'flash--warning';
-            }
-			if (d.dnp_type=='With Permission Only') {
-				suggestion = 'You should be ready to provide proof of permission!';
-				color = 'flash--warning';
+			let cc = InfernoAddElem('div',{className:'alternating-color block__content'},[]);
+			if (d.dnp_type == undefined && d.imply_notify == undefined) return undefined;
+			if (d.dnp_type != undefined) {
+				let color = 'flash--site-notice', suggestion = '';
+				if (d.dnp_type=='Artist Upload Only') {
+					suggestion = 'You won\'t be able to finish uploading.';
+					color = 'flash--warning';
+				}
+				if (d.dnp_type=='With Permission Only') {
+					suggestion = 'You should be ready to provide proof of permission!';
+					color = 'flash--warning';
+				}
+				if (d.dnp_type=='Certain Type/Location Only') color = 'flash--warning';
+				if (d.dnp_type=='No Edits') {
+					suggestion = 'If you have permission to upload, remove "edit" tag for now and add it after uploading.';
+					color = 'flash--warning';
+				}
+				if (d.dnp_type=='Other') color = 'flash--warning';
+				if (d.dnp_type=='Tag does not exist' || d.dnp_type=='Tag has no images') {
+					suggestion = 'You may have mistyped.';
+				}
+				cc.appendChild(InfernoAddElem('div',{},[
+					InfernoAddElem('div',{className:'flash '+color},[
+						InfernoAddElem('strong',{innerHTML:d.name},[]),
+						InfernoAddElem('span',{innerHTML:' — '},[]),
+						InfernoAddElem('strong',{innerHTML:d.dnp_type, style:{color:color}},[]),
+						InfernoAddElem('span',{innerHTML:suggestion==''?'':' — '},[]),
+						InfernoAddElem('span',{innerHTML:suggestion},[])
+					]),
+					InfernoAddElem('span',{innerHTML:' '},[]),
+					InfernoAddElem('span',{innerHTML:d.conditions},[]),
+					InfernoAddElem('br',{},[]),
+					InfernoAddElem('em',{innerHTML:d.reason},[])
+				]));
 			}
-			if (d.dnp_type=='Certain Type/Location Only') color = 'flash--warning';
-			if (d.dnp_type=='No Edits') {
-				suggestion = 'If you have permission to upload, remove "edit" tag for now and add it after uploading.';
-				color = 'flash--warning';
+			if (d.imply_notify != undefined) {
+				let actions = [];
+				if (!settings.implicationDefaultInsert) {
+					actions.push(InfernoAddElem('a',{innerHTML:'Add',style:'margin-right:0.85em;cursor:pointer',dataset:{clickFocus:'.js-taginput-input-tag_input'}, events:[{t:'click',f:function() {
+						insertImpliedTags(d.container,d.name);
+						d.mutedImplication = true;
+					}}]},[]));
+					if (!settings.implicationDefaultRecursive) {
+						actions.push(InfernoAddElem('a',{innerHTML:'with recursive',style:'margin-right:0.85em;cursor:pointer',dataset:{clickFocus:'.js-taginput-input-tag_input'}, events:[{t:'click',f:function() {
+							insertImpliedTags(d.container,d.name);
+							for (let i=0; i<d.implies.length; i++) {
+								document.querySelector('.input.input--wide.tagsinput.js-image-input.js-taginput.js-taginput-plain-tag_input').value += ', '+d.implies[i];
+								d.container.querySelector('a[data-tag-name="'+d.implies[i]+'"]').parentNode.style.opacity = '1';
+								delete checkedTags[d.implies[i]].impliedBy;
+								checkedTags[d.implies[i]].mutedImplication = false;
+							}
+							delete d.implies;
+							d.mutedImplication = true;
+						}}]},[]));
+					}
+					else {
+						actions.push(InfernoAddElem('a',{innerHTML:'without recursive',style:'margin-right:0.85em;cursor:pointer',dataset:{clickFocus:'.js-taginput-input-tag_input'}, events:[{t:'click',f:function() {
+							insertImpliedTags(d.container,d.name);
+							let checker = function() {
+								for (let i=0; i<d.implies.length; i++) {
+									if (checkedTags[d.implies[i]].needInfo) {
+										setTimeout(checker, 100);
+										return;
+									}
+								}
+								for (let i=0; i<d.implies.length; i++) {
+									removeRecursive(checkedTags[d.implies[i]], d);
+									checkedTags[d.implies[i]].mutedImplication = true;
+								}
+							};
+							setTimeout(checker, 400);
+							d.mutedImplication = true;
+						}}]},[]));
+					}
+				}
+				else {
+					actions.push(InfernoAddElem('a',{innerHTML:'Undo implication',style:'margin-right:0.85em;cursor:pointer',dataset:{clickFocus:'.js-taginput-input-tag_input'}, events:[{t:'click',f:function() {
+						d.mutedImplication = true;
+						for (let i=d.implies.length-1; i>=0; i--) delete removeTag(checkedTags[d.implies[i]], d);
+					}}]},[]));
+					if (!settings.implicationDefaultRecursive) {
+						actions.push(InfernoAddElem('a',{innerHTML:'Allow recursive',style:'margin-right:0.85em;cursor:pointer',dataset:{clickFocus:'.js-taginput-input-tag_input'}, events:[{t:'click',f:function() {
+							for (let i=0; i<d.implies.length; i++) {
+								document.querySelector('.input.input--wide.tagsinput.js-image-input.js-taginput.js-taginput-plain-tag_input').value += ', '+d.implies[i];
+								delete checkedTags[d.implies[i]].impliedBy;
+								if (checkedTags[d.implies[i]].implies != undefined && checkedTags[d.implies[i]].implies.length>0) {
+									checkedTags[d.implies[i]].imply_notify = true;
+									insertImpliedTags(d.container,d.implies[i]);
+								}
+								d.container.querySelector('a[data-tag-name="'+d.implies[i]+'"]').parentNode.style.opacity = '1';
+								checkedTags[d.implies[i]].mutedImplication = false;
+							}
+							delete d.implies;
+							d.mutedImplication = true;
+						}}]},[]));
+					}
+					else {
+						actions.push(InfernoAddElem('a',{innerHTML:'Disallow recursive',style:'margin-right:0.85em;cursor:pointer',dataset:{clickFocus:'.js-taginput-input-tag_input'}, events:[{t:'click',f:function() {
+							for (let i=0; i<d.implies.length; i++) removeRecursive(checkedTags[d.implies[i]], d);
+							d.mutedImplication = true;
+						}}]},[]));
+					}
+				}
+
+				actions.push(InfernoAddElem('a',{innerHTML:'Hide',style:'margin-right:0.85em;cursor:pointer',dataset:{clickFocus:'.js-taginput-input-tag_input'}, events:[{t:'click',f:function() {
+					d.mutedImplication = true;
+				}}]},[]));
+				cc.appendChild(InfernoAddElem('div',{},[
+					InfernoAddElem('div',{className:'flash'},[
+						InfernoAddElem('strong',{innerHTML:d.name},[]),
+						InfernoAddElem('span',{innerHTML:' — implies '},[]),
+						InfernoAddElem('strong',{innerHTML:d.implies.join(', ')},[])
+					]),
+					InfernoAddElem('br',{},[]),
+					InfernoAddElem('span',{},actions)
+				]));
 			}
-			if (d.dnp_type=='Other') color = 'flash--warning';
-            if (d.dnp_type=='Tag does not exist' || d.dnp_type=='Tag has no images') {
-                suggestion = 'You may have mistyped.';
-            }
-			return InfernoAddElem('div',{className:'alternating-color block__content'},[
-				InfernoAddElem('div',{className:'flash '+color},[
-					InfernoAddElem('strong',{innerHTML:d.name},[]),
-					InfernoAddElem('span',{innerHTML:' — '},[]),
-					InfernoAddElem('strong',{innerHTML:d.dnp_type, style:{color:color}},[]),
-					InfernoAddElem('span',{innerHTML:suggestion==''?'':' — '},[]),
-					InfernoAddElem('span',{innerHTML:suggestion},[])
-				]),
-				InfernoAddElem('span',{innerHTML:' '},[]),
-				InfernoAddElem('span',{innerHTML:d.conditions},[]),
-				InfernoAddElem('br',{},[]),
-				InfernoAddElem('em',{innerHTML:d.reason},[])
-			]);
+			return cc;
 		};
 		let checker = function (target, method) {
+			for (let x in checkedTags) {
+				checkedTags[x].shouldDraw = false;
+				checkedTags[x].present = false;
+			}
             for (let i=0; i<document.querySelectorAll(target).length; i++) {
                 let x = document.querySelectorAll(target)[i];
-				let gotten;
-				for (let x in checkedArtists) checkedArtists[x].shouldDraw = false;
+				let gotten = forceRedraw;
                 for (let i=0; i<x.getElementsByClassName('tag').length; i++) {
                     let y = x.getElementsByClassName('tag')[i];
                     let z;
                     z = y.getElementsByTagName('a')[0].dataset.tagName;
 
                     let name = z;
-                    if (checkedArtists[name] == undefined) {
+                    if (checkedTags[name] == undefined || checkedTags[name].needInfo != undefined) {
+						//gather tag info
                         fetch('/tags/'+encodeURIComponent((name).replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/ /g,'+').replace(/\:/g,'-colon-'))+'.json',{method:'GET'})
-                            .then(function (response) {
+                        .then(function (response) {
                             const errorMessage = {fail:true};
-                            if (!response.ok)
+                            if (!response.ok) {
                                 return errorMessage;
+							}
                             if (response.redirected) {
+								//got aliase
                                 let newTag = response.url.split('/').pop();
                                 newTag = newTag.replace(/\-dash\-/g,'-').replace(/\-dot\-/g,'.').replace(/\+/g,' ').replace(/\-colon\-/g,':');
                                 y.getElementsByTagName('a')[0].dataset.tagName = newTag;
                                 y.firstChild.textContent = newTag+' ';
+								if (checkedTags[name] != undefined) delete checkedTags[name].needInfo;
                                 return errorMessage;
                             }
                             return response.json();
                         })
-                            .then(data => {
+                        .then(data => {
                             if (data.fail) return;
+							//search for DNP
+							if (checkedTags[name] == undefined) checkedTags[name] = {};
+							checkedTags[name].container = x;
+							delete checkedTags[name].needInfo;
                             let dnp = data.dnp_entries;
                             if (dnp == undefined) {
-                                checkedArtists[name] = {dnp_type:'Tag does not exist',name:name};
+                                checkedTags[name].dnp_type = 'Tag does not exist';
+								checkedTags[name].name = name;
                             }
-                            else if (dnp.length>0) for (let j=0; j<dnp.length; j++) {
-                                let d = dnp[j];
-                                d.name = name;
-                                checkedArtists[name] = d;
-                                container.appendChild(render(d));
-                                gotten = true;
-                                checkedArtists[name].shouldDraw = true;
-                            }
+                            else if (dnp.length>0) {
+								for (let j=0; j<dnp.length; j++) {
+									let d = dnp[j];
+									d.name = name;
+									for (let x in d) checkedTags[name][x] = d[x];
+									container.appendChild(render(d));
+									gotten = true;
+									checkedTags[name].shouldDraw = true;
+									checkedTags[name].name = name;
+								}
+							}
                             else if (data.tag.images == 0) {
-                                checkedArtists[name] = {dnp_type:'Tag has no images',name:name};
+                                checkedTags[name].dnp_type = 'Tag has no images';
+								checkedTags[name].name = name;
                             }
-                            else checkedArtists[name] = {ok:true};
+                            else {
+								checkedTags[name].ok = true;
+								checkedTags[name].name = name;
+							}
+
+							//search for implications
+							if (data.tag != undefined && !settings.implicationDisallow) {
+								let implies = data.tag.implied_tags;
+								if (implies.length > 0) {
+									implies = implies.split(',');
+									implies = implies.map(function(c) {return c.trim();});
+									implies.forEach(function (v,i,a) {
+										if (!(checkedTags[v] == undefined || checkedTags[v].impliedBy != undefined)) {
+											a.splice(i,1);
+										}
+									})
+									if (implies.length > 0) {
+										checkedTags[name].implies = implies;
+
+										let inserted = false;
+										if ((checkedTags[name].impliedBy == undefined || (settings.implicationDefaultRecursive && checkedTags[name] == undefined)) && (settings.implicationDefaultInsert)) insertImpliedTags(x, name);
+										if ((settings.implicationNotify) && (checkedTags[name].impliedBy == undefined || (settings.implicationDefaultRecursive && checkedTags[name] == undefined))) {
+											checkedTags[name].imply_notify = true;
+											checkedTags[name].shouldDraw = true;
+											checkedTags[name].mutedImplication = false;
+											let yx = render(checkedTags[name]);
+											if (yx != undefined) container.appendChild(yx);
+										}
+										else checkedTags[name].mutedImplication = true;
+									}
+								}
+							}
                         });
+						if (checkedTags[name] != undefined) {
+							checkedTags[name].present = true;
+						}
                     }
-                    else if (!checkedArtists[name].ok) {
-                        checkedArtists[name].shouldDraw = true;
-                        if (!checkedArtists[name].drawn) gotten = true;
-                    }
+                    else {
+						if (checkedTags[name] != undefined) {
+							checkedTags[name].present = true;
+						}
+						if (!checkedTags[name].ok || (!checkedTags[name].mutedImplication && checkedTags[name].present)) {
+							checkedTags[name].shouldDraw = true;
+							if (!checkedTags[name].drawn) gotten = true;
+						}
+					}
 					
                 }
-				for (let x in checkedArtists) {
-					if (checkedArtists[x].drawn != checkedArtists[x].shouldDraw) {
+				for (let x in checkedTags) {
+					if (checkedTags[x].drawn != checkedTags[x].shouldDraw) {
 						gotten = true;
 						break;
 					}
 				}
+
 				if (gotten) {
-					for (let x in checkedArtists) checkedArtists[x].drawn = false;
+					forceRedraw = false;
+					for (let x in checkedTags) checkedTags[x].drawn = false;
 					let container = document.getElementById('ydb_dnp_container');
 					container.innerHTML = '';
 					let drawn = false;
@@ -315,15 +592,18 @@
 						let y = x.getElementsByClassName('tag')[i];
 						let z;
 						z = y.getElementsByTagName('a')[0].dataset.tagName;
-						
+
                         let name = z;
-                        if (checkedArtists[name] == undefined) continue;
-                        else if (!checkedArtists[name].ok) {
-                            checkedArtists[name].drawn = true;
-                            container.appendChild(render(checkedArtists[name]));
-                            drawn = true;
+                        if (checkedTags[name] == undefined) continue;
+                        else if (!checkedTags[name].ok || !checkedTags[name].mutedImplication) {
+							let yx = render(checkedTags[name]);
+                            if (yx != undefined) {
+                            	checkedTags[name].drawn = true;
+								container.appendChild(yx);
+								drawn = true;
+							}
                         }
-						
+
 					}
 					if (!drawn) {
 						container.appendChild(InfernoAddElem('div',{className:'block__content'},[
@@ -332,9 +612,34 @@
 					}
 				}
             }
+			for (let x in checkedTags) {
+				//removing
+				if (!checkedTags[x].present) {
+					if (settings.implicationAutoDelete && (checkedTags[x].implies != undefined && checkedTags[x].implies.length > 0)) {
+						checkedTags[x].implies.forEach(function(v,i,a) {
+							removeTag(checkedTags[v],checkedTags[x], true);
+						});
+						if (checkedTags[x].impliedBy != undefined) {
+							checkedTags[x].impliedBy.forEach(function(v,i,a) {
+								let y = checkedTags[v].implies;
+								for (let j=0; j<y.length; j++) {
+									if (y[j] == x) {
+										y.splice(j,1);
+										break;
+									}
+								}
+								if (y.length == 0) checkedTags[v].mutedImplication = true;
+								forceRedraw = true;
+							});
+						}
+						delete checkedTags[x];
+					}
+					else delete checkedTags[x];
+				}
+			}
         };
         checker('.js-taginput-fancy-tag_input');
-        setTimeout(tagCheck,500);
+        setTimeout(tagCheck,333);
 	}
 
 	if ((parseInt(location.pathname.slice(1))>=0 && location.pathname.split('/')[2] == undefined) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && location.pathname.split('/')[3] == undefined)) {
@@ -392,7 +697,6 @@
 			diff(url);
 		};
 		document.getElementById('js-scraper-preview').addEventListener('click',function() {
-			console.log(onceLoaded);
 			if (onceLoaded) {
 				onceLoaded = false;
 				return;
