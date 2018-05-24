@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Tumblr YDB:ADUp module
 // @namespace    http://tampermonkey.net/
-// @version      0.0.7
+// @version      0.0.8
 // @author       stsyn
 // @match        *://*/*
 // @exclude      *://trixiebooru.org/*
@@ -70,7 +70,7 @@
                      href:'//www.derpibooru.org/images/new?newImg='+encodeURIComponent('http://s3.amazonaws.com/data.tumblr.com'+img.replace(/_\d{3,}/, '_raw'))+
                      '&src='+encodeURIComponent(url)+'&tags='+encodeURIComponent('artist:'+artist)+'&description='+
                      (desc!=''?encodeURIComponent('[bq]'+desc+'[/bq]'):''),
-                     style:'position:absolute;top:0;left:0;background:#000;color:#fff;opacity:0.4', events:[{t:'click',f:function(e){
+                     style:'position:absolute;top:0;left:0;background:#000;color:#fff;opacity:0.4;max-width:10em;max-height:2em', events:[{t:'click',f:function(e){
 			e.preventDefault();
 			window.open(e.target.href,'_blank');
 		}}]},y);
@@ -87,16 +87,16 @@
 
 		document.querySelectorAll('div.post.is_photo div.post_media a.post_media_photo_anchor:not(._ydb_adup_parsed), a[href*="media.tumblr.com/"][href*="/tumblr_"]:not(._ydb_adup_parsed), a[href*="'+location.hostname+'/image/"]:not(._ydb_adup_parsed)').forEach(function(y) {
 			let img = y.querySelector('img');
+			y.classList.add('_ydb_adup_parsed');
 			if (img == undefined) {
 				y = y.parentNode;
 				img = y.querySelector('img[src*="media.tumblr"]');
 			}
 			if (img == undefined) return;
 			createLink(y, y, parseURL(img.src).path);
-			y.classList.add('_ydb_adup_parsed');
 		});
 
-		document.querySelectorAll('img[src*="/tumblr_inline_"]:not(._ydb_adup_parsed), a[href*="'+location.hostname+'"]:not(._ydb_adup_parsed) img[src*="media.tumblr.com/"]:not(._ydb_adup_parsed)').forEach(function(img) {
+		document.querySelectorAll('*:not(._ydb_adup_parsed)>img[src*="/tumblr_inline_"]:not(._ydb_adup_parsed), a[href*="'+location.hostname+'"]:not(._ydb_adup_parsed) img[src*="media.tumblr.com/"]:not(._ydb_adup_parsed)').forEach(function(img) {
 			let y = img.parentNode;
 			if (y.getElementsByTagName('img').length>1) return;
 			createLink(y, y, parseURL(img.src).path);
