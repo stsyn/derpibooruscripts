@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.33
+// @version      0.5.34
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -53,7 +53,23 @@
 	let version = 0;
 	let artists = [];
 	let bps = ['princess luna','tempest shadow','starlight glimmer','rarity','oc:blackjack','princess celestia'];
+	let sps = [{name:'solo',image:'https://derpicdn.net/img/view/2016/8/22/1231050.png'},
+			   {name:'patreon preview',image:'https://derpicdn.net/img/view/2016/6/3/1169448.png'},
+			   {name:'80s',image:'https://derpicdn.net/img/view/2016/5/5/1147241.png'},
+			   {name:'op is trying to start shit',image:'https://derpicdn.net/img/view/2015/8/28/967369.jpg'},
+			   {name:'twilight sparkle (alicorn)',image:'https://derpicdn.net/img/view/2014/12/1/776065.png'},
+			   {name:'milf',image:'https://derpicdn.net/img/view/2013/9/21/431956.png'},
+			   {name:'canon x oc',image:'https://derpicdn.net/img/view/2013/7/20/379005.png'},
+			   {name:'simple background',image:'https://derpicdn.net/img/view/2013/5/6/317918.png'},
+			   {name:'bad dragon',image:'https://derpicdn.net/img/view/2013/4/24/307465.png'},
+			   {name:'bedroom eyes',image:'https://derpicdn.net/img/view/2013/4/23/305990.png'},
+			   {name:'edit',image:'https://derpicdn.net/img/view/2013/4/22/305629.png'},
+			   {name:'artist:hoihoi',image:'https://derpicdn.net/img/view/2013/4/21/303903.png'},
+			   {name:'crotchboobs',image:'https://derpicdn.net/img/view/2013/4/22/305692.png'},
+			   {name:'foot fetish',image:'https://derpicdn.net/img/view/2013/4/20/303577.png'}
+	];
 	let best_pony_for_today = bps[parseInt(Math.random()*Math.random()*bps.length)];
+	let spoiler_for_today = sps[parseInt(Math.random()*sps.length)];
 	let hidden = {
 		normal:[
 			{
@@ -206,6 +222,7 @@ color: #0a0;
                 {type:'checkbox', name:' and donation based implications', parameter:'hideBadgesP'},
                 {type:'breakline'},
                 {type:'input', name:'Shrink comments and posts longer than (px)', parameter:'shrinkComms', validation:{type:'int',min:280, default:500}},
+                {type:'breakline'},
                 {type:'checkbox', name:'Button to shrink expanded posts', parameter:'shrinkButt'},
                 {type:'breakline'},
                 {type:'checkbox', name:'Greentext (don\'t tell TSP about it)', parameter:'greenText',eventsI:{change:function (e) {
@@ -216,6 +233,24 @@ color: #0a0;
 				}}},
                 {type:'breakline'},
                 {type:'checkbox', name:'Use endless related images search', parameter:'similar'},
+                {type:'breakline'},
+                {type:'header', name:'Custom spoilers'},
+				{type:'button', name:'Enforce update', action:function() {
+						localStorage._ydb_tools_ctags = '[]';
+						customSpoilerCheck(true, ls.spoilers);
+					}
+				},
+                {type:'breakline'},
+                {type:'breakline'},
+                {type:'text', name:'Spoiler', styleS:{width:'30%', textAlign:'center',display:'inline-block'}},
+                {type:'text', name:'Image URL', styleS:{width:'70%', textAlign:'center',display:'inline-block'}},
+                {type:'array', parameter:'spoilers', addText:'Add', customOrder:false, s:[
+                    [
+                        {type:'input', name:'', parameter:'name',styleI:{width:'calc(35% - 5.7em)'},validation:{type:'unique'}},
+                        {type:'input', name:'', parameter:'image',styleI:{width:'65%'}}
+                    ]
+                ], template:{name:spoiler_for_today.name,image:spoiler_for_today.image, w:false}},
+                {type:'breakline'},
                 {type:'header', name:'Tag aliases'},
                 {type:'checkbox', name:'Show actual query in page header', parameter:'oldName'},
                 {type:'checkbox', name:'As short queries as possible', parameter:'compress', styleS:{display:'none'}},
@@ -233,6 +268,11 @@ color: #0a0;
                 ], template:{a:'best_pony',b:best_pony_for_today, w:false}}
             ],
             onChanges:{
+				spoilers:{
+					_:function(module,data, cb) {
+						customSpoilerCheck(true, data);
+					}
+				},
                 aliases:{
                     _:function(module,data, cb) {
                         for (let i=0; i<data.length; i++) {
@@ -1486,7 +1526,7 @@ color: #0a0;
 					changed = true;
 				}
 				if (changed) {
-					debug('YDB:UA','Updated user '+name+'.',1);
+					debug('YDB:U','Updated user '+name+'.',1);
 					write();
 				}
 			}
@@ -1510,7 +1550,7 @@ color: #0a0;
 					removeUser(userbase.idIndex[id]);
 				}
 				userbase.idIndex[id] = name;
-				debug('YDB:UA','Added user '+name+'.',1);
+				debug('YDB:U','Added user '+name+'.',1);
 				write();
 			}
 			return user;
@@ -1967,6 +2007,101 @@ color: #0a0;
         }
     }
 
+	//custom spoilers
+	function customSpoilerApply(spoiler) {
+		let ax = JSON.parse(localStorage._ydb_tools_ctags);
+		if (ax == undefined) ax = [];
+		for (let i=0; i<ax.length; i++) if (ax[i] == spoiler.name) return;
+
+		for (let i in localStorage) {
+			if (/bor_tags_\d+/.test(i)) {
+				let s = JSON.parse(localStorage[i]);
+				try {
+					if (s.name == spoiler.name) {
+						s.spoiler_image_uri_old = s.spoiler_image_uri;
+						s.spoiler_image_uri = spoiler.image;
+						ax.push(spoiler.name);
+						debug('YDB:T','Spoiler '+spoiler.name+' successfully added.',1);
+						localStorage[i] = JSON.stringify(s);
+						localStorage._ydb_tools_ctags = JSON.stringify(ax);
+						return true;
+					}
+				}
+				catch (e) {
+					debug('YDB:T','Spoiler '+spoiler.name+' cannot be added — unknown reason.',2);
+					return false;
+				}
+			}
+		}
+		debug('YDB:T','Spoiler '+spoiler.name+' cannot be added — entry does not found.',2);
+		return false;
+	}
+
+	function customSpoilerRemove(spoiler) {
+		let ax = JSON.parse(localStorage._ydb_tools_ctags);
+		if (ax == undefined) ax = [];
+		let trigger = false;
+
+		for (let j=0; j<ax.length; j++) if (ax[j] == spoiler.name) {
+			trigger = true;
+			break;
+		}
+
+		if (!trigger) return;
+
+		for (let i in localStorage) {
+			if (/bor_tags_\d+/.test(i)) {
+				let s = JSON.parse(localStorage[i]);
+				if (s.name == spoiler.name) {
+					s.spoiler_image_uri = s.spoiler_image_uri_old;
+					ax.slice(j,1);
+				}
+			}
+		}
+		localStorage._ydb_tools_ctags = JSON.stringify(ax);
+	}
+
+	function customSpoilerCheck(forced, spoilers) {
+		if (!forced && Math.random()>0.2) return;
+
+		console.log('wut');
+
+		//check for activation
+		let ax;
+		try {
+			ax = JSON.parse(localStorage._ydb_tools_ctags);
+		}
+		catch (e) {
+			localStorage._ydb_tools_ctags = '[]';
+			ax = [];
+		}
+		if (ax == undefined) ax = [];
+		for (let i=0; i<spoilers.length; i++) {
+			let trigger = false;
+			for (let j=0; j<ax.length; j++) {
+				if (ax[j] == spoilers[i].name) {
+					trigger = true;
+					break;
+				}
+			}
+			if (!trigger) customSpoilerApply(spoilers[i]);
+		}
+
+		//check for deactivation
+		ax = JSON.parse(localStorage._ydb_tools_ctags);
+		if (ax == undefined) ax = [];
+		for (let i=0; i<ax.length; i++) {
+			let trigger = false;
+			for (let j=0; j<spoilers.length; j++) {
+				if (ax[i] == spoilers[j].name) {
+					trigger = true;
+					break;
+				}
+			}
+			if (!trigger) customSpoilerRemove(spoilers[j]);
+		}
+	}
+
 	// contacts module
 	function contacts() {
 		if (document.querySelector('.js-burger-links a.header__link[href*="messages"]') == undefined) return;
@@ -2179,6 +2314,58 @@ color: #0a0;
 		ChildsAddElem('div',{className:'block',style:'width:100%'}, c, x);
 	}
 
+	function YDB_TestSpoiler() {
+		document.querySelector('#content h1').innerHTML = 'Applying spoilers...';
+		let c = document.querySelector('#content .walloftext');
+		c.innerHTML = '';
+
+		if (ls.spoilers == undefined) ls.spoilers = [];
+
+		let generateLine = function(spoiler, state) {
+			return InfernoAddElem('div',{className:'alternating-color block__content flex flex--center-distributed flex--centered'},[
+				InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
+					InfernoAddElem('span',{innerHTML:spoiler},[])
+				]),
+				InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
+					InfernoAddElem('span',{innerHTML:state},[])
+				])
+			]);
+		};
+		let x = [];
+
+		for (let i=0; i<sps.length; i++) {
+			let triggered = false;
+			if (ls.spoilers != undefined) for (let j=0; j<ls.spoilers.length; j++) {
+				if (ls.spoilers[j].name == sps[i].name) {
+					c.appendChild(generateLine(sps[i].name, 'Exists already'));
+					triggered = true;
+					break;
+				}
+			}
+			if (!triggered) {
+				ls.spoilers.push(sps[i]);
+				customSpoilerApply(sps[i]);
+				c.appendChild(generateLine(sps[i].name, 'Added'));
+			}
+		}
+
+		c.appendChild(generateLine(' ', ' '));
+		c.appendChild(generateLine('Saving...', ' '));
+		write(ls);
+		if (window._YDB_public.funcs.backgroundBackup!=undefined) {
+			window._YDB_public.funcs.backgroundBackup(function(state) {
+				if (state) c.appendChild(generateLine('Backupped succesfully, returning...', ' '));
+				else c.appendChild(generateLine('Failed to backup, returning anyway...', ' '));
+				setTimeout(function() {
+					/*if (history.length == 1) close();
+					else history.back();*/
+				}, 200);
+			});
+			c.appendChild(generateLine('Backupping...', ' '));
+		}
+
+	}
+
     //fixing watchlist
     function YB_checkList(o, elems) {
 		let stop = false;
@@ -2257,6 +2444,7 @@ color: #0a0;
             let u = x.split('?');
 			if (u[0] == 'contactList') YDB_contacts();
 			else if (u[0] == 'usersDebug') YDB_Userlist();
+			else if (u[0] == 'toolsSpoilerTest') YDB_TestSpoiler();
         }
     }
 
@@ -2297,6 +2485,7 @@ color: #0a0;
     if (ls.deactivateButtons) deactivateButtons(document, true);
 	if (ls.oldHead) oldHeaders();
 	commentButtons(document, true);
+	customSpoilerCheck(false, ls.spoilers);
 	shrinkComms(document);
 	hiddenImg(document,true);
 	getArtists();
