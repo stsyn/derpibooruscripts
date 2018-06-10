@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.34
+// @version      0.5.35
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1504,7 +1504,7 @@ color: #0a0;
 
 	function UA(e) {
 		let nameEncode = function(name) {
-			return encodeURI(name.replace(/\+/g,'-plus-').replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/\//g,'-fwslash-').replace(/\\/g,'-bwslash-').replace(/ /g,'+'));
+			return encodeURI(name.replace(/\-/g,'-dash-').replace(/\+/g,'-plus-').replace(/\:/g,'-colon-').replace(/\./g,'-dot-').replace(/\//g,'-fwslash-').replace(/\\/g,'-bwslash-').replace(/ /g,'+'));
 		};
 
 		let createUser = function(name, aliases, id) {
