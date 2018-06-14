@@ -25,7 +25,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.3.13
+// @version      0.3.14
 // @description  Allows Next/Prev/Random navigation with not id sorting
 // @author       stsyn
 // @grant        none
@@ -122,7 +122,7 @@
 	}
 
 	function compileQueryComponent(l) {
-		return encodeURIComponent(l.replace(new RegExp(' ','g'),'+')).replace(new RegExp('%2B','g'),'+');
+		return encodeURIComponent(l.replace(new RegExp(' ','g'),'+').replace(new RegExp('%20','g'),'+')).replace(new RegExp('%2B','g'),'+');
 	}
 
 	function register() {
@@ -595,13 +595,18 @@
 			let args = ['q','sf','sd'];
 			for (let i=0; i<2; i++) {
 				let e = document.querySelector(es[i]);
-				let arg= args[i];
-				let t = compileQueryComponent(e.value);
-				if (myURL.params[arg] == "" || myURL.params[arg] == undefined) {
-					if (location.search == "" && i==0) s += '?'+arg+'='+e.value;
-					else s += '&'+arg+'='+e.value;
+				let val = e.value;
+				let arg = args[i];
+				if (i == 0) {
+					if (window._YDB_public.funcs != undefined && window._YDB_public.funcs.tagAliases != undefined)
+						val = window._YDB_public.funcs.tagAliases(e.value,{});
 				}
-				else s = s.replace(arg+'='+myURL.params[arg], arg+'='+t);
+				let t = compileQueryComponent(val);
+				if (myURL.params[arg] == "" || myURL.params[arg] == undefined) {
+					if (location.search == "" && i==0) s += '?'+arg+'='+val;
+					else s += '&'+arg+'='+val;
+				}
+				else s = s.replace(arg+'='+myURL.params[arg], arg+'='+val);
 			}
 			document.getElementById('_ydb_s_qpusher').search = s;
 /*
