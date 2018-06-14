@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.35
+// @version      0.5.36
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1843,6 +1843,7 @@ color: #0a0;
 					t = t.substring(21,t.length-2).trim();
 					let aliases = [t];
 					if (userbase.users[t] != undefined) {
+						let user = userbase.users[t];
 						let ts = getTimestamp(user, false, true);
 						if (userbase.users[t].id == ts) {
 							aliases = userbase.users[t].aliases;
