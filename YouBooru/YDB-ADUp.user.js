@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.2.2
+// @version      0.2.3
 // @author       stsyn
 
 // @include      *://trixiebooru.org/*
@@ -370,6 +370,7 @@
 	}
 
 	function tagCheck() {
+		let container = document.getElementById('ydb_dnp_container');
 		let render = function (d) {
 			let cc = InfernoAddElem('div',{className:'alternating-color block__content'},[]);
 			if (d.dnp_type == undefined && d.imply_notify == undefined) return undefined;
@@ -496,16 +497,18 @@
 					InfernoAddElem('span',{},actions)
 				]));
 			}
+
 			return cc;
 		};
 		let checker = function (target, method) {
+			let anythingToDraw = false;
 			for (let x in checkedTags) {
 				checkedTags[x].shouldDraw = false;
 				checkedTags[x].present = false;
 			}
             for (let i=0; i<document.querySelectorAll(target).length; i++) {
                 let x = document.querySelectorAll(target)[i];
-				let gotten = forceRedraw;
+				let gotten = false;
                 for (let i=0; i<x.getElementsByClassName('tag').length; i++) {
                     let y = x.getElementsByClassName('tag')[i];
                     let z;
@@ -546,14 +549,16 @@
 								for (let j=0; j<dnp.length; j++) {
 									let d = dnp[j];
 									d.name = name;
+
 									for (let x in d) checkedTags[name][x] = d[x];
-									container.appendChild(render(d));
+									//container.appendChild(render(d));
+									anythingToDraw = true;
 									gotten = true;
 									checkedTags[name].shouldDraw = true;
 									checkedTags[name].name = name;
 								}
 							}
-                            else if (data.tag.images == 0) {
+                            else if (data.tag.images <= 0) {
                                 checkedTags[name].dnp_type = 'Tag has no images';
 								checkedTags[name].name = name;
                             }
@@ -583,7 +588,9 @@
 											checkedTags[name].shouldDraw = true;
 											checkedTags[name].mutedImplication = false;
 											let yx = render(checkedTags[name]);
-											if (yx != undefined) container.appendChild(yx);
+											if (yx != undefined)
+												/*container.appendChild(yx);*/
+												anythingToDraw = true;
 										}
 										else checkedTags[name].mutedImplication = true;
 									}
@@ -598,7 +605,7 @@
 						if (checkedTags[name] != undefined) {
 							checkedTags[name].present = true;
 						}
-						if (!checkedTags[name].ok || (!checkedTags[name].mutedImplication && checkedTags[name].present)) {
+						if (!checkedTags[name].ok || (!checkedTags[name].mutedImplication && checkedTags[name].present && checkedTags[name].imply_notify)) {
 							checkedTags[name].shouldDraw = true;
 							if (!checkedTags[name].drawn) gotten = true;
 						}
@@ -612,10 +619,12 @@
 					}
 				}
 
-				if (gotten) {
+				if (gotten || anythingToDraw || forceRedraw) {
+					console.log(gotten, anythingToDraw);
+					gotten = false;
 					forceRedraw = false;
+					anythingToDraw = false;
 					for (let x in checkedTags) checkedTags[x].drawn = false;
-					let container = document.getElementById('ydb_dnp_container');
 					container.innerHTML = '';
 					let drawn = false;
 					for (let i=0; i<x.getElementsByClassName('tag').length; i++) {
@@ -625,10 +634,10 @@
 
                         let name = z;
                         if (checkedTags[name] == undefined) continue;
-                        else if (!checkedTags[name].ok || !checkedTags[name].mutedImplication) {
+                        if (!checkedTags[name].ok || (!checkedTags[name].mutedImplication && checkedTags[name].present && checkedTags[name].imply_notify)) {
 							let yx = render(checkedTags[name]);
                             if (yx != undefined) {
-                            	checkedTags[name].drawn = true;
+                        		checkedTags[name].drawn = true;
 								container.appendChild(yx);
 								drawn = true;
 							}
@@ -692,6 +701,32 @@
 		if (url.params.origin != undefined) {
 			fetchExtData(url);
 		}
+		let actions = [];
+		if (!settings.implicationDisallow) {
+			let actionsNames = [];
+			if (!settings.implicationDefaultInsert) {
+				actionsNames.push('Add all');
+				if (!settings.implicationDefaultRecursive)
+					actionsNames.push('with recursive');
+				else
+					actionsNames.push('without recursive');
+			}
+			else {
+				actionsNames.push('Undo all implications');
+				if (!settings.implicationDefaultRecursive)
+					actionsNames.push('Allow recursive');
+				else
+					actionsNames.push('Disallow recursive');
+			}
+			actionsNames.push('Hide');
+			for (let i=0; i<3; i++) {
+				actions.push(InfernoAddElem('a',{innerHTML:actionsNames[i],style:'margin-right:0.85em;cursor:pointer',events:[{t:'click',f:function() {
+					document.querySelectorAll('#ydb_dnp_container .block__content a:nth-child('+(i+1)+')').forEach(function(v) {v.click();});
+				}}]},[]));
+			}
+		}
+
+
 		document.getElementById('js-image-upload-preview').style.display = 'inline-block';
 		document.getElementById('js-image-upload-preview').style.width = '320px';
 		document.getElementById('js-image-upload-preview').style.marginBottom = '0';
@@ -744,7 +779,8 @@
 		fillData1(url);
 		document.getElementById('new_image').insertBefore(InfernoAddElem('div',{className:'block'},[
 			InfernoAddElem('div',{className:'block__header'},[
-				InfernoAddElem('span',{className:'block__header__title',innerHTML:'DNP entries and warnings'},[])
+				InfernoAddElem('span',{className:'block__header__title',innerHTML:'DNP entries and warnings. '},[]),
+				InfernoAddElem('span',{className:'block__header__title'},actions)
 			]),
 			InfernoAddElem('div',{id:'ydb_dnp_container'},[
 				InfernoAddElem('div',{className:'block__content'},[
