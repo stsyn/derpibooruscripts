@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.2.3
+// @version      0.2.4
 // @author       stsyn
 
 // @include      *://trixiebooru.org/*
@@ -36,6 +36,7 @@
 	let onceLoaded = false;
 	let checkedTags = {};
 	let forceRedraw = false;
+	let currentImage = '';
 	let settings = {
 		implicationDisallow:false,
 		implicationDefaultInsert:true,
@@ -309,14 +310,12 @@
 	function removeRecursive(tag, parent) {
 		let xc = document.querySelector('.input.input--wide.tagsinput.js-image-input.js-taginput.js-taginput-plain-tag_input');
 		let x = xc.value.split(', ');
-		console.log(x);
 		for (let i=0; i<x.length; i++) {
 			if (x[i] == tag.name) {
 				x.splice(i,1);
 				break;
 			}
 		}
-		console.log(x);
 		xc.value = x.join(', ');
 		if (tag.impliedBy == undefined) tag.impliedBy = [parent.name];
 		else {
@@ -335,7 +334,6 @@
 	function removeTag(tag, parent, nr) {
 		if (tag == undefined) return;
 
-		console.log(tag, tag.name);
 		if (tag.implies != undefined) {
 			for (let j=0; j<tag.implies.length; j++) {
 				if (tag.container.querySelector('a[data-tag-name="'+tag.implies[j]+'"]') == undefined) tag.implies.splice(j,1);
@@ -363,7 +361,6 @@
 				}
 			}
 		}
-		console.log(x, tag.name, parent);
 		if (x == undefined || x.length==0 || parent == undefined) {
 			if (tag.container.querySelector('a[data-tag-name="'+tag.name+'"]') != undefined) tag.container.querySelector('a[data-tag-name="'+tag.name+'"]').click();
 		}
@@ -525,10 +522,11 @@
 							}
                             if (response.redirected) {
 								//got aliase
-                                let newTag = response.url.split('/').pop();
+                                let newTag = response.url.split('/').pop().replace(/.json$/, '');
                                 newTag = newTag.replace(/\-dash\-/g,'-').replace(/\-dot\-/g,'.').replace(/\+/g,' ').replace(/\-colon\-/g,':');
                                 y.getElementsByTagName('a')[0].dataset.tagName = newTag;
                                 y.firstChild.textContent = newTag+' ';
+								console.log(newTag);
 								if (checkedTags[name] != undefined) delete checkedTags[name].needInfo;
                                 return errorMessage;
                             }
@@ -620,7 +618,6 @@
 				}
 
 				if (gotten || anythingToDraw || forceRedraw) {
-					console.log(gotten, anythingToDraw);
 					gotten = false;
 					forceRedraw = false;
 					anythingToDraw = false;
@@ -679,6 +676,18 @@
         setTimeout(tagCheck,333);
 	}
 
+	function diffCheck(url) {
+		setTimeout(diffCheck, 100, url);
+		if (url.params.originView == undefined) document.getElementById('_ydb_diff_container').style.display = 'none';
+		else document.getElementById('_ydb_diff_container').style.display = 'block';
+		if (document.querySelector('#js-image-upload-previews .scraper-preview--label .scraper-preview--input:checked') == null) return;
+		let c = document.querySelector('#js-image-upload-previews .scraper-preview--label .scraper-preview--input:checked').value;
+		if (currentImage != c) {
+			currentImage = c;
+			document.getElementById('js-image-upload-preview').src =  document.querySelector('#js-image-upload-previews .scraper-preview--label .scraper-preview--input:checked+.scraper-preview--image-wrapper img').src;
+		}
+	}
+
 	if ((parseInt(location.pathname.slice(1))>=0 && location.pathname.split('/')[2] == undefined) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && location.pathname.split('/')[3] == undefined)) {
 		let url;
 		url = '?';
@@ -726,10 +735,7 @@
 			}
 		}
 
-
-		document.getElementById('js-image-upload-preview').style.display = 'inline-block';
-		document.getElementById('js-image-upload-preview').style.width = '320px';
-		document.getElementById('js-image-upload-preview').style.marginBottom = '0';
+		let preview = InfernoAddElem('img',{id:'js-image-upload-preview',style:{display:'inline-block',width:'320px'}},[]);
 		document.querySelector('.image-other').insertBefore(InfernoAddElem('div',{},[
 			InfernoAddElem('div',{className:'block'},[
 				InfernoAddElem('div',{className:'block__header'},[
@@ -751,9 +757,11 @@
 				InfernoAddElem('span',{innerHTML:' => '},[]),
 				InfernoAddElem('strong',{id:'_ydb_new',innerHTML:'??? x ???'},[])
 			]),
-			InfernoAddElem('img',{id:'_ydb_preview',style:'display:inline-block;width:320px;margin-right:10px'},[]),
-			InfernoAddElem('canvas',{id:'_ydb_diff',style:'display:inline-block;width:320px;margin-right:10px'},[]),
-			document.getElementById('js-image-upload-preview')
+			InfernoAddElem('div',{id:'_ydb_diff_container'},[
+				InfernoAddElem('img',{id:'_ydb_preview',style:'display:inline-block;width:320px;margin-right:10px'},[]),
+				InfernoAddElem('canvas',{id:'_ydb_diff',style:'display:inline-block;width:320px;margin-right:10px'},[]),
+				preview
+			])
 		]),document.querySelector('.image-other').childNodes[0]);
 		document.getElementById('_ydb_preview').onload = function() {
 			document.getElementById('_ydb_diff').style.height = document.getElementById('_ydb_preview').clientHeight+'px';
@@ -768,7 +776,7 @@
 			if (document.querySelector('#_ydb_similarGallery strong') != undefined) document.querySelector('#_ydb_similarGallery strong').innerHTML = 'Not executed';
 			else document.getElementById('_ydb_similarGallery').appendChild(InfernoAddElem('strong',{innerHTML:'<br>Not executed'},[]));
 		});
-		document.getElementById('js-image-upload-preview').onload = function() {
+		preview.onload = function() {
 			if (document.getElementById('image_image').files.length > 0) {
 				overRideSize = false;
 				if (document.querySelector('#_ydb_similarGallery strong') != undefined) document.querySelector('#_ydb_similarGallery strong').innerHTML = 'Not executed';
@@ -790,5 +798,6 @@
 		]),
 		document.querySelector('h4+.field'));
 		tagCheck();
+		setTimeout(diffCheck, 100, url);
 	}
 })();
