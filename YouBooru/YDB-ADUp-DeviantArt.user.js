@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.0.7
+// @version      0.0.8
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
@@ -17,8 +17,8 @@
 
 	function DA(p, link) {
 		req = true;
-		if (l.indexOf('/art/') !== 0) {
-			console.log('[DAD]: Not art');
+		if (l.indexOf('/art/') == -1) {
+			console.log('Not art');
 			return;
 		}
 
