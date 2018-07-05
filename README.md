@@ -222,3 +222,11 @@ onChanges:{
   }
 }
 ```
+
+#### Other
+
+- **window._YDB_public.funcs.backgroundBackup** — **function (callback)** if user have backupping enabled, saves data cloudly on Derpibooru. Asynchronous, use **callback**;
+- **window._YDB_public.funcs.callWindow** — **function (element)** renders simple window with HTML-element **element**;
+- **window._YDB_public.funcs.getNonce** — **function ()** returns unsafe unique value, use to prevent possible not critical unwanted actions which your script may do after parsing URL or other things. Randomizes each ~6 hours, not protected from overwriting;
+- **window._YDB_public.handled** — **int** increment if your **onChange** handler is asynchronous to prevent page aborting function. Decrement upon completion;
+- **window._YDB_public.funcs.log** — **function (id, string, level)** makes a record in global debug log. **id** should represent script, **string** is a main record, **level** represents importance (0 — error, 1 — normal, 2 — verbose).
