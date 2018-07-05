@@ -21,7 +21,7 @@ Here are the userscripts related to the https://derpibooru.org. Most of them are
 Main settings provider which allows to construct UI-based settings for userscript on Derpibooru settings page. Can be used as separate userscript, since 0.9.12 can be used as library, through.
 
 #### Implementing
-Despite the fact that the script was developed for the internal needs of the YDB (this is evident in some elements of the design), you can use it for your own purposes. Due to the nature of its development, it's always working realtime as normal userscript (not as function-library), but always no more than one instance of the script is active (which was launched first). See YDB tab in settings to make sure, which instantion works right now.
+Despite the fact that the script was developed for the internal needs of the YDB (this is evident in some elements of the design), you can use it for your own purposes. Due to the nature of its development, it's always working realtime as normal userscript (not as typical function-library), but always no more than one instance of the script is active (which was launched first). See YDB tab in settings to make sure, which instantion works right now.
 
 If you want to guarantee it's startup in your work without having standalone installation of YDB:S, you need to require special library-based build of YDB:S:
 
@@ -29,10 +29,10 @@ If you want to guarantee it's startup in your work without having standalone ins
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0.lib.js
 ```
 
-You **must not** do that if your script has run-at property set as **document-start**.
+You **must not** do that if your script has run-at property set as **document-start**. You should provide to end users a link for a standalone version or just believe, that they have any other script which integrated YDB:S as a library.
 
 #### Usage
-Threre is sample code of implementing settings by using YDB:S:
+Threre is a sample code of implementing settings by using YDB:S:
 ``` javascript
 if (window._YDB_public == undefined) window._YDB_public = {};
 if (window._YDB_public.settings == undefined) window._YDB_public.settings = {};
@@ -164,23 +164,23 @@ The main thing is **s** array, which contains every setting you want to visually
   - **min** — **int/float** throws warning if value is smaller than specified;
   - **max** — **int/float** throws warning if value is bigger than specified.
 - **i** — **function** executes right after element injected with parameters **setting-module** and **HTML-elem**;
-- **values** — **[for *select*]** **array** — possible values for setting. Each element of array is object with these fields:
-  - **name** — **string** displayable name of value;
-  - **value** — **string** value itself;
+- **values** — **[Required]** **[for *select*]** **array** — possible values for setting. Each element of array is object with these fields:
+  - **name** — **[Required]** **string** displayable name of value;
+  - **value** — **[Required]** **string** value itself;
 - **addText** — **[Required]** **[for *array*]** **string** text on button to add value in array setting;
 - **customOrder** — **[Required]** **[for *array*]** **boolean** allows to reorder values in array; 
 - **s** — **[Required]** **[for *array*]** **array** of **arrays**. Each array represents one line and has the same structure as global **s** object;
 - **template** — **[for *array*]** **object** default parameters values for new elements of array setting;
-- **href** — **[for *buttonLink*]** **string** hyperlink.
+- **href** — **[Required]** **[for *buttonLink*]** **string** hyperlink.
 
 Optional object **onChanges** consist of function map, allows to attach parsing function to setting properties by **parameter** values. If you want to implement setting to **inner array properties**, you should create an object and use inner properties parameter. If you want to implement setting to **array itself**, you should create an object and set function as value to field **_** (underline). Sample:
 
 ``` javascript
 onChanges:{
-  property:evalueProperty;              //executes when option changed
+  property:evalueProperty;              // executes when option changed
   arrayProperty:{
-    innerProperty:evalueInnerProperty,  //executes when option changed
-    _:evalueArrayProperty               //executes when any option of array changed
+    innerProperty:evalueInnerProperty,  // executes when option changed
+    _:evalueArrayProperty               // executes when any option of array changed
   }
 }
 ```
@@ -188,10 +188,37 @@ onChanges:{
 Functions executes when user clicks "Save settings" right before being written.
 
 #### Usage for *// @run-at document-start* scripts
-Since there is different **window** object in that case, you should use other method to implement settings:
+Since there is a different **window** object in that case, you should use other method to implement settings:
 
 ``` javascript
 document.addEventListener('DOMContentLoaded', function() {addElem('span', {style:'display:none', type:'text', dataset:{value:JSON.stringify(DATA_OBJECT),origin:'script'}, className:'_YDB_reserved_register'}, document.body);});
 ```
 
-**DATA_OBJECT** is the same object as in common method with only one significant difference: **no any functions allowed**. If you want to do something with inserted HTML-elements, you should select them on your side.
+**DATA_OBJECT** is the same object as in common method with only one significant difference: **no any functions allowed**. If you want to do something with inserted HTML-elements, you should select them and add event listeners on your side.
+
+#### Arguments objects
+
+Functions, which can be placed as field **i** and **action** have 2 arguments: **module** and **element**.
+
+Functions, which can be placed in field **onChanges** have 3 arguments: **moduleData**, **element** and **callback**.
+
+- **callback** — call this function if you changed value in your handler and want to save changed one. Have 3 arguments: **moduleData**, **element** and **newValue**. First 2 is the same, 3rd one — new value;
+- **element** — it's common HTML-element which was generated to represent current setting. *For array type in **onChanges** is an array of **moduleData**s for each child!*
+- **module** — mostly consists of created earlier public objects fields:
+- - **changed** — for internal usage, you may see "false" here even if something actually was changed. You may change it to **true**, thought, it will cause backups to be updated;
+- - **container** — same as in public object;
+- - **name** — same as in public object;
+- - **onChanges** — same as in public object;
+- - **options** — same as **s** in public object;
+- - **saved** — saved content of this branch (see below).
+- **moduleData** — same as **module.saved**:
+
+``` javascript
+onChanges:{
+  property:evalueProperty;              // moduleData is {property:..., arrayProperty:{innerProperty:...}}
+  arrayProperty:{
+    innerProperty:evalueInnerProperty,  // moduleData is {innerProperty:...}
+    _:evalueArrayProperty               // moduleData is {property:..., arrayProperty:{innerProperty:...}}
+  }
+}
+```
