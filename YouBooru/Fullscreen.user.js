@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.6.5
+// @version      0.7.0
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -180,6 +180,7 @@ bottom:3px
 width:10px;
 right:3px
 }
+
 `;
     styles.keepVanila = `
 #content>.block:first-child>*>div {
@@ -401,13 +402,13 @@ margin:auto;
 `;
 
     styles.colorAccentTemplate = `
-.block__header--light a, .block__header--js-tabbed a, a.block__header--single-item, #container span:not(.tag)>a, a.profile-block, table.table td>a,
+.block__header--light a, .block__header--js-tabbed a, a.block__header--single-item, #container span:not(.tag)>a, a.profile-block, table.table td>a, #imagespns a,
 .block__header a:not(.interaction--fave):not(.interaction--upvote):not(.interaction--downvote):not(.interaction--comments):not(.interaction--hide), .image-description a,
 .block__header--sub a, .block__header--single-item a, .block__content:not(._fs_popup)>*:not(.media-box) a:not(.tag__name), .block__content>a, .profile-top__name-and-links a,
 .source_url a, #footer_content a, .button--link, .communication__body a, .comment_backlinks a, .communication__options a, a.interaction-user-list-item, .pagination a,
 a.block__header--single-item:hover, .block__header:not(.center--layout) a:hover, .block__header--sub a:hover, .block__header--single-item a:hover, .autocomplete__item--selected,
-.block--fixed a, .rule a, a.togglable-faq-item, .field a:not([data-tag-name]), a.media-box__header--link, a.media-box__header--link:hover, #content h1 a, #content h3 a, .flash a,
-#content p strong a, #content strong a, #content li a, .quick-tag-table__tab a, .flash--site-notice.flash a, #content code a, a.alternating-color {
+.block--fixed a, .rule a, a.togglable-faq-item, .field a:not([data-tag-name]), a.media-box__header--link, a.media-box__header--link:hover, #content h1 a, #content h2 a, #content h3 a,
+#content h4 a, .flash a, #content p strong a, #content strong a, #content li a, .quick-tag-table__tab a, .flash--site-notice.flash a, #content code a, a.alternating-color {
 color:_fs_color;
 }
 
@@ -434,7 +435,11 @@ background-color:_fs_ccomponent;
 border-color:_fs_background;
 }
 
-#container, .image-description, #imagespns, .block__content, .block__tab, .block__header--js-tabbed a.selected, .block__header--js-tabbed a.selected:hover, .toggle-box+label,
+#container {
+background:none
+}
+
+body, .image-description, #imagespns, .block__content, .block__tab, .block__header--js-tabbed a.selected, .block__header--js-tabbed a.selected:hover, .toggle-box+label,
 a.header__search__button:hover, button.header__search__button:hover, .input, .communication__toolbar__button, .tag__dropdown__link:hover, .block--fixed:not(.block--success):not(.block--warning), .filter,
 .alternating-color:nth-child(odd), .table>thead>tr, .table>tbody>tr:nth-child(odd) {
 background:_fs_component;
@@ -497,6 +502,21 @@ border-color:_fs_2component;
 .block__header--js-tabbed  {
 background:none
 }
+
+
+#_fs_pony_mark {
+width:100%;
+height:100%;
+position:fixed;
+background-position:bottom right;
+background-repeat:no-repeat;
+background-size:contain;
+top:0;
+left:0;
+z-index:-1;
+pointer-events:none;
+opacity:0.25;
+}
 `;
 
     styles.adc_pixel = `
@@ -506,7 +526,7 @@ image-rendering: pixelated;
 `;
 
     styles.noneTag = `
-body[data-theme*="dark"] .tag[data-tag-category="none"] {
+body[data-theme*="dark"] .tag[data-tag-category="none"], .tag[data-tag-category="none"].explicit_dark {
 background: #333;
 border-color: #555;
 color: #888;
@@ -527,6 +547,78 @@ color: #777;
     let colors = {};
     let started = false;
 
+	let ponymarks = {
+		bgs:{
+			aj:'https://camo.derpicdn.net/9ec1a92c1d98be04d750f719c5285e14eb0af3e7?url=https%3A%2F%2Fi.imgur.com%2FiOy09ti.png',
+			dh:'https://camo.derpicdn.net/497efe3f86ad217bd0999dd1c904e4cb9c9f897c?url=https%3A%2F%2Fi.imgur.com%2FOdsgUat.png',
+			fs:'https://camo.derpicdn.net/45c6d0533de22ccbbbccb77c44b9f0c6229c67ab?url=https%3A%2F%2Fi.imgur.com%2Fc3Bo4i8.png',
+			luna:'https://camo.derpicdn.net/4d4c82f4c20c3dae40587b1836decec85ae506a9?url=https%3A%2F%2Fi.imgur.com%2FpmcGux8.png',
+			lyra:'https://camo.derpicdn.net/a80100c0596a68ff8881c80f3b8a168f98b58825?url=https%3A%2F%2Fi.imgur.com%2FMijgqfu.png',
+			pcd:'https://camo.derpicdn.net/ef8cf240f883a12285720569f2f1a02c75104942?url=https%3A%2F%2Fi.imgur.com%2F5yreNg4.png',
+			pp:'https://camo.derpicdn.net/ea8d8c75578126a1102161eb29fed0c95a2232fd?url=https%3A%2F%2Fi.imgur.com%2FNDUyAIQ.png',
+			rd:'https://camo.derpicdn.net/f9851bd532e626c21f28c740153bf57724596a1d?url=https%3A%2F%2Fi.imgur.com%2FC70ULye.png',
+			ry:'https://camo.derpicdn.net/681bbc4eb5c3d1cfb52ed0314394e13759ca1201?url=https%3A%2F%2Fi.imgur.com%2FFE1oL6K.png',
+			sg:'https://camo.derpicdn.net/02c657a4380895b264b92bddfcde31c71cf69732?url=https%3A%2F%2Fi.imgur.com%2F7P3D8xl.png',
+			tia:'https://camo.derpicdn.net/59f353243662b65b8b5db8553d2523a86fbd8ecd?url=https%3A%2F%2Fi.imgur.com%2F6VxwK0n.png',
+			ts:'https://camo.derpicdn.net/361a9e94f8f37e4d8175a1ceb361134e8eb00b73?url=https%3A%2F%2Fi.imgur.com%2FURcKMiB.png',
+			tx:'https://camo.derpicdn.net/8c9b2c6232506c634e588162402fb5020e783c39?url=https%3A%2F%2Fi.imgur.com%2FRQHaAEG.png'
+		},
+		defaults:{
+			'content-fanmade': 'pp',
+			oc: 'ts',
+			error: 'tia',
+			spoiler: 'aj',
+			'content-official': 'fs',
+			'': 'lyra',
+			character: 'rd',
+			rating: 'luna',
+			origin: 'ry',
+			none: 'dh'
+		},
+		fix_brightness: {
+			light:{},
+			dark:{
+				spoiler: 130,
+				'content-official':150
+			},
+			red:{}
+		},
+		filter:{
+			dark:{
+				'content-fanmade': 320,
+				oc: 300,
+				error: 0,
+				spoiler: 60,
+				'content-official': 70,
+				'': 120,
+				character:180,
+				rating:210,
+				origin:265
+			},
+			light:{
+				'content-fanmade': 170,
+				oc: 150,
+				error: 180,
+				spoiler: 190,
+				'content-official':255,
+				'': 270,
+				character:340,
+				rating:60,
+				origin:70
+			},
+			red:{
+				'content-fanmade': 320,
+				oc: 300,
+				error: 0,
+				spoiler: 60,
+				'content-official': 70,
+				'': 120,
+				character:180,
+				rating:210,
+				origin:280
+			}
+		}
+	};
 
     function write() {
         localStorage._ydb_fs_state = JSON.stringify(state);
@@ -564,6 +656,7 @@ color: #777;
     if (settings.colorAccent == undefined) settings.colorAccent = false;
     if (settings.style == undefined) settings.style = 'rating';
     if (settings.button == undefined) settings.button = 'Download (short filename)';
+    if (settings.pony_mark == undefined) settings.pony_mark = 'none';
     settings.scrollSpeed = parseInt(settings.scrollSpeed);
     settings.scrollMultiply = parseInt(settings.scrollMultiply);
     settings.staticTime = parseInt(settings.staticTime);
@@ -599,6 +692,25 @@ color: #777;
                     {name:'Grey', value:'none'}
                 ], attrI:{id:'_fs_color_setting'}},
                 {type:'checkbox', name:'Match site palette', parameter:'colorAccent'},
+				{type:'select', name:'Cutiemark BG', parameter:'pony_mark', values:[
+                    {name:'disabled', value:'none'},
+                    {name:'theme default', value:'auto'},
+                    {name:'random', value:'random'},
+                    {name:'Applejack', value:'aj'},
+                    {name:'Cadence', value:'pcd'},
+                    {name:'Celestia', value:'tia'},
+                    {name:'Derpy', value:'dh'},
+                    {name:'Fluttershy', value:'fs'},
+                    {name:'Luna', value:'luna'},
+                    {name:'Lyra', value:'lyra'},
+                    {name:'Pinkie Pie', value:'pp'},
+                    {name:'Rainbow Dash', value:'rd'},
+                    {name:'Rarity', value:'ry'},
+                    {name:'Starlight', value:'sg'},
+                    {name:'Trixie', value:'tx'},
+                    {name:'Twilight', value:'ts'}
+                ], attrI:{id:'_fs_pony_mark_setting'}},
+				{type:'breakline'},
                 {type:'select', name:'Top right button', parameter:'button', values:[
                     {name:'none', value:''},
                     {name:'View (with tags)', value:'View (tags in filename)'},
@@ -621,16 +733,6 @@ color: #777;
         if (document.getElementById(id) == undefined) return 1;
         document.head.removeChild(document.getElementById(id));
         return 0;
-    }
-
-    function preenable() {
-        append('general');
-        if (settings.extended) {
-            append('base');
-            append('ex');
-        }
-        if (!settings.new) append('keepVanila');
-        if (settings.staticEnabled) append('hider');
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -965,6 +1067,7 @@ color: #777;
     }
 
     function applyColor() {
+		if (document.getElementById('container') != undefined) cm_bg();
         let r = function(x) {
             styles.colorAccent = styles.colorAccent.replace(new RegExp(x,'g'), 'rgb('+colors[x][0]+','+colors[x][1]+','+colors[x][2]+')');
         };
@@ -1002,6 +1105,7 @@ color: #777;
     }
 
     function enableColor(nrw) {
+
         colors.isDark = isDarkF();
 
         colors._fs_color = getComputedStyle(objects.colorAccent).color;
@@ -1024,7 +1128,62 @@ color: #777;
 
     }
 
+	function cm_bg() {
+		if (settings.pony_mark != 'off') {
+			let theme = 'light'
+			let mark = settings.pony_mark;
+			if (document.getElementById('_fs_pony_mark_setting') != undefined) mark = document.getElementById('_fs_pony_mark_setting').value;
+			try {
+				let c2 = document.head.querySelector('link[rel=stylesheet][media=all]').href;
+				if (c2.split('/')[5].startsWith('dark')) theme = 'dark';
+				else if (c2.split('/')[5].startsWith('red')) theme = 'red';
+			}
+			catch(e) {
+				if (Boolean(document.querySelector('body[data-theme*="dark"]'))) theme = 'dark';
+				else if (Boolean(document.querySelector('body[data-theme="red"]'))) theme = 'red';
+			}
+			let ccolor = settings.style;
+			if (document.getElementById('_fs_color_setting') != undefined) ccolor = document.getElementById('_fs_color_setting').value;
+
+			if (mark == 'auto') mark = ponymarks.defaults[ccolor];
+			if (mark == 'random') {
+				let x = parseInt(Math.random()*13);
+				let i;
+				for (i in ponymarks.bgs) {
+					if (x == 0) break;
+					x--;
+				}
+				mark = i;
+			}
+
+			document.getElementById('container').insertBefore(InfernoAddElem('div',{id:'_fs_pony_mark', style:{
+				backgroundImage:'url('+ponymarks.bgs[mark]+')',
+				filter:(
+					    ccolor=="none"?'grayscale(1) '+(theme=='light'?'brightness(300%)':'brightness(150%)'):
+						'hue-rotate('+ponymarks.filter[theme][ccolor]+'deg)'+
+						(theme=='light'?' invert(1) saturate(250%) brightness(95%)':'')+
+						(ponymarks.fix_brightness[theme][ccolor]==undefined?'':' brightness('+ponymarks.fix_brightness[theme][ccolor]+'%)')
+			    )
+			}}), document.getElementById('container').firstChild);
+		}
+		else if (document.getElementById('_fs_pony_mark_setting') != undefined) {
+			document.getElementById('container').removeChild(document.getElementById('_fs_pony_mark_setting'));
+		}
+	}
+
+    function preenable() {
+		if (document.title.indexOf('This image has been deleted.') == 0) return;
+        append('general');
+        if (settings.extended) {
+            append('base');
+            append('ex');
+        }
+        if (!settings.new) append('keepVanila');
+        if (settings.staticEnabled) append('hider');
+    }
+
     function enable(notInital) {
+		if (document.title.indexOf('This image has been deleted.') == 0) return;
         if (notInital) preenable();
         if (!started) init();
 
@@ -1127,6 +1286,8 @@ color: #777;
         else {
             popUps.down.classList.add('active');
         }
+
+		if (location.hash.indexOf('#comment') == 0) showComms();
     }
 
     function disable() {
@@ -1179,15 +1340,22 @@ color: #777;
     register();
     append('noneTag');
     document.addEventListener('DOMContentLoaded', function() {
-
+		cm_bg();
         if (document.getElementById('user_theme') != undefined) document.getElementById('user_theme').addEventListener('change',function() {
             remove('colorAccent');
+			setTimeout(function() {
+				if (isDarkF()) objects.colorAccent.classList.add('explicit_dark');
+				else objects.colorAccent.classList.remove('explicit_dark');
+			}, 200);
             setTimeout(function() {enableColor(true);},777);
         });
         setTimeout(function() {if (document.getElementById('_fs_color_setting') != undefined) document.getElementById('_fs_color_setting').addEventListener('change',function(e) {
             remove('colorAccent');
             objects.colorAccent.dataset.tagCategory = e.target.value;
             enableColor(true);
+        });},1000);
+		setTimeout(function() {if (document.getElementById('_fs_pony_mark_setting') != undefined) document.getElementById('_fs_pony_mark_setting').addEventListener('change',function(e) {
+            cm_bg();
         });},1000);
     });
 
@@ -1202,7 +1370,6 @@ color: #777;
             else document.addEventListener('DOMContentLoaded', function() {
                 enable();
                 preEnableColor();
-                if (location.hash.indexOf('#comment') == 0) showComms();
             });
         }
         else {
