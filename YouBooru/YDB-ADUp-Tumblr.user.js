@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Tumblr YDB:ADUp module
 // @namespace    http://tampermonkey.net/
-// @version      0.0.8
+// @version      0.0.9
 // @author       stsyn
 // @match        *://*/*
 // @exclude      *://trixiebooru.org/*
@@ -80,6 +80,7 @@
 		document.querySelectorAll('div.photoset[id*="photoset_"]:not(._ydb_adup_parsed)').forEach(function(x) {
 			for (let j=0; j<x.querySelectorAll('a.photoset_photo').length;j++) {
 				let y = x.querySelectorAll('a.photoset_photo')[j];
+                y.classList.add('_ydb_adup_parsed');
 				createLink(y, x, y.pathname);
 			}
 			x.classList.add('_ydb_adup_parsed');
@@ -87,6 +88,7 @@
 
 		document.querySelectorAll('div.post.is_photo div.post_media a.post_media_photo_anchor:not(._ydb_adup_parsed), a[href*="media.tumblr.com/"][href*="/tumblr_"]:not(._ydb_adup_parsed), a[href*="'+location.hostname+'/image/"]:not(._ydb_adup_parsed)').forEach(function(y) {
 			let img = y.querySelector('img');
+            if (y.clientHeight<66 && y.clientWidth<66) return;
 			y.classList.add('_ydb_adup_parsed');
 			if (img == undefined) {
 				y = y.parentNode;
@@ -99,8 +101,10 @@
 		document.querySelectorAll('*:not(._ydb_adup_parsed)>img[src*="/tumblr_inline_"]:not(._ydb_adup_parsed), a[href*="'+location.hostname+'"]:not(._ydb_adup_parsed) img[src*="media.tumblr.com/"]:not(._ydb_adup_parsed)').forEach(function(img) {
 			let y = img.parentNode;
 			if (y.getElementsByTagName('img').length>1) return;
-			createLink(y, y, parseURL(img.src).path);
+            if (img.clientHeight<66 && img.clientWidth<66) return;
+
 			img.classList.add('_ydb_adup_parsed');
+			createLink(y, y, parseURL(img.src).path);
 		});
 		setTimeout(main, 2000);
 
