@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.2.4
+// @version      0.2.5
 // @author       stsyn
 
 // @include      *://trixiebooru.org/*
@@ -37,6 +37,7 @@
 	let checkedTags = {};
 	let forceRedraw = false;
 	let currentImage = '';
+    let loadLimit = 3;
 	let settings = {
 		implicationDisallow:false,
 		implicationDefaultInsert:true,
@@ -367,6 +368,7 @@
 	}
 
 	function tagCheck() {
+		let checked = 0;
 		let container = document.getElementById('ydb_dnp_container');
 		let render = function (d) {
 			let cc = InfernoAddElem('div',{className:'alternating-color block__content'},[]);
@@ -404,7 +406,7 @@
 					InfernoAddElem('em',{innerHTML:d.reason},[])
 				]));
 			}
-			if (d.imply_notify != undefined) {
+			if (d.imply_notify != undefined && d.implies != undefined) {
 				let actions = [];
 				if (!settings.implicationDefaultInsert) {
 					actions.push(InfernoAddElem('a',{innerHTML:'Add',style:'margin-right:0.85em;cursor:pointer',dataset:{clickFocus:'.js-taginput-input-tag_input'}, events:[{t:'click',f:function() {
@@ -507,6 +509,7 @@
                 let x = document.querySelectorAll(target)[i];
 				let gotten = false;
                 for (let i=0; i<x.getElementsByClassName('tag').length; i++) {
+					if (checked >= loadLimit) break;
                     let y = x.getElementsByClassName('tag')[i];
                     let z;
                     z = y.getElementsByTagName('a')[0].dataset.tagName;
@@ -514,6 +517,7 @@
                     let name = z;
                     if (checkedTags[name] == undefined || checkedTags[name].needInfo != undefined) {
 						//gather tag info
+						checked++;
                         fetch('/tags/'+encodeURIComponent((name).replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/ /g,'+').replace(/\:/g,'-colon-'))+'.json',{method:'GET'})
                         .then(function (response) {
                             const errorMessage = {fail:true};
@@ -526,7 +530,6 @@
                                 newTag = newTag.replace(/\-dash\-/g,'-').replace(/\-dot\-/g,'.').replace(/\+/g,' ').replace(/\-colon\-/g,':');
                                 y.getElementsByTagName('a')[0].dataset.tagName = newTag;
                                 y.firstChild.textContent = newTag+' ';
-								console.log(newTag);
 								if (checkedTags[name] != undefined) delete checkedTags[name].needInfo;
                                 return errorMessage;
                             }
@@ -571,16 +574,23 @@
 								if (implies.length > 0) {
 									implies = implies.split(',');
 									implies = implies.map(function(c) {return c.trim();});
-									/*implies.forEach(function (v,i,a) {
-										if (!(checkedTags[v] == undefined || checkedTags[v].impliedBy != undefined)) {
-											a.splice(i,1);
+
+                                    //remove manually inserted tags
+                                    for (let i=0; i<implies.length; i++) {
+                                        let v = implies[i];
+                                        if (!(checkedTags[v] == undefined || checkedTags[v].impliedBy != undefined) ||
+											(document.querySelector('.tag a[data-tag-name="'+v+'"]') != undefined && document.querySelector('.tag a[data-tag-name="'+v+'"]').href.indexOf('#') > -1)) {
+											implies.splice(i,1);
+                                            i--;
 										}
-									})*/
+                                    }
+
 									if (implies.length > 0) {
 										checkedTags[name].implies = implies;
 
 										let inserted = false;
-										if ((checkedTags[name].impliedBy == undefined || settings.implicationDefaultRecursive) && (settings.implicationDefaultInsert)) insertImpliedTags(x, name);
+										if ((checkedTags[name].impliedBy == undefined || settings.implicationDefaultRecursive) && (settings.implicationDefaultInsert))
+                                            insertImpliedTags(x, name);
 										if ((settings.implicationNotify) && (checkedTags[name].impliedBy == undefined || (settings.implicationDefaultRecursive))) {
 											checkedTags[name].imply_notify = true;
 											checkedTags[name].shouldDraw = true;
@@ -608,7 +618,7 @@
 							if (!checkedTags[name].drawn) gotten = true;
 						}
 					}
-					
+
                 }
 				for (let x in checkedTags) {
 					if (checkedTags[x].drawn != checkedTags[x].shouldDraw) {
@@ -673,7 +683,7 @@
 			}
         };
         checker('.js-taginput-fancy-tag_input');
-        setTimeout(tagCheck,333);
+        setTimeout(tagCheck,444);
 	}
 
 	function diffCheck(url) {
@@ -763,10 +773,10 @@
 				preview
 			])
 		]),document.querySelector('.image-other').childNodes[0]);
-		document.getElementById('_ydb_preview').onload = function() {
+		document.getElementById('_ydb_preview').addEventListener('load', function() {
 			document.getElementById('_ydb_diff').style.height = document.getElementById('_ydb_preview').clientHeight+'px';
 			diff(url);
-		};
+		});
 		document.getElementById('js-scraper-preview').addEventListener('click',function() {
 			if (onceLoaded) {
 				onceLoaded = false;
@@ -776,14 +786,14 @@
 			if (document.querySelector('#_ydb_similarGallery strong') != undefined) document.querySelector('#_ydb_similarGallery strong').innerHTML = 'Not executed';
 			else document.getElementById('_ydb_similarGallery').appendChild(InfernoAddElem('strong',{innerHTML:'<br>Not executed'},[]));
 		});
-		preview.onload = function() {
+		preview.addEventListener('load', function() {
 			if (document.getElementById('image_image').files.length > 0) {
 				overRideSize = false;
 				if (document.querySelector('#_ydb_similarGallery strong') != undefined) document.querySelector('#_ydb_similarGallery strong').innerHTML = 'Not executed';
 				else document.getElementById('_ydb_similarGallery').appendChild(InfernoAddElem('strong',{innerHTML:'<br>Not executed'},[]));
 			}
 			diff(url);
-		};
+		});
 		fillData1(url);
 		document.getElementById('new_image').insertBefore(InfernoAddElem('div',{className:'block'},[
 			InfernoAddElem('div',{className:'block__header'},[
