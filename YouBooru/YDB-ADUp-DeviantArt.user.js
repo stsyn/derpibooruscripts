@@ -1,16 +1,17 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.0.8
+// @version      0.1.0
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp-DeviantArt.user.js
-// @run-at       document-end
+// @grant        unsafeWindow
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
 (function() {
 	'use strict';
+    let mainDomain = 'www.derpibooru.org';
 
 	var l, ds, i=0;
 	var req = false;
@@ -56,7 +57,8 @@
 
 		ds.innerHTML = '<i></i><span class="label"> Upload on derpibooru</span><span class="text"></span>';
 
-		ds.href = '//www.derpibooru.org/images/new?newImg='+encodeURIComponent(dlink)+
+
+		ds.href = '//'+mainDomain+'/images/new?newImg='+encodeURIComponent(dlink)+
 			'&src='+encodeURIComponent(location.href)+'&tags='+encodeURIComponent('artist:'+document.querySelector('.author .username').innerHTML.toLowerCase())+'&description='+
 			(encodeURIComponent(text))+
 			'&newWidth='+width+'&newHeight='+height;
@@ -67,6 +69,11 @@
 	}
 
 	function DA_check() {
+        try {
+            mainDomain = unsafeWindow._YDB_public.funcs.getDerpHomeDomain();
+        }
+        catch(e) {
+        }
 		setTimeout(DA_check, 1000);
 		if (window.location.pathname !== l) {
 			if (document.getElementsByClassName('dev-meta-actions')[i] !== undefined) {
