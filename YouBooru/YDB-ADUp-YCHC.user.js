@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YCH.Commishes YDB:ADUp module
-// @version      0.0.1
+// @version      0.1.0
 // @author       stsyn
 // @include      https://portfolio.commishes.com/upload/show/*
 // @include      https://ych.commishes.com/followUp/show/*
@@ -22,7 +22,14 @@
 
 (function() {
     'use strict';
+    let mainDomain = 'www.derpibooru.org';
     let stop = 0;
+
+    try {
+        mainDomain = unsafeWindow._YDB_public.funcs.getDerpHomeDomain();
+    }
+    catch(e) {
+    }
 
     function b64toBlob(b64Data, contentType, sliceSize) {
         contentType = contentType || '';
@@ -68,7 +75,7 @@
         let aname = document.querySelector('a[href*="/user/"]:not([href*="commishes.com"])').innerHTML.toLowerCase();
         let text = '';
         if (document.querySelector('div.material .force-wrap') != undefined) text = document.querySelector('div.material .force-wrap').innerText;
-        let href = '//www.derpibooru.org/images/new?newImg='+encodeURIComponent(src)+
+        let href = '//'+mainDomain+'/images/new?newImg='+encodeURIComponent(src)+
 			'&src='+encodeURIComponent(location.href)+
             '&tags='+encodeURIComponent('artist:'+aname)+',ych'+(location.href.indexOf('/followUp/')>-1?' result':',commission')+
             '&description='+(encodeURIComponent(text));
@@ -101,10 +108,10 @@
                 ctx.drawImage(image, 0, 0, width, height);
                 alert('Save image from the bottom and upload it manually. Sorry, right now it\'s the only way to get adequate quality file :(');
                 /*
-                I tried to do something automatically. 
+                I tried to do something automatically.
                 Welp, it will be possible only if portfolio.commishes.com will provide original noncompressed file or if Derpibooru will allow base64 uploading.
                 ¯\_(ツ)_/¯
-                
+
                 let dt = canvas.toDataURL();
                 GM_setValue('0', dt);
 
