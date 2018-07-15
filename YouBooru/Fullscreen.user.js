@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.0
+// @version      0.7.1
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -416,12 +416,12 @@ p>a {
 color:_fs_color !important;
 }
 
-#content .block__content .communication__body .spoiler:not(:hover) a, .image-description .spoiler:not(:hover) a{
-color:#e88585
+#content .communication__body .spoiler:not(:hover) a[href], .image-description .spoiler:not(:hover) a[href], .dnp-warning a[href]{
+color:#e88585 !important
 }
 
-body[data-theme*="dark"] #content .block__content .communication__body .spoiler:not(:hover) a, .image-description .spoiler:not(:hover) a {
-color:#782c21
+body[data-theme*="dark"] #content .communication__body .spoiler:not(:hover) a[href], body[data-theme*="dark"] .image-description .spoiler:not(:hover) a[href], body[data-theme*="dark"] .dnp-warning a[href] {
+color:#782c21 !important
 }
 
 .autocomplete__item:not(.autocomplete__item--selected), .header, a.header__link, span.header__link-user__dropdown-arrow, .add-to-gallery-list ::-webkit-scrollbar-thumb,
@@ -578,8 +578,8 @@ color: #777;
 		fix_brightness: {
 			light:{},
 			dark:{
-				spoiler: 130,
-				'content-official':150
+				spoiler: 150,
+				'content-official':160
 			},
 			red:{}
 		},
