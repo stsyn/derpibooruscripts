@@ -1,20 +1,24 @@
 // ==UserScript==
 // @name         Tumblr YDB:ADUp module
 // @namespace    http://tampermonkey.net/
-// @version      0.0.9
+// @version      0.1.0
 // @author       stsyn
 // @match        *://*/*
+
 // @exclude      *://trixiebooru.org/*
 // @exclude      *://derpibooru.org/*
 // @exclude      *://www.trixiebooru.org/*
 // @exclude      *://www.derpibooru.org/*
+
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp-Tumblr.user.js
 // @grant        none
 // ==/UserScript==
 
+
 (function() {
     'use strict';
+    let mainDomain = 'www.derpibooru.org';
 	function parseURL(url) {
 		var a = document.createElement('a');
 		a.href = url;
@@ -67,7 +71,7 @@
 			artist = u;
 		}
 		addElem('a',{innerHTML:'DB upload',target:'_blank',
-                     href:'//www.derpibooru.org/images/new?newImg='+encodeURIComponent('http://s3.amazonaws.com/data.tumblr.com'+img.replace(/_\d{3,}/, '_raw'))+
+                     href:'//'+mainDomain+'/images/new?newImg='+encodeURIComponent('http://s3.amazonaws.com/data.tumblr.com'+img.replace(/_\d{3,}/, '_raw'))+
                      '&src='+encodeURIComponent(url)+'&tags='+encodeURIComponent('artist:'+artist)+'&description='+
                      (desc!=''?encodeURIComponent('[bq]'+desc+'[/bq]'):''),
                      style:'position:absolute;top:0;left:0;background:#000;color:#fff;opacity:0.4;max-width:10em;max-height:2em', events:[{t:'click',f:function(e){
@@ -77,6 +81,12 @@
 	}
 
 	function main() {
+        try {
+            mainDomain = window._YDB_public.funcs.getDerpHomeDomain();
+        }
+        catch(e) {
+        }
+
 		document.querySelectorAll('div.photoset[id*="photoset_"]:not(._ydb_adup_parsed)').forEach(function(x) {
 			for (let j=0; j<x.querySelectorAll('a.photoset_photo').length;j++) {
 				let y = x.querySelectorAll('a.photoset_photo')[j];
