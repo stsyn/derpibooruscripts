@@ -25,7 +25,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.14
+// @version      0.5.15
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -247,7 +247,7 @@
 						{type:'checkbox', name:'Double size', parameter:'double',styleI:{marginRight:'.4em'}},
 						{type:'checkbox', name:'Show on home page', parameter:'mainPage',styleI:{marginRight:'.4em'}},
 						{type:'buttonLink', attrI:{title:'Copy-paste this link somewhere to share this feed!',target:'_blank'},styleI:{marginRight:'.5em'}, name:'Share', i:function(module,elem) {
-							let f = module.saved.feedz[elem.parentNode.dataset.id];
+                            let f = module.saved.feedz[elem.parentNode.dataset.id];
 							if (f == undefined) {
 								elem.innerHTML = '------';
 								return;
@@ -478,6 +478,18 @@
 		return '(created_at.gte:'+t.toISOString()+', created_at.lte:'+t2.toISOString()+')';
 	}
 
+	function hiddenQuery() {
+		if (document.getElementsByClassName('js-datastore')[0].dataset.hiddenTagList == undefined) return;
+		let tl = JSON.parse(document.getElementsByClassName('js-datastore')[0].dataset.hiddenTagList);
+		let tags = tl.reduce(function(prev, cur, i, a) {
+			if (localStorage['bor_tags_'+cur] == undefined) return '[Unknown]';
+			return prev + JSON.parse(localStorage['bor_tags_'+cur]).name+(i+1 == a.length?'':' || ');
+		}, '');
+		tags = '('+tags+')';
+		if (document.getElementsByClassName('js-datastore')[0].dataset.hiddenFilter != "") tags += ' || '+document.getElementsByClassName('js-datastore')[0].dataset.hiddenFilter;
+		return tags;
+	}
+
 	function spoileredQuery() {
 		if (document.getElementsByClassName('js-datastore')[0].dataset.spoileredTagList == undefined) return;
 		let tl = JSON.parse(document.getElementsByClassName('js-datastore')[0].dataset.spoileredTagList);
@@ -497,6 +509,7 @@
 			tx = tx.replace('__ydb_LastYearsAlt', getYearsAltQuery());
 			tx = tx.replace('__ydb_LastYears', getYearsQuery());
 			tx = tx.replace('__ydb_Spoilered', spoileredQuery());
+			tx = tx.replace('__ydb_Hidden', hiddenQuery());
 			tx = tx.replace('__ydb_tryUnspoil', '');
 		}
 		else {
@@ -830,7 +843,6 @@
                         let u = mutation.target.classList;
                         if (u.contains('interaction--fave') || u.contains('interaction--upvote') || u.contains('interaction--downvote') || u.contains('interaction--hide')) {
                             updateEvents(r.feed.container.querySelector('.media-box[data-image-id="'+mutation.target.dataset.imageId+'"]'), r.feed);
-                            console.log(feedzEvents);
                             localStorage._ydb_cachesEvents = JSON.stringify(feedzEvents);
                         }
                     }
@@ -881,7 +893,6 @@
                         let u = mutation.target.classList;
                         if (u.contains('interaction--fave') || u.contains('interaction--upvote') || u.contains('interaction--downvote') || u.contains('interaction--hide')) {
                             updateEvents(feed.container.querySelector('.media-box[data-image-id="'+mutation.target.dataset.imageId+'"]'), feed);
-                            console.log(feedzEvents);
                             localStorage._ydb_cachesEvents = JSON.stringify(feedzEvents);
                         }
                     }
