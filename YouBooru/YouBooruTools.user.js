@@ -1189,7 +1189,6 @@ color: #0a0;
         let get = function(el) {
 			if (userbase.artists[el.innerHTML] != undefined && Math.random()*200>1) {
 				let n = userbase.idIndex[userbase.artists[el.innerHTML]];
-                console.log(userbase.idIndex);
 				artists.push(n);
 				initHighlight(n);
 				highlightArtist(document, n);
@@ -1511,7 +1510,8 @@ color: #0a0;
 	};
 	let userbaseTS = {
 		ttu:0,
-		lastRun:0
+		lastRun:0,
+		fix:0
 	};
 	let userbaseStarted = false;
 	let getUserId, addUserInBase, UAwrite, UACLwrite, userCheck, addUserPending;
@@ -1523,6 +1523,7 @@ color: #0a0;
 
 		let createUser = function(name, aliases, id) {
 			let user;
+			id = parseInt(id);
 			if (userbase.users[name] != undefined) {
 				user = userbase.users[name];
 				let changed = false;
@@ -1599,11 +1600,11 @@ color: #0a0;
 			localStorage._ydb_toolsUBTS = JSON.stringify(userbaseTS);
 		};
 
-		let getTimestamp = function(user, regular, simplyReturn) {
+		let getTimestamp = function(user, getName, simplyReturn) {
 			let callback = function(req) {
 				try {
 					let x, nx;
-					if (!regular) {
+					if (!getName) {
 						x = JSON.parse(req.responseText).id;
 					}
 					else {
@@ -1612,11 +1613,9 @@ color: #0a0;
 						n.innerHTML = req.responseText;
 						nx = n.getElementsByTagName('h1')[0].innerHTML.slice(0,-11);
 					}
+					
 					if (simplyReturn) return x;
-					if (regular) {
-						userbase.pending.push(userbase.pending.shift());
-                        delete user.ts;
-					}
+					
 					if (user.id == undefined) {
 						user.id = x;
                         userbase.idIndex[user.id] = user.name;
@@ -1662,7 +1661,7 @@ color: #0a0;
 					url = '/lists/user_comments/'+user.id;
 				}
 				else {
-					if (regular) url = '/lists/user_comments/'+user.id;
+					if (getName) url = '/lists/user_comments/'+user.id;
 					else url = '/profiles/'+nameEncode(user.name)+'.json';
 				}
 				debug('YDB:U','Getting user '+user.name+' info.',0);
@@ -1685,22 +1684,73 @@ color: #0a0;
 			if (userbase.users[user.name] != undefined) {
 				user = userbase.users[user.name];
 			}
-			if (regular) {
-				userbaseTS.ttu -= (Date.now()-userbaseTS.lastRun);
+			if (getName) {
+				/*userbaseTS.ttu -= (Date.now()-userbaseTS.lastRun);
 				if (userbaseTS.ttu <= 0) {
-					if (userbaseTS.lastRun == 0) userbaseTS.ttu = 0;
+					if (userbaseTS.lastRun == 0) userbaseTS.ttu = 0;*/
 					get(user);
-					userbaseTS.lastRun = Date.now();
+					/*userbaseTS.lastRun = Date.now();
 					userbaseTS.ttu += UBinterval/userbase.pending.length;
                     userbaseTS.ttu = parseInt(userbaseTS.ttu);
 				}
-				tswrite();
+				tswrite();*/
 			}
             else {
 				return get(user);
             }
 		};
 
+		let fixDB = function() {
+			//filling userbase.idIndex
+			
+			for (let i in userbase.users) {
+				let u = userbase.users[i];
+				if (u.id != undefined) {
+					u.id = parseInt(u.id);
+					if (userbase.idIndex[u.id] != u.name) {
+						if (userbase.idIndex[u.id] != undefined) {
+							debug('YDB:T','User with id '+u.id+' already mentioned in idIndex with different name', 2);
+						}
+						else {
+							userbase.idIndex[u.id] = u.name;
+						}
+					}
+				}
+			}
+			
+			//handling userbase.lost
+			
+			for (let i in userbase.lost) {
+				let u = userbase.lost[i];
+				if (u.id != undefined) {
+					u.id = parseInt(u.id);
+					if (userbase.idIndex[u.id] != u.name) {
+						if (userbase.idIndex[u.id] != undefined) {
+							let nu = userbase.users[userbase.idIndex[u.id]];
+							let found = false;
+							for (let j=0; j<nu.aliases.length; j++) {
+								if (nu.aliases[j] == u.name) found = true;
+							}
+							if (!found) nu.aliases.push(u.name);
+							
+							for (let k=0; k<u.aliases.length; k++) {
+								found = false;
+								for (let j=0; j<nu.aliases.length; j++) {
+									if (nu.aliases[j] == u.aliases[k]) found = true;
+								}
+								if (!found) nu.aliases.push(u.aliases[k]);
+							}
+							
+							delete userbase.lost[i];
+						}
+						else {
+							debug('YDB:U','Lost user with id '+u.id+' has no mentions!', 2);
+						}
+					}
+				}
+			}
+		};
+		
 		if (!userbaseStarted) {
 			getUserId = function (name) {return getTimestamp({name:name},false,true);};
 			addUserInBase = function (name, id) {createUser(name,[],id);};
@@ -1743,6 +1793,55 @@ color: #0a0;
 				delete userbase.ttu;
 				delete userbase.lastRun;
 			}
+			
+			if (Date.now() - userbaseTS.fix > UBinterval) {
+				userbaseTS.fix = Date.now();
+				tswrite();
+				fixDB();
+				write();
+			}
+
+			if (userbase.idIndex == undefined) {
+				//y'know, reseting time
+				if (userbase.idIndex == undefined) userbase.idIndex = {};
+				if (userbase_local.friendlist == undefined) userbase_local.friendlist = [];
+				if (userbase_local.scratchpad == undefined) userbase_local.scratchpad = {};
+				if (userbase.artists == undefined) userbase.artists = {};
+				userbase.pending = [];
+
+				for (let i in userbase.users) {
+					let us = userbase.users[i];
+					if (us.id == undefined) us.id = getTimestamp(us, false, true);
+					userbase.idIndex[us.id] = us.name;
+				}
+				write();
+			}
+
+			if (userbase.pending.length>0) {
+				userbaseTS.ttu -= (Date.now()-userbaseTS.lastRun);
+				if (userbaseTS.ttu <= 0) {
+					if (userbaseTS.lastRun == 0) userbaseTS.ttu = 0;
+					getTimestamp(userbase.users[userbase.idIndex[userbase.pending[0]]], true);
+					userbase.pending.push(userbase.pending.shift());
+					userbaseTS.lastRun = Date.now();
+					userbaseTS.ttu += UBinterval/userbase.pending.length;
+                    userbaseTS.ttu = parseInt(userbaseTS.ttu);
+				}
+				tswrite();
+			}
+
+			if (!Array.isArray(userbase_local.friendlist)) userbase_local.friendlist = [];
+
+			let touched = false;
+			for (let i=0; i<userbase_local.friendlist.length; i++) {
+				if (userbase.idIndex[userbase_local.friendlist[i]] == undefined) createUser(undefined, [], userbase_local.friendlist[i]);
+				touched = true;
+			}
+			for (let i in userbase_local.scratchpad) {
+				if (userbase.idIndex[i] == undefined) createUser(undefined, [], i);
+				touched = true;
+			}
+			if (touched) write();
 
 			if (document.querySelector('.profile-top__name-header') != undefined) {
 				let name = document.querySelector('.profile-top__name-header').innerHTML.slice(0, -10);
@@ -1787,39 +1886,7 @@ color: #0a0;
 				}
 			}
 
-			if (userbase.idIndex == undefined) {
-				//y'know, reseting time
-				if (userbase.idIndex == undefined) userbase.idIndex = {};
-				if (userbase_local.friendlist == undefined) userbase_local.friendlist = [];
-				if (userbase_local.scratchpad == undefined) userbase_local.scratchpad = {};
-				if (userbase.artists == undefined) userbase.artists = {};
-				userbase.pending = [];
-
-				for (let i in userbase.users) {
-					let us = userbase.users[i];
-					if (us.id == undefined) us.id = getTimestamp(us, false, true);
-					userbase.idIndex[us.id] = us.name;
-				}
-				write();
-			}
-
-			if (userbase.pending.length>0) {
-				getTimestamp(userbase.users[userbase.idIndex[userbase.pending[0]]], true);
-			}
-
-			if (!Array.isArray(userbase_local.friendlist)) userbase_local.friendlist = [];
-
-			let touched = false;
-			for (let i=0; i<userbase_local.friendlist.length; i++) {
-				if (userbase.idIndex[userbase_local.friendlist[i]] == undefined) createUser(undefined, [], userbase_local.friendlist[i]);
-				touched = true;
-			}
-			for (let i in userbase_local.scratchpad) {
-				if (userbase.idIndex[i] == undefined) createUser(undefined, [], i);
-				touched = true;
-			}
-			if (touched) write();
-
+			
 			for (let i in userbase.users) {
 				if (userbase.users[i].id == undefined) {
 					userbase.users[i].id = getTimestamp(userbase.users[i],false,true);
@@ -2027,7 +2094,7 @@ color: #0a0;
 	//custom spoilers
 	function customSpoilerApply(spoiler) {
 		let ax = JSON.parse(localStorage._ydb_tools_ctags);
-		for (let i=0; i<ax.length; i++) if (ax[i] == spoiler.name) return;
+		// for (let i=0; i<ax.length; i++) if (ax[i] == spoiler.name) return;
 
 		for (let i in localStorage) {
 			if (/bor_tags_\d+/.test(i)) {
@@ -2079,9 +2146,7 @@ color: #0a0;
 
 	function customSpoilerCheck(forced, spoilers) {
         if (spoilers == undefined) return;
-		if (!forced && Math.random()>0.2) return;
-
-		console.log('wut');
+		if (!forced && Math.random()>0.1) return;
 
 		//check for activation
 		let ax;
@@ -2094,14 +2159,7 @@ color: #0a0;
 		}
 		if (ax == undefined) ax = [];
 		for (let i=0; i<spoilers.length; i++) {
-			let trigger = false;
-			for (let j=0; j<ax.length; j++) {
-				if (ax[j] == spoilers[i].name) {
-					trigger = true;
-					break;
-				}
-			}
-			if (!trigger) customSpoilerApply(spoilers[i]);
+			customSpoilerApply(spoilers[i]);
 		}
 
 		//check for deactivation
@@ -2468,7 +2526,6 @@ color: #0a0;
         };
 
         let get = function(i) {
-			console.log(stop);
             if (i == y.length || stop) {
                 finish();
                 return;
