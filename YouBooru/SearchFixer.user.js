@@ -25,8 +25,8 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.3.14
-// @description  Allows Next/Prev/Random navigation with not id sorting
+// @version      0.3.15
+// @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
 // @author       stsyn
 // @grant        none
 // @run-at       document-end
@@ -606,16 +606,14 @@
 					if (location.search == "" && i==0) s += '?'+arg+'='+val;
 					else s += '&'+arg+'='+val;
 				}
-				else s = s.replace(arg+'='+myURL.params[arg], arg+'='+val);
+				else {
+                    s = s.replace(new RegExp(arg+'='+myURL.params[arg]+'(%3A\\d{7}|)',''), arg+'='+val);
+                }
 			}
 			document.getElementById('_ydb_s_qpusher').search = s;
-/*
-			ch({target:document.querySelector('form.header__search .input')},'q',true);
-			ch({target:document.querySelector('#_ydb_s_qpusher_sf')},'sf',false);
-			ch({target:document.querySelector('#_ydb_s_qpusher_sd')},'sd',false);*/
 		};
 
-		setTimeout(function() {
+		if (document.getElementById('_ydb_s_qpusher')) setTimeout(function() {
 			document.querySelector('form.header__search .input').addEventListener('input', function(e) {chall();});
 			document.querySelector('#_ydb_s_qpusher_sf').addEventListener('input', function(e) {chall();});
 			document.querySelector('#_ydb_s_qpusher_sd').addEventListener('input', function(e) {chall();});
