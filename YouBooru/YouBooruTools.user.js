@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.36
+// @version      0.5.39
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -594,12 +594,25 @@ color: #0a0;
             return tags;
         };
 
+        function hiddenQuery() {
+            if (document.getElementsByClassName('js-datastore')[0].dataset.hiddenTagList == undefined) return;
+            let tl = JSON.parse(document.getElementsByClassName('js-datastore')[0].dataset.hiddenTagList);
+            let tags = tl.reduce(function(prev, cur, i, a) {
+                if (localStorage['bor_tags_'+cur] == undefined) return '[Unknown]';
+                return prev + JSON.parse(localStorage['bor_tags_'+cur]).name+(i+1 == a.length?'':' || ');
+            }, '');
+            tags = '('+tags+')';
+            if (document.getElementsByClassName('js-datastore')[0].dataset.hiddenFilter != "") tags += ' || '+document.getElementsByClassName('js-datastore')[0].dataset.hiddenFilter;
+            return tags;
+        }
+
 		if (original.startsWith('__ydb')) {
 			let param = 0;
 			if (!isNaN(parseInt(original.split(':')[1]))) param = parseInt(original.split(':')[1]);
 			if (original.startsWith('__ydb_lastyearsalt')) original = getYearsAltQuery(param);
 			else if (original.startsWith('__ydb_lastyears')) original = getYearsQuery(param);
 			else if (original.startsWith('__ydb_spoilered')) original = spoileredQuery();
+			else if (original.startsWith('__ydb_hidden')) original = hiddenQuery();
 			else if (original.startsWith('__ydb_yesterday')) original = getYesterdayQuery(1);
 			else if (original.startsWith('__ydb_daysago')) original = getYesterdayQuery(param);
 		}
@@ -1176,6 +1189,7 @@ color: #0a0;
         let get = function(el) {
 			if (userbase.artists[el.innerHTML] != undefined && Math.random()*200>1) {
 				let n = userbase.idIndex[userbase.artists[el.innerHTML]];
+                console.log(userbase.idIndex);
 				artists.push(n);
 				initHighlight(n);
 				highlightArtist(document, n);
@@ -1549,7 +1563,7 @@ color: #0a0;
 				if (userbase.idIndex[id] != undefined && id != undefined && userbase.idIndex[id] != name) {
 					removeUser(userbase.idIndex[id]);
 				}
-				userbase.idIndex[id] = name;
+				userbase.idIndex[user.id] = name;
 				debug('YDB:U','Added user '+name+'.',1);
 				write();
 			}
@@ -1605,6 +1619,7 @@ color: #0a0;
 					}
 					if (user.id == undefined) {
 						user.id = x;
+                        userbase.idIndex[user.id] = user.name;
 						write();
 					}
 					else {
@@ -1620,7 +1635,8 @@ color: #0a0;
 					}
 				}
 				catch(e) {
-					debug('YDB:U','Failed to get timestamp from name '+user.name+'. Encoded to '+nameEncode(user.name)+'. Maybe it\'s encoder issue, contact dev.', 2);
+					debug('YDB:U','Failed to decode timestamp from name '+user.name+'. Encoded to '+nameEncode(user.name)+'. Maybe it\'s encoder issue, contact dev.', 2);
+					debug('YDB:U','Error: '+e, 2);
 				}
 			};
 			let readyHandler = function(request) {
@@ -2011,7 +2027,6 @@ color: #0a0;
 	//custom spoilers
 	function customSpoilerApply(spoiler) {
 		let ax = JSON.parse(localStorage._ydb_tools_ctags);
-		if (ax == undefined) ax = [];
 		for (let i=0; i<ax.length; i++) if (ax[i] == spoiler.name) return;
 
 		for (let i in localStorage) {
@@ -2063,6 +2078,7 @@ color: #0a0;
 	}
 
 	function customSpoilerCheck(forced, spoilers) {
+        if (spoilers == undefined) return;
 		if (!forced && Math.random()>0.2) return;
 
 		console.log('wut');
@@ -2187,7 +2203,7 @@ color: #0a0;
 				catch(e) {
 					debug('YDB:U','Failed to get avatar from '+user.name+'.', 2);
 				}
-				user.ts = parseInt(Date.now()/1000);
+				user.avatarTS = parseInt(Date.now()/1000);
 				UAwrite();
 			};
 			let readyHandler = function(request) {
@@ -2294,6 +2310,18 @@ color: #0a0;
 		c.innerHTML = '';
 
 		let generateLine = function(user) {
+            if (user == undefined)
+                return InfernoAddElem('div',{className:'alternating-color block__content flex flex--center-distributed flex--centered'},[
+                    InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
+                        InfernoAddElem('a',{innerHTML:'Name', events:[{t:'click',f:function() {sortby='name';render();}}]},[])
+                    ]),
+                    InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
+                        InfernoAddElem('a',{innerHTML:'ID', events:[{t:'click',f:function() {sortby='id';render();}}]},[])
+                    ]),
+                    InfernoAddElem('span',{className:'flex__grow',style:'padding:0 12px'},[
+                        InfernoAddElem('a',{innerHTML:'[Auto]', events:[{t:'click',f:function() {sortby='auto';render();}}]},[])
+                    ])
+                ]);
 			return InfernoAddElem('div',{className:'alternating-color block__content flex flex--center-distributed flex--centered'},[
 				InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
 					InfernoAddElem('span',{innerHTML:user.name},[])
@@ -2306,13 +2334,37 @@ color: #0a0;
 				])
 			]);
 		};
-		let x = [];
 
-		for (let i in userbase.users) {
-			x.push(generateLine(userbase.users[i]));
-		}
+        let render = function() {
+            if (sortby != 'auto') tusers.sort(function (a,b) {
+                if (a[sortby] > b[sortby]) {
+                    return 1;
+                }
+                if (a[sortby] < b[sortby]) {
+                    return -1;
+                }
+                // a должно быть равным b
+                return 0;
+            });
+            else {
+                tusers = [];
+                for (let i in userbase.users) {
+                    tusers.push(userbase.users[i]);
+                }
+            }
 
-		ChildsAddElem('div',{className:'block',style:'width:100%'}, c, x);
+            container.innerHTML = '';
+
+            container.appendChild(generateLine());
+            for (let i=0; i<tusers.length; i++)
+                container.appendChild(generateLine(tusers[i]));
+        };
+
+        let tusers = [];
+        let sortby = 'auto';
+		let container = ChildsAddElem('div',{id:'_ydb_userlist',className:'block',style:'width:100%'}, c, []);
+        render();
+
 	}
 
 	function YDB_TestSpoiler() {
