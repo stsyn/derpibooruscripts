@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.1
+// @version      0.7.2
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -591,7 +591,7 @@ color: #777;
 				spoiler: 60,
 				'content-official': 70,
 				'': 120,
-				character:180,
+				character:183,
 				rating:210,
 				origin:265
 			},
@@ -1212,7 +1212,7 @@ color: #777;
 
         document.querySelector('.image-metabar').childNodes[1].insertBefore(objects.mainButton,document.querySelector('.interaction--fave'));
         //document.querySelectorAll('#content>div')[3].appendChild(document.getElementById('image_options_area'));        console.log(document.getElementsByTagName('form'), document.getElementById('js-comment-form'));
-        popUps.coms.appendChild(document.getElementById('js-comment-form'));
+        if (document.getElementById('js-comment-form') != undefined) popUps.coms.appendChild(document.getElementById('js-comment-form'));
         popUps.coms.appendChild(document.getElementById('comments'));
         //popUps.downContainer.appendChild(document.querySelector('#content>.block:first-child').cloneNode(true));
         //if (popUps.downContainer.childNodes[0].classList.contains('center--layout')) popUps.downContainer.childNodes[0].style.textAlign='center';
@@ -1317,7 +1317,7 @@ color: #777;
         }
 
         document.getElementById('content').appendChild(popUps.downContainer.childNodes[0]);
-		document.querySelector('#content>.layout--narrow').appendChild(document.getElementById('js-comment-form'));
+		if (document.getElementById('js-comment-form') != undefined) document.querySelector('#content>.layout--narrow').appendChild(document.getElementById('js-comment-form'));
 		document.querySelector('#content>.layout--narrow').appendChild(document.getElementById('comments'));
         //document.getElementById('content').appendChild(popUps.coms.getElementsByTagName('div')[0]);
         document.querySelector('a[title="'+settings.button+'"]').classList.remove('ydb_top_right_link');
