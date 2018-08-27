@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.2
+// @version      0.7.4
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -130,9 +130,14 @@ display:block;
 ._fs_down {
 display:none;
 }
-#image_target, #image_target>picture, #image_target>video {
+#image_target, #image_target>picture {
 min-height:100vh;
 min-width:100vw;
+display:block;
+}
+#image_target>video{
+max-height:none;
+max-width:none;
 display:block;
 }
 #image_target>picture>* {
@@ -379,10 +384,7 @@ transition:.5s;
 }
 `;
 
-    styles.hideAll = `
-.block, ._fs_down  {
-display:none
-}
+	styles.imageZoom = `
 #_fs_scroll_bot, #_fs_scroll_rgt {
 background:RGBA(192,192,192,0.5);
 transition:0.1s;
@@ -400,6 +402,11 @@ max-width: none;
 margin:auto;
 }
 `;
+
+    styles.hideAll = `
+.block, ._fs_down  {
+display:none
+}`;
 
     styles.colorAccentTemplate = `
 .block__header--light a, .block__header--js-tabbed a, a.block__header--single-item, #container span:not(.tag)>a, a.profile-block, table.table td>a, #imagespns a,
@@ -662,6 +669,8 @@ color: #777;
     settings.staticTime = parseInt(settings.staticTime);
     localStorage._ydb_fs = JSON.stringify(settings);
 
+	let singleDefSize = settings.singleMode;
+
     function register() {
         let fsData = {
             name:'Fullscreen',
@@ -675,6 +684,7 @@ color: #777;
                 {type:'checkbox', name:'Remove href from comments link', parameter:'commentLink'},
                 {type:'breakline'},
                 {type:'checkbox', name:'New experimental UI', parameter:'new'},
+                {type:'checkbox', name:'All in one mode (beta)', parameter:'singleMode'},
                 {type:'breakline'},
                 {type:'checkbox', name:'Autohide UI', parameter:'staticEnabled'},
                 {type:'input', name:'Autohide timeout', parameter:'staticTime', validation:{type:'int',min:0, max:600, default:50}},
@@ -739,38 +749,83 @@ color: #777;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	function resize() {
+		if (!state.enabled) return;
+		if (settings.singleMode) {
+			if (!pub.isVideo) {
+				objects.image.src = objects.fullImage.src;
+			}
+			else {
+				objects.image.querySelector('[type="video/webm"]').src = JSON.parse(objects.icontainer.dataset.uris).webm;
+				objects.image.querySelector('[type="video/mp4"]').src = JSON.parse(objects.icontainer.dataset.uris).mp4;
+			}
+		}
+		/*if (singleDefSize)*/ {
+			rescale();
+		}
+	}
+
     function rescale() {
         if (objects.icontainer.dataset.aspectRatio > window.innerWidth/window.innerHeight) pub.wide = false;
         else pub.wide = true;
 
+		let forced = settings.singleMode && singleDefSize;
+
         if (pub.scaled != objects.dcontainer.dataset.scaled) {
             pub.scaled = objects.dcontainer.dataset.scaled;
-            if (pub.scaled != 'true') {
-                append('hideAll');
-                pub.zoom = 1;
-            }
-            else remove('hideAll');
+			if (!settings.singleMode) {
+				if (pub.scaled != 'true') {
+					append('hideAll');
+					append('imageZoom');
+					pub.zoom = 1;
+				}
+				else {
+					remove('hideAll');
+					remove('imageZoom');
+				}
+			}
         }
+
+		if (settings.singleMode) {
+			if (pub.scaled == 'partscaled') {
+				pub.scaled = 'false';
+				initalZoom();
+			}
+		}
+
+		if (!pub.wide) pub.defzoom = window.innerWidth/objects.icontainer.dataset.width;
+		else pub.defzoom = window.innerHeight/objects.icontainer.dataset.height;
+
+		if (settings.singleMode && pub.zoom<pub.defzoom) {
+			singleEvent();
+			return;
+		}
+
         if (pub.scaled != 'false') {
-            objects.image.style.marginLeft = 'auto';
-            objects.image.style.marginTop = 'auto';
             if (!pub.wide) {
-                objects.image.style.width = '100vw';
-                objects.image.style.height = 'auto';
+                objects.image.style.width = forced?window.innerWidth+'px':'100vw';
+				pub.zoom = window.innerWidth/objects.icontainer.dataset.width;
+                objects.image.style.height = forced?(window.innerWidth/objects.icontainer.dataset.aspectRatio)+'px':'auto';
                 let aspectRatio = window.innerWidth / window.innerHeight;
                 let zoomRatio = objects.icontainer.dataset.width / window.innerWidth;
 
+                objects.image.style.marginLeft = '0';
                 objects.image.style.marginTop = (window.innerHeight - (objects.icontainer.dataset.height / zoomRatio)) / 2+'px';
-                objects.image.style.width = '100vw';
 
-                if (objects.image.tagName == 'VIDEO' && pub.scaled == 'true') {
+                if (pub.isVideo && pub.scaled == 'true') {
                     objects.image.style.marginTop = 0;
                 }
             }
             else {
+                let aspectRatio = window.innerWidth / window.innerHeight;
+                let zoomRatio = objects.icontainer.dataset.height / window.innerHeight;
+
                 objects.image.style.marginTop = '0';
-                objects.image.style.height = '100vh';
-                objects.image.style.width = 'auto';
+                objects.image.style.height = forced?window.innerHeight+'px':'100vh';
+				pub.zoom = window.innerHeight/objects.icontainer.dataset.height;
+                objects.image.style.width = forced?(window.innerHeight*objects.icontainer.dataset.aspectRatio)+'px':'auto';
+
+				objects.image.style.marginLeft = (window.innerWidth - (objects.icontainer.dataset.width / zoomRatio)) / 2+'px';
             }
         }
     }
@@ -794,6 +849,21 @@ color: #777;
 
     function loadedImgFetch() {
         objects.image = document.getElementById('image-display');
+
+		if (settings.singleMode) {
+			if (!pub.isVideo) {
+				objects.fullImage = InfernoAddElem('img',{style:{display:'none'},src:JSON.parse(objects.icontainer.dataset.uris).full, events:[{t:'load',f:function() {
+					if (!pub.isVideo) objects.dcontainer.addEventListener('click', singleEvent);
+					append('imageZoom');
+					objects.image.src = objects.fullImage.src;
+				}}]},[]);
+			}
+			else {
+				objects.image.querySelector('[type="video/webm"]').src = JSON.parse(objects.icontainer.dataset.uris).webm;
+				objects.image.querySelector('[type="video/mp4"]').src = JSON.parse(objects.icontainer.dataset.uris).mp4;
+				objects.image.addEventListener('click', singleEvent);
+			}
+		}
         rescale();
     }
 
@@ -845,25 +915,43 @@ color: #777;
     }
 
 
+	function initalZoom(width) {
+        let de = document.documentElement;
+		if (!width || width === undefined) {
+			if (adc.comic) {
+				if (!pub.wide) pub.zoom = window.innerWidth/objects.icontainer.dataset.width;
+				objects.image.style.marginTop = 0;
+			}
+			else objects.image.style.marginTop = -(objects.icontainer.dataset.height - de.clientHeight)/2 + 'px';
+		}
+		if (width || width === undefined) {
+			if (adc.comic) {
+				objects.image.style.marginLeft = 0;
+				if (pub.wide) pub.zoom = window.innerHeight/objects.icontainer.dataset.height;
+			}
+			else objects.image.style.marginLeft = -(objects.icontainer.dataset.width - de.clientWidth)/2 + 'px';
+		}
+	}
+
     function setMargin() {
-        if (pub.scaled != 'false') {
+        if (pub.scaled != 'false' && !settings.singleMode) {
             return;
         }
+		if (objects.image == undefined) return;
         let de = document.documentElement;
         if (pub.zoom>10) pub.zoom =10;
         if (pub.zoom<0.1) pub.zoom= 0.1;
         addScrolls();
         let xScale = de.clientWidth/(objects.icontainer.dataset.width*pub.zoom), yScale = de.clientHeight/(objects.icontainer.dataset.height*pub.zoom);
-        objects.image.style.height=objects.icontainer.dataset.height*pub.zoom+'px';
-        objects.image.style.width=objects.icontainer.dataset.width*pub.zoom+'px';
         if (isNaN(parseInt(objects.image.style.marginTop))) {
-            if (adc.comic) objects.image.style.marginTop = 0;
-            else objects.image.style.marginTop = -(objects.icontainer.dataset.height - de.clientHeight)/2 + 'px';
+            initalZoom(false);
         }
         if (isNaN(parseInt(objects.image.style.marginLeft))) {
-            if (adc.comic) objects.image.style.marginLeft = 0;
-            else objects.image.style.marginLeft = -(objects.icontainer.dataset.width - de.clientWidth)/2 + 'px';
+            initalZoom(true);
         }
+        objects.image.style.height=objects.icontainer.dataset.height*pub.zoom+'px';
+        objects.image.style.width=objects.icontainer.dataset.width*pub.zoom+'px';
+
 
         checkMargin();
         if (objects.icontainer.dataset.height*pub.zoom < de.clientHeight) {
@@ -885,6 +973,10 @@ color: #777;
 
             if (parseInt(objects.image.style.marginTop)>0) objects.image.style.marginTop = '0px';
             if (-parseInt(objects.image.style.marginTop)>=(objects.icontainer.dataset.height*pub.zoom-de.clientHeight)) objects.image.style.marginTop = -(objects.icontainer.dataset.height*pub.zoom-de.clientHeight)+1+'px';
+			if (singleDefSize) {
+				objects.image.style.marginTop = '0px';
+				objects.scroll_rgt.style.display = 'none';
+			}
         }
 
         if (objects.icontainer.dataset.width*pub.zoom > de.clientWidth) {
@@ -902,10 +994,14 @@ color: #777;
 
             if (parseInt(objects.image.style.marginLeft)>0) objects.image.style.marginLeft = '0px';
             if (-parseInt(objects.image.style.marginLeft)>=(objects.icontainer.dataset.width*pub.zoom-de.clientWidth)) objects.image.style.marginLeft = -(objects.icontainer.dataset.width*pub.zoom-de.clientWidth)+1+'px';
+			if (singleDefSize) {
+				objects.image.style.marginLeft = '0px';
+				objects.scroll_bot.style.display = 'none';
+			}
         }
         else
         {
-            objects.image.style.marginLeft = 'auto';
+			objects.image.style.marginLeft = (de.clientWidth - objects.icontainer.dataset.width*pub.zoom) / 2+'px';
             objects.scroll_bot.style.display = 'none';
         }
         objects.scroll_bot.style.left = -(isNaN(parseInt(objects.image.style.marginLeft))?0:parseInt(objects.image.style.marginLeft))*xScale+'px';
@@ -913,7 +1009,7 @@ color: #777;
     }
 
     function addScrolls() {
-        if (pub.scaled != 'false') return;
+        if (pub.scaled != 'false' && !settings.singleMode) return;
         let de = document.documentElement;
         let scrWidth = de.clientWidth, xScale = de.clientWidth/(objects.icontainer.dataset.width*pub.zoom);
         let scrHeight = de.clientHeight, yScale = de.clientHeight/(objects.icontainer.dataset.height*pub.zoom);
@@ -928,13 +1024,17 @@ color: #777;
     function listener() {
         if (!pub.enabled) return;
         setTimeout(listener, 100);
-
         tagEditor();
 
-        if (pub.scaled == 'false') setMargin();
+		if (settings.singleMode) {
+			if (singleDefSize || pub.defzoom >= pub.zoom) remove('hideAll');
+			else append('hideAll');
+		}
+
+        if (pub.scaled == 'false' || settings.singleMode) setMargin();
 
         if (objects.dcontainer != undefined) {
-            if (pub.scaled == 'true' && pub.mouseY/window.innerHeight >= (popUps.down.classList.contains('active')?0.4:0.85) && !popUps.back.classList.contains('active')) popUps.down.classList.add('active');
+            if ((pub.scaled == 'true' || (settings.singleMode && pub.defzoom >= pub.zoom)) && pub.mouseY/window.innerHeight >= (popUps.down.classList.contains('active')?0.4:0.85) && !popUps.back.classList.contains('active')) popUps.down.classList.add('active');
             else popUps.down.classList.remove('active');
         }
 
@@ -951,7 +1051,7 @@ color: #777;
             objects.mainButton.style.background = '';
         }
 
-        if (pub.scaled == 'true') {
+        if (pub.scaled == 'true' || (settings.singleMode && pub.defzoom >= pub.zoom)) {
             if ((pub.mouseY/window.innerHeight > 0.15 && pub.mouseY/window.innerHeight < 0.85) &&
                 !(popUps.down.classList.contains('active') || popUps.back.classList.contains('active')))  {
                 pub.static++;
@@ -1000,8 +1100,32 @@ color: #777;
             pub.zoom-=dt;
             pub.dta-=dt;
         }
+		if (settings.singleMode && singleDefSize) {
+			singleDefSize = false;
+			pub.scaled = 'false';
+			objects.dcontainer.dataset.scaled = pub.scaled;
+		}
 
         e.preventDefault();
+    }
+
+	function singleEvent(event){
+        singleDefSize = !singleDefSize;
+		pub.scaled = ''+singleDefSize;
+		pub.zoom = 1;
+		if (pub.scaled != 'false') {
+			//initalZoom();
+			if (pub.isVideo) pub.zoom = pub.defzoom;
+		}
+		objects.dcontainer.dataset.scaled = pub.scaled;
+		if (!pub.isVideo) {
+			objects.image.src = objects.fullImage.src;
+		}
+		else {
+			objects.image.querySelector('[type="video/webm"]').src = JSON.parse(objects.icontainer.dataset.uris).webm;
+			objects.image.querySelector('[type="video/mp4"]').src = JSON.parse(objects.icontainer.dataset.uris).mp4;
+			event.stopPropagation();
+		}
     }
 
 
@@ -1262,6 +1386,8 @@ color: #777;
         objects.commButton = document.getElementsByClassName('interaction--comments')[0];
         if (settings.commentLink) objects.commButton.href = 'javascript://';
 
+		pub.isVideo = JSON.parse(objects.icontainer.dataset.uris).full.split('.').pop() == 'webm';
+
         objects.commButton.addEventListener('click',showComms);
         popUps.back.addEventListener('click',hidePopups);
         document.body.addEventListener('mousemove',mouseListener);
@@ -1286,6 +1412,8 @@ color: #777;
         else {
             popUps.down.classList.add('active');
         }
+
+		window.addEventListener('resize', resize);
 
 		if (location.hash.indexOf('#comment') == 0) showComms();
     }
@@ -1333,6 +1461,7 @@ color: #777;
         document.body.classList.remove('_fs');
         document.body.removeChild(popUps.back);
         document.body.removeChild(popUps.down);
+		window.removeEventListener('resize', resize);
 
         write();
     }
