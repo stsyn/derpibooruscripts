@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.4
+// @version      0.7.5
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -480,7 +480,7 @@ body[data-theme*="dark"] a:not(.header__link):not([rel="dc:source"]):not(.button
 color:#aaa !important;
 }
 
-.media-box__header, .button:hover, .toggle-box+label:hover, .header--secondary, .header--secondary a,
+.media-box__header:not(.media-box__header--unselected), .button:hover, .toggle-box+label:hover, .header--secondary, .header--secondary a,
 .block__list a.block__list__link.primary, select.header__input:hover, select.header__input:focus:hover, span.header__counter {
 background-color:_fs_background;
 border-color:_fs_color;
@@ -851,10 +851,10 @@ color: #777;
         objects.image = document.getElementById('image-display');
 
 		if (settings.singleMode) {
+			append('imageZoom');
 			if (!pub.isVideo) {
 				objects.fullImage = InfernoAddElem('img',{style:{display:'none'},src:JSON.parse(objects.icontainer.dataset.uris).full, events:[{t:'load',f:function() {
 					if (!pub.isVideo) objects.dcontainer.addEventListener('click', singleEvent);
-					append('imageZoom');
 					objects.image.src = objects.fullImage.src;
 				}}]},[]);
 			}
