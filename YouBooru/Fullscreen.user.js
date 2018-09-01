@@ -973,7 +973,7 @@ color: #777;
 				else newsrc = JSON.parse(objects.icontainer.dataset.uris).large;
 			}
 			else {
-				if ((parseInt(objects.image.style.width) > 1280 && objects.icontainer.dataset.width > 1280) || (parseInt(objects.image.style.height) > 4096 && objects.icontainer.dataset.height > 4096)) newsrc = JSON.parse(objects.icontainer.dataset.uris).full;
+				if ((parseInt(objects.image.style.width) > 1280 && objects.icontainer.dataset.width > 1024) || (parseInt(objects.image.style.height) > 4096 && objects.icontainer.dataset.height > 4096)) newsrc = JSON.parse(objects.icontainer.dataset.uris).full;
 				else newsrc = JSON.parse(objects.icontainer.dataset.uris).tall;
 			}
 			if (objects.image.src != newsrc) objects.image.src = newsrc;
