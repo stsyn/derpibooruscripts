@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.5
+// @version      0.7.7
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -168,6 +168,10 @@ background:none;
 #image_target {
 position:fixed;
 top:0;
+-webkit-user-select: none;
+-moz-user-select: none;
+-ms-user-select: none;
+user-select: none;
 }
 
 #_fs_scroll_bot,#_fs_scroll_rgt {
@@ -670,6 +674,7 @@ color: #777;
     localStorage._ydb_fs = JSON.stringify(settings);
 
 	let singleDefSize = settings.singleMode;
+	let singleFirstChange = false;
 
     function register() {
         let fsData = {
@@ -749,18 +754,10 @@ color: #777;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	function resize() {
+	function resize(event) {
 		if (!state.enabled) return;
+		dropExecution(event);
 		if (settings.singleMode) {
-			if (!pub.isVideo) {
-				objects.image.src = objects.fullImage.src;
-			}
-			else {
-				objects.image.querySelector('[type="video/webm"]').src = JSON.parse(objects.icontainer.dataset.uris).webm;
-				objects.image.querySelector('[type="video/mp4"]').src = JSON.parse(objects.icontainer.dataset.uris).mp4;
-			}
-		}
-		/*if (singleDefSize)*/ {
 			rescale();
 		}
 	}
@@ -772,8 +769,8 @@ color: #777;
 		let forced = settings.singleMode && singleDefSize;
 
         if (pub.scaled != objects.dcontainer.dataset.scaled) {
-            pub.scaled = objects.dcontainer.dataset.scaled;
 			if (!settings.singleMode) {
+            	pub.scaled = objects.dcontainer.dataset.scaled;
 				if (pub.scaled != 'true') {
 					append('hideAll');
 					append('imageZoom');
@@ -813,7 +810,7 @@ color: #777;
                 objects.image.style.marginTop = (window.innerHeight - (objects.icontainer.dataset.height / zoomRatio)) / 2+'px';
 
                 if (pub.isVideo && pub.scaled == 'true') {
-                    objects.image.style.marginTop = 0;
+                    objects.image.style.marginTop = '0';
                 }
             }
             else {
@@ -834,6 +831,7 @@ color: #777;
         objects.image.style.height = 'auto';
         objects.image.style.width = 'auto';
         objects.image.style.marginTop = '0';
+        objects.image.style.marginLeft = '0';
     }
 
     function init() {
@@ -844,18 +842,20 @@ color: #777;
     }
 
     function disgustingLoadedImgFetch() {
+		if (!state.enabled) return;
         setTimeout(loadedImgFetch, 1);
+		if (pub.scaled == 'false') zeroZoom();
     }
 
     function loadedImgFetch() {
         objects.image = document.getElementById('image-display');
 
-		if (settings.singleMode) {
+		if (settings.singleMode && objects.dcontainer != undefined) {
 			append('imageZoom');
 			if (!pub.isVideo) {
 				objects.fullImage = InfernoAddElem('img',{style:{display:'none'},src:JSON.parse(objects.icontainer.dataset.uris).full, events:[{t:'load',f:function() {
-					if (!pub.isVideo) objects.dcontainer.addEventListener('click', singleEvent);
-					objects.image.src = objects.fullImage.src;
+					objects.dcontainer.addEventListener('click', singleEvent);
+					objects.icontainer.addEventListener('click', dropExecution);
 				}}]},[]);
 			}
 			else {
@@ -864,7 +864,11 @@ color: #777;
 				objects.image.addEventListener('click', singleEvent);
 			}
 		}
-        rescale();
+		if (!pub.isVideo && !singleFirstChange && settings.singleMode) {
+			rescale();
+			singleFirstChange = true;
+		}
+		else if (!settings.singleMode) rescale();
     }
 
     function callPopup(id) {
@@ -914,20 +918,28 @@ color: #777;
         pub.dta=0;
     }
 
+	function zeroZoom() {
+        let de = document.documentElement;
+		pub.zoom = pub.defzoom;
+		objects.image.style.height=objects.icontainer.dataset.height*pub.zoom+'px';
+        objects.image.style.width=objects.icontainer.dataset.width*pub.zoom+'px';
+		objects.image.style.marginTop = -(objects.icontainer.dataset.height*pub.zoom - de.clientHeight)/2 + 'px';
+		objects.image.style.marginLeft = -(objects.icontainer.dataset.width*pub.zoom - de.clientWidth)/2 + 'px';
+	}
 
 	function initalZoom(width) {
         let de = document.documentElement;
 		if (!width || width === undefined) {
 			if (adc.comic) {
-				if (!pub.wide) pub.zoom = window.innerWidth/objects.icontainer.dataset.width;
-				objects.image.style.marginTop = 0;
+				if (pub.wide) pub.zoom = window.innerWidth/objects.icontainer.dataset.width;
+				objects.image.style.marginTop = '0';
 			}
 			else objects.image.style.marginTop = -(objects.icontainer.dataset.height - de.clientHeight)/2 + 'px';
 		}
 		if (width || width === undefined) {
 			if (adc.comic) {
-				objects.image.style.marginLeft = 0;
-				if (pub.wide) pub.zoom = window.innerHeight/objects.icontainer.dataset.height;
+				objects.image.style.marginLeft = '0';
+				if (!pub.wide) pub.zoom = window.innerHeight/objects.icontainer.dataset.height;
 			}
 			else objects.image.style.marginLeft = -(objects.icontainer.dataset.width - de.clientWidth)/2 + 'px';
 		}
@@ -939,19 +951,33 @@ color: #777;
         }
 		if (objects.image == undefined) return;
         let de = document.documentElement;
-        if (pub.zoom>10) pub.zoom =10;
-        if (pub.zoom<0.1) pub.zoom= 0.1;
+        if (pub.zoom >   20) pub.zoom =   20;
+        if (pub.zoom < 0.02) pub.zoom = 0.02;
         addScrolls();
         let xScale = de.clientWidth/(objects.icontainer.dataset.width*pub.zoom), yScale = de.clientHeight/(objects.icontainer.dataset.height*pub.zoom);
-        if (isNaN(parseInt(objects.image.style.marginTop))) {
-            initalZoom(false);
-        }
-        if (isNaN(parseInt(objects.image.style.marginLeft))) {
-            initalZoom(true);
-        }
+        if (!settings.singleMode) {
+			if (isNaN(parseInt(objects.image.style.marginTop))) {
+				initalZoom(false);
+			}
+			if (isNaN(parseInt(objects.image.style.marginLeft))) {
+				initalZoom(true);
+			}
+		}
         objects.image.style.height=objects.icontainer.dataset.height*pub.zoom+'px';
         objects.image.style.width=objects.icontainer.dataset.width*pub.zoom+'px';
-
+		if (settings.singleMode && !(pub.isVideo || pub.gif)) {
+			let isWide = (objects.icontainer.dataset.width/objects.icontainer.dataset.height > 1);
+			let newsrc;
+			if (isWide) {
+				if (parseInt(objects.image.style.width) > 1280 && objects.icontainer.dataset.width > 1280) newsrc = JSON.parse(objects.icontainer.dataset.uris).full;
+				else newsrc = JSON.parse(objects.icontainer.dataset.uris).large;
+			}
+			else {
+				if ((parseInt(objects.image.style.width) > 1280 && objects.icontainer.dataset.width > 1280) || (parseInt(objects.image.style.height) > 4096 && objects.icontainer.dataset.height > 4096)) newsrc = JSON.parse(objects.icontainer.dataset.uris).full;
+				else newsrc = JSON.parse(objects.icontainer.dataset.uris).tall;
+			}
+			if (objects.image.src != newsrc) objects.image.src = newsrc;
+		}
 
         checkMargin();
         if (objects.icontainer.dataset.height*pub.zoom < de.clientHeight) {
@@ -1029,6 +1055,15 @@ color: #777;
 		if (settings.singleMode) {
 			if (singleDefSize || pub.defzoom >= pub.zoom) remove('hideAll');
 			else append('hideAll');
+
+		}
+
+		if (pub.isVideo && settings.singleMode && (!/\/full.webm/.test(objects.image.querySelector('[type="video/webm"]').src) || !singleFirstChange)) {
+			objects.image.removeAttribute('src');
+			objects.image.querySelector('[type="video/webm"]').src = JSON.parse(objects.icontainer.dataset.uris).webm;
+			objects.image.querySelector('[type="video/mp4"]').src = JSON.parse(objects.icontainer.dataset.uris).mp4;
+			rescale();
+			singleFirstChange = true;
 		}
 
         if (pub.scaled == 'false' || settings.singleMode) setMargin();
@@ -1083,6 +1118,7 @@ color: #777;
     }
 
     function wheelListener(e){
+		if (!state.enabled) return;
         let delta = e.deltaY || e.detail || e.wheelDelta;
         let dt;
 
@@ -1109,22 +1145,29 @@ color: #777;
         e.preventDefault();
     }
 
-	function singleEvent(event){
+	function dropExecution(event) {
+		if (!state.enabled || !settings.singleMode) return;
+		if (document.querySelector('.image-filtered.hidden') == null) return;
+		if (event != undefined) event.stopPropagation();
+	}
+
+	function singleEvent(event) {
+		if (!state.enabled || !settings.singleMode) return;
+		if (event != undefined) event.stopPropagation();
+		dropExecution(event);
         singleDefSize = !singleDefSize;
 		pub.scaled = ''+singleDefSize;
-		pub.zoom = 1;
 		if (pub.scaled != 'false') {
-			//initalZoom();
-			if (pub.isVideo) pub.zoom = pub.defzoom;
-		}
-		objects.dcontainer.dataset.scaled = pub.scaled;
-		if (!pub.isVideo) {
-			objects.image.src = objects.fullImage.src;
+			/*if (pub.isVideo) */pub.zoom = pub.defzoom;
 		}
 		else {
+			pub.zoom = 1;
+			initalZoom();
+		}
+		objects.dcontainer.dataset.scaled = pub.scaled;
+		if (pub.isVideo) {
 			objects.image.querySelector('[type="video/webm"]').src = JSON.parse(objects.icontainer.dataset.uris).webm;
 			objects.image.querySelector('[type="video/mp4"]').src = JSON.parse(objects.icontainer.dataset.uris).mp4;
-			event.stopPropagation();
 		}
     }
 
@@ -1386,8 +1429,6 @@ color: #777;
         objects.commButton = document.getElementsByClassName('interaction--comments')[0];
         if (settings.commentLink) objects.commButton.href = 'javascript://';
 
-		pub.isVideo = JSON.parse(objects.icontainer.dataset.uris).full.split('.').pop() == 'webm';
-
         objects.commButton.addEventListener('click',showComms);
         popUps.back.addEventListener('click',hidePopups);
         document.body.addEventListener('mousemove',mouseListener);
@@ -1408,6 +1449,17 @@ color: #777;
             objects.dcontainer.addEventListener("click",disgustingLoadedImgFetch);
             objects.dcontainer.addEventListener("wheel", wheelListener);
             advancedTagTools();
+			pub.isVideo = JSON.parse(objects.icontainer.dataset.uris).full.split('.').pop() == 'webm';
+			pub.gif = JSON.parse(objects.icontainer.dataset.uris).full.split('.').pop() == 'gif';
+			if ((pub.gif || pub.isVideo) && settings.singleMode) {
+				let x = JSON.parse(objects.icontainer.dataset.uris);
+				for (let i in x) {
+					if (pub.gif) x[i] = x.full;
+				}
+				objects.icontainer.dataset.uris = JSON.stringify(x);
+				objects.dcontainer.dataset.uris = JSON.stringify(x);
+				// я устал с этим скриптом бороться :(
+			}
         }
         else {
             popUps.down.classList.add('active');
