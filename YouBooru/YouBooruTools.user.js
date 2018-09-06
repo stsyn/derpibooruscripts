@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.39
+// @version      0.5.41
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -586,8 +586,9 @@ color: #0a0;
             if (document.getElementsByClassName('js-datastore')[0].dataset.spoileredTagList == undefined) return;
             let tl = JSON.parse(document.getElementsByClassName('js-datastore')[0].dataset.spoileredTagList);
             let tags = tl.reduce(function(prev, cur, i, a) {
-                if (localStorage['bor_tags_'+cur] == undefined) return '[Unknown]';
-                return prev + JSON.parse(localStorage['bor_tags_'+cur]).name+(i+1 == a.length?'':' || ');
+                if (localStorage['bor_tags_'+cur] == undefined) return prev;
+				let quotes = (/(\(|\))/.test(tname)?'"':'');
+                return prev + quotes + tname + quotes + (i+1 == a.length?'':' || ');
             }, '');
             tags = '('+tags+')';
             if (document.getElementsByClassName('js-datastore')[0].dataset.spoileredFilter != "") tags += ' || '+document.getElementsByClassName('js-datastore')[0].dataset.spoileredFilter;
@@ -598,8 +599,10 @@ color: #0a0;
             if (document.getElementsByClassName('js-datastore')[0].dataset.hiddenTagList == undefined) return;
             let tl = JSON.parse(document.getElementsByClassName('js-datastore')[0].dataset.hiddenTagList);
             let tags = tl.reduce(function(prev, cur, i, a) {
-                if (localStorage['bor_tags_'+cur] == undefined) return '[Unknown]';
-                return prev + JSON.parse(localStorage['bor_tags_'+cur]).name+(i+1 == a.length?'':' || ');
+                if (localStorage['bor_tags_'+cur] == undefined) return prev;
+				let tname = JSON.parse(localStorage['bor_tags_'+cur]).name;
+				let quotes = (/(\(|\))/.test(tname)?'"':'');
+                return prev + quotes + tname + quotes + (i+1 == a.length?'':' || ');
             }, '');
             tags = '('+tags+')';
             if (document.getElementsByClassName('js-datastore')[0].dataset.hiddenFilter != "") tags += ' || '+document.getElementsByClassName('js-datastore')[0].dataset.hiddenFilter;
@@ -801,6 +804,7 @@ color: #0a0;
 						InfernoAddElem('a',{dataset:{searchAdd:'__ydb_LastYears:0',searchShowHelp:''},innerHTML:'Created at that day of previous years'},[]),
 						InfernoAddElem('a',{dataset:{searchAdd:'__ydb_LastYearsAlt:0',searchShowHelp:''},innerHTML:'First seen at that day of previous years'},[]),
 						InfernoAddElem('a',{dataset:{searchAdd:'__ydb_Spoilered',searchShowHelp:''},innerHTML:'Spoilered by filter'},[]),
+						InfernoAddElem('a',{dataset:{searchAdd:'__ydb_Hidden',searchShowHelp:''},innerHTML:'Hidden by filter'},[]),
 						InfernoAddElem('a',{dataset:{searchAdd:'__ydb_Unspoil',searchShowHelp:''},innerHTML:'Unspoil result'},[]),
 						InfernoAddElem('a',{dataset:{searchAdd:'__ydb_Yesterday',searchShowHelp:''},innerHTML:'Uploaded yesterday'},[]),
 						InfernoAddElem('a',{dataset:{searchAdd:'__ydb_DaysAgo:2',searchShowHelp:''},innerHTML:'Uploaded X days ago'},[])
@@ -1518,7 +1522,7 @@ color: #0a0;
 
 	function UA(e) {
 		let nameEncode = function(name) {
-			return encodeURI(name.replace(/\-/g,'-dash-').replace(/\+/g,'-plus-').replace(/\:/g,'-colon-').replace(/\./g,'-dot-').replace(/\//g,'-fwslash-').replace(/\\/g,'-bwslash-').replace(/ /g,'+'));
+			return encodeURI(name.replace(/\-/g,'-dash-').replace(/\+/g,'-plus-').replace(/\:/g,'-colon-').replace(/\./g,'-dot-').replace(/\//g,'-fwslash-').replace(/\\/g,'-bwslash-').replace(/ /g,'+')).replace(/\&lt;/g,'%3C');
 		};
 
 		let createUser = function(name, aliases, id) {
@@ -1613,9 +1617,9 @@ color: #0a0;
 						n.innerHTML = req.responseText;
 						nx = n.getElementsByTagName('h1')[0].innerHTML.slice(0,-11);
 					}
-					
+
 					if (simplyReturn) return x;
-					
+
 					if (user.id == undefined) {
 						user.id = x;
                         userbase.idIndex[user.id] = user.name;
@@ -1671,10 +1675,11 @@ color: #0a0;
                     if (req.status === 200) {
 						let id;
 						try {
+                            console.log(req.responseText);
 							id = JSON.parse(req.responseText).id;
 						}
 						catch(e) {
-							debug('YDB:U','Failed to get timestamp from name '+user.name+'. Encoded to '+nameEncode(user.name)+'. Maybe it\'s encoder issue, contact dev.', 2);
+							debug('YDB:U','Failed to encode timestamp from name '+user.name+'. Encoded to '+nameEncode(user.name)+'. Maybe it\'s encoder issue, contact dev.', 2);
 						}
 						return id;
 					}
@@ -1702,7 +1707,7 @@ color: #0a0;
 
 		let fixDB = function() {
 			//filling userbase.idIndex
-			
+
 			for (let i in userbase.users) {
 				let u = userbase.users[i];
 				if (u.id != undefined) {
@@ -1717,9 +1722,9 @@ color: #0a0;
 					}
 				}
 			}
-			
+
 			//handling userbase.lost
-			
+
 			for (let i in userbase.lost) {
 				let u = userbase.lost[i];
 				if (u.id != undefined) {
@@ -1732,7 +1737,7 @@ color: #0a0;
 								if (nu.aliases[j] == u.name) found = true;
 							}
 							if (!found) nu.aliases.push(u.name);
-							
+
 							for (let k=0; k<u.aliases.length; k++) {
 								found = false;
 								for (let j=0; j<nu.aliases.length; j++) {
@@ -1740,7 +1745,7 @@ color: #0a0;
 								}
 								if (!found) nu.aliases.push(u.aliases[k]);
 							}
-							
+
 							delete userbase.lost[i];
 						}
 						else {
@@ -1750,7 +1755,7 @@ color: #0a0;
 				}
 			}
 		};
-		
+
 		if (!userbaseStarted) {
 			getUserId = function (name) {return getTimestamp({name:name},false,true);};
 			addUserInBase = function (name, id) {createUser(name,[],id);};
@@ -1793,7 +1798,7 @@ color: #0a0;
 				delete userbase.ttu;
 				delete userbase.lastRun;
 			}
-			
+
 			if (Date.now() - userbaseTS.fix > UBinterval) {
 				userbaseTS.fix = Date.now();
 				tswrite();
@@ -1886,7 +1891,7 @@ color: #0a0;
 				}
 			}
 
-			
+
 			for (let i in userbase.users) {
 				if (userbase.users[i].id == undefined) {
 					userbase.users[i].id = getTimestamp(userbase.users[i],false,true);
