@@ -25,7 +25,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.3.15
+// @version      0.3.16
 // @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
 // @author       stsyn
 // @grant        none
@@ -589,7 +589,7 @@
 		let ch = function(e,arg,first) {
 		};
 
-		let chall =function() {
+		let chall = function() {
 			let s = location.search;
 			let es = ['form.header__search .input','#_ydb_s_qpusher_sf','#_ydb_s_qpusher_sd'];
 			let args = ['q','sf','sd'];
@@ -602,15 +602,21 @@
 						val = window._YDB_public.funcs.tagAliases(e.value,{});
 				}
 				let t = compileQueryComponent(val);
-				if (myURL.params[arg] == "" || myURL.params[arg] == undefined) {
+				/*if (myURL.params[arg] == "" || myURL.params[arg] == undefined) {
 					if (location.search == "" && i==0) s += '?'+arg+'='+val;
 					else s += '&'+arg+'='+val;
 				}
 				else {
                     s = s.replace(new RegExp(arg+'='+myURL.params[arg]+'(%3A\\d{7}|)',''), arg+'='+val);
-                }
+                }*/
+				myURL.params[arg] = t;
+				s = '?';
+				for (let x in myURL.params) {
+					s += (s!='?'?'&':'') + x + '=' + myURL.params[x];
+				}
 			}
 			document.getElementById('_ydb_s_qpusher').search = s;
+			console.log(s);
 		};
 
 		if (document.getElementById('_ydb_s_qpusher')) setTimeout(function() {
