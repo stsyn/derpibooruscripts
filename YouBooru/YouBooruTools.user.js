@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.41
+// @version      0.5.42
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -52,6 +52,7 @@
     let result;
 	let version = 0;
 	let artists = [];
+	let isEditors = [];
 	let bps = ['princess luna','tempest shadow','starlight glimmer','rarity','oc:blackjack','princess celestia'];
 	let sps = [{name:'solo',image:'https://derpicdn.net/img/view/2016/8/22/1231050.png'},
 			   {name:'patreon preview',image:'https://derpicdn.net/img/view/2016/6/3/1169448.png'},
@@ -101,6 +102,16 @@ color: #e0e0e0  !important;
 
 body ._ydb_green {
 background: #67af2b !important;
+color: #fff !important;
+}
+
+body[data-theme*="dark"] ._ydb_orange{
+background: #8b5b26;
+color: #e0e0e0  !important;
+}
+
+body ._ydb_orange {
+background: #9f6f2b !important;
 color: #fff !important;
 }
 
@@ -1128,18 +1139,18 @@ color: #0a0;
 	//highlight artist
 	function getArtists() {
 		if (!((parseInt(location.pathname.slice(1))>=0 && location.pathname.split('/')[2] == undefined) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && location.pathname.split('/')[3] == undefined))) return;
-		let initHighlight = function(n) {
+		let initHighlight = function(n, editor) {
 			if (document.querySelector('.image_uploader a') != undefined && document.querySelector('.image_uploader a').innerHTML == n) {
 				for (let i=0; i<document.querySelectorAll('.image_uploader a').length; i++) {
-					document.querySelectorAll('.image_uploader a')[i].classList.add('_ydb_green');
+					document.querySelectorAll('.image_uploader a')[i].classList.add(editor?'_ydb_orange':'_ydb_green');
 				}
 			}
 		}
 
 		let callback = function(r) {
-			let x = addElem('div',{innerHTML:r.responseText,style:'display:none'},document.body);
+			let x = InfernoAddElem('div',{innerHTML:r.responseText,style:'display:none'},[]);
 			let exit = function() {
-				document.body.removeChild(x);
+				//document.body.removeChild(x);
 			};
 			for (let i=0; i<x.querySelectorAll('.tag-info__more strong').length; i++) {
 				let ax = x.querySelectorAll('.tag-info__more strong')[i];
@@ -1150,11 +1161,12 @@ color: #0a0;
 						return;
 					}
 					artists.push(n.innerHTML);
+					isEditors.push(r.el.innerHTML.startsWith('editor:'));
 					while (n.nextSibling != undefined && n.nextSibling.nextSibling != undefined && n.nextSibling.nextSibling.tagName == 'A') {
 						n = n.nextSibling.nextSibling;
 						artists.push(n.innerHTML);
 					}
-					initHighlight(n.innerHTML);
+					initHighlight(n.innerHTML, r.el.innerHTML.startsWith('editor:'));
 					let id;
 					if (userbase.idIndex[n.innerHTML] == undefined) {
 						id = getUserId(n.innerHTML);
@@ -1168,7 +1180,7 @@ color: #0a0;
 						if (!r.u) UAwrite();
 						else userCheck(n.innerHTML, id);
 					}
-					highlightArtist(document, n.innerHTML);
+					highlightArtist(document, n.innerHTML, r.el.innerHTML.startsWith('editor:'));
 					break;
 				}
 			}
@@ -1194,8 +1206,9 @@ color: #0a0;
 			if (userbase.artists[el.innerHTML] != undefined && Math.random()*200>1) {
 				let n = userbase.idIndex[userbase.artists[el.innerHTML]];
 				artists.push(n);
-				initHighlight(n);
-				highlightArtist(document, n);
+				isEditors.push(el.innerHTML.startsWith('editor:'));
+				initHighlight(n,el.innerHTML.startsWith('editor:'));
+				highlightArtist(document, n, el.innerHTML.startsWith('editor:'));
 			}
 			else {
 				if (checked > 1) return;
@@ -1216,19 +1229,19 @@ color: #0a0;
 		}
 	}
 
-	function highlightArtist(e, name) {
-		let highlight = function(e,n) {
+	function highlightArtist(e, name, editor) {
+		let highlight = function(e,n, editor) {
 			if (document.querySelector('.image_uploader a') == undefined) return;
 			for (let i=0; i<e.getElementsByClassName('communication__body').length; i++) {
 				let el = e.getElementsByClassName('communication__body')[i];
 				if (el.querySelector('.communication__body__sender-name a') != undefined && el.querySelector('.communication__body__sender-name a').innerHTML == n) {
-					el.querySelector('.communication__body__sender-name a').classList.add('flash--success');
+					el.querySelector('.communication__body__sender-name a').classList.add(editor?'flash--warning':'flash--success');
 				}
 			}
 		};
-		if (name != undefined) highlight(e, name);
+		if (name != undefined) highlight(e, name, editor);
 		else {
-			for (let i=0; i<artists.length; i++) highlight(e, artists[i]);
+			for (let i=0; i<artists.length; i++) highlight(e, artists[i], isEditors[i]);
 		}
 	}
 
@@ -1522,7 +1535,7 @@ color: #0a0;
 
 	function UA(e) {
 		let nameEncode = function(name) {
-			return encodeURI(name.replace(/\-/g,'-dash-').replace(/\+/g,'-plus-').replace(/\:/g,'-colon-').replace(/\./g,'-dot-').replace(/\//g,'-fwslash-').replace(/\\/g,'-bwslash-').replace(/ /g,'+')).replace(/\&lt;/g,'%3C');
+			return encodeURI(name.replace(/\-/g,'-dash-').replace(/\+/g,'-plus-').replace(/\:/g,'-colon-').replace(/\./g,'-dot-').replace(/\//g,'-fwslash-').replace(/\\/g,'-bwslash-').replace(/ /g,'+')).replace(/\&lt;/g,'%3C').replace(/\#/,'%2523');
 		};
 
 		let createUser = function(name, aliases, id) {
@@ -1669,13 +1682,13 @@ color: #0a0;
 					else url = '/profiles/'+nameEncode(user.name)+'.json';
 				}
 				debug('YDB:U','Getting user '+user.name+' info.',0);
+				console.log(user, getName, simplyReturn, url);
 				req.open('GET', url, !simplyReturn);
 				req.send();
                 if (simplyReturn) {
                     if (req.status === 200) {
 						let id;
 						try {
-                            console.log(req.responseText);
 							id = JSON.parse(req.responseText).id;
 						}
 						catch(e) {
@@ -1895,6 +1908,7 @@ color: #0a0;
 			for (let i in userbase.users) {
 				if (userbase.users[i].id == undefined) {
 					userbase.users[i].id = getTimestamp(userbase.users[i],false,true);
+					console.log(userbase.users[i]);
 					write();
 					return;
 				}
