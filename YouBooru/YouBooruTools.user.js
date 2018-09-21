@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.42
+// @version      0.5.43
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -26,7 +26,6 @@
 // @require      https://raw.githubusercontent.com/blueimp/JavaScript-MD5/master/js/md5.min.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagDB0.js
-// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagShortAliases0.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/badgesDB0.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0.lib.js
 
@@ -142,7 +141,7 @@ color: #0a0;
 }
 `;
 
-    let tagDB ={normal:{character:[],'content-official':[],error:["artist needed","source needed","dead source","useless source url"],oc:["oc","oc only","unnamed oc"],origin:["screencap","edit","edited screencap","derpibooru exclusive","alternate version","color edit","them's fightin' herds"],rating:["safe","explicit","questionable","suggestive","grimdark","semi-grimdark", "grotesque"],spoiler:["leak"]},regulars:{oc:/^oc:/g,origin:/^(artist:|editor:|colorist:)/g,spoiler:/^spoiler:/g},list:{oc:[],origin:[]}};
+    let tagDB ={normal:{character:["twilight sparkle","rainbow dash","pinkie pie","fluttershy","rarity","applejack","princess luna","princess celestia","spike","trixie","derpy hooves","scootaloo","sweetie belle","sunset shimmer","apple bloom","vinyl scratch","starlight glimmer","queen chrysalis","dj pon-3","princess cadance","discord","lyra heartstrings","big macintosh","octavia melody","shining armor","nightmare moon","sci-twi","bon bon","sweetie drops","soarin'","spitfire","sonata dusk","king sombra","maud pie","adagio dazzle","flash sentry","doctor whooves","time turner","cheerilee","diamond tiara","gilda","angel bunny","aria blaze","zecora","silver spoon","royal guard","berry punch","berryshine","braeburn","daring do"],'content-official':["equestria girls","rainbow rocks","my little pony: the movie","friendship games","legend of everfree"],'content-fanmade':["fallout equestria"],error:["artist needed","source needed","dead source","useless source url"],oc:["oc","oc only"],origin:["screencap","edit","edited screencap","derpibooru exclusive","alternate version","color edit"],rating:["safe","explicit","questionable","suggestive","grimdark","semi-grimdark", "grotesque"],spoiler:[]},regulars:{oc:/^oc:/g,origin:/^(artist:|editor:|colorist:)/g,spoiler:/^spoiler:/g,'content-fanmade':/^(comic:|fanfic:|artpack:|art pack:|tumblr:)/g},list:{oc:[],origin:[]}};
     function _getTagDB() {
         try {
             tagDB = getTagDB();
@@ -1161,12 +1160,12 @@ color: #0a0;
 						return;
 					}
 					artists.push(n.innerHTML);
-					isEditors.push(r.el.innerHTML.startsWith('editor:'));
+					isEditors.push(r.el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'));
 					while (n.nextSibling != undefined && n.nextSibling.nextSibling != undefined && n.nextSibling.nextSibling.tagName == 'A') {
 						n = n.nextSibling.nextSibling;
 						artists.push(n.innerHTML);
 					}
-					initHighlight(n.innerHTML, r.el.innerHTML.startsWith('editor:'));
+					initHighlight(n.innerHTML, r.el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'));
 					let id;
 					if (userbase.idIndex[n.innerHTML] == undefined) {
 						id = getUserId(n.innerHTML);
@@ -1180,7 +1179,7 @@ color: #0a0;
 						if (!r.u) UAwrite();
 						else userCheck(n.innerHTML, id);
 					}
-					highlightArtist(document, n.innerHTML, r.el.innerHTML.startsWith('editor:'));
+					highlightArtist(document, n.innerHTML, r.el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'));
 					break;
 				}
 			}
@@ -1206,9 +1205,9 @@ color: #0a0;
 			if (userbase.artists[el.innerHTML] != undefined && Math.random()*200>1) {
 				let n = userbase.idIndex[userbase.artists[el.innerHTML]];
 				artists.push(n);
-				isEditors.push(el.innerHTML.startsWith('editor:'));
-				initHighlight(n,el.innerHTML.startsWith('editor:'));
-				highlightArtist(document, n, el.innerHTML.startsWith('editor:'));
+				isEditors.push(el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'));
+				initHighlight(n,el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'));
+				highlightArtist(document, n, el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'));
 			}
 			else {
 				if (checked > 1) return;
