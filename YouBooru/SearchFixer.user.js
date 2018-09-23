@@ -25,7 +25,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.3.16
+// @version      0.3.17
 // @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
 // @author       stsyn
 // @grant        none
@@ -295,7 +295,7 @@
 			request(compileXQuery(findIter, true), r.sel, type, 'post');
 			return;
 		}
-		if (myURL.params.sf!= 'random') {
+		if (!myURL.params.sf.startsWith('random')) {
 			if (r.level == 'pre') {
 				if (u.total == 0) {
 					//не удалось найти следующую пикчу по номеру, пробуем теперь реально следующую
@@ -443,12 +443,13 @@
 	}
 
 	function compilePreQuery(type) {
+        console.log(myURL.params.sf, type);
 		//due to unpredictable sorting mechanism firstly gonna check by id
 		findIter = 1;
 		findTemp = 9;
 		if (type == 'find') return compileLtQuery(1);
 		if (myURL.params.sf.startsWith('gallery_id')) return compileXQuery(1, true);
-		if (type == 'random' || myURL.params.sf == "random") return compileQuery(type);
+		if (type == 'random' || myURL.params.sf.startsWith("random")) return compileQuery(type);
 
 		let prevUrl = '//'+myURL.host+'/search.json?q=('+myURL.params.q+')';
 		let dir = ((myURL.params.sd=='asc'^type=='prev')?'gt':'lt');
@@ -477,7 +478,7 @@
 		let d = 0;
 		if (delta != undefined) d = delta*((myURL.params.sd=='asc'^type=='prev')?-1:1);
 		let prevUrl = '//'+myURL.host+'/search.json?q=('+myURL.params.q+')';
-		if (type !='random' && myURL.params.sf != "random") {
+		if (type !='random' && myURL.params.sf.startsWith('random')) {
 			let cscore;
 			if (settings.pregain) cscore = preparam[myURL.params.sf];
 			else cscore = gainParams();
@@ -497,7 +498,7 @@
 			}
 			prevUrl+='&perpage=3&sf='+myURL.params.sf+'&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
 		}
-		else prevUrl+='&perpage='+(myURL.params.sf=="random"?4:3)+'&sf=random';
+		else prevUrl+='&perpage='+(myURL.params.sf.startsWith('random')?4:3)+'&sf=random';
 		debug('SSF','Query: query '+prevUrl,0);
 		return prevUrl;
 	}
@@ -534,7 +535,7 @@
 
 	function compileXQuery(page, pp) {
 		let sf = myURL.params.sf;
-		if (myURL.params.sf == '' || myURL.params.sf == 'wilson' || myURL.params.sf == 'random' || myURL.params.sf == 'relevance') sf = 'created_at';
+		if (myURL.params.sf == '' || myURL.params.sf == 'wilson' || myURL.params.sf.startsWith('random') || myURL.params.sf == 'relevance') sf = 'created_at';
 		debug('SSF','Pagination query: page '+page+', query '+myURL.params.q+', sort '+sf,0);
 		return '//'+myURL.host+'/search'+(pp?'.json':'')+'?q='+myURL.params.q+(pp?'&perpage=50':'')+'&sf='+(sf==undefined?'':sf)+'&sd='+(myURL.params.sd==undefined?'':myURL.params.sd)+'&page='+page;
 	}
@@ -653,12 +654,12 @@
 
 	function execute() {
 		let url, req;
-		if (myURL.params.sf != "random") {
+		if (!myURL.params.sf.startsWith('random')) {
 			crLink('.js-prev', 'pre', 'prev');
 			crLink('.js-next', 'pre', 'next');
 
 		}
-		if (settings.randomButton || myURL.params.sf == "random") {
+		if (settings.randomButton || myURL.params.sf.startsWith('random')) {
 			crLink('.js-rand', 'post', 'random');
 		}
 	}
@@ -716,7 +717,7 @@
 		myURL.params.sf != 'relevance' &&
 		!(myURL.params.sf == 'score' && !settings.score) &&
 		!(myURL.params.sf == 'comments' && !settings.comments) &&
-		!(myURL.params.sf == 'random' && !settings.random) &&
+		!(myURL.params.sf.startsWith('random') && !settings.random) &&
 		!(myURL.params.sf.startsWith('gallery_id') && !settings.gallery) &&
 		!((myURL.params.sf == 'width' || myURL.params.sf == 'height') && !settings.sizes)
 	) {
@@ -725,11 +726,11 @@
 		else {
 			document.querySelectorAll('.js-next')[0].addEventListener('click',function(e) {
 				commonClickAction(e);
-				crLink('.js-next', (myURL.params.sf=='random')?'post':'pre', 'next');
+				crLink('.js-next', myURL.params.sf.startsWith('random')?'post':'pre', myURL.params.sf.startsWith('random')?'random':'next');
 			});
 			document.querySelectorAll('.js-prev')[0].addEventListener('click',function(e) {
 				commonClickAction(e);
-				crLink('.js-prev', (myURL.params.sf=='random')?'post':'pre', 'prev');
+				crLink('.js-prev', myURL.params.sf.startsWith('random')?'post':'pre', myURL.params.sf.startsWith('random')?'random':'prev');
 			});
 			document.querySelectorAll('.js-rand')[0].addEventListener('click',function(e) {
 				commonClickAction(e);
@@ -743,7 +744,7 @@
 		(myURL.params.sf == 'comments' && settings.comments) ||
 		(myURL.params.sf != undefined && myURL.params.sf.startsWith('gallery_id') && settings.gallery) ||
 		((myURL.params.sf == 'width' || myURL.params.sf == 'height') && settings.sizesUp) ||
-		((((myURL.params.sf == undefined || myURL.params.sf == '') && myURL.params.q != undefined && myURL.params.q != '' && myURL.params.q != '%2A') || myURL.params.sf == 'wilson' || myURL.params.sf == 'created_at' || myURL.params.sf == 'random' || myURL.params.sf == 'relevance') && settings.everyUp)
+		((((myURL.params.sf == undefined || myURL.params.sf == '') && myURL.params.q != undefined && myURL.params.q != '' && myURL.params.q != '%2A') || myURL.params.sf == 'wilson' || myURL.params.sf == 'created_at' || myURL.params.sf.startsWith('random') || myURL.params.sf == 'relevance') && settings.everyUp)
 
 	)) {
 		document.querySelectorAll('.js-up')[0].addEventListener('click',function(e) {
