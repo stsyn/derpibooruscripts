@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.43
+// @version      0.5.44
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1205,9 +1205,9 @@ color: #0a0;
 			if (userbase.artists[el.innerHTML] != undefined && Math.random()*200>1) {
 				let n = userbase.idIndex[userbase.artists[el.innerHTML]];
 				artists.push(n);
-				isEditors.push(el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'));
-				initHighlight(n,el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'));
-				highlightArtist(document, n, el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'));
+				isEditors.push(el.innerHTML.startsWith('editor:') || el.innerHTML.startsWith('colorist:'));
+				initHighlight(n,el.innerHTML.startsWith('editor:') || el.innerHTML.startsWith('colorist:'));
+				highlightArtist(document, n, el.innerHTML.startsWith('editor:') || el.innerHTML.startsWith('colorist:'));
 			}
 			else {
 				if (checked > 1) return;
