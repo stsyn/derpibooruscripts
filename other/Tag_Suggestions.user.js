@@ -8,7 +8,7 @@
 // @downloadURL https://github.com/stsyn/derpibooruscripts/raw/master/other/Tag_Suggestions.user.js
 // @installURL  https://github.com/stsyn/derpibooruscripts/raw/master/other/Tag_Suggestions.user.js
 // @updateURL   https://github.com/stsyn/derpibooruscripts/raw/master/other/Tag_Suggestions.user.js
-// @version     1.1.1
+// @version     1.1.2
 // @grant       none
 // ==/UserScript==
 
@@ -419,7 +419,7 @@ window.tagSuggestions = {
 				});
 
 				//Initial update happens when clicking on edit, or immeadiately on a new upload
-				var editButton = document.querySelector("#image_options_area #tag-sauce-toggle");
+				var editButton = document.querySelector("#image_options_area .tag-sauce-toggle");
 				if(editButton) {
 					editButton.addEventListener("click", function() { that.initSuggestions(); });
                 }
