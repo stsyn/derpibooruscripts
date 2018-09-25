@@ -8,7 +8,7 @@
 // @downloadURL https://github.com/stsyn/derpibooruscripts/raw/master/other/Tag_Suggestions.user.js
 // @installURL  https://github.com/stsyn/derpibooruscripts/raw/master/other/Tag_Suggestions.user.js
 // @updateURL   https://github.com/stsyn/derpibooruscripts/raw/master/other/Tag_Suggestions.user.js
-// @version     1.1.0
+// @version     1.1.1
 // @grant       none
 // ==/UserScript==
 
@@ -45,9 +45,8 @@ var config = {
 /////////////////////////////////////
 
 window.addTag = function(a,b,c, that) {
-    console.log(a,b,c);
     a.value+=', '+b;
-    c.getElementsByClassName('js-taginput-show-tag_input')[0].click();
+    c.getElementsByClassName('js-taginput-show')[0].click();
     //that.updateTags(that);
 }
 
@@ -133,7 +132,7 @@ window.tagSuggestions = {
 					console.log("[TagSuggestions] Derpibooru API returned an error: " + textStatus + "\n" + errorThrown);
 				}],
 			beforeSend: function(jqXHR) {
-				jqXHR.setRequestHeader("User-Agent", navigator.userAgent + " TagSuggestions/1.0");
+				//jqXHR.setRequestHeader("User-Agent", navigator.userAgent + " TagSuggestions/1.0");
 			}
 		});
 
@@ -393,7 +392,6 @@ window.tagSuggestions = {
 	run: function(config) {
 		this.config = config;
 
-        console.log('check');
 		/* Add styles */
 		$("head").append('<style type="text/css">' + this.styles.replace("%MAX_HEIGHT%", this.config.MAX_DISPLAY_ROWS * 35) + '</style>');
 
@@ -421,11 +419,13 @@ window.tagSuggestions = {
 				});
 
 				//Initial update happens when clicking on edit, or immeadiately on a new upload
-				var editButton = document.querySelector("#tag-sauce-toggle");
-				if(editButton)
+				var editButton = document.querySelector("#image_options_area #tag-sauce-toggle");
+				if(editButton) {
 					editButton.addEventListener("click", function() { that.initSuggestions(); });
+                }
 				else
 					that.initSuggestions();
+
 
 				//Init observer
 				that.tagsinputdiv = tagsinputdiv;
@@ -433,7 +433,6 @@ window.tagSuggestions = {
 					//Toggling the editor removes every node and adds
 					//it back, so we just ignore all bulk changes
 					var mutation = mutations[0];
-                    console.log(mutations);
 					if(mutations.length == 1 && mutation.addedNodes  .length == 1) {
 						var addedSpan   = mutation.addedNodes[0];
 						if(addedSpan.tagName   == "SPAN") that.tagAdded  (addedSpan.getElementsByTagName('a')[0].dataset.tagName);
