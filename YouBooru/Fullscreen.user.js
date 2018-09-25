@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.7
+// @version      0.7.8
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -756,6 +756,7 @@ color: #777;
 
 	function resize(event) {
 		if (!state.enabled) return;
+        if (document.querySelector('.image-filtered.hidden') == null) return;
 		dropExecution(event);
 		if (settings.singleMode) {
 			rescale();
@@ -859,9 +860,11 @@ color: #777;
 				}}]},[]);
 			}
 			else {
-				objects.image.querySelector('[type="video/webm"]').src = JSON.parse(objects.icontainer.dataset.uris).webm;
-				objects.image.querySelector('[type="video/mp4"]').src = JSON.parse(objects.icontainer.dataset.uris).mp4;
-				objects.image.addEventListener('click', singleEvent);
+				if (!/full.webm/.test(objects.image.querySelector('[type="video/webm"]').src)) {
+					objects.image.querySelector('[type="video/webm"]').src = JSON.parse(objects.icontainer.dataset.uris).webm;
+					objects.image.querySelector('[type="video/mp4"]').src = JSON.parse(objects.icontainer.dataset.uris).mp4;
+					objects.image.addEventListener('click', singleEvent);
+				}
 			}
 		}
 		if (!pub.isVideo && !singleFirstChange && settings.singleMode) {
@@ -1058,7 +1061,7 @@ color: #777;
 
 		}
 
-		if (pub.isVideo && settings.singleMode && (!/\/full.webm/.test(objects.image.querySelector('[type="video/webm"]').src) || !singleFirstChange)) {
+		if (objects.image != undefined && pub.isVideo && settings.singleMode && (!/\/full.webm/.test(objects.image.querySelector('[type="video/webm"]').src) || !singleFirstChange)) {
 			objects.image.removeAttribute('src');
 			objects.image.querySelector('[type="video/webm"]').src = JSON.parse(objects.icontainer.dataset.uris).webm;
 			objects.image.querySelector('[type="video/mp4"]').src = JSON.parse(objects.icontainer.dataset.uris).mp4;
@@ -1148,13 +1151,14 @@ color: #777;
 	function dropExecution(event) {
 		if (!state.enabled || !settings.singleMode) return;
 		if (document.querySelector('.image-filtered.hidden') == null) return;
-		if (event != undefined) event.stopPropagation();
+		if (event != undefined) event.stopImmediatePropagation();
 	}
 
 	function singleEvent(event) {
 		if (!state.enabled || !settings.singleMode) return;
 		if (event != undefined) event.stopPropagation();
 		dropExecution(event);
+		console.log('stahp');
         singleDefSize = !singleDefSize;
 		pub.scaled = ''+singleDefSize;
 		if (pub.scaled != 'false') {
@@ -1165,10 +1169,11 @@ color: #777;
 			initalZoom();
 		}
 		objects.dcontainer.dataset.scaled = pub.scaled;
-		if (pub.isVideo) {
+		if (pub.isVideo && !/full.webm/.test(objects.image.querySelector('[type="video/webm"]').src)) {
 			objects.image.querySelector('[type="video/webm"]').src = JSON.parse(objects.icontainer.dataset.uris).webm;
 			objects.image.querySelector('[type="video/mp4"]').src = JSON.parse(objects.icontainer.dataset.uris).mp4;
 		}
+		return false;
     }
 
 
