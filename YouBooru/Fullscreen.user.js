@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.8
+// @version      0.7.9
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -756,7 +756,7 @@ color: #777;
 
 	function resize(event) {
 		if (!state.enabled) return;
-        if (document.querySelector('.image-filtered.hidden') == null) return;
+		if (document.querySelector('.image-show-container .image-show.hidden') != null) return;
 		dropExecution(event);
 		if (settings.singleMode) {
 			rescale();
@@ -856,7 +856,7 @@ color: #777;
 			if (!pub.isVideo) {
 				objects.fullImage = InfernoAddElem('img',{style:{display:'none'},src:JSON.parse(objects.icontainer.dataset.uris).full, events:[{t:'load',f:function() {
 					objects.dcontainer.addEventListener('click', singleEvent);
-					objects.icontainer.addEventListener('click', dropExecution);
+					//objects.icontainer.addEventListener('click', dropExecution);
 				}}]},[]);
 			}
 			else {
@@ -952,6 +952,7 @@ color: #777;
         if (pub.scaled != 'false' && !settings.singleMode) {
             return;
         }
+		if (document.querySelector('.image-show-container .image-show.hidden') != null) return;
 		if (objects.image == undefined) return;
         let de = document.documentElement;
         if (pub.zoom >   20) pub.zoom =   20;
@@ -1150,15 +1151,14 @@ color: #777;
 
 	function dropExecution(event) {
 		if (!state.enabled || !settings.singleMode) return;
-		if (document.querySelector('.image-filtered.hidden') == null) return;
 		if (event != undefined) event.stopImmediatePropagation();
 	}
 
 	function singleEvent(event) {
 		if (!state.enabled || !settings.singleMode) return;
+		if (document.querySelector('.image-show-container .image-show.hidden') != null) return;
 		if (event != undefined) event.stopPropagation();
-		dropExecution(event);
-		console.log('stahp');
+		//dropExecution(event);
         singleDefSize = !singleDefSize;
 		pub.scaled = ''+singleDefSize;
 		if (pub.scaled != 'false') {
