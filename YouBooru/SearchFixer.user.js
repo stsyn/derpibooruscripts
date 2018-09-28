@@ -25,7 +25,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.3.17
+// @version      0.3.18
 // @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
 // @author       stsyn
 // @grant        none
@@ -478,7 +478,7 @@
 		let d = 0;
 		if (delta != undefined) d = delta*((myURL.params.sd=='asc'^type=='prev')?-1:1);
 		let prevUrl = '//'+myURL.host+'/search.json?q=('+myURL.params.q+')';
-		if (type !='random' && myURL.params.sf.startsWith('random')) {
+		if (type !='random' && !myURL.params.sf.startsWith('random')) {
 			let cscore;
 			if (settings.pregain) cscore = preparam[myURL.params.sf];
 			else cscore = gainParams();
