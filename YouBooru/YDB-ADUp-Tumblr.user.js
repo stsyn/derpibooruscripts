@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Tumblr YDB:ADUp module
 // @namespace    http://tampermonkey.net/
-// @version      0.1.0
+// @version      0.1.1
 // @author       stsyn
 // @match        *://*/*
 
@@ -71,7 +71,7 @@
 			artist = u;
 		}
 		addElem('a',{innerHTML:'DB upload',target:'_blank',
-                     href:'//'+mainDomain+'/images/new?newImg='+encodeURIComponent('http://s3.amazonaws.com/data.tumblr.com'+img.replace(/_\d{3,}/, '_raw'))+
+                     href:'//'+mainDomain+'/images/new?newImg='+encodeURIComponent('https://media.tumblr.com'+img.replace(/_\d{3,}/, '_1280'))+
                      '&src='+encodeURIComponent(url)+'&tags='+encodeURIComponent('artist:'+artist)+'&description='+
                      (desc!=''?encodeURIComponent('[bq]'+desc+'[/bq]'):''),
                      style:'position:absolute;top:0;left:0;background:#000;color:#fff;opacity:0.4;max-width:10em;max-height:2em', events:[{t:'click',f:function(e){
