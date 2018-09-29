@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.5.44
+// @version      0.6.0
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -28,6 +28,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagDB0.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/badgesDB0.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0.lib.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruImitation0.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
@@ -1149,7 +1150,7 @@ color: #0a0;
 		let callback = function(r) {
 			let x = InfernoAddElem('div',{innerHTML:r.responseText,style:'display:none'},[]);
 			let exit = function() {
-				//document.body.removeChild(x);
+
 			};
 			for (let i=0; i<x.querySelectorAll('.tag-info__more strong').length; i++) {
 				let ax = x.querySelectorAll('.tag-info__more strong')[i];
@@ -1167,17 +1168,12 @@ color: #0a0;
 					}
 					initHighlight(n.innerHTML, r.el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'));
 					let id;
-					if (userbase.idIndex[n.innerHTML] == undefined) {
-						id = getUserId(n.innerHTML);
-						if (id == undefined) break;
-						userbase.artists[r.el.innerHTML] = id;
-						addUserInBase(n.innerHTML,id)
+					if (getUser(n.innerHTML).id == 0) {
+						addUserInBase(n.innerHTML, undefined, {tags:[r.el.innerHTML]})
 					}
 					else {
-						id = userbase.idIndex[n.innerHTML];
-						userbase.artists[r.el.innerHTML] = id;
-						if (!r.u) UAwrite();
-						else userCheck(n.innerHTML, id);
+						let user = getUser(n.innerHTML);
+						addUserInBase(user.name, user.id, {tags:[r.el.innerHTML]})
 					}
 					highlightArtist(document, n.innerHTML, r.el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'));
 					break;
@@ -1203,7 +1199,7 @@ color: #0a0;
 		let checked=0;
         let get = function(el) {
 			if (userbase.artists[el.innerHTML] != undefined && Math.random()*200>1) {
-				let n = userbase.idIndex[userbase.artists[el.innerHTML]];
+				let n = userbase.users[userbase.artists[el.innerHTML]].name;
 				artists.push(n);
 				isEditors.push(el.innerHTML.startsWith('editor:') || el.innerHTML.startsWith('colorist:'));
 				initHighlight(n,el.innerHTML.startsWith('editor:') || el.innerHTML.startsWith('colorist:'));
@@ -1515,10 +1511,7 @@ color: #0a0;
 	let userbase = {
 		users:{},
 		pending:[],
-		slowpending:[],
-		lost:{},
-		artists:{},
-		idIndex:{}
+		artists:{}
 	};
 	let userbase_local = {
 		friendlist:[],
@@ -1527,84 +1520,31 @@ color: #0a0;
 	let userbaseTS = {
 		ttu:0,
 		lastRun:0,
-		fix:0
+		fix:0,
+		migrated:false
 	};
 	let userbaseStarted = false;
-	let getUserId, addUserInBase, UAwrite, UACLwrite, userCheck, addUserPending;
+	let getUserId, getUserName, addUserInBase, UAwrite, UACLwrite, addUserPending, getUser, addUserPendingById;
+
 
 	function UA(e) {
+		let nameIndex = {};
 		let nameEncode = function(name) {
 			return encodeURI(name.replace(/\-/g,'-dash-').replace(/\+/g,'-plus-').replace(/\:/g,'-colon-').replace(/\./g,'-dot-').replace(/\//g,'-fwslash-').replace(/\\/g,'-bwslash-').replace(/ /g,'+')).replace(/\&lt;/g,'%3C').replace(/\#/,'%2523');
 		};
 
-		let createUser = function(name, aliases, id) {
-			let user;
-			id = parseInt(id);
-			if (userbase.users[name] != undefined) {
-				user = userbase.users[name];
-				let changed = false;
-				if (user.aliases.length<aliases.length) {
-					user.aliases = aliases;
-					changed = true;
-				}
-				if (user.id != id && id != undefined) {
-					delete userbase.idIndex[user.id];
-					user.id = id;
-					if (userbase.idIndex[id] != undefined && userbase.idIndex[id] != name) {
-						removeUser(userbase.idIndex[id]);
-					}
-					userbase.idIndex[id] = name;
-					changed = true;
-				}
-				if (changed) {
-					debug('YDB:U','Updated user '+name+'.',1);
-					write();
-				}
+		let getUserByName = function (name) {
+			if (nameIndex[name] != undefined) return userbase.users[nameIndex[name]];
+			for (let i in userbase.users) {
+				nameIndex[userbase.users[i].name] = i;
+				if (name == userbase.users[i].name) return userbase.users[i];
 			}
-			else {
-				if (name == undefined) {
-					let req = new XMLHttpRequest();
-					let url = '/lists/user_comments/'+id;
-					req.open('GET', url, false);
-					req.send();
-					let n = document.createElement('div');
-					n.innerHTML = req.responseText;
-					name = n.getElementsByTagName('h1')[0].innerHTML.slice(0,-11);
-				}
-				user = {
-					name:name,
-					aliases:aliases,
-					id:id
-				};
-				userbase.users[name] = user;
-				if (userbase.idIndex[id] != undefined && id != undefined && userbase.idIndex[id] != name) {
-					removeUser(userbase.idIndex[id]);
-				}
-				userbase.idIndex[user.id] = name;
-				debug('YDB:U','Added user '+name+'.',1);
-				write();
-			}
-			return user;
-		};
-
-		let addPending = function(user) {
-			//for (let i=0; i<userbase.pending.length; i++) if (user.id == userbase.pending[i]) return;
-			userbase.pending.push(user.id);
-		};
-
-		let removeUser = function(username) {
-			if (username == userbase.idIndex[userbase.users[username].id]) delete userbase.idIndex[userbase.users[username].id];
-			delete userbase.users[username];
-			for (let i=0; i<userbase.pending.length; i++) {
-				if (userbase.pending[i] == username) {
-					userbase.pending.splice(i,1);
-					return;
-				}
-			}
+			debug('YDB:U','Failed to find user with name "'+name+'".', 0);
+			return {id:0,name:'[UNKNOWN USER]',aliases:[],tags:[]}
 		};
 
 		let write = function() {
-			localStorage._ydb_toolsUB = JSON.stringify(userbase);
+			localStorage._ydb_toolsUB2 = JSON.stringify(userbase);
 		};
 
 		let clwrite = function() {
@@ -1616,186 +1556,296 @@ color: #0a0;
 			localStorage._ydb_toolsUBTS = JSON.stringify(userbaseTS);
 		};
 
-		let getTimestamp = function(user, getName, simplyReturn) {
-			let callback = function(req) {
+		let addPending = function(user) {
+			if (userbase.pending.indexOf(user.id) != -1) return;
+			userbase.pending.push(user.id);
+			debug('YDB:U','User "'+user.name+'" ('+user.id+') added to pending list.', 0);
+			write();
+		};
+
+		let addPendingById = function(id) {
+			if (userbase.pending.indexOf(id) != -1) return;
+			userbase.pending.push(id);
+			debug('YDB:U','User with id '+user.id+' added to pending list.', 0);
+			write();
+		};
+
+		let removeUser = function(id) {
+			let user = userbase.users[id];
+			if (user == undefined) return;
+			for (let i in user.tags) {
+				delete userbase.artists[user.tags[i]];
+			}
+			if (userbase.pending.indexOf(id) != -1) userbase.pending.splice(userbase.pending.indexOf(id),1);
+		};
+
+		let getId = function(name, callback) {
+			fetch('/profiles/'+nameEncode(name)+'.json',{method:'GET'})
+			.then(function (response) {
+				const errorMessage = {fail:true};
+				if (!response.ok) {
+					debug('YDB:U','Error in response while performing "updateId" on "'+name+'"', 2);
+					setTimeout(function() {getId(name, callback)}, 200);
+					errorMessage.retry = true;
+					return errorMessage;
+				}
+				if (response.redirected) {
+					debug('YDB:U','Redirected response while performing "updateId" on "'+name+'". Encoded to '+nameEncode(name), 2);
+					return errorMessage;
+				}
+				return response.json();
+			})
+			.then(data => {
+				if (data.fail) {
+					if (!data.retry) callback();
+					return;
+				}
 				try {
-					let x, nx;
-					if (!getName) {
-						x = JSON.parse(req.responseText).id;
-					}
-					else {
-						x = user.id;
-						let n = document.createElement('div');
-						n.innerHTML = req.responseText;
-						nx = n.getElementsByTagName('h1')[0].innerHTML.slice(0,-11);
-					}
-
-					if (simplyReturn) return x;
-
-					if (user.id == undefined) {
-						user.id = x;
-                        userbase.idIndex[user.id] = user.name;
-						write();
-					}
-					else {
-						if (user.id != x) {
-							delete userbase.idIndex[user.id];
-							userbase.lost[user.id] = user;
-							removeUser(user.name);
-						}
-						if (user.name != nx) {
-							createUser(nx,user.aliases.push(user.name),x);
-						}
-						write();
-					}
+					callback(data.id);
+					debug('YDB:U','Received id '+id+' of user "'+id+'".', 0);
 				}
 				catch(e) {
-					debug('YDB:U','Failed to decode timestamp from name '+user.name+'. Encoded to '+nameEncode(user.name)+'. Maybe it\'s encoder issue, contact dev.', 2);
-					debug('YDB:U','Error: '+e, 2);
+					debug('YDB:U','Failed to decode ID in reponse while performing "updateId" on "'+user.name+'". Encoded to '+nameEncode(user.name), 2);
 				}
-			};
-			let readyHandler = function(request) {
-				return function () {
-					if (request.readyState === 4) {
-						if (request.status === 200) return callback(request);
-						else if (request.status === 0) {
-							return false;
+			});
+		};
+
+		let getName = function(id, callback) {
+
+			fetch('/lists/user_comments/'+id,{method:'GET'})
+			.then(function (response) {
+				const errorMessage = {fail:true};
+				if (!response.ok) {
+					debug('YDB:U','Error in response while performing "updateName" on user with id '+id, 2);
+					return errorMessage;
+				}
+				if (response.redirected) {
+					debug('YDB:U','Redirected response while performing "updateName" on user with id '+id, 2);
+					return errorMessage;
+				}
+				return response.text();
+			})
+			.then(data => {
+				if (data.fail) return;
+				try {
+					let n = document.createElement('div');
+					n.innerHTML = data;
+					let name = n.getElementsByTagName('h1')[0].innerHTML.slice(0,-11);
+					debug('YDB:U','Received name "'+name+'" of user with id '+id+'.', 0);
+					callback(name);
+				}
+				catch(e) {
+					debug('YDB:U','Failed to find userName in reponse while performing "updateName" on user with id '+id+'.', 2);
+				}
+			});
+
+		};
+
+		let updateId = function(user, callback) {
+			getId(user.name, function (id) {
+				if (id != undefined)
+					user.id = id;
+				callback(user);
+			})
+		};
+
+		let updateName = function(user, callback) {
+			getName(user.id, function (name) {
+				if (user.name != undefined && user.name != '[UNKNOWN]' && user.name != name) {
+					user.aliases.push(user.name);
+					debug('YDB:U','User "'+user.name+'" ('+user.id+') was renamed into "'+name+'".', 0);
+				}
+				user.name = name;
+				callback(user);
+			})
+		};
+
+		let createUser = function(name, id, content) {
+			let writeEntry = function(newId) {
+				if (newId == undefined) return;
+				let user = {id:newId, name:name, aliases:[], tags:[]};
+				if (userbase.users[newId] != undefined) {
+					let changed = false;
+					let oldUser = userbase.users[newId];
+
+					user.aliases = oldUser.aliases;
+					//in case of renaming
+					if (user.name != oldUser.name) {
+						user.aliases.push(oldUser.name);
+						debug('YDB:U','User "'+oldUser.name+'" ('+user.id+') was renamed into "'+user.name+'".', 0);
+						if (getUserByName(user.name).id != id) {
+							//user with this name exists... should recheck old one
+							addPending(getUserByName(user.name));
 						}
-						else {
-							debug('YDB:U','Failed to get timestamp from name '+user.name+'. Encoded to '+nameEncode(user.name)+'. Maybe it\'s encoder issue, contact dev.', 2);
-							return false;
+						changed = true;
+					}
+
+					//adding aliases
+					if (content.aliases != undefined && content.aliases.length>0) {
+						for (let i=0; i<content.aliases.length; i++) {
+							let found = false;
+							for (let j=0; i<user.aliases.length; j++) {
+								if (content.aliases[i] == user.aliases[j]) {
+									found = true;
+									break;
+								}
+							}
+							if (!found) {
+								user.aliases.push(content.aliases[i]);
+								changed = true;
+							}
 						}
 					}
-				};
-			};
 
-			let get = function(user) {
-				let req = new XMLHttpRequest();
-				let url;
-				if (!simplyReturn) {
-					req.onreadystatechange = readyHandler(req);
-					url = '/lists/user_comments/'+user.id;
+					//adding artist tags
+					if (content.tags != undefined && content.tags.length>0) {
+						for (let i=0; i<content.tags.length; i++) {
+							let found = false;
+							for (let j=0; i<user.tags.length; j++) {
+								if (content.tags[i] == user.tags[j]) {
+									found = true;
+									break;
+								}
+							}
+							if (!found) {
+								user.tags.push(content.tags[i]);
+								if (userbase.artists[content.tags[i]] != undefined && userbase.artists[content.tags[i]] != user.id) {
+									//removing artist tag from user which is no longer connected to it
+									let u = userbase.users[userbase.artists[content.tags[i]]];
+									if (u.tags.indexOf(content.tags[i]) != -1) u.tags.splice(u.tags.indexOf(content.tags[i]),1);
+									debug('YDB:U','Removed tag "'+content.tags[i]+'" from "'+u.name+'" ('+u.id+') because "'+u.name+'" ('+u.id+') has it now.', 0);
+								}
+								userbase.artists[content.tags[i]] = user.id;
+								changed = true;
+							}
+						}
+					}
+
+					if (changed) {
+						userbase.users[newId] = user;
+						debug('YDB:U','Updated user "'+user.name+'" ('+user.id+').', 1);
+						write();
+					}
 				}
 				else {
-					if (getName) url = '/lists/user_comments/'+user.id;
-					else url = '/profiles/'+nameEncode(user.name)+'.json';
-				}
-				debug('YDB:U','Getting user '+user.name+' info.',0);
-				console.log(user, getName, simplyReturn, url);
-				req.open('GET', url, !simplyReturn);
-				req.send();
-                if (simplyReturn) {
-                    if (req.status === 200) {
-						let id;
-						try {
-							id = JSON.parse(req.responseText).id;
-						}
-						catch(e) {
-							debug('YDB:U','Failed to encode timestamp from name '+user.name+'. Encoded to '+nameEncode(user.name)+'. Maybe it\'s encoder issue, contact dev.', 2);
-						}
-						return id;
+					//new user
+					if (getUserByName(user.name).id != id && getUserByName(user.name).id != 0) {
+						//user with this name exists... should recheck old one
+						addPending(getUserByName(user.name));
 					}
-                }
+
+					//adding aliases
+					if (content.aliases != undefined && content.aliases.length>0) {
+						for (let i=0; i<content.aliases.length; i++) {
+							user.aliases.push(content.aliases[i]);
+						}
+					}
+
+					//adding artist tags
+					if (content.tags != undefined && content.tags.length>0) {
+						for (let i=0; i<content.tags.length; i++) {
+							user.tags.push(content.tags[i]);
+							if (userbase.artists[content.tags[i]] != undefined) {
+								//removing artist tag from user which is no longer connected to it
+								let u = userbase.users[userbase.artists[content.tags[i]]];
+								if (u.tags.indexOf(content.tags[i]) != -1) u.tags.splice(u.tags.indexOf(content.tags[i]),1);
+								debug('YDB:U','Removed tag "'+content.tags[i]+'" from "'+u.name+'" ('+u.id+') because "'+u.name+'" ('+u.id+') has it now.', 0);
+							}
+							userbase.artists[content.tags[i]] = user.id;
+						}
+					}
+
+					userbase.users[newId] = user;
+					debug('YDB:U','Created user "'+user.name+'" ('+user.id+').', 1);
+					write();
+				}
 			};
+			if (id == undefined) getId(name, writeEntry);
+			else writeEntry(id);
+		};
 
-			if (userbase.users[user.name] != undefined) {
-				user = userbase.users[user.name];
-			}
-			if (getName) {
-				/*userbaseTS.ttu -= (Date.now()-userbaseTS.lastRun);
-				if (userbaseTS.ttu <= 0) {
-					if (userbaseTS.lastRun == 0) userbaseTS.ttu = 0;*/
-					get(user);
-					/*userbaseTS.lastRun = Date.now();
-					userbaseTS.ttu += UBinterval/userbase.pending.length;
-                    userbaseTS.ttu = parseInt(userbaseTS.ttu);
-				}
-				tswrite();*/
-			}
-            else {
-				return get(user);
+		let migrate = function() {
+
+			if (localStorage._ydb_toolsUB == undefined) return;
+            let callWindow = function(inside) {
+                return ChildsAddElem('div',{className:'_ydb_window block__content'},document.body,inside);
             }
-		};
+            if (window._YDB_public != undefined && window._YDB_public.funcs != undefined && window._YDB_public.funcs.callWindow != undefined) {
+                callWindow = window._YDB_public.funcs.callWindow;
+            }
+            let win = callWindow([
+                InfernoAddElem('h1',{innerHTML:'Renewing userbase...'},[]),
+                InfernoAddElem('span',{innerHTML:'Please be patient and don\'t close or navigate tab.'},[]),
+                InfernoAddElem('hr',{},[]),
+                InfernoAddElem('span',{id:"_ydb_t_ub_status",innerHTML:'Reading...'},[])
+            ]);
+			try {
+				let inline = 0, errors = 0;
+				let temp = JSON.parse(localStorage._ydb_toolsUB);
+                let done = false;
 
-		let fixDB = function() {
-			//filling userbase.idIndex
-
-			for (let i in userbase.users) {
-				let u = userbase.users[i];
-				if (u.id != undefined) {
-					u.id = parseInt(u.id);
-					if (userbase.idIndex[u.id] != u.name) {
-						if (userbase.idIndex[u.id] != undefined) {
-							debug('YDB:T','User with id '+u.id+' already mentioned in idIndex with different name', 2);
-						}
-						else {
-							userbase.idIndex[u.id] = u.name;
-						}
-					}
-				}
-			}
-
-			//handling userbase.lost
-
-			for (let i in userbase.lost) {
-				let u = userbase.lost[i];
-				if (u.id != undefined) {
-					u.id = parseInt(u.id);
-					if (userbase.idIndex[u.id] != u.name) {
-						if (userbase.idIndex[u.id] != undefined) {
-							let nu = userbase.users[userbase.idIndex[u.id]];
-							let found = false;
-							for (let j=0; j<nu.aliases.length; j++) {
-								if (nu.aliases[j] == u.name) found = true;
-							}
-							if (!found) nu.aliases.push(u.name);
-
-							for (let k=0; k<u.aliases.length; k++) {
-								found = false;
-								for (let j=0; j<nu.aliases.length; j++) {
-									if (nu.aliases[j] == u.aliases[k]) found = true;
-								}
-								if (!found) nu.aliases.push(u.aliases[k]);
-							}
-
-							delete userbase.lost[i];
-						}
-						else {
-							debug('YDB:U','Lost user with id '+u.id+' has no mentions!', 2);
+				let finalize = function() {
+					for (let i in temp.artists) {
+						if (!isNaN(parseInt(temp.artists[i])) && userbase.users[userbase.artists[i]] != undefined) {
+							userbase.artists[i] = temp.artists[i];
+							userbase.users[userbase.artists[i]].tags.push(i);
 						}
 					}
+					for (let i in userbase_local.scratchpad) userbase.pending.push(i);
+					for (let i=0; i<userbase_local.friendlist.length; i++) {
+						if (userbase.pending.indexOf(userbase_local.friendlist[i]) != -1)
+							userbase.pending.push(userbase_local.friendlist[i]);
+					}
+					write();
+					userbaseTS.migrated = true;
+					tswrite();
+					if (errors == 0) debug('YDB:U','Database was successfully migrated to new version.', 1);
+					else debug('YDB:U','Database was migrated to new version with '+errors+' missed entries.', 1);
+					if (win != undefined) win.style.display = 'none';
+				};
+
+				let writeEntry = function(user) {
+					if (user.id != undefined) {
+						userbase.users[user.id] = user;
+					}
+                    else errors++;
+					inline--;
+					if (inline == 0 && done) finalize();
+				};
+
+				for (let i in temp.users) {
+					inline++;
+					let user = {
+						name:i,
+						id:temp.users[i].id,
+						aliases:temp.users[i].aliases,
+						tags:[]
+					};
+					if (user.id == undefined || isNaN(user.id)) updateId(user, function() {writeEntry(user)});
+					else writeEntry(user);
 				}
+                done = true;
+                if (inline == 0) finalize();
+				document.getElementById('_ydb_t_ub_status').innerHTML = 'Waiting for responses... If it takes too long (more than 5 seconds) reload page.';
+			}
+			catch (e) {
+				debug('YDB:U', 'Failed to migrate a database! '+e, 2);
 			}
 		};
+
 
 		if (!userbaseStarted) {
-			getUserId = function (name) {return getTimestamp({name:name},false,true);};
-			addUserInBase = function (name, id) {createUser(name,[],id);};
-			addUserPending = addPending;
+			getUserId = function (name, callback) {return getId(name, callback);};
+			getUserName = function (id, callback) {return getName(id, callback);};
+			getUser = function (name) {return getUserByName(name);};
+			addUserInBase = function (name, id, content) {createUser(name, id, content);};
+			addUserPending = function(user) {addPending(user);};
+			addUserPendingById = function(id) {addPendingById(id);};
 			UAwrite = function (name, id) {write();};
 			UACLwrite = function (name, id) {clwrite();};
-			userCheck = function (name, id) {getTimestamp({name:name, id:id},true,false);}
-			userbaseStarted = true;
 
 			//чтение
-			try {
-				let temp = JSON.parse(localStorage._ydb_toolsUB);
-				userbase = temp;
-			}
-			catch(e) {}
-			try {
-				let temp = JSON.parse(localStorage._ydb_toolsUBLocal);
-				userbase_local = temp;
-			}
-			catch(e) {
-				if (userbase.scratchpad != undefined || userbase.friendlist != undefined) {
-					userbase_local.scratchpad = userbase.scratchpad;
-					delete userbase.scratchpad;
-					userbase_local.friendlist = userbase.friendlist;
-					delete userbase.friendlist;
-					clwrite();
-				}
-			}
+			//metadata
 			try {
 				let temp = JSON.parse(localStorage._ydb_toolsUBTS);
 				userbaseTS = temp;
@@ -1806,162 +1856,140 @@ color: #0a0;
 					userbaseTS.lastRun = userbase.lastRun;
 				}
 			}
-			if (userbase.ttu != undefined) {
-				delete userbase.ttu;
-				delete userbase.lastRun;
+
+			//cloud database
+			try {
+				let temp = JSON.parse(localStorage._ydb_toolsUBLocal);
+				userbase_local = temp;
 			}
+			catch(e) {}
 
-			if (Date.now() - userbaseTS.fix > UBinterval) {
-				userbaseTS.fix = Date.now();
-				tswrite();
-				fixDB();
-				write();
+			//database
+			try {
+				let temp = JSON.parse(localStorage._ydb_toolsUB2);
+				userbase = temp;
 			}
-
-			if (userbase.idIndex == undefined) {
-				//y'know, reseting time
-				if (userbase.idIndex == undefined) userbase.idIndex = {};
-				if (userbase_local.friendlist == undefined) userbase_local.friendlist = [];
-				if (userbase_local.scratchpad == undefined) userbase_local.scratchpad = {};
-				if (userbase.artists == undefined) userbase.artists = {};
-				userbase.pending = [];
-
-				for (let i in userbase.users) {
-					let us = userbase.users[i];
-					if (us.id == undefined) us.id = getTimestamp(us, false, true);
-					userbase.idIndex[us.id] = us.name;
+			catch(e) {
+				if (localStorage._ydb_toolsUB != undefined) migrate();
+				else {
+					userbaseTS.migrated = true;
+					tswrite();
 				}
-				write();
 			}
 
+			//pending updates
 			if (userbase.pending.length>0) {
 				userbaseTS.ttu -= (Date.now()-userbaseTS.lastRun);
 				if (userbaseTS.ttu <= 0) {
 					if (userbaseTS.lastRun == 0) userbaseTS.ttu = 0;
-					getTimestamp(userbase.users[userbase.idIndex[userbase.pending[0]]], true);
-					userbase.pending.push(userbase.pending.shift());
-					userbaseTS.lastRun = Date.now();
-					userbaseTS.ttu += UBinterval/userbase.pending.length;
-                    userbaseTS.ttu = parseInt(userbaseTS.ttu);
+					updateName(userbase.users[userbase.pending[0]], function(user) {
+						debug('YDB:U','Updated user "'+user.name+'" ('+user.id+').', 1);
+						userbase.pending.shift();
+						if (userbase_local.friendlist.indexOf(user.id) != -1 || userbase_local.scratchpad[user.id] != undefined)
+							userbase.pending.push(user.id);
+						userbaseTS.lastRun = Date.now();
+						userbaseTS.ttu += UBinterval/userbase.pending.length;
+						userbaseTS.ttu = parseInt(userbaseTS.ttu);
+						tswrite();
+					});
 				}
 				tswrite();
 			}
 
-			if (!Array.isArray(userbase_local.friendlist)) userbase_local.friendlist = [];
-
+			userbaseStarted = true;
 			let touched = false;
+
+			//filling friends
 			for (let i=0; i<userbase_local.friendlist.length; i++) {
-				if (userbase.idIndex[userbase_local.friendlist[i]] == undefined) createUser(undefined, [], userbase_local.friendlist[i]);
+				if (userbase.users[userbase_local.friendlist[i]] == undefined) {
+					createUser('[UNKNOWN]', userbase_local.friendlist[i], {});
+					addPending(i);
+				}
 				touched = true;
 			}
+			//filling scartchpad
 			for (let i in userbase_local.scratchpad) {
-				if (userbase.idIndex[i] == undefined) createUser(undefined, [], i);
+				if (userbase.users[i] == undefined) {
+					createUser('[UNKNOWN]', i, {});
+					addPending(i);
+				}
 				touched = true;
 			}
+
+			//writing in cloud storage
 			if (touched) write();
 
+			//gathering old names from profile page
 			if (document.querySelector('.profile-top__name-header') != undefined) {
 				let name = document.querySelector('.profile-top__name-header').innerHTML.slice(0, -10);
-				if (userbase.users[name] == undefined) {
+				if (getUserByName(name).id == 0) {
 					if (document.querySelector('.profile-top__name-header').nextSibling.tagName == undefined) {
 						let t = document.querySelector('.profile-top__name-header').nextSibling.wholeText;
 						t = t.substring(21,t.length-2).trim();
 						let aliases = [t];
-						if (userbase.users[t] != undefined) {
-							let id = document.querySelector('a[href*="/lists/user_comments"]').href.split('/').pop();
-							if (userbase.users[t].id == id) {
-								aliases = userbase.users[t].aliases;
-								aliases.push(t);
-								removeUser(t);
-								createUser(name, aliases, id);
-							}
-							else {
-								userbase.lost[userbase.users[t].id] = userbase.users[t];
-								removeUser(t);
-								createUser(name, aliases, id);
-							}
-						}
-						else {
-							createUser(name, aliases);
-						}
+						let id = document.querySelector('a[href*="/lists/user_comments"]').href.split('/').pop();
+
+						createUser(name, id, {aliases:aliases});
 					}
 				}
-				else {
-					let a = userbase.users[name].aliases;
-					if (userbase.users[name].aliases.length>0) {
-						let ae = [];
-						for (let i=0;i<a.length; a++) {
-							ae.push(InfernoAddElem('div',{className:'alternating-color block__content', innerHTML:a[i]},[]));
-						}
-						ae.unshift(InfernoAddElem('div',{className:'block__header'},[
-							InfernoAddElem('span',{className:'block__header__title',innerHTML:'Also known as:'},[])
-						]));
-						document.querySelector('.column-layout__left').insertBefore(
-							InfernoAddElem('div',{className:'block'},ae)
-						,document.querySelector('.column-layout__left').firstChild);
+				let a = getUserByName(name).aliases;
+				if (a.length>0) {
+					let ae = [];
+					for (let i=0;i<a.length; a++) {
+						ae.push(InfernoAddElem('div',{className:'alternating-color block__content', innerHTML:a[i]},[]));
 					}
-				}
-			}
-
-
-			for (let i in userbase.users) {
-				if (userbase.users[i].id == undefined) {
-					userbase.users[i].id = getTimestamp(userbase.users[i],false,true);
-					console.log(userbase.users[i]);
-					write();
-					return;
+					ae.unshift(InfernoAddElem('div',{className:'block__header'},[
+						InfernoAddElem('span',{className:'block__header__title',innerHTML:'Also known as:'},[])
+					]));
+					document.querySelector('.column-layout__left').insertBefore(
+						InfernoAddElem('div',{className:'block'},ae)
+					,document.querySelector('.column-layout__left').firstChild);
 				}
 			}
 		}
 
 		if (e == undefined) return;
 
+        //checking posts and comments
 		for (let i=0; i<e.getElementsByClassName('communication__body').length; i++) {
 			let el = e.getElementsByClassName('communication__body')[i];
 			let eln = el.querySelector('.communication__body__sender-name a');
 			if (eln == undefined) continue;
 			let ele = el.querySelector('.communication__body__sender-name');
 			let name = eln.innerHTML;
-			if (userbase.users[name] != undefined) {
-				if (userbase_local.scratchpad[userbase.users[name].id] != undefined) {
-					eln.title = userbase_local.scratchpad[userbase.users[name].id];
+			//scratchpad content and previous names
+			if (getUserByName(name).id != 0) {
+				let user = getUserByName(name);
+				if (userbase_local.scratchpad[user.id] != undefined) {
+					eln.title = userbase_local.scratchpad[user.id];
 				}
-				if (userbase.users[name].aliases.length>0) {
+				if (user.aliases.length>0) {
 					let s = InfernoAddElem('div',{style:'width:100px;font-size:.86em'},[
 						InfernoAddElem('span',{innerHTML:'AKA '},[]),
-						InfernoAddElem('strong',{innerHTML:userbase.users[name].aliases.join()},[]),
+						InfernoAddElem('strong',{innerHTML:user.aliases.join(', ')},[]),
 						InfernoAddElem('br',{},[])
 					]);
 					if (!(el.parentNode.querySelector('.flex__fixed.spacing-right').lastChild.classList != undefined && el.parentNode.querySelector('.flex__fixed.spacing-right').lastChild.classList.contains('post-image-container')))
 						el.parentNode.querySelector('.flex__fixed.spacing-right').insertBefore(s,el.parentNode.querySelector('.flex__fixed.spacing-right').lastChild);
 				}
-				continue;
+				//continue;
 			}
+			//gather aliases
 			let alias = ele.nextSibling;
 			while (!(alias.classList != undefined && alias.classList.contains('communication__body__text'))) {
 				if (alias.classList != undefined && alias.classList.contains('small-text')) {
 					let t = alias.innerHTML;
 					t = t.substring(21,t.length-2).trim();
-					let aliases = [t];
-					if (userbase.users[t] != undefined) {
-						let user = userbase.users[t];
-						let ts = getTimestamp(user, false, true);
-						if (userbase.users[t].id == ts) {
-							aliases = userbase.users[t].aliases;
-							aliases.push(t);
-							removeUser(t);
-							createUser(name, aliases, ts);
-						}
-						else {
-							userbase.lost[userbase.users[t].id] = userbase.users[t];
-							removeUser(t);
-							createUser(name, aliases, ts);
-						}
-					}
-					else {
-						let user = createUser(name, aliases);
-						getTimestamp(user, false);
-					}
+                    if (getUserByName(name).id != 0) {
+						let user = getUserByName(name);
+                        let has = (user.aliases.indexOf(t) != -1);
+                        if (has) break;
+                        user.aliases.push(t);
+                        write();
+                    }
+                    else {
+                        createUser(name, undefined, {aliases:[t]});
+                    }
 					break;
 				}
 				alias = alias.nextSibling;
@@ -1969,7 +1997,8 @@ color: #0a0;
 		}
 
 	}
-	/////////////////////////////////////////////
+
+    ////////////////////////////////////////////////
 
 	function scratchPad() {
 		let getPreview = function() {
@@ -1986,6 +2015,7 @@ color: #0a0;
 			.then(data => {
 				let cc = InfernoAddElem('div',{innerHTML:data},[]);
 				previewTab.innerHTML = cc.getElementsByClassName('communication__body__text')[0].innerHTML;
+                DB_processImages(previewTab.parentNode);
 				listRunInComms(previewTab.parentNode);
 			});
 		}
@@ -2007,8 +2037,8 @@ color: #0a0;
 						InfernoAddElem('span',{innerHTML:'Do not use for passwords!'},[]),
 						InfernoAddElem('input',{type:'button', className:"button input--wide",value:'Update',events:[{t:'click',f:function(e) {
 							if (userbase_local.scratchpad[id] == undefined) {
-								if (userbase.idIndex[id] == undefined) {
-									addUserInBase(name, id);
+								if (userbase.users[id] == undefined) {
+									addUserInBase(name, id, {});
 								}
 							}
 							userbase_local.scratchpad[id] = document.getElementById('_ydb_scratchpad').value;
@@ -2207,7 +2237,9 @@ color: #0a0;
 		if (location.pathname.startsWith('/messages/new')) {
 			let x = [];
 			for (let i=0; i<userbase_local.friendlist.length; i++) {
-				x.push(InfernoAddElem('span',{className:'button',innerHTML:userbase.idIndex[userbase_local.friendlist[i]],events:[{t:'click',f:function() {document.getElementById('recipient').value = userbase.idIndex[userbase_local.friendlist[i]];}}]}));
+				x.push(InfernoAddElem('span',{className:'button',innerHTML:userbase.users[userbase_local.friendlist[i]].name,events:[{t:'click',f:function() {
+                    document.getElementById('recipient').value = userbase.users[userbase_local.friendlist[i]].name;
+                }}]}));
 			}
 
 			document.querySelector('.block__tab.communication-edit__tab .field .field').insertBefore(
@@ -2228,9 +2260,9 @@ color: #0a0;
 				InfernoAddElem('li',{},[
 					InfernoAddElem('a',{href:'javascript://',innerHTML:'Add to contacts', events:[{t:'click',f:function(e) {
 						let name = document.querySelector('.profile-top__name-header').innerHTML.slice(0, -10);
-						addUserInBase(name, uid);
+						addUserInBase(name, uid, {});
 						userbase_local.friendlist.push(uid);
-						addUserPending({id:uid});
+						addUserPendingById(uid);
 						document.getElementsByClassName('profile-top__options__column')[0].lastChild.classList.add('hidden');
 						UACLwrite();
 					}}]},[])
@@ -2370,7 +2402,7 @@ color: #0a0;
 		};
 
 		for (let i=0; i<userbase_local.friendlist.length; i++) {
-			let user = userbase.users[userbase.idIndex[userbase_local.friendlist[i]]];
+			let user = userbase.users[userbase_local.friendlist[i]];
 			users.push(user);
 		}
 
@@ -2396,7 +2428,8 @@ color: #0a0;
                     ]),
                     InfernoAddElem('span',{className:'flex__grow',style:'padding:0 12px'},[
                         InfernoAddElem('a',{innerHTML:'[Auto]', events:[{t:'click',f:function() {sortby='auto';render();}}]},[])
-                    ])
+                    ]),
+                    InfernoAddElem('span',{className:'flex__grow',style:'padding:0 12px'},[])
                 ]);
 			return InfernoAddElem('div',{className:'alternating-color block__content flex flex--center-distributed flex--centered'},[
 				InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
@@ -2406,7 +2439,10 @@ color: #0a0;
 					InfernoAddElem('span',{innerHTML:user.id},[])
 				]),
 				InfernoAddElem('span',{className:'flex__grow',style:'padding:0 12px'},[
-					InfernoAddElem('span',{innerHTML:user.aliases},[])
+					InfernoAddElem('span',{innerHTML:user.aliases.join(', ')},[])
+				]),
+				InfernoAddElem('span',{className:'flex__grow',style:'padding:0 12px'},[
+					InfernoAddElem('span',{innerHTML:user.tags.join(', ')},[])
 				])
 			]);
 		};
@@ -2419,7 +2455,6 @@ color: #0a0;
                 if (a[sortby] < b[sortby]) {
                     return -1;
                 }
-                // a должно быть равным b
                 return 0;
             });
             else {
@@ -2519,7 +2554,7 @@ color: #0a0;
             }
             catch (e) {
 				c.appendChild(InfernoAddElem('span',{innerHTML:'[PARSE ERROR] '+e+'<br>'},[]));
-				debug('YDB:T','[PARSE ERROR] '+e+' for '+y[i],2);
+				debug('YDB:T','[PARSE ERROR] '+e+' for '+y[request.id],2);
             }
             if (request.id < y.length) get(request.id+1);
             return;
