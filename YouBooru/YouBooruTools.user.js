@@ -1786,7 +1786,7 @@ color: #0a0;
 
 				let finalize = function() {
 					for (let i in temp.artists) {
-						if (!isNaN(parseInt(temp.artists[i])) && userbase.users[userbase.artists[i]] != undefined) {
+						if (!isNaN(parseInt(temp.artists[i])) && userbase.users[temp.artists[i]] != undefined) {
 							userbase.artists[i] = temp.artists[i];
 							userbase.users[userbase.artists[i]].tags.push(i);
 						}
