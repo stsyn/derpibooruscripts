@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.3.0
+// @version      0.3.1
 // @author       stsyn
 
 // @match        *://*/*
@@ -368,7 +368,7 @@
                         .then(data => {
                             if (data.fail) return;
                             if ((data.tag != undefined && data.tag.implied_tags != '') || settings.implicationDisallow) {
-                                let implied_tags = data.tag.implied_tags.split(',');
+                                let implied_tags = data.tag.implied_tags.split(/\s*,\s*/);
                                 checkedTags[name] = {name:name,implied_tags:implied_tags};
                                 //container.appendChild(implyRender(checkedTags[name]));
                             }
