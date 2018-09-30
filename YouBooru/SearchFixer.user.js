@@ -25,7 +25,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.3.18
+// @version      0.3.19
 // @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
 // @author       stsyn
 // @grant        none
@@ -443,7 +443,6 @@
 	}
 
 	function compilePreQuery(type) {
-        console.log(myURL.params.sf, type);
 		//due to unpredictable sorting mechanism firstly gonna check by id
 		findIter = 1;
 		findTemp = 9;
@@ -463,6 +462,9 @@
 		else if (myURL.params.sf == "width") {
 			prevUrl += ',(width:'+cscore+',id.'+dir+':'+id+')';
 		}
+		else if (myURL.params.sf == "created_at") {
+			prevUrl += ',(id.'+dir+':'+id+')';
+		}
 		else if (myURL.params.sf == "height") {
 			prevUrl += ',(height:'+cscore+',id.'+dir+':'+id+')';
 		}
@@ -470,6 +472,7 @@
 			prevUrl += ',(comment_count:'+cscore+',id.'+dir+':'+id+')';
 		}
 		prevUrl+='&perpage=1&sf=created_at&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
+        if (myURL.params.del != undefined && myURL.params.del != '') prevUrl+='&del='+myURL.params.del;
 		debug('SSF','Pre query: query '+prevUrl,0);
 		return prevUrl;
 	}
@@ -541,7 +544,7 @@
 	}
 
 	function crLink(sel, level, type) {
-		request(compilePreQuery(type), sel, type, level);
+		request(compilePreQuery(type), sel, type, (myURL.params.sf == 'created_at'?'post':level));
 	};
 
 
@@ -592,10 +595,11 @@
 
 		let chall = function() {
 			let s = location.search;
-			let es = ['form.header__search .input','#_ydb_s_qpusher_sf','#_ydb_s_qpusher_sd'];
-			let args = ['q','sf','sd'];
-			for (let i=0; i<2; i++) {
+			let es = ['form.header__search .input','#_ydb_s_qpusher_sf','#_ydb_s_qpusher_sd', '#del'];
+			let args = ['q','sf','sd','del'];
+			for (let i=0; i<es.length; i++) {
 				let e = document.querySelector(es[i]);
+                if (e == undefined) continue;
 				let val = e.value;
 				let arg = args[i];
 				if (i == 0) {
@@ -624,6 +628,7 @@
 			document.querySelector('form.header__search .input').addEventListener('input', function(e) {chall();});
 			document.querySelector('#_ydb_s_qpusher_sf').addEventListener('input', function(e) {chall();});
 			document.querySelector('#_ydb_s_qpusher_sd').addEventListener('input', function(e) {chall();});
+            if (document.querySelector('#del')) document.querySelector('#del').addEventListener('input', function(e) {chall();});
 		}, 200);
 
 		//fetching tags
@@ -712,7 +717,7 @@
 		!isNaN(id) &&
 		myURL.params.sf != undefined &&
 		myURL.params.sf != "" &&
-		myURL.params.sf != 'created_at' &&
+		!(myURL.params.sf == 'created_at' && (myURL.params.del == undefined || myURL.params.del == '')) &&
 		myURL.params.sf != 'wilson' &&
 		myURL.params.sf != 'relevance' &&
 		!(myURL.params.sf == 'score' && !settings.score) &&
@@ -744,7 +749,8 @@
 		(myURL.params.sf == 'comments' && settings.comments) ||
 		(myURL.params.sf != undefined && myURL.params.sf.startsWith('gallery_id') && settings.gallery) ||
 		((myURL.params.sf == 'width' || myURL.params.sf == 'height') && settings.sizesUp) ||
-		((((myURL.params.sf == undefined || myURL.params.sf == '') && myURL.params.q != undefined && myURL.params.q != '' && myURL.params.q != '%2A') || myURL.params.sf == 'wilson' || myURL.params.sf == 'created_at' || myURL.params.sf.startsWith('random') || myURL.params.sf == 'relevance') && settings.everyUp)
+		(( ((myURL.params.sf == undefined || myURL.params.sf == '') && myURL.params.q != undefined && myURL.params.q != '' && myURL.params.q != '%2A')
+          || myURL.params.sf == 'wilson' || myURL.params.sf == 'created_at' || (myURL.params.sf != undefined && myURL.params.sf.startsWith('random')) || myURL.params.sf == 'relevance') && settings.everyUp)
 
 	)) {
 		document.querySelectorAll('.js-up')[0].addEventListener('click',function(e) {
