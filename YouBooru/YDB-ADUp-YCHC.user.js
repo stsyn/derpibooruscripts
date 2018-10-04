@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YCH.Commishes YDB:ADUp module
-// @version      0.1.0
+// @version      0.1.1
 // @author       stsyn
 // @include      https://portfolio.commishes.com/upload/show/*
 // @include      https://ych.commishes.com/followUp/show/*
@@ -24,6 +24,7 @@
     'use strict';
     let mainDomain = 'www.derpibooru.org';
     let stop = 0;
+    let multiplier;
 
     try {
         mainDomain = unsafeWindow._YDB_public.funcs.getDerpHomeDomain();
@@ -88,20 +89,23 @@
             return;
         }
         let holder = document.querySelector('.user-info+.spacer');
-        holder.style.minHeight = '3.5em';
-        let button = holder.appendChild(InfernoAddElem('a', {href:'javascript://',target:'_blank',innerHTML:'Prepare to share on Derpibooru', className:'like-toggle iconless',style:{fontSize:'120%',marginTop:'0.2em',display:'inline-block'}, events:[{t:'click',f:function() {
+        holder.style.minHeight = '5.5em';
+        let button = holder.appendChild(InfernoAddElem('a', {href:'javascript://',target:'_blank',innerHTML:'Prepare to share on Derpibooru', className:'like-toggle iconless',style:{fontSize:'120%',marginTop:'0.2em',display:'inline-block'}, events:[{t:'click',f:function(e) {
 
+            e.target.innerHTML = 'Please wait';
             let aname = document.querySelector('.user-info .username').innerHTML.toLowerCase();
             let width = parseInt(document.querySelectorAll('body>script')[2].innerHTML.split('\n')[3].split('=').pop().trim());
             let height = parseInt(document.querySelectorAll('body>script')[2].innerHTML.split('\n')[4].split('=').pop().trim());
             let max = (width>height?width:height);
             let link = container.src.split('/');
             let xid = link[link.length-3];
+            multiplier = parseInt(document.getElementById('_adup_quality').value);
 
-            let xlink = 'https://portfolio.commishes.com/image/thumb/'+xid+'/original/'+(max*2)+'/.png';
+            let xlink = 'https://portfolio.commishes.com/image/thumb/'+xid+'/original/'+(max*multiplier)+'/.png';
             let image = InfernoAddElem('img',{src:xlink}, []);
 
             image.onload = function() {
+                e.target.innerHTML = 'Scroll down';
                 let canvas = InfernoAddElem('canvas',{width:width,height:height, style:{maxWidth:'100%'}}, []);
                 document.body.appendChild(canvas);
                 let ctx = canvas.getContext('2d');
@@ -126,6 +130,10 @@
         //let button = holder.appendChild(InfernoAddElem('a', {href:href,target:'_blank',innerHTML:'Share on Derpibooru', className:'like-toggle iconless',style:{fontSize:'120%',marginTop:'0.2em',display:'inline-block'}, events:[{t:'click',f:function() {
 
         }}]}, []));
+        holder.appendChild(InfernoAddElem('br', {},[]));
+        holder.appendChild(InfernoAddElem('br', {},[]));
+        holder.appendChild(InfernoAddElem('span', {innerHTML:'JPEG size (2-4 recommended) '},[]));
+        holder.appendChild(InfernoAddElem('input', {type:'number',id:'_adup_quality',style:{width:'3em'},value:2},[]));
     }
     else {
         // handle derpibooru
