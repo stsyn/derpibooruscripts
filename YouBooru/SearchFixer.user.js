@@ -25,7 +25,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.3.19
+// @version      0.3.20
 // @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
 // @author       stsyn
 // @grant        none
@@ -462,7 +462,7 @@
 		else if (myURL.params.sf == "width") {
 			prevUrl += ',(width:'+cscore+',id.'+dir+':'+id+')';
 		}
-		else if (myURL.params.sf == "created_at") {
+		else if (myURL.params.sf == "created_at" && type != "find") {
 			prevUrl += ',(id.'+dir+':'+id+')';
 		}
 		else if (myURL.params.sf == "height") {
@@ -544,7 +544,7 @@
 	}
 
 	function crLink(sel, level, type) {
-		request(compilePreQuery(type), sel, type, (myURL.params.sf == 'created_at'?'post':level));
+		request(compilePreQuery(type), sel, type, (myURL.params.sf == 'created_at' && type != "find"?'post':level));
 	};
 
 
@@ -621,7 +621,6 @@
 				}
 			}
 			document.getElementById('_ydb_s_qpusher').search = s;
-			console.log(s);
 		};
 
 		if (document.getElementById('_ydb_s_qpusher')) setTimeout(function() {
@@ -649,7 +648,6 @@
 		if (document.getElementById('_ydb_s_finder') != undefined) document.getElementById('_ydb_s_finder').addEventListener('click',function(e) {
 			commonClickAction(e);
 			myURL = parseURL(document.getElementById('_ydb_s_qpusher').href);
-            console.log(myURL);
 			crLink('#_ydb_s_finder', 'act', 'find');
 		});
 	}
