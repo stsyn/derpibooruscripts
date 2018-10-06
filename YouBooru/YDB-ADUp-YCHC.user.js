@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YCH.Commishes YDB:ADUp module
-// @version      0.1.2
+// @version      0.1.3
 // @author       stsyn
 // @include      https://portfolio.commishes.com/upload/show/*
 // @include      https://ych.commishes.com/followUp/show/*
@@ -165,7 +165,7 @@
             return;
         }
         let holder = document.querySelector('.user-info+.spacer');
-        holder.style.minHeight = '5.5em';
+        holder.style.minHeight = '6em';
         let button = holder.appendChild(InfernoAddElem('a', {href:'javascript://',target:'_blank',innerHTML:'Prepare to share on Derpibooru', className:'like-toggle iconless',style:{fontSize:'120%',marginTop:'0.2em',display:'inline-block'}, events:[{t:'click',f:function(e) {
 
             e.target.innerHTML = 'Please wait';
@@ -187,8 +187,15 @@
                 document.body.appendChild(canvas);
                 let ctx = canvas.getContext('2d');
                 ctx.drawImage(image, 0, 0, (hermit?width*multiplier:width), (hermit?height*multiplier:height));
-                if (hermit) resample_single(canvas,width,height,true);
-                alert('Save image from the bottom and upload it manually. Sorry, right now it\'s the only way to get adequate quality file :(');
+                if (hermit) {
+                    e.target.innerHTML = 'Downscaling... Please be patient.';
+                    setTimeout(function() {
+                        resample_single(canvas,width,height,true);
+                        alert('Save image from the bottom and upload it manually. Sorry, right now it\'s the only way to get adequate quality file :(');
+                        e.target.innerHTML = 'Scroll down';
+                    }, 100);
+                }
+                else alert('Save image from the bottom and upload it manually. Sorry, right now it\'s the only way to get adequate quality file :(');
                 /*
                 I tried to do something automatically.
                 Welp, it will be possible only if portfolio.commishes.com will provide original noncompressed file or if Derpibooru will allow base64 uploading.
@@ -208,10 +215,16 @@
         //let button = holder.appendChild(InfernoAddElem('a', {href:href,target:'_blank',innerHTML:'Share on Derpibooru', className:'like-toggle iconless',style:{fontSize:'120%',marginTop:'0.2em',display:'inline-block'}, events:[{t:'click',f:function() {
 
         }}]}, []));
+
+        let width = parseInt(document.querySelectorAll('body>script')[2].innerHTML.split('\n')[3].split('=').pop().trim());
+        let height = parseInt(document.querySelectorAll('body>script')[2].innerHTML.split('\n')[4].split('=').pop().trim());
         holder.appendChild(InfernoAddElem('br', {},[]));
+        holder.appendChild(InfernoAddElem('br', {},[]));
+        holder.appendChild(InfernoAddElem('span', {innerHTML:'Expected size: ', style:'font-size:80%'},[]));
+        holder.appendChild(InfernoAddElem('b', {innerHTML:width+'x'+height, style:'font-size:80%'},[]));
         holder.appendChild(InfernoAddElem('br', {},[]));
         holder.appendChild(InfernoAddElem('span', {innerHTML:'JPEG size (2-4 recommended) ', style:'font-size:80%'},[]));
-        holder.appendChild(InfernoAddElem('input', {type:'number',id:'_adup_quality',style:{width:'3em'},value:2},[]));
+        holder.appendChild(InfernoAddElem('input', {type:'number',id:'_adup_quality',style:{width:'3em',fontSize:'80%'},value:2},[]));
         holder.appendChild(InfernoAddElem('label', {innerHTML:' HQ rescale ', style:'font-size:80%'},[
             InfernoAddElem('input', {type:'checkbox',id:'_adup_hermit',checked:true},[])
         ]));
