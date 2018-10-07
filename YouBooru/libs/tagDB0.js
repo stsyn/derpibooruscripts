@@ -13,7 +13,7 @@ normal:{
 
 regulars:{
 	oc:/^oc:/g,
-	origin:/^(artist:|editor:|colorist:)/g,
+	origin:/^(artist:|editor:|colorist:|photographer:)/g,
 	'content-fanmade':/^(comic:|fanfic:|artpack:|art pack:|tumblr:)/g,
 	spoiler:/^spoiler:/g
 }
