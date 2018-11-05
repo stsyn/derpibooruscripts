@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.3.1
+// @version      0.3.2
 // @author       stsyn
 
 // @match        *://*/*
@@ -118,38 +118,60 @@
 		if (url.params.src == 'undefined') url.params.src = encodeURIComponent(x.source_url);
 	}
 
+    function hasData() {
+        return !!document.getElementById('image_tag_input').value || !!document.getElementById('image_source_url').value || !!document.getElementById('scraper_url').value || !!document.getElementById('image_description').value;
+    }
+
+    function fillDData1(url) {
+        if (decodeURIComponent(url.params.tags) != 'undefined') {
+            if (url.params.origTags != undefined) {
+                document.getElementById('image_tag_input').value = url.params.origTags+','+decodeURIComponent(url.params.tags);
+            }
+            else {
+                url.params.origTags = decodeURIComponent(url.params.tags);
+                document.getElementById('image_tag_input').value = decodeURIComponent(url.params.tags);
+            }
+            document.querySelector('.button.button--state-primary.button--bold.js-taginput-show').click();
+        }
+        if (decodeURIComponent(url.params.src) != 'undefined') {
+            document.getElementById('image_source_url').value = decodeURIComponent(url.params.src);
+        }
+        if (decodeURIComponent(url.params.newImg) != 'undefined') {
+            document.getElementById('scraper_url').value = decodeURIComponent(url.params.newImg);
+            onceLoaded = true;
+            document.getElementById('js-scraper-preview').click();
+        }
+        if (decodeURIComponent(url.params.description) != 'undefined') {
+            document.getElementById('image_description').value = decodeURIComponent(url.params.description).replace(/\n\s*\n/g, '\n').replace(/^\s*/mg, '');
+        }
+        if (decodeURIComponent(url.params.originView) != 'undefined') {
+            document.getElementById('_ydb_preview').src = url.params.originView;
+        }
+    }
+
 	function fillData1(url) {
-		if (decodeURIComponent(url.params.tags) != 'undefined') {
-			if (url.params.origTags != undefined) {
-				document.getElementById('image_tag_input').value = url.params.origTags+','+decodeURIComponent(url.params.tags);
-			}
-			else {
-				url.params.origTags = decodeURIComponent(url.params.tags);
-				document.getElementById('image_tag_input').value = decodeURIComponent(url.params.tags);
-			}
-			document.querySelector('.button.button--state-primary.button--bold.js-taginput-show').click();
-		}
-		if (decodeURIComponent(url.params.src) != 'undefined') {
-			document.getElementById('image_source_url').value = decodeURIComponent(url.params.src);
-		}
-		if (decodeURIComponent(url.params.newImg) != 'undefined') {
-			document.getElementById('scraper_url').value = decodeURIComponent(url.params.newImg);
-			onceLoaded = true;
-			document.getElementById('js-scraper-preview').click();
-		}
-		if (decodeURIComponent(url.params.originWidth) != 'undefined') {
-			document.getElementById('_ydb_old').innerHTML = url.params.originWidth+'x'+url.params.originHeight;
-		}
-		if (decodeURIComponent(url.params.newWidth) != 'undefined') {
-			overRideSize = true;
-			document.getElementById('_ydb_new').innerHTML = url.params.newWidth+'x'+url.params.newHeight;
-		}
-		if (decodeURIComponent(url.params.originView) != 'undefined') {
-			document.getElementById('_ydb_preview').src = url.params.originView;
-		}
-		if (decodeURIComponent(url.params.description) != 'undefined') {
-			document.getElementById('image_description').value = decodeURIComponent(url.params.description).replace(/\n\s*\n/g, '\n').replace(/^\s*/mg, '');
-		}
+        if (!hasData()) {
+            fillDData1(url)
+        } else {
+            document.getElementById('new_image').insertBefore(
+                InfernoAddElem('div',{className:"dnp-warning", style:{marginBottom:'0.5em'}, id:'_ydb_warning'},[
+                    InfernoAddElem('h4',{innerHTML:"Override prefilled page content with ADUp fetch data?"},[]),
+                    InfernoAddElem('p',{},[
+                        InfernoAddElem('a',{innerHTML:'OK', events:[{t:'click',f:function() {fillDData1(url); document.getElementById('_ydb_warning').style.display = 'none'}}]},[]),
+                        InfernoAddElem('span',{innerHTML:" "},[]),
+                        InfernoAddElem('a',{innerHTML:'Cancel', events:[{t:'click',f:function() {document.getElementById('_ydb_warning').style.display = 'none'}}]},[])
+                    ])
+                ]),
+            document.querySelector('.dnp-warning'));
+        }
+
+        if (decodeURIComponent(url.params.originWidth) != 'undefined') {
+            document.getElementById('_ydb_old').innerHTML = url.params.originWidth+'x'+url.params.originHeight;
+        }
+        if (decodeURIComponent(url.params.newWidth) != 'undefined') {
+            overRideSize = true;
+            document.getElementById('_ydb_new').innerHTML = url.params.newWidth+'x'+url.params.newHeight;
+        }
 	}
 
 	function diff(url) {
@@ -256,8 +278,15 @@
 	}
 
 	function addTag(x, tag) {
-		if (x.querySelector('a[data-tag-name="'+tag+'"]') != undefined) return;
-		x.appendChild(InfernoAddElem('span',{className:'tag _ydb_transparent',style:'opacity:0.75; cursor:pointer',innerHTML:tag+' ',events:[{t:'click',f:function(e) {
+		if (x.parentNode.parentNode.querySelector('a[data-tag-name="'+tag+'"]') != undefined) return;
+        let z = x.parentNode.parentNode;
+        let y = z.querySelector('._ydb_tag_placeholder');
+        if (y == undefined) {
+            y = z.insertBefore(InfernoAddElem('div',{style:'min-height:0',className:'_ydb_tag_placeholder js-taginput input input--wide tagsinput', dataset:{clickFocus:'.js-taginput-input.js-taginput-tag_input'}}, [
+                InfernoAddElem('span',{innerHTML:'Implied tags '}, [])
+            ]), z.querySelector('.js-taginput-show'));
+        }
+		y.appendChild(InfernoAddElem('span',{className:'tag _ydb_transparent',style:'opacity:0.75; cursor:pointer',innerHTML:tag+' ',events:[{t:'click',f:function(e) {
             insertImpliedTag(x, tag);
         }}]},[
 			InfernoAddElem('a',{href:'javascript://', innerHTML:'x', style:{display:'none'},dataset:{clickFocus:'.js-taginput-input',tagName:tag}},[
@@ -274,21 +303,25 @@
         x.querySelector('.input.js-taginput-input').value = tText;
 	}
 
+    function drawEmptyTag(tag) {
+        return InfernoAddElem('span',{className:'tag',innerHTML:tag+' '},[
+            InfernoAddElem('a',{style:{display:'none'},dataset:{tagName:tag}},[
+        ])]);
+    }
+
 	function tagCheck() {
         let implyRender = function (x, d) {
-            let tags = '';// = d.implied_tags.join(', ');
+            let tags = [];// = d.implied_tags.join(', ');
             for (let i=0; i<d.implied_tags.length; i++) {
-                if (x.querySelector('.tag:not(._ydb_transparent) a[data-tag-name="'+d.implied_tags[i]+'"]') != undefined) continue;
-                tags += (tags==''?'':', ')+d.implied_tags[i];
+                if (x.parentNode.parentNode.querySelector('.tag:not(._ydb_transparent) a[data-tag-name="'+d.implied_tags[i]+'"]') != undefined) continue;
+                tags.push(drawEmptyTag(d.implied_tags[i]));
             }
-            if (tags == '') return false;
+            if (tags.length == 0) return false;
             return InfernoAddElem('div',{className:'alternating-color block__content'},[
-				InfernoAddElem('div',{className:'flash flash--site-notice'},[
-					InfernoAddElem('strong',{innerHTML:d.name},[]),
-					InfernoAddElem('span',{innerHTML:' implies — '},[]),
-					InfernoAddElem('strong',{innerHTML:tags},[]),
-				]),
-                InfernoAddElem('div',{className:'block__header'},[
+				InfernoAddElem('div',{className:''},[
+                    drawEmptyTag(d.name),
+					InfernoAddElem('span',{innerHTML:'implies — '},[]),
+					InfernoAddElem('span',{},tags),
                     InfernoAddElem('a',{href:'javascript://',className:'action block__header__title',innerHTML:'Insert', events:[{t:'click',f:function(e) {
                         for (let i=0; i<d.implied_tags.length; i++) {
                             if (x.querySelector('.tag._ydb_transparent a[data-tag-name="'+d.implied_tags[i]+'"]') != undefined)
@@ -300,7 +333,7 @@
                         d.drawn = false;
                         e.target.parentNode.parentNode.style.display = 'none';
                     }}]},[])
-                ])
+				])
 			]);
         };
 		let render = function (d) {
@@ -323,8 +356,8 @@
                 suggestion = 'You may have mistyped.';
             }
 			return InfernoAddElem('div',{className:'alternating-color block__content'},[
-				InfernoAddElem('div',{className:'flash '+color},[
-					InfernoAddElem('strong',{innerHTML:d.name},[]),
+				InfernoAddElem('div',{className:' '+color},[
+					drawEmptyTag(d.name),
 					InfernoAddElem('span',{innerHTML:' — '},[]),
 					InfernoAddElem('strong',{innerHTML:d.dnp_type, style:{color:color}},[]),
 					InfernoAddElem('span',{innerHTML:suggestion==''?'':' — '},[]),
@@ -358,7 +391,7 @@
                                 return errorMessage;
                             if (response.redirected) {
                                 let newTag = response.url.split('/').pop().replace(/.json$/,'');
-                                newTag = newTag.replace(/\-dash\-/g,'-').replace(/\-dot\-/g,'.').replace(/\+/g,' ').replace(/\-colon\-/g,':');
+                                newTag = decodeURIComponent(newTag.replace(/\-dash\-/g,'-').replace(/\-dot\-/g,'.').replace(/\+/g,' ').replace(/\-colon\-/g,':').replace(/\%25/g,'%'));
                                 y.getElementsByTagName('a')[0].dataset.tagName = newTag;
                                 y.firstChild.textContent = newTag+' ';
                                 return errorMessage;
@@ -431,6 +464,7 @@
                         else if (!checkedTags[name].ok) {
                             if (checkedTags[name].dnp_type != undefined) {
                                 container.appendChild(render(checkedTags[name]));
+                                container.scrollTop = container.scrollHeight;
                                 drawn = true;
                             }
                         }
@@ -440,6 +474,7 @@
                             if (elem) {
                                 if (!checkedTags[name].ok && settings.implicationNotify) {
                                     container.appendChild(elem);
+                                    container.scrollTop = container.scrollHeight;
                                     drawn = true;
                                 }
                             }
@@ -579,7 +614,7 @@
                     InfernoAddElem('span',{className:'block__header__title',innerHTML:'DNP entries and warnings. '},[]),
                     InfernoAddElem('span',{className:'block__header__title'},actions)
                 ]),
-                InfernoAddElem('div',{id:'ydb_dnp_container'},[
+                InfernoAddElem('div',{id:'ydb_dnp_container', className:'js-taginput', style:{maxHeight:'40vh',overflowY:'auto'}},[
                     InfernoAddElem('div',{className:'block__content'},[
                         InfernoAddElem('span',{innerHTML:'Nothing'},[]),
                     ])
