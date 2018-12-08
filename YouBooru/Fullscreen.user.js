@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.10
+// @version      0.7.11
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -22,6 +22,15 @@
 // @exclude      *://*.orzgs6djmvrg633souxg64th.*.*/adverts/*
 // @exclude      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
 // @exclude      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
+
+// @exclude      *://trixiebooru.org/*.json
+// @exclude      *://derpibooru.org/*.json
+// @exclude      *://www.trixiebooru.org/*.json
+// @exclude      *://www.derpibooru.org/*.json
+// @exclude      *://*.o53xo.orzgs6djmvrg633souxg64th.*.json
+// @exclude      *://*.orzgs6djmvrg633souxg64th.*.json
+// @exclude      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.json
+// @exclude      *://*.mrsxe4djmjxw64tvfzxxezy.*.json
 
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 
@@ -367,11 +376,11 @@ height:4em;
 
 
 ._fs_down.active {
-height:60vh;
+height:65vh;
 }
 ._fs_down.active ._fs_down_container{
 margin-top:1vh;
-height:59vh;
+height:64vh;
 overflow-y:auto;
 }
 ._fs_down.active ._fs_down_back{
@@ -413,12 +422,12 @@ display:none
 }`;
 
     styles.colorAccentTemplate = `
-.block__header--light a, .block__header--js-tabbed a, a.block__header--single-item, #container span:not(.tag)>a, a.profile-block, table.table td>a, #imagespns a,
+.block__header--light a, .block__header--js-tabbed a, a.block__header--single-item, #container span:not(.tag)>a, a.profile-block, table.table td>a, #imagespns a, a.button.button--link,
 .block__header a:not(.interaction--fave):not(.interaction--upvote):not(.interaction--downvote):not(.interaction--comments):not(.interaction--hide), .image-description a,
 .block__header--sub a, .block__header--single-item a, .block__content:not(._fs_popup)>*:not(.media-box) a:not(.tag__name), .block__content>a, .profile-top__name-and-links a,
-.source_url a, #footer_content a, .button--link, .communication__body a, .comment_backlinks a, .communication__options a, a.interaction-user-list-item, .pagination a,
+.source_url a, #footer_content a, .button--link, .communication__body a, .comment_backlinks a, .communication__options a, a.interaction-user-list-item, .pagination a, .dr__status-options a,
 a.block__header--single-item:hover, .block__header:not(.center--layout) a:hover, .block__header--sub a:hover, .block__header--single-item a:hover, .autocomplete__item--selected,
-.block--fixed a, .rule a, a.togglable-faq-item, .field a:not([data-tag-name]), a.media-box__header--link, a.media-box__header--link:hover, #content h1 a, #content h2 a, #content h3 a,
+.block--fixed a, .rule a, a.togglable-faq-item, .field a:not([data-tag-name]):not(.button--state-warning), a.media-box__header--link, a.media-box__header--link:hover, #content h1 a, #content h2 a, #content h3 a,
 #content h4 a, .flash a, #content p strong a, #content strong a, #content li a, .quick-tag-table__tab a, .flash--site-notice.flash a, #content code a, a.alternating-color {
 color:_fs_color;
 }
@@ -435,44 +444,48 @@ body[data-theme*="dark"] #content .communication__body .spoiler:not(:hover) a[hr
 color:#782c21 !important
 }
 
-.autocomplete__item:not(.autocomplete__item--selected), .header, a.header__link, span.header__link-user__dropdown-arrow, .add-to-gallery-list ::-webkit-scrollbar-thumb,
-span.header__link-user__dropdown-arrow:hover, .header__dropdown:hover span.header__link-user__dropdown-arrow, .sparkline .bar {
+.autocomplete__item:not(.autocomplete__item--selected), .header, header a.header__link, span.header__link-user__dropdown-arrow, .add-to-gallery-list ::-webkit-scrollbar-thumb,
+span.header__link-user__dropdown-arrow:hover, .header__dropdown:hover span.header__link-user__dropdown-arrow, .sparkline .bar, .poll-bar__fill:not(.poll-bar__fill--top)  {
 background-color:_fs_ccomponent;
 }
 
 .border-vertical, .block__header--js-tabbed a:hover, .image-description, #imagespns, .block__header--js-tabbed, .block__header--js-tabbed a.selected, .block__header--js-tabbed a.selected:hover,
 .button:not(.commission__category):not(.button--state-warning):not(.button--state-danger):not(.button--state-success), .toggle-box+label, .block__list a.block__list__link, .block__list, .input, .communication__toolbar__button,
-.block__header--js-tabbed a, .block__header--js-tabbed a:last-child, .block__header--js-tabbed a:first-child, .block--fixed:not(.block--success):not(.block--warning), .media-box, .filter {
+.block__header--js-tabbed a, .block__header--js-tabbed a:last-child, .block__header--js-tabbed a:first-child, .block--fixed:not(.block--success):not(.block--warning), .media-box, .filter,
+.poll-bar {
 border-color:_fs_background;
 }
 
-#container {
+#container, .block__content .profile-top__options ul li a {
 background:none
 }
 
 body, .image-description, #imagespns, .block__content, .block__tab, .block__header--js-tabbed a.selected, .block__header--js-tabbed a.selected:hover, .toggle-box+label,
 a.header__search__button:hover, button.header__search__button:hover, .input, .communication__toolbar__button, .tag__dropdown__link:hover, .block--fixed:not(.block--success):not(.block--warning), .filter,
-.alternating-color:nth-child(odd), .table>thead>tr, .table>tbody>tr:nth-child(odd) {
+.alternating-color:nth-child(odd), .table>thead>tr, .table>tbody>tr:nth-child(odd), .poll-bar,
+.block__content .profile-top__options ul li:hover {
 background:_fs_component;
 }
 
-#footer, .alternating-color:nth-child(even), .table>tbody>tr:nth-child(even), .block__header--sub, .block__header--sub a {
+#footer, .alternating-color:nth-child(even), .table>tbody>tr:nth-child(even), .block__header--sub, .block__header--sub a, .block__content>.label.label--primary.label--block,
+.block__content .profile-top__options ul li {
 background:_fs_4component;
 }
 
-.header--secondary a.header__link:hover, .header--secondary .header__dropdown:hover>a, .input:focus, .communication__toolbar__button:hover, .tag__dropdown__link,
+.header--secondary>.flex>.hide-mobile a.header__link:hover, .header--secondary .header__dropdown:hover>a, .input:focus, .communication__toolbar__button:hover, .tag__dropdown__link,
 .block__header, .block__header--single-item,
 .block__header a, .block__header--single-item a, .block__list a.block__list__link,
 .communication__options, .button:not(.commission__category):not(.button--state-warning):not(.button--state-danger):not(.button--state-success), a.media-box__header--link:hover, .header--secondary span.header__counter,
-.interaction--downvote.disabled, .interaction--downvote.disabled:hover{
+.interaction--downvote.disabled, .interaction--downvote.disabled:hover, .block__content>.label.label--primary.label--block:hover, .poll-form__options__label {
 background:_fs_2component;
 }
 
-.rule h2 {
+.rule h2, .quick-tag-table__tab>div, .poll-form__options__label {
 border-color:_fs_2component;
 }
 
-.input:focus, .communication__toolbar__button:focus, .communication__toolbar__button:hover, .communication__toolbar__button:active, .communication__toolbar__button:visited, .sparkline {
+.input:focus, .communication:target, .communication__toolbar__button:focus, .communication__toolbar__button:hover, .communication__toolbar__button:active,
+.communication__toolbar__button:visited, .sparkline  {
 border-color:_fs_color;
 }
 
@@ -484,13 +497,13 @@ body[data-theme*="dark"] a:not(.header__link):not([rel="dc:source"]):not(.button
 color:#aaa !important;
 }
 
-.media-box__header:not(.media-box__header--unselected), .button:hover, .toggle-box+label:hover, .header--secondary, .header--secondary a,
+.media-box__header:not(.media-box__header--unselected), .button:hover, .toggle-box+label:hover, .header--secondary, .header--secondary>.flex>.hide-mobile a,
 .block__list a.block__list__link.primary, select.header__input:hover, select.header__input:focus:hover, span.header__counter {
 background-color:_fs_background;
 border-color:_fs_color;
 }
 
-a.header__link:hover, .header__dropdown:hover>a, ::selection {
+header a.header__link:hover, .header__dropdown:hover>a, ::selection {
 background:_fs_color;
 }
 
@@ -504,10 +517,12 @@ color:_fs_ccomponent !important;
 }
 
 .header__input, .header__input:focus, select.header__input, select.header__input:focus, a.header__search__button, button.header__search__button,
-select.header__input:hover, select.header__input:focus:hover  {
+select.header__input:hover, select.header__input:focus:hover,body[data-theme*="default"] .flash.flash--site-notice {
 background-color:_fs_icomponent;
 }
-.block__content, .block__content:last-child, .block__content:first-child, .table, .table>tbody, .block__tab, .block__tab:not(.hidden){
+
+.block__content, .block__content:last-child, .block__content:first-child, .table, .table>tbody, .block__tab, .block__tab:not(.hidden), .block__content>.label.label--primary.label
+{
 border-color:_fs_2component;
 }
 .block__header--js-tabbed  {
@@ -759,11 +774,11 @@ color: #777;
 		if (document.querySelector('.image-show-container .image-show.hidden') != null) return;
 		dropExecution(event);
 		if (settings.singleMode) {
-			rescale();
+			rescale(true);
 		}
 	}
 
-    function rescale() {
+    function rescale(doNotSwitch) {
         if (objects.icontainer.dataset.aspectRatio > window.innerWidth/window.innerHeight) pub.wide = false;
         else pub.wide = true;
 
@@ -794,7 +809,7 @@ color: #777;
 		if (!pub.wide) pub.defzoom = window.innerWidth/objects.icontainer.dataset.width;
 		else pub.defzoom = window.innerHeight/objects.icontainer.dataset.height;
 
-		if (settings.singleMode && pub.zoom<pub.defzoom) {
+		if (settings.singleMode && pub.zoom<pub.defzoom && !doNotSwitch) {
 			singleEvent();
 			return;
 		}
@@ -934,7 +949,7 @@ color: #777;
         let de = document.documentElement;
 		if (!width || width === undefined) {
 			if (adc.comic) {
-				if (pub.wide) pub.zoom = window.innerWidth/objects.icontainer.dataset.width;
+				if (pub.wide) pub.zoom = window.innerWidth*(de.clientHeight>de.clientWidth?10:8)/10/objects.icontainer.dataset.width;
 				objects.image.style.marginTop = '0';
 			}
 			else objects.image.style.marginTop = -(objects.icontainer.dataset.height - de.clientHeight)/2 + 'px';
@@ -942,7 +957,7 @@ color: #777;
 		if (width || width === undefined) {
 			if (adc.comic) {
 				objects.image.style.marginLeft = '0';
-				if (!pub.wide) pub.zoom = window.innerHeight/objects.icontainer.dataset.height;
+				if (!pub.wide) pub.zoom = window.innerHeight*(de.clientHeight<de.clientWidth?10:8)/10/objects.icontainer.dataset.height;
 			}
 			else objects.image.style.marginLeft = -(objects.icontainer.dataset.width - de.clientWidth)/2 + 'px';
 		}
@@ -1073,7 +1088,7 @@ color: #777;
         if (pub.scaled == 'false' || settings.singleMode) setMargin();
 
         if (objects.dcontainer != undefined) {
-            if ((pub.scaled == 'true' || (settings.singleMode && pub.defzoom >= pub.zoom)) && pub.mouseY/window.innerHeight >= (popUps.down.classList.contains('active')?0.4:0.85) && !popUps.back.classList.contains('active')) popUps.down.classList.add('active');
+            if ((pub.scaled == 'true' || (settings.singleMode && pub.defzoom >= pub.zoom)) && pub.mouseY/window.innerHeight >= (popUps.down.classList.contains('active')?0.3:0.85) && !popUps.back.classList.contains('active')) popUps.down.classList.add('active');
             else popUps.down.classList.remove('active');
         }
 
