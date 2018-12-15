@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.6.0
+// @version      0.6.1
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -770,6 +770,9 @@ color: #0a0;
 			let xx = elem.querySelector('a img');
 			let x = elem.querySelector('.image-container');
 			let s = JSON.parse(x.getAttribute('data-uris')).thumb;
+			if (localStorage.serve_hidpi && !/\.gif$/.test(s) && !/\.webm$/.test(s)) {
+				xx.srcset = s + " 1x, " + JSON.parse(x.getAttribute('data-uris')).medium + " 2x";
+			}
 			if (s.indexOf('.webm')>-1) ux.innerHTML = 'Webm';
 			else ux.classList.add('hidden');
 			if (ix) {
@@ -851,6 +854,7 @@ color: #0a0;
 				}
 				if (document.getElementsByClassName('js-resizable-media-container')[0] != undefined) unspoil(document.getElementsByClassName('js-resizable-media-container')[0]);
 				else if (document.getElementsByClassName('image-show-container')[0] != undefined) unspoil(document.getElementsByClassName('image-show-container')[0]);
+
 			}
 		}
 
@@ -1557,15 +1561,15 @@ color: #0a0;
 		};
 
 		let addPending = function(user) {
-			if (userbase.pending.indexOf(user.id) != -1) return;
-			userbase.pending.push(user.id);
+			if (userbase.pending.indexOf(user.id) != -1 || user.id == null) return;
+			userbase.pending.push(parseInt(user.id));
 			debug('YDB:U','User "'+user.name+'" ('+user.id+') added to pending list.', 0);
 			write();
 		};
 
 		let addPendingById = function(id) {
-			if (userbase.pending.indexOf(id) != -1) return;
-			userbase.pending.push(id);
+			if (userbase.pending.indexOf(id) != -1 || id == null) return;
+			userbase.pending.push(parseInt(id));
 			debug('YDB:U','User with id '+user.id+' added to pending list.', 0);
 			write();
 		};
@@ -1877,11 +1881,30 @@ color: #0a0;
 				}
 			}
 
+			//cleaning updates
+			for (let i=0; i<userbase.pending.length; i++) {
+				userbase.pending[i] = parseInt(userbase.pending[i]);
+				if (userbase.pending[i] == 0 || isNaN(userbase.pending[i])) {
+					userbase.pending.splice(i,1);
+					i--;
+				}
+				else {
+					for (let j=0; j<i; j++) {
+						if (userbase.pending[i] == userbase.pending[j]) {
+							userbase.pending.splice(i,1);
+							i--;
+							break;
+						}
+					}
+				}
+			}
+
 			//pending updates
 			if (userbase.pending.length>0) {
 				userbaseTS.ttu -= (Date.now()-userbaseTS.lastRun);
 				if (userbaseTS.ttu <= 0) {
 					if (userbaseTS.lastRun == 0) userbaseTS.ttu = 0;
+					if (userbase.users[userbase.pending[0]] == undefined) createUser('[UNKNOWN]', userbase.pending[0], {});
 					updateName(userbase.users[userbase.pending[0]], function(user) {
 						debug('YDB:U','Updated user "'+user.name+'" ('+user.id+').', 1);
 						userbase.pending.shift();
@@ -2082,8 +2105,9 @@ color: #0a0;
 		let twidth = parseInt(mwidth/5-8);
 		for (let i=0; i<document.getElementsByClassName('js-resizable-media-container').length; i++) {
 			let el = document.getElementsByClassName('js-resizable-media-container')[i];
-			for (let j=0; j<el.getElementsByClassName('media-box').length; j++) {
-				let eli = el.getElementsByClassName('media-box')[j];
+			for (let j=0; j<el.querySelectorAll('.media-box:not(._ydb_resizible)').length; j++) {
+				let eli = el.querySelectorAll('.media-box:not(._ydb_resizible)')[j];
+				eli.style.width = twidth+'px';
 				eli.getElementsByClassName('media-box__header')[0].style.width = twidth+'px';
 				eli.getElementsByClassName('media-box__content')[0].style.width = twidth+'px';
 				eli.getElementsByClassName('media-box__content')[0].style.height = twidth+'px';
@@ -2350,6 +2374,10 @@ color: #0a0;
 						InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Remove'},[])
 					])
 				]);
+			if (user.name == '[UNKNOWN]') {
+				addUserPending(user);
+				getUserName(user.id, function(e) {user.name = e; UAwrite();});
+			}
 			return InfernoAddElem('div',{dataset:{username:user.name},className:'alternating-color block__content flex flex--center-distributed flex--centered'},[
 				InfernoAddElem('div',{style:'flex-basis: 48px;'},[
 					InfernoAddElem('img',{width:48,height:48},[])
@@ -2383,7 +2411,7 @@ color: #0a0;
 			for (let i=0; i<users.length; i++) {
 				let user = users[i];
 				let line = generateLine(user);
-				if (user.avatar == undefined || user.avatarTS+24*60<Date.now()/1000) {
+				if (user.avatar == undefined || user.avatarTS+24*60*60<Date.now()/1000) {
 					setTimeout(function() {fetchAvatara(user,line.querySelector('img'));}, 50*i);
 				}
 				else {
@@ -2634,27 +2662,31 @@ color: #0a0;
 		highlightArtist(e.target);
 	}
 
-	UA();
-    flashNotifies();
-    profileLinks();
-	readAll();
-	scratchPad();
-    if (ls.patchSearch) bigSearch();
-    aliases();
-    asWatchlist();
-	YDBSpoilersHelp();
-	if (ls.similar) similar();
-    listRunInComms(document);
-    if (ls.deactivateButtons) deactivateButtons(document, true);
-	if (ls.oldHead) oldHeaders();
-	commentButtons(document, true);
-	customSpoilerCheck(false, ls.spoilers);
-	shrinkComms(document);
-	hiddenImg(document,true);
-	getArtists();
-	resizeEverything(true);
-	addGalleryOption();
-	contacts();
+	function error(name, e) {
+		debug('YDB:T',name+' crashed during startup. '+e.stack,2);
+	}
+
+	try {UA();} catch(e) {error("UA", e)};
+	try {flashNotifies();} catch(e) {error("flashNotifies", e)};
+	try {profileLinks();} catch(e) {error("profileLinks", e)};
+	try {readAll();} catch(e) {error("readAll", e)};
+	try {scratchPad();} catch(e) {error("scratchPad", e)};
+	if (ls.patchSearch) try {bigSearch();} catch(e) {error("bigSearch", e)};
+	try {aliases();} catch(e) {error("aliases", e)};
+	try {asWatchlist();} catch(e) {error("asWatchlist", e)};
+	try {YDBSpoilersHelp();} catch(e) {error("YDBSpoilersHelp", e)};
+	if (ls.similar) try {similar();} catch(e) {error("bigSearch", e)};
+	try {listRunInComms(document);} catch(e) {error("listRunInComms", e)};
+	if (ls.deactivateButtons) try {deactivateButtons(document, true);} catch(e) {error("deactivateButtons", e)};
+	if (ls.oldHead) try {oldHeaders();} catch(e) {error("oldHead", e)};
+	try {commentButtons(document, true);} catch(e) {error("commentButtons", e)};
+	try {customSpoilerCheck(false, ls.spoilers);} catch(e) {error("customSpoilerCheck", e)};
+	try {shrinkComms(document);} catch(e) {error("shrinkComms", e)};
+	try {hiddenImg(document, true);} catch(e) {error("hiddenImg", e)};
+	try {getArtists();} catch(e) {error("getArtists", e)};
+	try {resizeEverything(true);} catch(e) {error("resizeEverything", e)};
+	try {addGalleryOption();} catch(e) {error("addGalleryOption", e)};
+	try {contacts();} catch(e) {error("contacts", e)};
     if (location.pathname == "/pages/yourbooru") {
         YDB();
     }
