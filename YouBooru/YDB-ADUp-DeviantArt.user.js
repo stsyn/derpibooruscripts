@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.1.0
+// @version      0.1.1
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
@@ -29,7 +29,7 @@
 			let xlink = document.querySelector('.dev-page-download').href;
 			width = document.querySelector('div.dev-metainfo-details dl dd:nth-child(6)').innerHTML.split('×')[0];
 			height = document.querySelector('div.dev-metainfo-details dl dd:nth-child(6)').innerHTML.split('×')[1];
-			if (link == undefined) {
+			/*if (link == undefined) {
 				GM_xmlhttpRequest({
 					method:   "GET",
 					url:      xlink,
@@ -44,13 +44,14 @@
 			}
 			else {
 				dlink = link;
-			}
+			}*/
+			dlink = location.href;
 		}
 		else {
 			let o = document.querySelector('.pimp a.thumb');
-			dlink = o.dataset.superFullImg;
-			width = o.dataset.superFullWidth;
-			height = o.dataset.superFullHeight;
+			dlink = o.dataset.superFullImg.replace(/\/v1\/fill.*$/, '');
+			//width = o.dataset.superFullWidth;
+			//height = o.dataset.superFullHeight;
 		}
 
 		if (document.querySelector('.dev-description .text.block') != undefined) text = '[bq]'+document.querySelector('.dev-description .text.block').innerText+'[/bq]';
