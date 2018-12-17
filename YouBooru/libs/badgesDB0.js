@@ -18,7 +18,8 @@ function getBadgesImplications() {
 			'Friendship, Art, and Magic (6 Years)':['Friendship, Art, and Magic (5 Years)'],
 			'Helpful Owl':['Friendly Griffon'],
 			'Equality':['Not a Llama'],
-			'Condensed Milk':['Not a Llama']
+			'Condensed Milk':['Not a Llama'],
+			'A Tale For The Ages':['Birthday Cake']
 		},
 		donations:{
 			'Platinum Patron':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity','Gold Bit','Silver Bit','Bronze Bit'],
