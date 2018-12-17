@@ -26,6 +26,7 @@ Despite the fact that the script was developed for the internal needs of the YDB
 If you want to guarantee it's startup in your work without having standalone installation of YDB:S, you need to require special library-based build of YDB:S:
 
 ``` javascript
+// @grant        none
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0.lib.js
 ```
 
@@ -36,7 +37,7 @@ If your script has **any // @grant**, you should use **unsafeWindow** object ins
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0UW.lib.js
 ```
 
-You **must not** add that lines if your script has run-at property set as **document-start**. You should provide to end users a link for a standalone version or just believe, that they have any other script which integrated YDB:S as a library.
+You **must not** add that lines if your script has run-at property set as **document-start** or **document-idle**. You should provide to end users a link for a standalone version or just believe, that they have any other script which integrated YDB:S as a library.
 
 #### Usage
 Threre is a sample code of implementing settings by using YDB:S:
