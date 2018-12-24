@@ -25,7 +25,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.15
+// @version      0.5.16
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -83,7 +83,7 @@
 		{
 			name:'Fresh ponuts every day',
 			query:'?onut',
-			sort:'',
+			sort:'first_seen_at',
 			sd:'desc',
 			ccache:0,
 			cache:30
@@ -91,7 +91,7 @@
 		{
 			name:'Catbooru',
 			query:'cat || cat lingerie || behaving like a cat || catsuit || cat ears || cat keyhole bra set || catified || nyan cat || sphinx || cat costume',
-			sort:'',
+			sort:'first_seen_at',
 			sd:'desc',
 			ccache:0,
 			cache:30
@@ -123,7 +123,7 @@
 		{
 			name:'Recently uploaded',
 			query:'*',
-			sort:'',
+			sort:'created_at',
 			sd:'desc',
 			cache:0,
 			ccache:0,
@@ -216,7 +216,8 @@
 					[
 						{type:'input', name:'Name', parameter:'name',styleI:{width:'33em', marginRight:'.5em'},validation:{type:'unique'}},
 						{type:'select', name:'Sorting', parameter:'sort',styleI:{marginRight:'.5em'}, values:[
-							{name:'Creation date', value:'created_at'},
+							{name:'Upload date', value:'created_at'},
+							{name:'Creation date', value:'first_seen_at'},
 							{name:'Score', value:'score'},
 							{name:'Wilson score', value:'wilson'},
 							{name:'Relevance', value:'relevance'},
@@ -353,7 +354,16 @@
 			}
 		}
 
+		let updated = false;
+
 		for (let i=0; i<feedz.length; i++) {
+			if (!f_s_c.firstSeenAtImplemented) {
+				if (feedz[i].sort == "created_at" && feedz[i].query != '*') {
+					feedz[i].sort = 'first_seen_at';
+					updated = true;
+					feedzCache[i] = undefined;
+				}
+			}
 			if (feedz[i] != null) feedz[i].loaded = false;
 			if (feedz[i].cachedResp != undefined) {
 				feedzCache[i] = feedz[i].cachedResp;
@@ -364,7 +374,13 @@
 				delete feedz[i].cachedQuery;
 			}
 		}
-
+		f_s_c.firstSeenAtImplemented = true;
+		if (window._YDB_public.funcs.backgroundBackup!=undefined && updated) {
+			setTimeout(function() {
+				window._YDB_public.funcs.backgroundBackup(function() {});
+				write();
+			}, 3000);
+		}
 		if (config.oneTimeLoad == undefined) config.oneTimeLoad = 3;
 	}
 
