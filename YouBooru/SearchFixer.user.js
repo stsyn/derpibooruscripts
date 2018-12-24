@@ -25,7 +25,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.3.20
+// @version      0.3.21
 // @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
 // @author       stsyn
 // @grant        none
@@ -533,6 +533,7 @@
 		}
 		prevUrl+='&page='+page+'&perpage=50&sf='+sf+'&sd='+sd;
 		debug('SSF','Gaining offset pagination query: page '+page+', query '+myURL.params.q,0);
+        if (myURL.params.del != undefined && myURL.params.del != '') prevUrl+='&del='+myURL.params.del;
 		return prevUrl;
 	}
 
@@ -540,7 +541,8 @@
 		let sf = myURL.params.sf;
 		if (myURL.params.sf == '' || myURL.params.sf == 'wilson' || myURL.params.sf.startsWith('random') || myURL.params.sf == 'relevance') sf = 'created_at';
 		debug('SSF','Pagination query: page '+page+', query '+myURL.params.q+', sort '+sf,0);
-		return '//'+myURL.host+'/search'+(pp?'.json':'')+'?q='+myURL.params.q+(pp?'&perpage=50':'')+'&sf='+(sf==undefined?'':sf)+'&sd='+(myURL.params.sd==undefined?'':myURL.params.sd)+'&page='+page;
+		return '//'+myURL.host+'/search'+(pp?'.json':'')+'?q='+myURL.params.q+(pp?'&perpage=50':'')+'&sf='+(sf==undefined?'':sf)+'&sd='+
+            (myURL.params.sd==undefined?'':myURL.params.sd)+'&page='+page+((myURL.params.del != undefined && myURL.params.del != '')?'&del='+myURL.params.del:'');
 	}
 
 	function crLink(sel, level, type) {
@@ -551,11 +553,23 @@
 
 	//adding a button, pushes query in header search
 	function pushQuery(withup) {
+        document.head.appendChild(InfernoAddElem('style',{type:"text/css", innerHTML:`
+@media(max-width: 800px) {
+
+.header__search .dropdown__content, .header__search:hover .dropdown__content {
+display:flex;
+font-size:14px;
+width:auto;
+min-width:auto !important
+}
+}
+`},[]));
 		document.querySelector('form.header__search').classList.add('dropdown');
 		document.querySelector('form.header__search').appendChild(
 			InfernoAddElem('span',{className:'dropdown__content', style:'position:static;min-width:0;z-index:1'},[
 				InfernoAddElem('select',{id:'_ydb_s_qpusher_sf',className:'input header__input', style:'display:inline;width:5em', name:'sf', size:1},[
 					InfernoAddElem('option',{value:'created_at', innerHTML:'created_at'},[]),
+					InfernoAddElem('option',{value:'first_seen_at', innerHTML:'first_seen_at'},[]),
 					InfernoAddElem('option',{value:'score', innerHTML:'score'},[]),
 					InfernoAddElem('option',{value:'wilson', innerHTML:'wilson'},[]),
 					InfernoAddElem('option',{value:'relevance', innerHTML:'relevance'},[]),
@@ -564,7 +578,7 @@
 					InfernoAddElem('option',{value:'comments', innerHTML:'comments'},[]),
 					InfernoAddElem('option',{value:'random', innerHTML:'random'},[]),
 				]),
-				InfernoAddElem('select',{id:'_ydb_s_qpusher_sd',className:'input header__input', style:'display:inline', name:'sd', size:1},[
+				InfernoAddElem('select',{id:'_ydb_s_qpusher_sd',className:'input header__input', style:'display:inline;width:3.5em', name:'sd', size:1},[
 					InfernoAddElem('option',{value:'desc', innerHTML:'desc'},[]),
 					InfernoAddElem('option',{value:'asc', innerHTML:'asc'},[])
 				])
@@ -621,6 +635,7 @@
 				}
 			}
 			document.getElementById('_ydb_s_qpusher').search = s;
+			console.log(s);
 		};
 
 		if (document.getElementById('_ydb_s_qpusher')) setTimeout(function() {
@@ -648,6 +663,7 @@
 		if (document.getElementById('_ydb_s_finder') != undefined) document.getElementById('_ydb_s_finder').addEventListener('click',function(e) {
 			commonClickAction(e);
 			myURL = parseURL(document.getElementById('_ydb_s_qpusher').href);
+            console.log(myURL);
 			crLink('#_ydb_s_finder', 'act', 'find');
 		});
 	}
@@ -718,6 +734,7 @@
 		!(myURL.params.sf == 'created_at' && (myURL.params.del == undefined || myURL.params.del == '')) &&
 		myURL.params.sf != 'wilson' &&
 		myURL.params.sf != 'relevance' &&
+		myURL.params.sf != 'first_seen_at' &&
 		!(myURL.params.sf == 'score' && !settings.score) &&
 		!(myURL.params.sf == 'comments' && !settings.comments) &&
 		!(myURL.params.sf.startsWith('random') && !settings.random) &&
