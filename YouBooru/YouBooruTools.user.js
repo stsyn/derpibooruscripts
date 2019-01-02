@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.6.1
+// @version      0.6.2
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1274,23 +1274,28 @@ color: #0a0;
 
 	//compress comments
 	function shrinkComms(e) {
-		for (let i=0; i<e.querySelectorAll('.block.communication').length; i++) {
-			let el = e.querySelectorAll('.block.communication')[i];
+		for (let i=0; i<e.querySelectorAll('.block.communication, .profile-about').length; i++) {
+			let baseSize = parseInt(ls.shrinkComms);
+			let el = e.querySelectorAll('.block.communication, .profile-about')[i];
+			if (el.classList.contains('profile-about')) {
+				el = el.parentNode;
+				//baseSize *= 4;
+			}
 			if (el.clientHeight == 0) {
 				setTimeout(function() {shrinkComms(e)}, 200);
 				return;
 			}
-			if (el.clientHeight > parseInt(ls.shrinkComms)*1.2+13) {
-				let t = el.querySelector('.communication__body__text');
+			if (el.clientHeight > baseSize*1.2+13) {
+				let t = el.querySelector('.communication__body__text, .profile-about');
 				if (t.classList.contains('_ydb_t_comm_shrink')) continue;
 				t.classList.add('_ydb_t_comm_shrink');
-				t.style.maxHeight = parseInt(ls.shrinkComms)*0.8+'px';
+				t.style.maxHeight = baseSize*0.8+'px';
 				el.style.position = 'relative';
 				let x;
 				let y = InfernoAddElem('div',{className:'block__content communication__options _ydb_tools_compress', style:'display:none;text-align:center;font-size:150%;margin-bottom:2px'},[
 					InfernoAddElem('a',{href:'javascript://', style:'width:100%;display:inline-block;', events:[{t:'click',f:function() {
 						t.classList.add('_ydb_t_comm_shrink');
-						t.style.maxHeight = parseInt(ls.shrinkComms)*0.8+'px';
+						t.style.maxHeight = baseSize*0.8+'px';
 						x.style.display = 'block';
 						y.style.display = 'none';
 					}}]}, [
@@ -1299,7 +1304,7 @@ color: #0a0;
 						InfernoAddElem('i',{innerHTML:'\uF062',className:'fa'},[])
 					])
 				]);
-				x = InfernoAddElem('div',{className:'block__content communication__options _ydb_tools_expand', style:'position:absolute;text-align:center;font-size:150%;bottom:'+(el.querySelector('.communication__options').clientHeight+4)+'px;width:calc(100% - 14px)'},[
+				x = InfernoAddElem('div',{className:'block__content communication__options _ydb_tools_expand', style:'position:absolute;text-align:center;font-size:150%;bottom:'+(t.classList.contains('profile-about')?0:(el.querySelector('.communication__options').clientHeight+4))+'px;width:calc(100% - 14px)'},[
 					InfernoAddElem('a',{href:'javascript://', style:'width:100%;display:inline-block;',events:[{t:'click',f:function() {
 						t.classList.remove('_ydb_t_comm_shrink');
 						t.style.maxHeight = 'none';
@@ -1311,11 +1316,18 @@ color: #0a0;
 						InfernoAddElem('i',{innerHTML:'\uF063',className:'fa'},[])
 					])
 				]);
-				if (ls.shrinkButt) el.insertBefore(y,el.lastChild);
-				el.insertBefore(x,el.lastChild);
+				console.log(el);
+				if (t.classList.contains('profile-about')) {
+					if (ls.shrinkButt) el.appendChild(y);
+					el.appendChild(x);
+				}
+				else {
+					if (ls.shrinkButt) el.insertBefore(y,el.lastChild);
+					el.insertBefore(x,el.lastChild);
+				}
 			}
-			else if (el.clientHeight < parseInt(ls.shrinkComms)*0.8+13) {
-				let t = el.querySelector('.communication__body__text');
+			else if (el.clientHeight < baseSize*0.8+13) {
+				let t = el.querySelector('.communication__body__text, .profile-about');
 				if (t.classList.contains('_ydb_t_comm_shrink') && parseInt(t.style.maxHeight)<t.clientHeight) {
 					if (el.getElementsByClassName('_ydb_tools_compress')[0] != undefined) el.removeChild(el.getElementsByClassName('_ydb_tools_compress')[0]);
 					el.removeChild(el.getElementsByClassName('_ydb_tools_expand')[0]);
@@ -2163,6 +2175,27 @@ color: #0a0;
         }
     }
 
+	//broken preview
+	function fixDupes() {
+		let cs = document.querySelectorAll('.grid.grid--dupe-report-list:not(._ydb_patched)');
+		for (let i=0; i<cs.length; i++) {
+			let es = cs[i].querySelectorAll('.image-container.thumb_small');
+			for (let j=0; j<es.length; j++) {
+				let p = es[j].querySelector('picture img');
+				if (p != undefined) {
+					if (p.src.indexOf('derpicdn.net/assets/1x1') > -1) {
+						DB_processImages(es[j].parentNode);
+					}
+				}
+				es[j].querySelector('a').style.lineHeight = '150px';
+				es[j].style.minWidth = '150px';
+				es[j].style.minHeight = '150px';
+			}
+			cs[i].classList.add('_ydb_patched');
+		}
+		setTimeout(fixDupes, 500);
+	}
+	
 	//custom spoilers
 	function customSpoilerApply(spoiler) {
 		let ax = JSON.parse(localStorage._ydb_tools_ctags);
@@ -2687,6 +2720,7 @@ color: #0a0;
 	try {resizeEverything(true);} catch(e) {error("resizeEverything", e)};
 	try {addGalleryOption();} catch(e) {error("addGalleryOption", e)};
 	try {contacts();} catch(e) {error("contacts", e)};
+	try {fixDupes();} catch(e) {error('fixDupes', e)};
     if (location.pathname == "/pages/yourbooru") {
         YDB();
     }
