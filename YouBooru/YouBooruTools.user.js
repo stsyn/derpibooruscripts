@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.6.2
+// @version      0.6.3
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -2181,7 +2181,7 @@ color: #0a0;
 		for (let i=0; i<cs.length; i++) {
 			let es = cs[i].querySelectorAll('.image-container.thumb_small');
 			for (let j=0; j<es.length; j++) {
-				let p = es[j].querySelector('picture img');
+				let p = es[j].querySelector('a img');
 				if (p != undefined) {
 					if (p.src.indexOf('derpicdn.net/assets/1x1') > -1) {
 						DB_processImages(es[j].parentNode);
