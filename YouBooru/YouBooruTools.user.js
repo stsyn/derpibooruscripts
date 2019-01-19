@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.6.3
+// @version      0.6.4
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1582,7 +1582,7 @@ color: #0a0;
 		let addPendingById = function(id) {
 			if (userbase.pending.indexOf(id) != -1 || id == null) return;
 			userbase.pending.push(parseInt(id));
-			debug('YDB:U','User with id '+user.id+' added to pending list.', 0);
+			debug('YDB:U','User with id '+id+' added to pending list.', 0);
 			write();
 		};
 
