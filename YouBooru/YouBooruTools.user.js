@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.6.4
+// @version      0.6.5
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1316,7 +1316,6 @@ color: #0a0;
 						InfernoAddElem('i',{innerHTML:'\uF063',className:'fa'},[])
 					])
 				]);
-				console.log(el);
 				if (t.classList.contains('profile-about')) {
 					if (ls.shrinkButt) el.appendChild(y);
 					el.appendChild(x);
@@ -1621,7 +1620,7 @@ color: #0a0;
 					debug('YDB:U','Received id '+id+' of user "'+id+'".', 0);
 				}
 				catch(e) {
-					debug('YDB:U','Failed to decode ID in reponse while performing "updateId" on "'+user.name+'". Encoded to '+nameEncode(user.name), 2);
+					debug('YDB:U','Failed to decode ID in reponse while performing "updateId" on "'+name+'". Encoded to '+nameEncode(name), 2);
 				}
 			});
 		};
@@ -1689,10 +1688,6 @@ color: #0a0;
 					if (user.name != oldUser.name) {
 						user.aliases.push(oldUser.name);
 						debug('YDB:U','User "'+oldUser.name+'" ('+user.id+') was renamed into "'+user.name+'".', 0);
-						if (getUserByName(user.name).id != id) {
-							//user with this name exists... should recheck old one
-							addPending(getUserByName(user.name));
-						}
 						changed = true;
 					}
 
@@ -1700,8 +1695,9 @@ color: #0a0;
 					if (content.aliases != undefined && content.aliases.length>0) {
 						for (let i=0; i<content.aliases.length; i++) {
 							let found = false;
-							for (let j=0; i<user.aliases.length; j++) {
-								if (content.aliases[i] == user.aliases[j]) {
+							if (content.aliases[i] == oldUser.name) found = true;
+							for (let j=0; j<oldUser.aliases.length; j++) {
+								if (content.aliases[i] == oldUser.aliases[j]) {
 									found = true;
 									break;
 								}
@@ -1717,8 +1713,8 @@ color: #0a0;
 					if (content.tags != undefined && content.tags.length>0) {
 						for (let i=0; i<content.tags.length; i++) {
 							let found = false;
-							for (let j=0; i<user.tags.length; j++) {
-								if (content.tags[i] == user.tags[j]) {
+							for (let j=0; j<oldUser.tags.length; j++) {
+								if (content.tags[i] == oldUser.tags[j]) {
 									found = true;
 									break;
 								}
@@ -1849,6 +1845,28 @@ color: #0a0;
 			}
 		};
 
+		let fixDupesInNames = function() {
+			for (let id in userbase.users) {
+				let user = userbase.users[id];
+				let name = user.name;
+				for (let i=0; i<user.aliases.length; i++) {
+					if (user.aliases[i] == name) {
+						user.aliases.splice(i, 1);
+						i--;
+					}
+				}
+				for (let i=0; i<user.aliases.length; i++) {
+					name = user.aliases[i];
+					for (let j=i; j<user.aliases.length; j++) {
+						if (user.aliases[j] == name) {
+							user.aliases.splice(j, 1);
+							j--;
+						}
+					}
+				}
+			}
+			write();
+		};
 
 		if (!userbaseStarted) {
 			getUserId = function (name, callback) {return getId(name, callback);};
@@ -1912,6 +1930,11 @@ color: #0a0;
 			}
 
 			//pending updates
+			if (!userbaseTS.checkedDupes) {
+				fixDupesInNames();
+				userbaseTS.checkedDupes = true;
+				tswrite();
+			}
 			if (userbase.pending.length>0) {
 				userbaseTS.ttu -= (Date.now()-userbaseTS.lastRun);
 				if (userbaseTS.ttu <= 0) {
@@ -1925,7 +1948,9 @@ color: #0a0;
 						userbaseTS.lastRun = Date.now();
 						userbaseTS.ttu += UBinterval/userbase.pending.length;
 						userbaseTS.ttu = parseInt(userbaseTS.ttu);
+						userbaseTS.checkedDupes = false;
 						tswrite();
+						write();
 					});
 				}
 				tswrite();
@@ -2199,16 +2224,23 @@ color: #0a0;
 	//custom spoilers
 	function customSpoilerApply(spoiler) {
 		let ax = JSON.parse(localStorage._ydb_tools_ctags);
+		if (ax == undefined) ax = {};
+		if (typeof ax == 'object' && Array.isArray(ax)) {
+			let cx = {};
+			for (let i=0; i<ax.length; i++) cx[ax[i]] = true;
+			ax = cx;
+			localStorage._ydb_tools_ctags = JSON.stringify(ax);
+		}
 		// for (let i=0; i<ax.length; i++) if (ax[i] == spoiler.name) return;
 
 		for (let i in localStorage) {
 			if (/bor_tags_\d+/.test(i)) {
 				let s = JSON.parse(localStorage[i]);
 				try {
-					if (s.name == spoiler.name) {
+					if (s.name == spoiler.name && !s.spoiler_image_uri == spoiler.image) {
 						s.spoiler_image_uri_old = s.spoiler_image_uri;
 						s.spoiler_image_uri = spoiler.image;
-						ax.push(spoiler.name);
+						ax[spoiler.name] = true;
 						debug('YDB:T','Spoiler '+spoiler.name+' successfully added.',1);
 						localStorage[i] = JSON.stringify(s);
 						localStorage._ydb_tools_ctags = JSON.stringify(ax);
@@ -2227,7 +2259,13 @@ color: #0a0;
 
 	function customSpoilerRemove(spoiler) {
 		let ax = JSON.parse(localStorage._ydb_tools_ctags);
-		if (ax == undefined) ax = [];
+		if (ax == undefined) ax = {};
+		if (typeof ax == 'object' && Array.isArray(ax)) {
+			let cx = {};
+			for (let i=0; i<ax.length; i++) cx[ax[i]] = true;
+			ax = cx;
+			localStorage._ydb_tools_ctags = JSON.stringify(ax);
+		}
 		let trigger = false;
 
 		for (let j=0; j<ax.length; j++) if (ax[j] == spoiler.name) {
@@ -2242,7 +2280,7 @@ color: #0a0;
 				let s = JSON.parse(localStorage[i]);
 				if (s.name == spoiler.name) {
 					s.spoiler_image_uri = s.spoiler_image_uri_old;
-					ax.slice(j,1);
+					ax[spoiler.name] = false;
 				}
 			}
 		}
@@ -2259,8 +2297,8 @@ color: #0a0;
 			ax = JSON.parse(localStorage._ydb_tools_ctags);
 		}
 		catch (e) {
-			localStorage._ydb_tools_ctags = '[]';
-			ax = [];
+			localStorage._ydb_tools_ctags = '{}';
+			ax = {};
 		}
 		if (ax == undefined) ax = [];
 		for (let i=0; i<spoilers.length; i++) {
@@ -2269,11 +2307,11 @@ color: #0a0;
 
 		//check for deactivation
 		ax = JSON.parse(localStorage._ydb_tools_ctags);
-		if (ax == undefined) ax = [];
-		for (let i=0; i<ax.length; i++) {
+		if (ax == undefined) ax = {};
+		for (let i in ax) {
 			let trigger = false;
-			for (let j=0; j<spoilers.length; j++) {
-				if (ax[i] == spoilers[j].name) {
+			if (ax[i]) for (let j=0; j<spoilers.length; j++) {
+				if (i == spoilers[j].name) {
 					trigger = true;
 					break;
 				}
@@ -2598,7 +2636,7 @@ color: #0a0;
         let c = elems.querySelector('.walloftext');
         let t = addElem('div',{id:'_ydb_temp', style:'display:none'}, document.getElementById('content'));
         c.innerHTML = 'This may take few seconds. Do not close this page until finished<br><br>';
-		c.appendChild(InfernoAddElem('a',{innerHTML:'Abort', events:[{t:'click',f:function(e) {stop = true;console.log(stop+' x');}}]},[]));
+		c.appendChild(InfernoAddElem('a',{innerHTML:'Abort', events:[{t:'click',f:function(e) {stop = true;}}]},[]));
 		c.appendChild(InfernoAddElem('br',{},[]));
 		c.appendChild(InfernoAddElem('br',{},[]));
 
