@@ -25,7 +25,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.15
+// @version      0.9.16
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -810,7 +810,7 @@
 	}
 
 	function settingPage() {
-		localStorage._ydb_watchListFilterString = document.getElementById('user_watched_images_exclude_str').innerHTML;
+		//localStorage._ydb_watchListFilterString = document.getElementById('user_watched_images_exclude_str').innerHTML;
 		let cont;
 		//preparing
 		document.getElementById('js-setting-table').insertBefore(cont = InfernoAddElem('div',{className:'block__tab hidden',dataset:{tab:'YourBooru'},style:'position:relative'}), document.querySelector('[data-tab="local"]').nextSibling);
