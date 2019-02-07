@@ -25,7 +25,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.16
+// @version      0.5.17
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -1309,12 +1309,9 @@
 	let cont = document.getElementsByClassName('column-layout__main')[0];
 	if (location.pathname == '/' || location.pathname == '') setTimeout(init, 10);
 	else {
-		if (location.pathname == "/pages/yourbooru") {
-			preRun();
-			YDB();
-		}
+		preRun();
+		if (location.pathname == "/pages/yourbooru") YDB();
         else if (location.pathname == "/search" || location.pathname == '/search/index') {
-			preRun();
             let u = parseURL(location.href);
             if (u.params.name != undefined) YB_addFeed2(u);
 			else if (u.params.feedId != undefined) YB_feedButton(u.params.feedId);
