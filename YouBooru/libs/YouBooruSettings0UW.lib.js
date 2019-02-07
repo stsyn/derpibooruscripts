@@ -1,31 +1,10 @@
-// ==UserScript==
+// ==UserScriptLib==
 // @name         YourBooru:Settings
-// @namespace    http://tampermonkey.net/
-
-// @include      *://trixiebooru.org/*
-// @include      *://derpibooru.org/*
-// @include      *://www.trixiebooru.org/*
-// @include      *://www.derpibooru.org/*
-// @include      *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/*
-// @include      *://*.orzgs6djmvrg633souxg64th.*.*/*
-// @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
-// @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
-
-// @exclude      *://trixiebooru.org/adverts/*
-// @exclude      *://derpibooru.org/adverts/*
-// @exclude      *://www.trixiebooru.org/adverts/*
-// @exclude      *://www.derpibooru.org/adverts/*
-// @exclude      *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/adverts/*
-// @exclude      *://*.orzgs6djmvrg633souxg64th.*.*/adverts/*
-// @exclude      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
-// @exclude      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
-
-// @version      0.9.15LUW
-// @description  Global settings script for YourBooru script family
+// @version      0.9.16L
+// @description  Global library script for YourBooru script family
+// @grant	 unsafeWindow
 // @author       stsyn
-// @grant        unsafeWindow
-// @run-at       document-end
-// ==/UserScript==
+// ==/UserScriptLib==
 
     // This is beta version
     if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (unsafeWindow.self === unsafeWindow.top)) {
@@ -812,7 +791,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 	}
 
 	function settingPage() {
-		localStorage._ydb_watchListFilterString = document.getElementById('user_watched_images_exclude_str').innerHTML;
+		//localStorage._ydb_watchListFilterString = document.getElementById('user_watched_images_exclude_str').innerHTML;
 		let cont;
 		//preparing
 		document.getElementById('js-setting-table').insertBefore(cont = InfernoAddElem('div',{className:'block__tab hidden',dataset:{tab:'YourBooru'},style:'position:relative'}), document.querySelector('[data-tab="local"]').nextSibling);
