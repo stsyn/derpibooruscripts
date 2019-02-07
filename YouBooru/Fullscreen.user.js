@@ -1542,7 +1542,7 @@ color: #777;
 
     register();
     append('noneTag');
-	if (document.querySelector('iframe[src*="//www.youtube-nocookie.com/embed/qRC4Vk6kisY"]') != null) return;
+	if (document.title == "Update Deployment - Derpibooru - My Little Pony: Friendship is Magic Imageboard") return;
     document.addEventListener('DOMContentLoaded', function() {
 		cm_bg();
         if (document.getElementById('user_theme') != undefined) document.getElementById('user_theme').addEventListener('change',function() {
