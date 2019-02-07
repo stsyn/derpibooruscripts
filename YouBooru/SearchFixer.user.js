@@ -25,7 +25,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.3.21
+// @version      0.4.0
 // @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
 // @author       stsyn
 // @grant        none
@@ -59,6 +59,7 @@
 		sizes:true,
 		comments:true,
 		gallery:true,
+		first_seen_at:true,
 
 		//Fix random button
 		randomButton:true,
@@ -81,6 +82,7 @@
 
 	let findTemp = 0, findIter = 1, TTL = 5;
 	let preparam;
+	let first_seen;
 	let debug = function(id, value, level) {
 		try {
 			window._YDB_public.funcs.log(id, value, level);
@@ -139,6 +141,7 @@
 				{type:'checkbox', name:'Fix size sorting', parameter:'sizes'},
 				{type:'checkbox', name:'Fix comments sorting', parameter:'comments'},
 				{type:'checkbox', name:'Fix gallery sorting', parameter:'gallery'},
+				{type:'checkbox', name:'Fix first_seen_at', parameter:'first_seen_at'},
 				{type:'breakline'},
 				{type:'checkbox', name:'Fix random button', parameter:'randomButton'},
 				{type:'checkbox', name:'Flash on completion', parameter:'blink'},
@@ -205,12 +208,14 @@
             score:parseInt(document.getElementsByClassName('score')[0].innerHTML),
             width:document.querySelector('.image-show-container').dataset.width,
             height:document.querySelector('.image-show-container').dataset.height,
-            comments:document.querySelectorAll('.comments_count')[0].innerHTML
+            comments:document.querySelectorAll('.comments_count')[0].innerHTML,
+			first_seen_at:first_seen
         };
 		if (myURL.params.sf == 'score') return parseInt(document.getElementsByClassName('score')[0].innerHTML);
 		if (myURL.params.sf == 'width') return document.querySelector('.image-show-container').dataset.width;
 		if (myURL.params.sf == 'height') return document.querySelector('.image-show-container').dataset.height;
 		if (myURL.params.sf == 'comments') return document.querySelectorAll('.comments_count')[0].innerHTML;
+		if (myURL.params.sf == 'first_seen_at') return first_seen;
 	}
 
 	function parse(r, type) {
@@ -323,6 +328,7 @@
 						else if (myURL.params.sf == 'width') param='width';
 						else if (myURL.params.sf == 'height') param='height';
 						else if (myURL.params.sf == 'comments') param='comment_count';
+						else if (myURL.params.sf == 'first_seen_at') param='first_seen_at';
 						else param = '';
 						if (u.search[s+1][param] == u.search[s][param]) {
 							//мы чот нашли, но у соседней по тому же критерию то же самое, нужно уточнить, что ставить
@@ -437,6 +443,9 @@
 		else if (myURL.params.sf == "comments") {
 			prevUrl += ',(comment_count:'+v+')';
 		}
+		else if (myURL.params.sf == "first_seen_at") {
+			prevUrl += ',(first_seen_at:'+v+')';
+		}
 		prevUrl+=((type!='find')?('&perpage=1'):('&perpage=50&page='+page))+'&sf=created_at&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
 		debug('SSF','Post query: query '+prevUrl,0);
 		return prevUrl;
@@ -471,6 +480,9 @@
 		else if (myURL.params.sf == "comments") {
 			prevUrl += ',(comment_count:'+cscore+',id.'+dir+':'+id+')';
 		}
+		else if (myURL.params.sf == "first_seen_at") {
+			prevUrl += ',(first_seen_at:'+cscore+',id.'+dir+':'+id+')';
+		}
 		prevUrl+='&perpage=1&sf=created_at&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
         if (myURL.params.del != undefined && myURL.params.del != '') prevUrl+='&del='+myURL.params.del;
 		debug('SSF','Pre query: query '+prevUrl,0);
@@ -498,6 +510,9 @@
 			}
 			else if (myURL.params.sf == "comments") {
 				prevUrl += ',((comment_count:'+(cscore+d)+',id.'+dir+':'+id+')+||+(comment_count.'+dir+':'+(cscore+d)+'))';
+			}
+			else if (myURL.params.sf == "first_seen_at") {
+				prevUrl += ',((first_seen_at:'+(cscore+d)+',id.'+dir+':'+id+')+||+(first_seen_at.'+dir+':'+(cscore+d)+'))';
 			}
 			prevUrl+='&perpage=3&sf='+myURL.params.sf+'&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
 		}
@@ -527,6 +542,9 @@
 		else if (myURL.params.sf == "comments") {
 			prevUrl += ',(comment_count.'+dir+':'+cscore+')';
 		}
+		else if (myURL.params.sf == "first_seen_at") {
+			prevUrl += ',(first_seen_at.'+dir+':'+cscore+')';
+		}
 		else {
 			prevUrl += ',(id.'+dir+':'+id+')';
 			sf = 'created_at';
@@ -546,10 +564,20 @@
 	}
 
 	function crLink(sel, level, type) {
-		request(compilePreQuery(type), sel, type, (myURL.params.sf == 'created_at' && type != "find"?'post':level));
+		if (myURL.params.sf == 'first_seen_at' && first_seen == undefined) setTimeout(crLink, 10, sel, level, type);
+		else request(compilePreQuery(type), sel, type, (myURL.params.sf == 'created_at' && type != "find"?'post':level));
 	};
 
-
+	function fetchFirstSeen(id) {
+		fetch('/'+id+'.json')
+		.then(function(response) {
+			return response.json();
+		})
+		.then(function(response) {
+			first_seen = response.first_seen_at;
+			preparam.first_seen_at = first_seen;
+		});
+	};
 
 	//adding a button, pushes query in header search
 	function pushQuery(withup) {
@@ -712,6 +740,7 @@ min-width:auto !important
 			localStorage._ssf = JSON.stringify(settings);
 		}
 	}
+	if (settings.first_seen_at == undefined) settings.first_seen_at = true;
 	register();
 	let myURL = parseURL(location.href);
 	if (myURL.sf != undefined) if (myURL.params.sf.startsWith('gallery_id')) return;
@@ -734,14 +763,15 @@ min-width:auto !important
 		!(myURL.params.sf == 'created_at' && (myURL.params.del == undefined || myURL.params.del == '')) &&
 		myURL.params.sf != 'wilson' &&
 		myURL.params.sf != 'relevance' &&
-		myURL.params.sf != 'first_seen_at' &&
 		!(myURL.params.sf == 'score' && !settings.score) &&
 		!(myURL.params.sf == 'comments' && !settings.comments) &&
+		!(myURL.params.sf == 'first_seen_at' && !settings.first_seen_at) &&
 		!(myURL.params.sf.startsWith('random') && !settings.random) &&
 		!(myURL.params.sf.startsWith('gallery_id') && !settings.gallery) &&
 		!((myURL.params.sf == 'width' || myURL.params.sf == 'height') && !settings.sizes)
 	) {
 		if (!(myURL.params.sf.startsWith('gallery_id'))) myURL.params.sf = myURL.params.sf.split('%')[0];
+		if (myURL.params.sf == 'first_seen_at') fetchFirstSeen(id);
 		if (settings.preloading) execute();
 		else {
 			document.querySelectorAll('.js-next')[0].addEventListener('click',function(e) {
@@ -762,6 +792,7 @@ min-width:auto !important
 	if (!isNaN(id) && (
 		(myURL.params.sf == 'score' && settings.scoreUp) ||
 		(myURL.params.sf == 'comments' && settings.comments) ||
+		(myURL.params.sf == 'first_seen_at' && settings.first_seen_at) ||
 		(myURL.params.sf != undefined && myURL.params.sf.startsWith('gallery_id') && settings.gallery) ||
 		((myURL.params.sf == 'width' || myURL.params.sf == 'height') && settings.sizesUp) ||
 		(( ((myURL.params.sf == undefined || myURL.params.sf == '') && myURL.params.q != undefined && myURL.params.q != '' && myURL.params.q != '%2A')
