@@ -25,7 +25,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.4.1
+// @version      0.4.2
 // @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
 // @author       stsyn
 // @grant        none
@@ -481,7 +481,7 @@
 			prevUrl += ',(comment_count:'+cscore+',id.'+dir+':'+id+')';
 		}
 		else if (myURL.params.sf == "first_seen_at") {
-			prevUrl += ',(first_seen_at:'+cscore+')';
+			prevUrl += ',(first_seen_at.'+dir+':'+cscore+')';
 		}
 		prevUrl+='&perpage=1&sf=created_at&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
         if (myURL.params.del != undefined && myURL.params.del != '') prevUrl+='&del='+myURL.params.del;
@@ -566,7 +566,7 @@
 	function crLink(sel, level, type) {
 		if (myURL.params.sf == 'first_seen_at' && first_seen == undefined) setTimeout(crLink, 10, sel, level, type);
 		else {
-			if (myURL.params.sf == 'first_seen_at' && type != 'find') request(compilePostQuery(type, first_seen), sel, type, 'post');
+			if (myURL.params.sf == 'first_seen_at' && type != 'find') request(compilePreQuery(type, first_seen), sel, type, 'post');
 			else request(compilePreQuery(type), sel, type, (myURL.params.sf == 'created_at' && type != "find"?'post':level));
 		}
 	};
