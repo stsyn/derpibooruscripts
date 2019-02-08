@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Tumblr YDB:ADUp module
 // @namespace    http://tampermonkey.net/
-// @version      0.1.1
+// @version      0.1.2
 // @author       stsyn
 // @match        *://*/*
 
@@ -108,7 +108,7 @@
 			createLink(y, y, parseURL(img.src).path);
 		});
 
-		document.querySelectorAll('*:not(._ydb_adup_parsed)>img[src*="/tumblr_inline_"]:not(._ydb_adup_parsed), a[href*="'+location.hostname+'"]:not(._ydb_adup_parsed) img[src*="media.tumblr.com/"]:not(._ydb_adup_parsed)').forEach(function(img) {
+		document.querySelectorAll('*:not(._ydb_adup_parsed)>img[src*="/tumblr_inline_"]:not(._ydb_adup_parsed), a[href*="'+location.hostname+'"]:not(._ydb_adup_parsed) img[src*="media.tumblr.com/"]:not(._ydb_adup_parsed), .tmblr-full>img:not(._ydb_adup_parsed)').forEach(function(img) {
 			let y = img.parentNode;
 			if (y.getElementsByTagName('img').length>1) return;
             if (img.clientHeight<66 && img.clientWidth<66) return;
@@ -116,6 +116,7 @@
 			img.classList.add('_ydb_adup_parsed');
 			createLink(y, y, parseURL(img.src).path);
 		});
+
 		setTimeout(main, 2000);
 
 	}
