@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.6.5
+// @version      0.6.6
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -27,12 +27,12 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagDB0.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/badgesDB0.js
-// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0.lib.js
-// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruImitation0.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0UW.lib.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruImitation0UW.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
-// @grant        none
+// @grant        unsafeWindow
 // @run-at       document-idle
 // ==/UserScript==
 
@@ -43,7 +43,7 @@
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
-	try {if (window._YDB_public.settings[scriptId] != undefined) return;}
+	try {if (unsafeWindow._YDB_public.settings[scriptId] != undefined) return;}
 	catch(e){}
 	if (aE) {if (!window._YDB_public.allowedToRun[scriptId]) return;}
 	let sversion = aE?window._YDB_public.version:GM_info.script.version;
@@ -87,7 +87,7 @@
 	};
 	let debug = function(id, value, level) {
 		try {
-			window._YDB_public.funcs.log(id, value, level);
+			unsafeWindow._YDB_public.funcs.log(id, value, level);
 		}
 		catch(e) {
 			let levels = ['.', '?', '!'];
@@ -182,12 +182,13 @@ color: #0a0;
 	}
 
 	function fetchJson(verb, endpoint, body) {
+		if (!endpoint.startsWith('https://'+location.hostname)) endpoint = 'https://'+location.hostname+endpoint;
 		const data = {
 			method: verb,
 			credentials: 'same-origin',
 			headers: {
 				'Content-Type': 'application/json',
-				'X-CSRF-Token': window.booru.csrfToken,
+				'X-CSRF-Token': unsafeWindow.booru.csrfToken,
 			},
 		};
 
@@ -205,15 +206,15 @@ color: #0a0;
 
     function register() {
 		addElem('style',{type:'text/css',innerHTML:style},document.head);
-        if (window._YDB_public == undefined) window._YDB_public = {};
-        if (window._YDB_public.settings == undefined) window._YDB_public.settings = {};
-		window._YDB_public.settings.toolsUB = {
+        if (unsafeWindow._YDB_public == undefined) unsafeWindow._YDB_public = {};
+        if (unsafeWindow._YDB_public.settings == undefined) unsafeWindow._YDB_public.settings = {};
+		unsafeWindow._YDB_public.settings.toolsUB = {
             name:'Tools (Userbase)',
             container:'_ydb_toolsUBLocal',
             version:sversion,
 			hidden:true
 		};
-		window._YDB_public.settings.tools = {
+		unsafeWindow._YDB_public.settings.tools = {
             name:'Tools',
             container:'_ydb_tools',
 			link:'/meta/youboorutools-0524-everything-what-you-ever-imagined-and-even-more',
@@ -290,18 +291,18 @@ color: #0a0;
                             if (data[i].changed) {
                                 data[i].changed = false;
                                 if (data[i].w) {
-                                    window._YDB_public.handled++;
+                                    unsafeWindow._YDB_public.handled++;
                                     let t = InfernoAddElem('div',{},[
                                         InfernoAddElem('h1',{},[]),
                                         InfernoAddElem('div',{className:'walloftext'},[])
                                     ]);
-                                    t = window._YDB_public.funcs.callWindow([t]);
+                                    t = unsafeWindow._YDB_public.funcs.callWindow([t]);
                                     processing[data[i].a] = true;
                                     YB_checkList(data[i], t);
                                     let process = function() {
                                         if (!processing[data[i].a]) {
                                             data[i] = result;
-                                            window._YDB_public.handled--;
+                                            unsafeWindow._YDB_public.handled--;
                                             t.classList.add('hidden');
                                             //cb(module,data, result);
                                         }
@@ -321,13 +322,13 @@ color: #0a0;
                 }
             }
         };
-        if (window._YDB_public.funcs == undefined) window._YDB_public.funcs = {};
-        window._YDB_public.funcs.tagAliases = tagAliases;
-        window._YDB_public.funcs.tagComplexParser = goodParse;
-        window._YDB_public.funcs.tagSimpleParser = simpleParse;
-		window._YDB_public.funcs.tagComplexCombine = goodCombine;
-		window._YDB_public.funcs.tagSimpleCombine = simpleCombine;
-		window._YDB_public.funcs.upvoteDownvoteDisabler = function(elem, inital) {
+        if (unsafeWindow._YDB_public.funcs == undefined) unsafeWindow._YDB_public.funcs = {};
+        unsafeWindow._YDB_public.funcs.tagAliases = tagAliases;
+        unsafeWindow._YDB_public.funcs.tagComplexParser = goodParse;
+        unsafeWindow._YDB_public.funcs.tagSimpleParser = simpleParse;
+		unsafeWindow._YDB_public.funcs.tagComplexCombine = goodCombine;
+		unsafeWindow._YDB_public.funcs.tagSimpleCombine = simpleCombine;
+		unsafeWindow._YDB_public.funcs.upvoteDownvoteDisabler = function(elem, inital) {
 			commentButtons(elem, inital);
 			deactivateButtons(elem, inital);
 			hiddenImg(elem, inital);
@@ -721,8 +722,8 @@ color: #0a0;
 
 		let unspoilTag = function (orig) {
 			let nonce;
-			if (window._YDB_public.funcs.getNonce == undefined) nonce = 'unsafe_nonce';
-			else nonce = window._YDB_public.funcs.getNonce();
+			if (unsafeWindow._YDB_public.funcs.getNonce == undefined) nonce = 'unsafe_nonce';
+			else nonce = unsafeWindow._YDB_public.funcs.getNonce();
             let tags = goodParse(orig);
             for (let i=0; i<tags.tags.length; i++) {
                 if (tags.tags[i].v == '__ydb_unspoil') {
@@ -834,13 +835,13 @@ color: #0a0;
 		for (let i=0; i<qc.tags.length; i++) {
 			if (qc.tags[i].v.startsWith('__ydb_unspoil')) {
 				let n = qc.tags[i].v.split(':').pop();
-				if (window._YDB_public.funcs.getNonce == undefined) {
+				if (unsafeWindow._YDB_public.funcs.getNonce == undefined) {
 					document.getElementById('container').insertBefore(InfernoAddElem('div',{className:'flash flash--warning', innerHTML:'YDB:Settings 0.9.1+ strongly recommended! Using unsafe nonce.'},[]),document.getElementById('content'));
 				}
 
 				let nonce;
-				if (window._YDB_public.funcs.getNonce == undefined) nonce = 'unsafe_nonce';
-				else nonce = window._YDB_public.funcs.getNonce();
+				if (unsafeWindow._YDB_public.funcs.getNonce == undefined) nonce = 'unsafe_nonce';
+				else nonce = unsafeWindow._YDB_public.funcs.getNonce();
 
 				if (data[s] == undefined) {
 					document.getElementById('container').insertBefore(InfernoAddElem('div',{className:'flash flash--warning', innerHTML:'Query lifetime expired. Please search again.'},[]),document.getElementById('content'));
@@ -904,7 +905,7 @@ color: #0a0;
                                         l.aliases[k].b = simpleCombine(s);
                                         write(l);
                                         e.target.innerHTML = d.a+' (+)';
-                                        if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup();
+                                        if (unsafeWindow._YDB_public.funcs.backgroundBackup!=undefined) unsafeWindow._YDB_public.funcs.backgroundBackup();
                                         return;
                                     }
                                 }
@@ -912,7 +913,7 @@ color: #0a0;
                                 l.aliases[k].b = simpleCombine(s);
                                 write(l);
                                 e.target.innerHTML = d.a+' (-)';
-                                if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup();
+                                if (unsafeWindow._YDB_public.funcs.backgroundBackup!=undefined) unsafeWindow._YDB_public.funcs.backgroundBackup();
                                 return;
                             }
                         }
@@ -1257,21 +1258,6 @@ color: #0a0;
 		}
 	}
 
-	//compress labels
-	function personal_titles_have_to_be_24_characters_long(e) {
-		for (let i=0; i<e.querySelectorAll('.label:not(._ydb_t_patched)').length; i++) {
-			let el = e.querySelectorAll('.label:not(._ydb_t_patched)')[i];
-			el.classList.add('_ydb_t_patched');
-			if (el.innerText.length > 25) {
-				let t = el.innerHTML;
-				el.innerText = el.innerText.substr(0,25);
-				addElem('a',{innerHTML:'Read more >>', href:'javascript://', events:[{t:'click',f:function() {
-					el.innerText = t;
-				}}]}, el);
-			}
-		}
-	}
-
 	//compress comments
 	function shrinkComms(e) {
 		for (let i=0; i<e.querySelectorAll('.block.communication, .profile-about').length; i++) {
@@ -1564,7 +1550,7 @@ color: #0a0;
 
 		let clwrite = function() {
 			localStorage._ydb_toolsUBLocal = JSON.stringify(userbase_local);
-			if (window._YDB_public.funcs.backgroundBackup!=undefined) window._YDB_public.funcs.backgroundBackup();
+			if (unsafeWindow._YDB_public.funcs.backgroundBackup!=undefined) unsafeWindow._YDB_public.funcs.backgroundBackup();
 		};
 
 		let tswrite = function() {
@@ -1684,6 +1670,7 @@ color: #0a0;
 					let oldUser = userbase.users[newId];
 
 					user.aliases = oldUser.aliases;
+					user.tags = oldUser.tags;
 					//in case of renaming
 					if (user.name != oldUser.name) {
 						user.aliases.push(oldUser.name);
@@ -1782,8 +1769,8 @@ color: #0a0;
             let callWindow = function(inside) {
                 return ChildsAddElem('div',{className:'_ydb_window block__content'},document.body,inside);
             }
-            if (window._YDB_public != undefined && window._YDB_public.funcs != undefined && window._YDB_public.funcs.callWindow != undefined) {
-                callWindow = window._YDB_public.funcs.callWindow;
+            if (unsafeWindow._YDB_public != undefined && unsafeWindow._YDB_public.funcs != undefined && unsafeWindow._YDB_public.funcs.callWindow != undefined) {
+                callWindow = unsafeWindow._YDB_public.funcs.callWindow;
             }
             let win = callWindow([
                 InfernoAddElem('h1',{innerHTML:'Renewing userbase...'},[]),
@@ -2172,7 +2159,7 @@ color: #0a0;
 				}
 			}
 		}
-		if (document.getElementsByClassName('js-resizable-media-container').length > 0 && inital) window.addEventListener('resize',resizeEverything);
+		if (document.getElementsByClassName('js-resizable-media-container').length > 0 && inital) unsafeWindow.addEventListener('resize',resizeEverything);
 	}
 
     //selfbadges
@@ -2220,7 +2207,7 @@ color: #0a0;
 		}
 		setTimeout(fixDupes, 500);
 	}
-	
+
 	//custom spoilers
 	function customSpoilerApply(spoiler) {
 		let ax = JSON.parse(localStorage._ydb_tools_ctags);
@@ -2237,7 +2224,7 @@ color: #0a0;
 			if (/bor_tags_\d+/.test(i)) {
 				let s = JSON.parse(localStorage[i]);
 				try {
-					if (s.name == spoiler.name && !s.spoiler_image_uri == spoiler.image) {
+					if (s.name == spoiler.name && !(s.spoiler_image_uri == spoiler.image)) {
 						s.spoiler_image_uri_old = s.spoiler_image_uri;
 						s.spoiler_image_uri = spoiler.image;
 						ax[spoiler.name] = true;
@@ -2281,6 +2268,7 @@ color: #0a0;
 				if (s.name == spoiler.name) {
 					s.spoiler_image_uri = s.spoiler_image_uri_old;
 					ax[spoiler.name] = false;
+					debug('YDB:T','Spoiler '+spoiler.name+' successfully removed.',1);
 				}
 			}
 		}
@@ -2615,8 +2603,8 @@ color: #0a0;
 		c.appendChild(generateLine(' ', ' '));
 		c.appendChild(generateLine('Saving...', ' '));
 		write(ls);
-		if (window._YDB_public.funcs.backgroundBackup!=undefined) {
-			window._YDB_public.funcs.backgroundBackup(function(state) {
+		if (unsafeWindow._YDB_public.funcs.backgroundBackup!=undefined) {
+			unsafeWindow._YDB_public.funcs.backgroundBackup(function(state) {
 				if (state) c.appendChild(generateLine('Backupped succesfully, returning...', ' '));
 				else c.appendChild(generateLine('Failed to backup, returning anyway...', ' '));
 				setTimeout(function() {
@@ -2718,7 +2706,6 @@ color: #0a0;
 		showUploader(targ);
 		compressBadges(targ);
 		setTimeout(function() {shrinkComms(targ)},200);
-		personal_titles_have_to_be_24_characters_long(targ);
 	}
 
 	function listRunWhenDone() {
@@ -2762,7 +2749,7 @@ color: #0a0;
     if (location.pathname == "/pages/yourbooru") {
         YDB();
     }
-	window.addEventListener('load',listRunWhenDone);
+	unsafeWindow.addEventListener('load',listRunWhenDone);
     if (document.getElementById('comments') != undefined) document.getElementById('comments').addEventListener("DOMNodeInserted", listener);
     if (document.querySelector('.communication-edit__tab[data-tab="preview"]') != undefined) document.querySelector('.communication-edit__tab[data-tab="preview"]').addEventListener("DOMNodeInserted", listener);
 	};
