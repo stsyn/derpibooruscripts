@@ -16,6 +16,7 @@ function getBadgesImplications() {
 		},
 		extreme:{
 			'Friendship, Art, and Magic (6 Years)':['Friendship, Art, and Magic (5 Years)'],
+			'Friendship, Art, and Magic (7 Years)':['Friendship, Art, and Magic (5 Years)','Friendship, Art, and Magic (6 Years)'],
 			'Helpful Owl':['Friendly Griffon'],
 			'Equality':['Not a Llama'],
 			'Condensed Milk':['Not a Llama'],
