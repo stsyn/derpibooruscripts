@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.3.2
+// @version      0.3.3
 // @author       stsyn
 
 // @match        *://*/*
@@ -534,10 +534,9 @@
             url += '&originWidth='+document.getElementsByClassName('image-show-container')[0].dataset.width;
             url += '&originHeight='+document.getElementsByClassName('image-show-container')[0].dataset.height;
             addElem('span',{style:'flex-grow:1'},document.querySelector('#image_options_area .flex'));
-            ChildsAddElem('span',{style:''},document.querySelector('#image_options_area .flex'), [
-                InfernoAddElem('a',{href:'/images/new'+url},[
-                    InfernoAddElem('button',{className:'button button--link',innerHTML:'Upload copy'},[])
-                ])
+            ChildsAddElem('a',{href:'/images/new'+url},document.querySelector('#image_options_area .block__header'), [
+                InfernoAddElem('i',{className:'fa fa-copy'},[]),
+                InfernoAddElem('span',{innerHTML:' Upload copy'},[])
             ]);
         }
         else if (location.pathname == '/images/new') {
