@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.1.1
+// @version      0.1.2
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
@@ -29,29 +29,12 @@
 			let xlink = document.querySelector('.dev-page-download').href;
 			width = document.querySelector('div.dev-metainfo-details dl dd:nth-child(6)').innerHTML.split('×')[0];
 			height = document.querySelector('div.dev-metainfo-details dl dd:nth-child(6)').innerHTML.split('×')[1];
-			/*if (link == undefined) {
-				GM_xmlhttpRequest({
-					method:   "GET",
-					url:      xlink,
-					onload: function(r) {
-						DA(p,r.finalUrl);
-					},
-					onerror:  function(r) {
-						console.log('Error', r);
-					}
-				});
-				return;
-			}
-			else {
-				dlink = link;
-			}*/
+			
 			dlink = location.href;
 		}
 		else {
 			let o = document.querySelector('.pimp a.thumb');
-			dlink = o.dataset.superFullImg.replace(/\/v1\/fill.*$/, '');
-			//width = o.dataset.superFullWidth;
-			//height = o.dataset.superFullHeight;
+			dlink = o.dataset.superFullImg.replace(/\/v1\/fill.*$/, '').replace('.com/f/', '.com/intermediary/f/');
 		}
 
 		if (document.querySelector('.dev-description .text.block') != undefined) text = '[bq]'+document.querySelector('.dev-description .text.block').innerText+'[/bq]';
