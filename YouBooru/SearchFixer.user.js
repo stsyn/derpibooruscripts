@@ -25,7 +25,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.4.2
+// @version      0.4.3
 // @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
 // @author       stsyn
 // @grant        none
@@ -209,12 +209,14 @@
             width:document.querySelector('.image-show-container').dataset.width,
             height:document.querySelector('.image-show-container').dataset.height,
             comments:document.querySelectorAll('.comments_count')[0].innerHTML,
+			tag_count:document.querySelectorAll('.tag-list .tag').length,
 			first_seen_at:first_seen
         };
 		if (myURL.params.sf == 'score') return parseInt(document.getElementsByClassName('score')[0].innerHTML);
 		if (myURL.params.sf == 'width') return document.querySelector('.image-show-container').dataset.width;
 		if (myURL.params.sf == 'height') return document.querySelector('.image-show-container').dataset.height;
 		if (myURL.params.sf == 'comments') return document.querySelectorAll('.comments_count')[0].innerHTML;
+		if (myURL.params.sf == 'tag_count') return document.querySelectorAll('.tag-list .tag').length;
 		if (myURL.params.sf == 'first_seen_at') return first_seen;
 	}
 
@@ -446,6 +448,9 @@
 		else if (myURL.params.sf == "first_seen_at") {
 			prevUrl += ',(first_seen_at:'+v+')';
 		}
+		else if (myURL.params.sf == "tag_count") {
+			prevUrl += ',(tag_count:'+v+')';
+		}
 		prevUrl+=((type!='find')?('&perpage=1'):('&perpage=50&page='+page))+'&sf=created_at&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
 		debug('SSF','Post query: query '+prevUrl,0);
 		return prevUrl;
@@ -545,6 +550,9 @@
 		else if (myURL.params.sf == "first_seen_at") {
 			prevUrl += ',(first_seen_at.'+dir+':'+cscore+')';
 		}
+		else if (myURL.params.sf == "tag_count") {
+			prevUrl += ',(tag_count.'+dir+':'+cscore+')';
+		}
 		else {
 			prevUrl += ',(id.'+dir+':'+id+')';
 			sf = 'created_at';
@@ -607,6 +615,7 @@ min-width:auto !important
 					InfernoAddElem('option',{value:'width', innerHTML:'width'},[]),
 					InfernoAddElem('option',{value:'height', innerHTML:'height'},[]),
 					InfernoAddElem('option',{value:'comments', innerHTML:'comments'},[]),
+					InfernoAddElem('option',{value:'tag_count', innerHTML:'tag_count'},[]),
 					InfernoAddElem('option',{value:'random', innerHTML:'random'},[]),
 				]),
 				InfernoAddElem('select',{id:'_ydb_s_qpusher_sd',className:'input header__input', style:'display:inline;width:3.5em', name:'sd', size:1},[
@@ -765,6 +774,7 @@ min-width:auto !important
 		myURL.params.sf != "" &&
 		!(myURL.params.sf == 'created_at' && (myURL.params.del == undefined || myURL.params.del == '')) &&
 		myURL.params.sf != 'wilson' &&
+		myURL.params.sf != 'tag_count' &&
 		myURL.params.sf != 'relevance' &&
 		!(myURL.params.sf == 'score' && !settings.score) &&
 		!(myURL.params.sf == 'comments' && !settings.comments) &&
@@ -799,7 +809,7 @@ min-width:auto !important
 		(myURL.params.sf != undefined && myURL.params.sf.startsWith('gallery_id') && settings.gallery) ||
 		((myURL.params.sf == 'width' || myURL.params.sf == 'height') && settings.sizesUp) ||
 		(( ((myURL.params.sf == undefined || myURL.params.sf == '') && myURL.params.q != undefined && myURL.params.q != '' && myURL.params.q != '%2A')
-          || myURL.params.sf == 'wilson' || myURL.params.sf == 'created_at' || (myURL.params.sf != undefined && myURL.params.sf.startsWith('random')) || myURL.params.sf == 'relevance') && settings.everyUp)
+          || myURL.params.sf == 'wilson' || myURL.params.sf == 'created_at' || myURL.params.sf == 'tag_count' || (myURL.params.sf != undefined && myURL.params.sf.startsWith('random')) || myURL.params.sf == 'relevance') && settings.everyUp)
 
 	)) {
 		document.querySelectorAll('.js-up')[0].addEventListener('click',function(e) {
