@@ -25,7 +25,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.17
+// @version      0.5.18
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -224,6 +224,7 @@
 							{name:'Width', value:'width'},
 							{name:'Height', value:'height'},
 							{name:'Comments', value:'comments'},
+							{name:'Tag count', value:'tag_count'},
 							{name:'Random', value:'random'},
 							{name:'Gallery', value:'gallery_id'}
 						],i:function(module,elem) {
