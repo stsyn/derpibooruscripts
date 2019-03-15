@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.3.3
+// @version      0.3.4
 // @author       stsyn
 
 // @match        *://*/*
@@ -162,7 +162,7 @@
                         InfernoAddElem('a',{innerHTML:'Cancel', events:[{t:'click',f:function() {document.getElementById('_ydb_warning').style.display = 'none'}}]},[])
                     ])
                 ]),
-            document.querySelector('.dnp-warning'));
+                document.querySelector('.dnp-warning'));
         }
 
         if (decodeURIComponent(url.params.originWidth) != 'undefined') {
@@ -533,7 +533,6 @@
             url += '&originView='+encodeURIComponent(JSON.parse(document.getElementsByClassName('image-show-container')[0].dataset.uris).large);
             url += '&originWidth='+document.getElementsByClassName('image-show-container')[0].dataset.width;
             url += '&originHeight='+document.getElementsByClassName('image-show-container')[0].dataset.height;
-            addElem('span',{style:'flex-grow:1'},document.querySelector('#image_options_area .flex'));
             ChildsAddElem('a',{href:'/images/new'+url},document.querySelector('#image_options_area .block__header'), [
                 InfernoAddElem('i',{className:'fa fa-copy'},[]),
                 InfernoAddElem('span',{innerHTML:' Upload copy'},[])
