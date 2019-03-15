@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YCH.Commishes YDB:ADUp module
-// @version      0.2.0
+// @version      0.2.1
 // @author       stsyn
 // @include      https://portfolio.commishes.com/upload/show/*
 // @include      https://ych.commishes.com/followUp/show/*
@@ -92,6 +92,8 @@
 
             let button = holder.appendChild(InfernoAddElem('a', {href:href,target:'_blank',innerHTML:'Share on Derpibooru', className:'like-toggle iconless',
                                                                  style:{fontSize:'120%',marginTop:'0.2em',display:'inline-block'}}, []));
+			let direct = holder.appendChild(InfernoAddElem('a', {href:url,target:'_blank',innerHTML:'Direct link', className:'iconless',
+                                                                 style:{fontSize:'120%',marginTop:'0.2em',display:'block'}}, []));
         };
 
         let error = function() {
