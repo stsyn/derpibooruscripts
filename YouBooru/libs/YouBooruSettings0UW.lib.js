@@ -1,6 +1,6 @@
 // ==UserScriptLib==
 // @name         YourBooru:Settings
-// @version      0.9.16L
+// @version      0.9.17L
 // @description  Global library script for YourBooru script family
 // @grant	 unsafeWindow
 // @author       stsyn
@@ -18,7 +18,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 
 	let main = function() {
 	let scriptId = 'settings';
-	let internalVersion = '0.9.15L';
+	let internalVersion = '0.9.17LUW';
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
@@ -666,7 +666,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 					}
 
 					if (inChanged) changed = true;
-					if (inChanged && o != undefined && o[el.dataset.parameter]._ != undefined) o[el.dataset.parameter]._(m, m[el.dataset.parameter], callback);
+					if (inChanged && o != undefined && o[el.dataset.parameter] != undefined && o[el.dataset.parameter]._ != undefined) o[el.dataset.parameter]._(m, m[el.dataset.parameter], callback);
 				}
 			}
 			return changed;
