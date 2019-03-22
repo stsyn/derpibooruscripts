@@ -25,7 +25,7 @@
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.16
+// @version      0.9.17
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -685,7 +685,7 @@
 					}
 
 					if (inChanged) changed = true;
-					if (inChanged && o != undefined && o[el.dataset.parameter]._ != undefined) o[el.dataset.parameter]._(m, m[el.dataset.parameter], callback);
+					if (inChanged && o != undefined && o[el.dataset.parameter] != undefined && o[el.dataset.parameter]._ != undefined) o[el.dataset.parameter]._(m, m[el.dataset.parameter], callback);
 				}
 			}
 			return changed;
