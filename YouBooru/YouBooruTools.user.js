@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.6.6
+// @version      0.7.0
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -272,12 +272,23 @@ color: #0a0;
                 {type:'text', name:'Original tag', styleS:{width:'70%', textAlign:'center',display:'inline-block'}},
                 {type:'array', parameter:'aliases', addText:'Add', customOrder:false, s:[
                     [
-                        {type:'input', name:'', parameter:'a',styleI:{width:'calc(40% - 10px - 12.5em)'},validation:{type:'unique'}},
+                        {type:'input', name:'', parameter:'a',styleI:{width:'calc(40% - 10px - 12.25em)'},validation:{type:'unique'}},
                         {type:'textarea', name:'', parameter:'b',styleI:{width:'60%'}},
                         {type:'input', name:'', parameter:'c',styleI:{display:'none'}},
                         {type:'checkbox', name:'As watchlist', parameter:'w'}
                     ]
-                ], template:{a:'best_pony',b:best_pony_for_today, w:false}}
+                ], template:{a:'best_pony',b:best_pony_for_today, w:false}},
+                {type:'breakline'},
+                {type:'header', name:'Shortcuts'},
+                {type:'breakline'},
+                {type:'text', name:'Name', styleS:{width:'30%', textAlign:'center',display:'inline-block'}},
+                {type:'text', name:'Actual link', styleS:{width:'70%', textAlign:'center',display:'inline-block'}},
+                {type:'array', parameter:'shortcuts', addText:'Add', customOrder:false, s:[
+                    [
+                        {type:'input', name:'', parameter:'name',styleI:{width:'calc(40% - 10px - 5em)'}},
+                        {type:'input', name:'', parameter:'link',styleI:{width:'60%'}},
+                    ]
+                ], template:{name:'Somepony is watching you',link:'/search?q=looking+at+you%2C+score.gte%3A100&random_image=y&sd=desc&sf=created_at'}},
             ],
             onChanges:{
 				spoilers:{
@@ -293,7 +304,8 @@ color: #0a0;
                                 if (data[i].w) {
                                     unsafeWindow._YDB_public.handled++;
                                     let t = InfernoAddElem('div',{},[
-                                        InfernoAddElem('h1',{},[]),
+                                        InfernoAddElem('h1',{},[]),,
+                                        InfernoAddElem('div',{className:'wallcontainer'},[]),
                                         InfernoAddElem('div',{className:'walloftext'},[])
                                     ]);
                                     t = unsafeWindow._YDB_public.funcs.callWindow([t]);
@@ -328,6 +340,7 @@ color: #0a0;
         unsafeWindow._YDB_public.funcs.tagSimpleParser = simpleParse;
 		unsafeWindow._YDB_public.funcs.tagComplexCombine = goodCombine;
 		unsafeWindow._YDB_public.funcs.tagSimpleCombine = simpleCombine;
+		unsafeWindow._YDB_public.funcs.searchForDuplicates = searchForDuplicates;
 		unsafeWindow._YDB_public.funcs.upvoteDownvoteDisabler = function(elem, inital) {
 			commentButtons(elem, inital);
 			deactivateButtons(elem, inital);
@@ -530,10 +543,16 @@ color: #0a0;
     }
 
     function simpleCombine(y,separator) {
-		if (separator == undefined) separator = ' || ';
+		if (separator == undefined) separator = ' OR ';
         let s = '';
         for (let i=0; i<y.length; i++) s += y[i] + (i<y.length-1?separator:'');
         return s;
+    }
+
+    function searchForDuplicates(a) {
+        return a.filter(function(a, c, d) {
+            return d.indexOf(a) === c
+        })
     }
 
     function readTagTools() {
@@ -2308,6 +2327,28 @@ color: #0a0;
 		}
 	}
 
+    function appendCustomNav() {
+        let sh = ls.shortcuts;
+        if (sh == undefined || sh.length == 0) return;
+        let rootLink = '#';
+        let links = sh.map(function (sh) {
+            if (sh.name != '_root_')
+                return InfernoAddElem('a',{innerHTML:sh.name, className:'header__link', href:sh.link, rel:'nofollow noreferrer'},[]);
+            else {
+                rootLink = sh.link;
+                return InfernoAddElem('a',{innerHTML:'', className:'hidden', href:sh.link, rel:'nofollow noreferrer'},[]);
+            }
+        });
+        document.querySelector('.header.header--secondary .hide-mobile').insertBefore(InfernoAddElem('div', {className:'dropdown header__dropdown'}, [
+            InfernoAddElem('a', {className:'header__link', href:rootLink}, [
+                InfernoAddElem('i', {className:'fa fa-external-link-alt'}, []),
+                InfernoAddElem('span', {innerHTML:' '}, []),
+                InfernoAddElem('span', {dataset:{clickPreventdefault:true},className:'fa fa-caret-down'}, [])
+            ]),
+            InfernoAddElem('div', {className:'dropdown__content'}, links)
+        ]), document.querySelector('.header.header--secondary .hide-mobile').firstChild);
+    }
+
 	// contacts module
 	function contacts() {
 		if (document.querySelector('.js-burger-links a.header__link[href*="messages"]') == undefined) return;
@@ -2621,12 +2662,13 @@ color: #0a0;
     function YB_checkList(o, elems) {
 		let stop = false;
         elems.querySelector('h1').innerHTML = 'Checking watchlist tags...';
-        let c = elems.querySelector('.walloftext');
+        let c = elems.querySelector('.wallcontainer');
         let t = addElem('div',{id:'_ydb_temp', style:'display:none'}, document.getElementById('content'));
         c.innerHTML = 'This may take few seconds. Do not close this page until finished<br><br>';
 		c.appendChild(InfernoAddElem('a',{innerHTML:'Abort', events:[{t:'click',f:function(e) {stop = true;}}]},[]));
 		c.appendChild(InfernoAddElem('br',{},[]));
 		c.appendChild(InfernoAddElem('br',{},[]));
+        c = elems.querySelector('.walloftext');
 
         let y = simpleParse(o.b);
         for (let i=0; i<y.length; i++) y[i] = y[i].trim();
@@ -2636,11 +2678,11 @@ color: #0a0;
             try {
                 t.innerHTML = request.responseText;
                 y[request.id] = t.getElementsByClassName('tag')[0].dataset.tagName;
-				c.appendChild(InfernoAddElem('span',{innerHTML:y[request.id]+'<br>'},[]));
+				c.firstChild.innerHTML+=y[request.id];
                 t.innerHTML = '';
             }
             catch (e) {
-				c.appendChild(InfernoAddElem('span',{innerHTML:'[PARSE ERROR] '+e+'<br>'},[]));
+				c.firstChild.innerHTML+='[PARSE ERROR] '+e;
 				debug('YDB:T','[PARSE ERROR] '+e+' for '+y[request.id],2);
             }
             if (request.id < y.length) get(request.id+1);
@@ -2652,12 +2694,12 @@ color: #0a0;
                 if (request.readyState === 4) {
                     if (request.status === 200) return parse(request);
                     else if (request.status === 0) {
-						c.appendChild(InfernoAddElem('span',{innerHTML:'[ERROR]<br>'},[]));
+						c.firstChild.innerHTML+='[ERROR]';
                         if (request.id < y.length) return get(request.id+1);
                         return false;
                     }
                     else {
-						c.appendChild(InfernoAddElem('span',{innerHTML:'[ERROR]<br>'},[]));
+						c.firstChild.innerHTML+='[ERROR]';
                         if (request.id < y.length) return get(request.id+1);
                         return false;
                     }
@@ -2670,7 +2712,7 @@ color: #0a0;
                 finish();
                 return;
             }
-			c.appendChild(InfernoAddElem('span',{innerHTML:y[i]+' -> '},[]));
+			c.insertBefore(InfernoAddElem('span',{innerHTML:'<br>'+y[i]+' -> '},[]), c.firstChild);
             let req = new XMLHttpRequest();
             req.id = i;
             req.onreadystatechange = readyHandler(req);
@@ -2679,6 +2721,7 @@ color: #0a0;
         };
 
         let finish = function() {
+            y = searchForDuplicates(y);
             o.b = simpleCombine(y);
             result = o;
             processing[o.a] = false;
@@ -2746,6 +2789,7 @@ color: #0a0;
 	try {addGalleryOption();} catch(e) {error("addGalleryOption", e)};
 	try {contacts();} catch(e) {error("contacts", e)};
 	try {fixDupes();} catch(e) {error('fixDupes', e)};
+	try {appendCustomNav();} catch(e) {error('appendCustomNav', e)};
     if (location.pathname == "/pages/yourbooru") {
         YDB();
     }
