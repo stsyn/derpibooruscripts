@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.12
+// @version      0.7.13
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -1197,10 +1197,10 @@ color: #777;
     function advancedTagTools() {
         //
         let t = JSON.parse(objects.icontainer.dataset.imageTags);
-        if (t.indexOf(37875)>0) {
+        if (t.indexOf(37875)>=0) {
             append('adc_pixel');
         }
-        if (t.indexOf(23531)>0) {
+        if (t.indexOf(23531)>=0) {
             adc.comic = true;
         }
     }
