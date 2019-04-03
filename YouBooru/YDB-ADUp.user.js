@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.3.4
+// @version      0.3.5
 // @author       stsyn
 
 // @match        *://*/*
@@ -41,7 +41,7 @@
 	let checkedTags = {};
 	let forceRedraw = false;
 	let currentImage = '';
-    let loadLimit = 3;
+    let loadLimit = 2;
 	let settings = {
 		implicationDisallow:false,
 		implicationDefaultInsert:true,
@@ -372,11 +372,13 @@
 		let checker = function (target, method) {
             let container = document.getElementById('ydb_dnp_container');
             for (let i=0; i<document.querySelectorAll(target).length; i++) {
+				let processed = 0;
                 let x = document.querySelectorAll(target)[i];
 				let gotten;
                 for (let x in checkedTags) checkedTags[x].shouldDraw = false;
 				//for (let x in checkedTags) checkedTags[x].shouldDraw = false;
                 for (let i=0; i<x.getElementsByClassName('tag').length; i++) {
+					if (processed > loadLimit) break;
                     let y = x.getElementsByClassName('tag')[i];
                     if (y.classList.contains('_ydb_transparent')) continue;
                     let z;
@@ -384,7 +386,8 @@
 
                     let name = z;
                     if (checkedTags[name] == undefined) {
-                        fetch('/tags/'+encodeURIComponent((name).replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/ /g,'+').replace(/\:/g,'-colon-'))+'.json',{method:'GET'})
+						checkedTags[name] = {notReady:true};
+                        fetch('/tags/'+encodeURIComponent((name).replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/ /g,'+').replace(/\:/g,'-colon-').replace(/\//g,'-fwslash-'))+'.json',{method:'GET'})
                         .then(function (response) {
                             const errorMessage = {fail:true};
                             if (!response.ok)
@@ -399,7 +402,10 @@
                             return response.json();
                         })
                         .then(data => {
-                            if (data.fail) return;
+                            if (data.fail) {
+								delete checkedTags[name];
+								return;
+							}
                             if ((data.tag != undefined && data.tag.implied_tags != '') || settings.implicationDisallow) {
                                 let implied_tags = data.tag.implied_tags.split(/\s*,\s*/);
                                 checkedTags[name] = {name:name,implied_tags:implied_tags};
@@ -409,6 +415,7 @@
                                 checkedTags[name] = {name:name,implied_tags:[]};
                             }
 
+							checkedTags[name].notReady = false;
                             checkedTags[name].drawn = false;
 
                             let dnp = data.dnp_entries;
@@ -430,14 +437,16 @@
                                 checkedTags[name].ok = true;
                             }
                         });
+						processed++;
                     }
-                    else /*if (!checkedTags[name].ok)*/ {
+                    else if (!checkedTags[name].notReady) {
                         checkedTags[name].shouldDraw = true;
                         if (!checkedTags[name].drawn) gotten = true;
                     }
 
                 }
 				for (let x in checkedTags) {
+					if (checkedTags[x].notReady) continue;
                     if (!checkedTags[x].shouldDraw) {
                         delete checkedTags[x];
 						gotten = true;
@@ -449,7 +458,10 @@
 					}
 				}
 				if (gotten) {
-					for (let x in checkedTags) checkedTags[x].drawn = false;
+					for (let x in checkedTags) {
+						if (checkedTags[x].notReady) continue;
+						checkedTags[x].drawn = false;
+					}
                     while (document.querySelector('._ydb_transparent') != null) document.querySelector('._ydb_transparent').parentNode.removeChild(document.querySelector('._ydb_transparent'));
 					let container = document.getElementById('ydb_dnp_container');
 					container.innerHTML = '';
@@ -461,6 +473,7 @@
 
                         let name = z;
                         if (checkedTags[name] == undefined) continue;
+						else if (checkedTags[name].notReady) continue;
                         else if (!checkedTags[name].ok) {
                             if (checkedTags[name].dnp_type != undefined) {
                                 container.appendChild(render(checkedTags[name]));
@@ -491,7 +504,7 @@
             }
         };
         checker('.js-taginput-fancy');
-        setTimeout(tagCheck,400);
+        setTimeout(tagCheck,333);
 	}
 
 	function diffCheck(url) {
@@ -606,7 +619,7 @@
                 }
                 diff(url);
             });
-            fillData1(url);
+            setTimeout(fillData1, 70, url);
             document.getElementById('new_image').insertBefore(InfernoAddElem('div',{className:'block'},[
                 InfernoAddElem('div',{className:'block__header'},[
                     InfernoAddElem('span',{className:'block__header__title',innerHTML:'DNP entries and warnings. '},[]),
