@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.3.5
+// @version      0.3.6
 // @author       stsyn
 
 // @match        *://*/*
@@ -47,7 +47,8 @@
 		implicationDefaultInsert:true,
 		implicationNotify:true,
 		implicationDefaultRecursive:false,
-		implicationAutoDelete:true
+		implicationAutoDelete:true,
+		batchLoader:true
 	};
 
 	function register() {
@@ -64,6 +65,7 @@
                 link:'/meta/topics/userscript-semi-automated-derpibooru-uploader',
                 s:[
                     {type:'checkbox', name:'Turn off implication predictor', parameter:'implicationDisallow'},
+                    {type:'checkbox', name:'Batch tag loader', parameter:'batchLoader'},
                     {type:'breakline'},
                     {type:'checkbox', name:'Notify about implication', parameter:'implicationNotify'}/*,
                     {type:'breakline'},
@@ -310,6 +312,131 @@
     }
 
 	function tagCheck() {
+		let gotten;
+		let handleTagData = function (name, data) {
+			if (data.fail) {
+				delete checkedTags[name];
+				return;
+			}
+			if ((data.tag != undefined && data.tag.implied_tags != '') || settings.implicationDisallow) {
+				let implied_tags = data.tag.implied_tags.split(/\s*,\s*/);
+				checkedTags[name] = {name:name,implied_tags:implied_tags};
+			}
+			else {
+				checkedTags[name] = {name:name,implied_tags:[]};
+			}
+
+			checkedTags[name].notReady = false;
+			checkedTags[name].drawn = false;
+
+			let dnp = data.dnp_entries;
+			if (dnp == undefined) {
+				checkedTags[name].dnp_type = 'Tag does not exist';
+			}
+			else if (data.tag.images == 0) {
+				checkedTags[name].dnp_type = 'Tag has no images';
+			}
+			else if (dnp.length>0) for (let j=0; j<dnp.length; j++) {
+				let d = dnp[j];
+				d.name = name;
+				d.implied_tags = checkedTags[name].implied_tags;
+				checkedTags[name] = d;
+				gotten = true;
+			}
+			else if (checkedTags[name].implied_tags.length == 0) {
+				checkedTags[name].ok = true;
+			}
+		};
+		let handleBatchTagData = function (name, data) {
+			if (data.fail) {
+				delete checkedTags[name];
+				return;
+			}
+			if ((data.implied_tags != '') || settings.implicationDisallow) {
+				let implied_tags = data.implied_tags.split(/\s*,\s*/);
+				checkedTags[name] = {name:name,implied_tags:implied_tags};
+			}
+			else {
+				checkedTags[name] = {name:name,implied_tags:[]};
+			}
+
+			checkedTags[name].notReady = false;
+			checkedTags[name].drawn = false;
+
+			let dnp = data.dnp_entries;
+			if (data.images == 0) {
+				checkedTags[name].dnp_type = 'Tag has no images';
+			}
+			else if (dnp != undefined && dnp.length>0) for (let j=0; j<dnp.length; j++) {
+				let d = dnp[j];
+				d.name = name;
+				d.implied_tags = checkedTags[name].implied_tags;
+				checkedTags[name] = d;
+				gotten = true;
+			}
+			else if (checkedTags[name].implied_tags.length == 0) {
+				checkedTags[name].ok = true;
+			}
+		};
+		let checkTag = function (name, y) {
+			fetch('/tags/'+encodeURIComponent((name).replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/ /g,'+').replace(/\:/g,'-colon-').replace(/\//g,'-fwslash-'))+'.json',{method:'GET'})
+			.then(function (response) {
+				const errorMessage = {fail:true};
+				if (!response.ok)
+					return errorMessage;
+				if (response.redirected) {
+					let newTag = response.url.split('/').pop().replace(/.json$/,'');
+					newTag = decodeURIComponent(newTag.replace(/\-dash\-/g,'-').replace(/\-dot\-/g,'.').replace(/\+/g,' ').replace(/\-colon\-/g,':').replace(/\%25/g,'%'));
+					y.getElementsByTagName('a')[0].dataset.tagName = newTag;
+					y.firstChild.textContent = newTag+' ';
+					return errorMessage;
+				}
+				return response.json();
+			})
+			.then(data => {
+				handleTagData(name, data);
+			});
+		};
+		let batchCheckTag = function (names, target) {
+			if (names.length == 1) {
+				checkTag(names[0], target.querySelector('.tag a[data-tag-name="'+names[0]+'"]').parentNode);
+				return;
+			}
+			//let x = names.map(function(c) {return c.replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/ /g,'+').replace(/\:/g,'-colon-').replace(/\//g,'-fwslash-')});
+			let uri = unsafeWindow.booru.apiEndpoint+"tags/fetch_many.json?name[]="+names.join("&name[]=");
+			fetch(uri,{method:'GET'})
+			.then(function (response) {
+				const errorMessage = {fail:true};
+				if (!response.ok)
+					return errorMessage;
+				return response.json();
+			})
+			.then(data => {
+				if (data.fail) {
+					names.forEach(function (name) {delete checkedTags[name]})
+					return;
+				}
+
+				if (data.tags != undefined) {
+					for (let i=0; i<data.tags.length; i++) {
+						let x = data.tags[i];
+						if (!!x.aliased_to) {
+							let newTag = x.aliased_to;
+							let y = target.querySelector('.tag a[data-tag-name="'+names[0]+'"]').parentNode;
+							y.getElementsByTagName('a')[0].dataset.tagName = newTag;
+							y.firstChild.textContent = newTag+' ';
+							x = {fail:true};
+						}
+						handleBatchTagData(x.name, x);
+						names.splice(names.indexOf(x.name));
+					}
+					for (let i=0; i<names.length; i++) {
+						checkedTags[names[i]].dnp_type = 'Tag does not exist';
+					}
+				}
+
+			});
+		};
         let implyRender = function (x, d) {
             let tags = [];// = d.implied_tags.join(', ');
             for (let i=0; i<d.implied_tags.length; i++) {
@@ -373,12 +500,13 @@
             let container = document.getElementById('ydb_dnp_container');
             for (let i=0; i<document.querySelectorAll(target).length; i++) {
 				let processed = 0;
+				let tagsToCheck = [];
                 let x = document.querySelectorAll(target)[i];
-				let gotten;
                 for (let x in checkedTags) checkedTags[x].shouldDraw = false;
 				//for (let x in checkedTags) checkedTags[x].shouldDraw = false;
                 for (let i=0; i<x.getElementsByClassName('tag').length; i++) {
 					if (processed > loadLimit) break;
+					if (tagsToCheck.length > 50) break;
                     let y = x.getElementsByClassName('tag')[i];
                     if (y.classList.contains('_ydb_transparent')) continue;
                     let z;
@@ -387,57 +515,11 @@
                     let name = z;
                     if (checkedTags[name] == undefined) {
 						checkedTags[name] = {notReady:true};
-                        fetch('/tags/'+encodeURIComponent((name).replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/ /g,'+').replace(/\:/g,'-colon-').replace(/\//g,'-fwslash-'))+'.json',{method:'GET'})
-                        .then(function (response) {
-                            const errorMessage = {fail:true};
-                            if (!response.ok)
-                                return errorMessage;
-                            if (response.redirected) {
-                                let newTag = response.url.split('/').pop().replace(/.json$/,'');
-                                newTag = decodeURIComponent(newTag.replace(/\-dash\-/g,'-').replace(/\-dot\-/g,'.').replace(/\+/g,' ').replace(/\-colon\-/g,':').replace(/\%25/g,'%'));
-                                y.getElementsByTagName('a')[0].dataset.tagName = newTag;
-                                y.firstChild.textContent = newTag+' ';
-                                return errorMessage;
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            if (data.fail) {
-								delete checkedTags[name];
-								return;
-							}
-                            if ((data.tag != undefined && data.tag.implied_tags != '') || settings.implicationDisallow) {
-                                let implied_tags = data.tag.implied_tags.split(/\s*,\s*/);
-                                checkedTags[name] = {name:name,implied_tags:implied_tags};
-                                //container.appendChild(implyRender(checkedTags[name]));
-                            }
-                            else {
-                                checkedTags[name] = {name:name,implied_tags:[]};
-                            }
-
-							checkedTags[name].notReady = false;
-                            checkedTags[name].drawn = false;
-
-                            let dnp = data.dnp_entries;
-                            if (dnp == undefined) {
-                                checkedTags[name].dnp_type = 'Tag does not exist';
-                            }
-                            else if (data.tag.images == 0) {
-                                checkedTags[name].dnp_type = 'Tag has no images';
-                            }
-                            else if (dnp.length>0) for (let j=0; j<dnp.length; j++) {
-                                let d = dnp[j];
-                                d.name = name;
-                                d.implied_tags = checkedTags[name].implied_tags;
-                                checkedTags[name] = d;
-                                //container.appendChild(render(d));
-                                gotten = true;
-                            }
-                            else if (checkedTags[name].implied_tags.length == 0) {
-                                checkedTags[name].ok = true;
-                            }
-                        });
-						processed++;
+                        if (!settings.batchLoader) {
+							checkTag(name, y);
+							processed++;
+						}
+						else tagsToCheck.push(name);
                     }
                     else if (!checkedTags[name].notReady) {
                         checkedTags[name].shouldDraw = true;
@@ -445,6 +527,7 @@
                     }
 
                 }
+				if (settings.batchLoader && tagsToCheck.length>0) batchCheckTag(tagsToCheck, target);
 				for (let x in checkedTags) {
 					if (checkedTags[x].notReady) continue;
                     if (!checkedTags[x].shouldDraw) {
@@ -534,6 +617,8 @@
                 localStorage._adup = JSON.stringify(settings);
             }
         }
+
+		if (settings.batchLoad === undefined) settings.batchLoad = true;
 
         unsafeWindow.checkedTags = checkedTags;
         if ((parseInt(location.pathname.slice(1))>=0 && location.pathname.split('/')[2] == undefined) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && location.pathname.split('/')[3] == undefined)) {
