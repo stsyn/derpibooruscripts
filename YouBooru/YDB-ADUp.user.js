@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.3.6
+// @version      0.3.7
 // @author       stsyn
 
 // @match        *://*/*
@@ -527,7 +527,7 @@
                     }
 
                 }
-				if (settings.batchLoader && tagsToCheck.length>0) batchCheckTag(tagsToCheck, target);
+				if (settings.batchLoader && tagsToCheck.length>0) batchCheckTag(tagsToCheck, x);
 				for (let x in checkedTags) {
 					if (checkedTags[x].notReady) continue;
                     if (!checkedTags[x].shouldDraw) {
