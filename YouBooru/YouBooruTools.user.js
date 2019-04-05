@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.7.0
+// @version      0.7.1
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1663,8 +1663,10 @@ color: #0a0;
 
 		let updateId = function(user, callback) {
 			getId(user.name, function (id) {
-				if (id != undefined)
+				if (id != undefined) {
 					user.id = id;
+					user.updated = parseInt(Date.now()/1000);
+				}
 				callback(user);
 			})
 		};
@@ -1675,7 +1677,10 @@ color: #0a0;
 					user.aliases.push(user.name);
 					debug('YDB:U','User "'+user.name+'" ('+user.id+') was renamed into "'+name+'".', 0);
 				}
-				user.name = name;
+				if (user.name != name) {
+					user.name = name;
+					user.updated = parseInt(Date.now()/1000);
+				}
 				callback(user);
 			})
 		};
@@ -1690,6 +1695,7 @@ color: #0a0;
 
 					user.aliases = oldUser.aliases;
 					user.tags = oldUser.tags;
+					user.updated = parseInt(Date.now()/1000);
 					//in case of renaming
 					if (user.name != oldUser.name) {
 						user.aliases.push(oldUser.name);
@@ -1837,7 +1843,8 @@ color: #0a0;
 						name:i,
 						id:temp.users[i].id,
 						aliases:temp.users[i].aliases,
-						tags:[]
+						tags:[],
+						updated:parseInt(Date.now()/1000)
 					};
 					if (user.id == undefined || isNaN(user.id)) updateId(user, function() {writeEntry(user)});
 					else writeEntry(user);
@@ -1861,9 +1868,9 @@ color: #0a0;
 						i--;
 					}
 				}
-				for (let i=0; i<user.aliases.length; i++) {
+				for (let i=0; i<user.aliases.length-1; i++) {
 					name = user.aliases[i];
-					for (let j=i; j<user.aliases.length; j++) {
+					for (let j=i+1; j<user.aliases.length; j++) {
 						if (user.aliases[j] == name) {
 							user.aliases.splice(j, 1);
 							j--;
@@ -1973,7 +1980,7 @@ color: #0a0;
 				}
 				touched = true;
 			}
-			//filling scartchpad
+			//filling scratchpad
 			for (let i in userbase_local.scratchpad) {
 				if (userbase.users[i] == undefined) {
 					createUser('[UNKNOWN]', i, {});
@@ -2051,6 +2058,7 @@ color: #0a0;
                         let has = (user.aliases.indexOf(t) != -1);
                         if (has) break;
                         user.aliases.push(t);
+						user.updated = parseInt(Date.now()/1000);
                         write();
                     }
                     else {
@@ -2554,6 +2562,9 @@ color: #0a0;
                     InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
                         InfernoAddElem('a',{innerHTML:'ID', events:[{t:'click',f:function() {sortby='id';render();}}]},[])
                     ]),
+                    InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
+                        InfernoAddElem('a',{innerHTML:'Updated', events:[{t:'click',f:function() {sortby='updated';render();}}]},[])
+                    ]),
                     InfernoAddElem('span',{className:'flex__grow',style:'padding:0 12px'},[
                         InfernoAddElem('a',{innerHTML:'[Auto]', events:[{t:'click',f:function() {sortby='auto';render();}}]},[])
                     ]),
@@ -2565,6 +2576,9 @@ color: #0a0;
 				]),
 				InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
 					InfernoAddElem('span',{innerHTML:user.id},[])
+				]),
+				InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
+					InfernoAddElem('span',{innerHTML:user.updated},[])
 				]),
 				InfernoAddElem('span',{className:'flex__grow',style:'padding:0 12px'},[
 					InfernoAddElem('span',{innerHTML:user.aliases.join(', ')},[])
