@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.13
+// @version      0.7.14
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -422,13 +422,7 @@ display:none
 }`;
 
     styles.colorAccentTemplate = `
-.block__header--light a, .block__header--js-tabbed a, a.block__header--single-item, #container span:not(.tag)>a, a.profile-block, table.table td>a, #imagespns a, a.button.button--link,
-.block__header a:not(.interaction--fave):not(.interaction--upvote):not(.interaction--downvote):not(.interaction--comments):not(.interaction--hide), .image-description a,
-.block__header--sub a, .block__header--single-item a, .block__content:not(._fs_popup)>*:not(.media-box) a:not(.tag__name), .block__content>a, .profile-top__name-and-links a,
-.source_url a, #footer_content a, .button--link, .communication__body a, .comment_backlinks a, .communication__options a, a.interaction-user-list-item, .pagination a, .dr__status-options a,
-a.block__header--single-item:hover, .block__header:not(.center--layout) a:hover, .block__header--sub a:hover, .block__header--single-item a:hover, .autocomplete__item--selected,
-.block--fixed a, .rule a, a.togglable-faq-item, .field a:not([data-tag-name]):not(.button--state-warning), a.media-box__header--link, a.media-box__header--link:hover, #content h1 a, #content h2 a, #content h3 a,
-#content h4 a, .flash a, #content p strong a, #content strong a, #content li a, .quick-tag-table__tab a, .flash--site-notice.flash a, #content code a, a.alternating-color {
+*:not(.tag) > a:not(.header__link):not([rel="dc:source"]):not(.button):not(.block__header):not(.tag__name):not(.interaction--hide):not(.interaction--fave):not(.interaction--comments):not(.interaction--upvote):not(.interaction--downvote), a.button--link {
 color:_fs_color;
 }
 
@@ -444,7 +438,7 @@ body[data-theme*="dark"] #content .communication__body .spoiler:not(:hover) a[hr
 color:#782c21 !important
 }
 
-.autocomplete__item:not(.autocomplete__item--selected), .header, header a.header__link, span.header__link-user__dropdown-arrow, .add-to-gallery-list ::-webkit-scrollbar-thumb,
+.autocomplete__item:not(.autocomplete__item--selected), .header, #burger a:hover, header a.header__link, span.header__link-user__dropdown-arrow, .add-to-gallery-list ::-webkit-scrollbar-thumb,
 span.header__link-user__dropdown-arrow:hover, .header__dropdown:hover span.header__link-user__dropdown-arrow, .sparkline .bar, .poll-bar__fill:not(.poll-bar__fill--top)  {
 background-color:_fs_ccomponent;
 }
@@ -460,8 +454,13 @@ border-color:_fs_background;
 background:none
 }
 
+hr {
+background-color: _fs_background;
+}
+
 body, .image-description, #imagespns, .block__content, .block__tab, .block__header--js-tabbed a.selected, .block__header--js-tabbed a.selected:hover, .toggle-box+label,
-a.header__search__button:hover, button.header__search__button:hover, .input, .communication__toolbar__button, .tag__dropdown__link:hover, .block--fixed:not(.block--success):not(.block--warning), .filter,
+a.header__search__button:hover, button.header__search__button:hover, .input, .communication__toolbar__button, .tag__dropdown__link:hover, .block--fixed:not(.block--success):not(.block--warning),
+.filter, #burger a, #burger,
 .alternating-color:nth-child(odd), .table>thead>tr, .table>tbody>tr:nth-child(odd), .poll-bar,
 .block__content .profile-top__options ul li:hover {
 background:_fs_component;
@@ -489,7 +488,7 @@ border-color:_fs_2component;
 border-color:_fs_color;
 }
 
-a:not(.header__link):not([rel="dc:source"]):not(.button):not(.block__header):not(.block__header--single-item):not(.tag__name):not(.interaction--fave):not(.interaction--comments):not(.interaction--upvote):not(.interaction--downvote):not(.media-box__header--link):hover{
+a:not(.header__link):not([rel="dc:source"]):not(.button):not(.block__header):not(.block__header--single-item):not(.tag__name):not(.interaction--fave):not(.interaction--comments):not(.interaction--upvote):not(.interaction--hide):not(.interaction--downvote):not(.media-box__header--link):hover{
 color:#aaa !important;
 }
 
@@ -497,7 +496,7 @@ body[data-theme*="dark"] a:not(.header__link):not([rel="dc:source"]):not(.button
 color:#aaa !important;
 }
 
-.media-box__header:not(.media-box__header--unselected), .button:hover, .toggle-box+label:hover, .header--secondary, .header--secondary>.flex>.hide-mobile a,
+.media-box__header:not(.media-box__header--unselected), .button:hover:not(.button--state-danger):not(.button--state-warning):not(.button--state-success), .toggle-box+label:hover, .header--secondary, .header--secondary>.flex>.hide-mobile a,
 .block__list a.block__list__link.primary, select.header__input:hover, select.header__input:focus:hover, span.header__counter {
 background-color:_fs_background;
 border-color:_fs_color;
@@ -1093,7 +1092,8 @@ color: #777;
         }
 
         let s = '';
-        if (document.getElementsByClassName('js-notification-ticker')[0] != undefined && parseInt(document.getElementsByClassName('js-notification-ticker')[0].innerHTML) > 0) s += ' '+parseInt(document.getElementsByClassName('js-notification-ticker')[0].innerHTML);
+        if (document.getElementsByClassName('js-notification-ticker')[0] != undefined && parseInt(document.getElementsByClassName('js-notification-ticker')[0].innerHTML) > 0) s += ' '+parseInt(document.getElementsByClassName('js-notification-ticker')[0].dataset.notificationCount);
+		console.log(document.getElementsByClassName('js-notification-ticker')[0].dataset.notificationCount);
         if (parseInt(document.querySelector('a[href*="/messages"] .fa-embedded__text').innerHTML) > 0) s += (s.length>0?'+':' ')+'M'+parseInt(document.querySelector('a[href*="/messages"] .fa-embedded__text').innerHTML);
 
         if (s.length>0) {
