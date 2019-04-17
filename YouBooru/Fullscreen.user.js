@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.14
+// @version      0.7.15
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -422,19 +422,19 @@ display:none
 }`;
 
     styles.colorAccentTemplate = `
-*:not(.tag) > a:not(.header__link):not([rel="dc:source"]):not(.button):not(.block__header):not(.tag__name):not(.interaction--hide):not(.interaction--fave):not(.interaction--comments):not(.interaction--upvote):not(.interaction--downvote), a.button--link {
+*:not(.dnp-warning) > *:not(.tag) > a:not(.header__link):not([rel="dc:source"]):not(.button):not(.block__header):not(.tag__name):not(.interaction--hide):not(.interaction--fave):not(.interaction--comments):not(.interaction--upvote):not(.interaction--downvote), .button.button--link, .button.button--link:visited {
 color:_fs_color;
 }
 
-p>a {
+/*p>a {
 color:_fs_color !important;
-}
+}*/
 
-#content .communication__body .spoiler:not(:hover) a[href], .image-description .spoiler:not(:hover) a[href], .dnp-warning a[href]{
+#content .communication__body .spoiler:not(:hover) a[href], .image-description .spoiler:not(:hover) a[href] {
 color:#e88585 !important
 }
 
-body[data-theme*="dark"] #content .communication__body .spoiler:not(:hover) a[href], body[data-theme*="dark"] .image-description .spoiler:not(:hover) a[href], body[data-theme*="dark"] .dnp-warning a[href] {
+body[data-theme*="dark"] #content .communication__body .spoiler:not(:hover) a[href], body[data-theme*="dark"] .image-description .spoiler:not(:hover) a[href] {
 color:#782c21 !important
 }
 
@@ -444,7 +444,9 @@ background-color:_fs_ccomponent;
 }
 
 .border-vertical, .block__header--js-tabbed a:hover, .image-description, #imagespns, .block__header--js-tabbed, .block__header--js-tabbed a.selected, .block__header--js-tabbed a.selected:hover,
-.button:not(.commission__category):not(.button--state-warning):not(.button--state-danger):not(.button--state-success), .toggle-box+label, .block__list a.block__list__link, .block__list, .input, .communication__toolbar__button,
+.button:not(.commission__category):not(.button--state-warning):not(.button--state-danger):not(.button--state-success), .toggle-box+label,
+.block__list a.block__list__link, .block__list, .input, .communication__toolbar__button, .tag-info__image,
+#js-image-upload-previews .scraper-preview--label .scraper-preview--input:checked+.scraper-preview--image-wrapper,
 .block__header--js-tabbed a, .block__header--js-tabbed a:last-child, .block__header--js-tabbed a:first-child, .block--fixed:not(.block--success):not(.block--warning), .media-box, .filter,
 .poll-bar {
 border-color:_fs_background;
@@ -474,7 +476,9 @@ background:_fs_4component;
 .header--secondary>.flex>.hide-mobile a.header__link:hover, .header--secondary .header__dropdown:hover>a, .input:focus, .communication__toolbar__button:hover, .tag__dropdown__link,
 .block__header, .block__header--single-item,
 .block__header a, .block__header--single-item a, .block__list a.block__list__link,
-.communication__options, .button:not(.commission__category):not(.button--state-warning):not(.button--state-danger):not(.button--state-success), a.media-box__header--link:hover, .header--secondary span.header__counter,
+.communication__options, .button:not(.commission__category):not(.button--state-warning):not(.button--state-danger):not(.button--state-success),
+a.media-box__header--link:hover, .header--secondary span.header__counter,
+#js-image-upload-previews .scraper-preview--label .scraper-preview--input:checked+.scraper-preview--image-wrapper,
 .interaction--downvote.disabled, .interaction--downvote.disabled:hover, .block__content>.label.label--primary.label--block:hover, .poll-form__options__label {
 background:_fs_2component;
 }
