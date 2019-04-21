@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.7.1
+// @version      0.7.2
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -503,7 +503,6 @@ color: #0a0;
         x = x.replace(/^\!/g, ' ');
         x = x.replace(/([ ,])\-/g, '$1 ');
         x = x.replace(/([ ,])!/g, '$1 ');
-        x = x.replace(/([ ,])\*/g, '$1 ');
         x = x.replace(/\"/g, ' ');
         x = x.replace(/\~/g, ',');
         x = x.replace(/\^/g, ',');
