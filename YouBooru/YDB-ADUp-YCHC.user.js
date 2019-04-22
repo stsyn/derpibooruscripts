@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YCH.Commishes YDB:ADUp module
-// @version      0.2.1
+// @version      0.2.2
 // @author       stsyn
 // @include      https://portfolio.commishes.com/upload/show/*
 // @include      https://ych.commishes.com/followUp/show/*
@@ -41,7 +41,7 @@
         let res = 0;
         for (let i=0; i<x.length; i++) {
             let d = x.length-i-1;
-            res += arr.indexOf(x[i])*Math.pow(arr.length, d);
+            res += arr.indexOf(x[i].toLowerCase())*Math.pow(arr.length, d);
         }
         return res;
     }
