@@ -25,7 +25,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.18
+// @version      0.5.19
 // @description  Feedz
 // @author       stsyn
 // @grant        none
@@ -217,6 +217,7 @@
 						{type:'input', name:'Name', parameter:'name',styleI:{width:'33em', marginRight:'.5em'},validation:{type:'unique'}},
 						{type:'select', name:'Sorting', parameter:'sort',styleI:{marginRight:'.5em'}, values:[
 							{name:'Upload date', value:'created_at'},
+							{name:'Modification date', value:'updated_at'},
 							{name:'Creation date', value:'first_seen_at'},
 							{name:'Score', value:'score'},
 							{name:'Wilson score', value:'wilson'},
@@ -746,7 +747,7 @@
     function updateEvents(elem, feed) {
         let obj = {};
         try {
-        obj.fcount = elem.getElementsByClassName('favourites')[0].innerHTML;
+        obj.fcount = elem.getElementsByClassName('favorites')[0].innerHTML;
         obj.count = elem.getElementsByClassName('score')[0].innerHTML;
         obj.isFaved = (Boolean)(elem.querySelector('.interaction--fave.active'));
         obj.isUpvoted = (Boolean)(elem.querySelector('.interaction--upvote.active'));
@@ -761,8 +762,8 @@
         let obj = feedzEvents[feed.internalId][elem.dataset.imageId];
         if (obj == undefined) return;
         try {
-        elem.getElementsByClassName('favourites')[0].innerHTML = obj.fcount;
-        elem.getElementsByClassName('score')[0].innerHTML = obj.count;
+        if (!!obj.fcount) elem.getElementsByClassName('favorites')[0].innerHTML = obj.fcount;
+        if (!!obj.count) elem.getElementsByClassName('score')[0].innerHTML = obj.count;
         if (obj.isFaved) elem.querySelector('.interaction--fave').classList.add('active');
         else elem.querySelector('.interaction--fave').classList.remove('active');
         if (obj.isUpvoted) elem.querySelector('.interaction--upvote').classList.add('active');
