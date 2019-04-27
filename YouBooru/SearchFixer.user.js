@@ -25,7 +25,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.4.3
+// @version      0.4.4
 // @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
 // @author       stsyn
 // @grant        none
@@ -485,6 +485,9 @@
 		else if (myURL.params.sf == "comments") {
 			prevUrl += ',(comment_count:'+cscore+',id.'+dir+':'+id+')';
 		}
+		else if (myURL.params.sf == "tag_count") {
+			prevUrl += ',(tag_count:'+cscore+',id.'+dir+':'+id+')';
+		}
 		else if (myURL.params.sf == "first_seen_at") {
 			prevUrl += ',(first_seen_at.'+dir+':'+cscore+')';
 		}
@@ -515,6 +518,9 @@
 			}
 			else if (myURL.params.sf == "comments") {
 				prevUrl += ',((comment_count:'+(cscore+d)+',id.'+dir+':'+id+')+||+(comment_count.'+dir+':'+(cscore+d)+'))';
+			}
+			else if (myURL.params.sf == "tag_count") {
+				prevUrl += ',((tag_count:'+(cscore+d)+',id.'+dir+':'+id+')+||+(tag_count.'+dir+':'+(cscore+d)+'))';
 			}
 			else if (myURL.params.sf == "first_seen_at") {
 				prevUrl += ',((first_seen_at:'+(cscore+d)+',id.'+dir+':'+id+')+||+(first_seen_at.'+dir+':'+(cscore+d)+'))';
@@ -565,7 +571,7 @@
 
 	function compileXQuery(page, pp) {
 		let sf = myURL.params.sf;
-		if (myURL.params.sf == '' || myURL.params.sf == 'wilson' || myURL.params.sf.startsWith('random') || myURL.params.sf == 'relevance') sf = 'created_at';
+		if (myURL.params.sf == '' || myURL.params.sf == 'updated_at' || myURL.params.sf == 'wilson' || myURL.params.sf.startsWith('random') || myURL.params.sf == 'relevance') sf = 'created_at';
 		debug('SSF','Pagination query: page '+page+', query '+myURL.params.q+', sort '+sf,0);
 		return '//'+myURL.host+'/search'+(pp?'.json':'')+'?q='+myURL.params.q+(pp?'&perpage=50':'')+'&sf='+(sf==undefined?'':sf)+'&sd='+
             (myURL.params.sd==undefined?'':myURL.params.sd)+'&page='+page+((myURL.params.del != undefined && myURL.params.del != '')?'&del='+myURL.params.del:'');
@@ -608,6 +614,7 @@ min-width:auto !important
 			InfernoAddElem('span',{className:'dropdown__content', style:'position:static;min-width:0;z-index:1'},[
 				InfernoAddElem('select',{id:'_ydb_s_qpusher_sf',className:'input header__input', style:'display:inline;width:5em', name:'sf', size:1},[
 					InfernoAddElem('option',{value:'created_at', innerHTML:'created_at'},[]),
+					InfernoAddElem('option',{value:'updated_at', innerHTML:'updated_at'},[]),
 					InfernoAddElem('option',{value:'first_seen_at', innerHTML:'first_seen_at'},[]),
 					InfernoAddElem('option',{value:'score', innerHTML:'score'},[]),
 					InfernoAddElem('option',{value:'wilson', innerHTML:'wilson'},[]),
@@ -774,7 +781,7 @@ min-width:auto !important
 		myURL.params.sf != "" &&
 		!(myURL.params.sf == 'created_at' && (myURL.params.del == undefined || myURL.params.del == '')) &&
 		myURL.params.sf != 'wilson' &&
-		myURL.params.sf != 'tag_count' &&
+		myURL.params.sf != 'updated_at' &&
 		myURL.params.sf != 'relevance' &&
 		!(myURL.params.sf == 'score' && !settings.score) &&
 		!(myURL.params.sf == 'comments' && !settings.comments) &&
@@ -809,7 +816,7 @@ min-width:auto !important
 		(myURL.params.sf != undefined && myURL.params.sf.startsWith('gallery_id') && settings.gallery) ||
 		((myURL.params.sf == 'width' || myURL.params.sf == 'height') && settings.sizesUp) ||
 		(( ((myURL.params.sf == undefined || myURL.params.sf == '') && myURL.params.q != undefined && myURL.params.q != '' && myURL.params.q != '%2A')
-          || myURL.params.sf == 'wilson' || myURL.params.sf == 'created_at' || myURL.params.sf == 'tag_count' || (myURL.params.sf != undefined && myURL.params.sf.startsWith('random')) || myURL.params.sf == 'relevance') && settings.everyUp)
+          || myURL.params.sf == 'wilson' || myURL.params.sf == 'created_at' || myURL.params.sf == 'updated_at' || myURL.params.sf == 'tag_count' || (myURL.params.sf != undefined && myURL.params.sf.startsWith('random')) || myURL.params.sf == 'relevance') && settings.everyUp)
 
 	)) {
 		document.querySelectorAll('.js-up')[0].addEventListener('click',function(e) {
