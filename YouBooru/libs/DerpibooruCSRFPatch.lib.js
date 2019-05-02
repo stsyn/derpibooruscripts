@@ -1,3 +1,5 @@
+// updates CSRF token to avoid site fails because of some scripts requests
+
 let prevented = false;
 function preventWrongCSRF(e, c) {
     e.preventDefault();
