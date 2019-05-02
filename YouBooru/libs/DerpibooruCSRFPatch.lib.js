@@ -1,5 +1,6 @@
 // updates CSRF token to avoid site fails because of some scripts requests
 
+(function() {
 let prevented = false;
 function preventWrongCSRF(e, c) {
     e.preventDefault();
@@ -47,3 +48,4 @@ if (!document.querySelector('meta[name="csrf-ydb-tweak"]')) {
         check(e.target);
     });
 }
+})();
