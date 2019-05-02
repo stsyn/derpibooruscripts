@@ -26,7 +26,7 @@ function preventWrongCSRF(e, c) {
                 //if (c && token2) c.value = token2;
                 prevented = true;
                 e.target.click();
-                setTimeout(function() {prevented = false;}, 1000);
+                setTimeout(function() {prevented = false;}, 15000);
             }
         });
     };
