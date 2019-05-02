@@ -20,7 +20,7 @@ function preventWrongCSRF(e, c) {
                 console.log('No token :( — '+e);
             }
             if (token) {
-                if (unsafeWindow) unsafeWindow.booru.csrfToken = token;
+                try {unsafeWindow.booru.csrfToken = token;} catch(e) {};
                 if (window.booru) window.booru.csrfToken = token;
                 if (document.querySelector('meta[name="csrf-token"]')) document.querySelector('meta[name="csrf-token"]').content = token;
                 //if (c && token2) c.value = token2;
