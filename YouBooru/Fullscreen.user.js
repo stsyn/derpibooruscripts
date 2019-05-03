@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.15
+// @version      0.7.16
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -490,6 +490,10 @@ border-color:_fs_2component;
 .input:focus, .communication:target, .communication__toolbar__button:focus, .communication__toolbar__button:hover, .communication__toolbar__button:active,
 .communication__toolbar__button:visited, .sparkline  {
 border-color:_fs_color;
+}
+
+.barline__bar {
+fill:_fs_color;
 }
 
 a:not(.header__link):not([rel="dc:source"]):not(.button):not(.block__header):not(.block__header--single-item):not(.tag__name):not(.interaction--fave):not(.interaction--comments):not(.interaction--upvote):not(.interaction--hide):not(.interaction--downvote):not(.media-box__header--link):hover{
@@ -1008,15 +1012,14 @@ color: #777;
         }
         else {
             objects.scroll_rgt.style.display = 'block';
-            if (pub.mouseY < de.clientHeight*3/10) {
-                objects.image.style.marginTop = (isNaN(parseInt(objects.image.style.marginTop))?0:parseInt(objects.image.style.marginTop))+settings.scrollSpeed+'px';
-                if (pub.mouseY < de.clientHeight/5) objects.image.style.marginTop = parseInt(objects.image.style.marginTop)+settings.scrollSpeed*(settings.scrollMultiply-1)+'px';
-                if (pub.mouseY < de.clientHeight/10) objects.image.style.marginTop = parseInt(objects.image.style.marginTop)+settings.scrollSpeed*(settings.scrollMultiply*2)+'px';
+            let vx = de.clientHeight*4/10;
+            if (pub.mouseY < vx) {
+                let v = 1-pub.mouseY/vx;
+                objects.image.style.marginTop = (isNaN(parseInt(objects.image.style.marginTop))?0:parseInt(objects.image.style.marginTop))+settings.scrollSpeed*v*6+'px';
             }
-            if (pub.mouseY > de.clientHeight*7/10) {
-                objects.image.style.marginTop = (isNaN(parseInt(objects.image.style.marginTop))?0:parseInt(objects.image.style.marginTop))-settings.scrollSpeed+'px';
-                if (pub.mouseY > de.clientHeight*4/5) objects.image.style.marginTop = parseInt(objects.image.style.marginTop)-settings.scrollSpeed*(settings.scrollMultiply-1)+'px';
-                if (pub.mouseY > de.clientHeight*9/10) objects.image.style.marginTop = parseInt(objects.image.style.marginTop)-settings.scrollSpeed*(settings.scrollMultiply*2)+'px';
+            if (pub.mouseY > de.clientHeight*6/10) {
+                let v = (pub.mouseY-de.clientHeight*6/10)/vx;
+                objects.image.style.marginTop = (isNaN(parseInt(objects.image.style.marginTop))?0:parseInt(objects.image.style.marginTop))-settings.scrollSpeed*v*6+'px';
             }
 
             if (parseInt(objects.image.style.marginTop)>0) objects.image.style.marginTop = '0px';
@@ -1029,15 +1032,14 @@ color: #777;
 
         if (objects.icontainer.dataset.width*pub.zoom > de.clientWidth) {
             objects.scroll_bot.style.display = 'block';
-            if (pub.mouseX < de.clientWidth*3/10) {
-                objects.image.style.marginLeft = (isNaN(parseInt(objects.image.style.marginLeft))?0:parseInt(objects.image.style.marginLeft))+settings.scrollSpeed+'px';
-                if (pub.mouseX < de.clientWidth/5) objects.image.style.marginLeft = parseInt(objects.image.style.marginLeft)+settings.scrollSpeed*(settings.scrollMultiply-1)+'px';
-                if (pub.mouseX < de.clientWidth/10) objects.image.style.marginLeft = parseInt(objects.image.style.marginLeft)+settings.scrollSpeed*(settings.scrollMultiply*2)+'px';
+            let vx = de.clientWidth*4/10;
+            if (pub.mouseX < vx) {
+                let v = 1-pub.mouseX/vx;
+                objects.image.style.marginLeft = (isNaN(parseInt(objects.image.style.marginLeft))?0:parseInt(objects.image.style.marginLeft))+settings.scrollSpeed*v*6+'px';
             }
-            if (pub.mouseX > de.clientWidth*7/10) {
-                objects.image.style.marginLeft = (isNaN(parseInt(objects.image.style.marginLeft))?0:parseInt(objects.image.style.marginLeft))-settings.scrollSpeed+'px';
-                if (pub.mouseX > de.clientWidth*4/5) objects.image.style.marginLeft = parseInt(objects.image.style.marginLeft)-settings.scrollSpeed*(settings.scrollMultiply-1)+'px';
-                if (pub.mouseX > de.clientWidth*9/10) objects.image.style.marginLeft = parseInt(objects.image.style.marginLeft)-settings.scrollSpeed*(settings.scrollMultiply*2)+'px';
+            if (pub.mouseX > de.clientWidth*6/10) {
+                let v = (pub.mouseX-de.clientWidth*6/10)/vx;
+                objects.image.style.marginLeft = (isNaN(parseInt(objects.image.style.marginLeft))?0:parseInt(objects.image.style.marginLeft))-settings.scrollSpeed*v*6+'px';
             }
 
             if (parseInt(objects.image.style.marginLeft)>0) objects.image.style.marginLeft = '0px';
@@ -1097,7 +1099,6 @@ color: #777;
 
         let s = '';
         if (document.getElementsByClassName('js-notification-ticker')[0] != undefined && parseInt(document.getElementsByClassName('js-notification-ticker')[0].innerHTML) > 0) s += ' '+parseInt(document.getElementsByClassName('js-notification-ticker')[0].dataset.notificationCount);
-		console.log(document.getElementsByClassName('js-notification-ticker')[0].dataset.notificationCount);
         if (parseInt(document.querySelector('a[href*="/messages"] .fa-embedded__text').innerHTML) > 0) s += (s.length>0?'+':' ')+'M'+parseInt(document.querySelector('a[href*="/messages"] .fa-embedded__text').innerHTML);
 
         if (s.length>0) {
@@ -1176,7 +1177,6 @@ color: #777;
 	function singleEvent(event) {
 		if (!state.enabled || !settings.singleMode) return;
 		if (document.querySelector('#image_target.hidden') != null) return;
-        console.log('wut');
 		if (event != undefined) event.stopPropagation();
 		//dropExecution(event);
 
@@ -1472,7 +1472,7 @@ color: #777;
         //to avoid bugs on unloaded images
         if (objects.dcontainer != undefined) {
             objects.dcontainer.addEventListener("DOMNodeInserted",loadedImgFetch);
-            objects.dcontainer.addEventListener("click",disgustingLoadedImgFetch);
+            //objects.dcontainer.addEventListener("click",disgustingLoadedImgFetch);
             objects.dcontainer.addEventListener("wheel", wheelListener);
             advancedTagTools();
 			pub.isVideo = JSON.parse(objects.icontainer.dataset.uris).full.split('.').pop() == 'webm';
@@ -1505,7 +1505,7 @@ color: #777;
         unscale();
 
         objects.dcontainer.removeEventListener("DOMNodeInserted",loadedImgFetch);
-        objects.dcontainer.removeEventListener("click",disgustingLoadedImgFetch);
+        //objects.dcontainer.removeEventListener("click",disgustingLoadedImgFetch);
         objects.commButton.removeEventListener('click',showComms);
         objects.commButton.href = '#comments';
         popUps.back.removeEventListener('click',hidePopups);
