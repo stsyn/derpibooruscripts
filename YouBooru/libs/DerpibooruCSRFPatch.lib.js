@@ -63,7 +63,7 @@ if (!document.querySelector('meta[name="csrf-ydb-tweak"]')) {
         if (prevented) return;
         let check = function(elem) {
             if ((elem.tagName == 'INPUT' || elem.tagName == 'BUTTON') && elem.type == 'submit') {
-                preventWrongCSRF(e, e.target.form.authenticity_token);
+                preventWrongCSRF(e, elem.form.authenticity_token);
             }
             if (!elem.tagName == 'BODY') check(elem.parentNode);
         }
