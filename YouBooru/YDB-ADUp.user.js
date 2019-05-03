@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.3.7
+// @version      0.3.8
 // @author       stsyn
 
 // @match        *://*/*
@@ -624,7 +624,7 @@
         if ((parseInt(location.pathname.slice(1))>=0 && location.pathname.split('/')[2] == undefined) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && location.pathname.split('/')[3] == undefined)) {
             let url;
             url = '?';
-            url += 'tags='+encodeURIComponent(document.getElementById('image_old_tag_list').value);
+            url += 'tags='+encodeURIComponent(document.querySelector('.js-taginput.js-taginput-plain.js-taginput-tag_input').value);
             let src = document.querySelector('span.source_url a');
             if (src) url += '&src='+encodeURIComponent(src.innerHTML);
             url += '&origin='+document.getElementsByClassName('image-show-container')[0].dataset.imageId;
