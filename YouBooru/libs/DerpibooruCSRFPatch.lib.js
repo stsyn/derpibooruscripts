@@ -5,30 +5,52 @@ let prevented = false;
 function preventWrongCSRF(e, c) {
     e.preventDefault();
     e.stopPropagation();
-    let token, token2;
+    let token, token2, token2Container;
     let update = function() {
-        fetch('/images/new')
-        .then(function(response) {
-            return response.text();
-        })
-        .then(function(t) {
+
+        let onComplete = function (r) {
+            let t = r.responseText;
             try {
                 token = t.match(/<meta name="csrf-token" content="([A-Za-z0-9+=\/]*)" \/>/)[1];
-                if (c) token2 = t.match(/<input type="hidden" name="authenticity_token" value="([A-Za-z0-9+=\/]*)" \/>/)[1];
+                if (c) {
+                    token2Container = document.createElement('div');
+                    token2Container.innerHTML = t.match(/<body [A-Za-z0-9=\- "]*>([\s\S]*)<\/body>/)[1];
+                    token2 = token2Container.querySelector('form[action="'+c.form.action.replace(location.origin, '')+'"]').authenticity_token.value;
+                }
             }
             catch (e) {
-                console.log('No token :( — '+e);
+                if (!token) console.log('No token :( — '+e);
+                else if (!token2) console.log('No token2 '+c.form.action+' :( — '+e);
             }
             if (token) {
                 try {unsafeWindow.booru.csrfToken = token;} catch(e) {};
                 if (window.booru) window.booru.csrfToken = token;
                 if (document.querySelector('meta[name="csrf-token"]')) document.querySelector('meta[name="csrf-token"]').content = token;
-                //if (c && token2) c.value = token2;
+                if (c && token2) c.value = token2;
                 prevented = true;
                 e.target.click();
                 setTimeout(function() {prevented = false;}, 15000);
             }
-        });
+        }
+
+        let readyHandler = function(request) {
+            return function () {
+                if (request.readyState === 4) {
+                    if (request.status === 200) return onComplete(request);
+                    else if (request.status === 0) {
+                        return false;
+                    }
+                    else {
+                        return false;
+                    }
+                }
+            };
+        };
+
+        let req = new XMLHttpRequest();
+        req.onreadystatechange = readyHandler(req);
+        req.open('GET', location.href);
+        req.send();
     };
     update();
 }
