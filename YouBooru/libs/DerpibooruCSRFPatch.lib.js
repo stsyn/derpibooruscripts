@@ -1,10 +1,12 @@
 // updates CSRF token to avoid site fails because of some scripts requests
 
 (function() {
-let prevented = false;
+let prevented = true;
 function preventWrongCSRF(e, c) {
-    e.preventDefault();
-    e.stopPropagation();
+    if (!!e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
     let token, token2, token2Container;
     let update = function() {
 
@@ -27,9 +29,11 @@ function preventWrongCSRF(e, c) {
                 if (window.booru) window.booru.csrfToken = token;
                 if (document.querySelector('meta[name="csrf-token"]')) document.querySelector('meta[name="csrf-token"]').content = token;
                 if (c && token2) c.value = token2;
-                prevented = true;
-                e.target.click();
-                setTimeout(function() {prevented = false;}, 15000);
+                if (!!e) {
+                    prevented = true;
+                    e.target.click();
+                    setTimeout(function() {prevented = false;}, 30000);
+                }
             }
         }
 
@@ -62,12 +66,18 @@ if (!document.querySelector('meta[name="csrf-ydb-tweak"]')) {
     document.body.addEventListener('click', function (e) {
         if (prevented) return;
         let check = function(elem) {
-            if ((elem.tagName == 'INPUT' || elem.tagName == 'BUTTON') && elem.type == 'submit' && elem.title.toLowerCase() != 'search') {
-                preventWrongCSRF(e, elem.form.authenticity_token);
+            if (
+                ((elem.tagName == 'INPUT' || elem.tagName == 'BUTTON') && elem.type == 'submit' && elem.title.toLowerCase() != 'search')
+                ||
+                ((elem.tagName == 'A') && elem.href.endsWith('#') && !(!!elem.dataset && (elem.dataset.clickTab == 'write')))
+            ) {
+                preventWrongCSRF(e, (!!elem.form?elem.form.authenticity_token:undefined));
             }
-            if (!elem.tagName == 'BODY') check(elem.parentNode);
+            if (elem.tagName != 'BODY') check(elem.parentNode);
         }
         check(e.target);
     });
+    setTimeout(function() {prevented = false;}, 10000);
+    //setInterval(preventWrongCSRF, 60000);
 }
 })();
