@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.7.3
+// @version      0.7.4
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -75,14 +75,14 @@
 	let hidden = {
 		normal:[
 			{
-				big:'https://derpicdn.net/img/view/2017/10/23/1568696.png',
-				small:'https://derpicdn.net/img/2017/10/23/1568696/small.png'
+				big:'https://derpicdn.net/img/view/2017/10/23/large.png',
+				small:'https://derpicdn.net/img/2017/10/23/1568696/medium.png'
 			}
 		],
 		pony:[
 			{
 				big:'https://derpicdn.net/img/2012/11/24/161576/large.png',
-				small:'https://derpicdn.net/img/2012/11/24/161576/small.png'
+				small:'https://derpicdn.net/img/2012/11/24/161576/medium.png'
 			}
 		]
 	};
@@ -1463,6 +1463,7 @@ color: #0a0;
 
 	function hiddenImg(e, inital, invert) {
 		let horsie = (document.querySelector('body[data-theme*="ponyicons"]')?'pony':'normal');
+        let im = hidden[horsie][parseInt(Math.random()*hidden[horsie].length)];
 		if (!ls.fastHide) return;
 		if (parseURL(location.href).params.hidden == '1') return;
         let work = function(el) {
@@ -1477,13 +1478,13 @@ color: #0a0;
 				if (el.querySelector('.media-box__content picture img') != undefined) {
 					el.querySelector('.image-container').dataset.hthumb = el.querySelector('.media-box__content picture img').src;
 					el.querySelector('.image-container').dataset.hsthumb = el.querySelector('.media-box__content picture img').srcset;
-					el.querySelector('.media-box__content picture img').src = hidden[horsie][parseInt(Math.random()*hidden[horsie].length)].small;
-					el.querySelector('.media-box__content picture img').srcset = hidden[horsie][parseInt(Math.random()*hidden[horsie].length)].small;
+					el.querySelector('.media-box__content picture img').src = im.small;
+					el.querySelector('.media-box__content picture img').srcset = im.small+' 1x,'+im.big+' 2x';
 				}
 				else {
 					el.querySelector('.media-box__content a video').style.display = 'none';
 					ChildsAddElem('picture',{},el.querySelector('.media-box__content a'), [
-						InfernoAddElem('img',{src:hidden[horsie][parseInt(Math.random()*hidden[horsie].length)].small},[])
+						InfernoAddElem('img',{src:im.small, srcset:im.small+' 1x,'+im.big+' 2x'},[])
 					]);
 				}
 			}
