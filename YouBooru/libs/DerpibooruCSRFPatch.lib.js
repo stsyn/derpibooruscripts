@@ -41,12 +41,7 @@
         return function() {
           if (request.readyState === 4) {
             if (request.status === 200) { return onComplete(request); }
-            else if (request.status === 0) {
-              return false;
-            }
-
             return false;
-
           }
         };
       };
