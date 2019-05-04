@@ -25,7 +25,7 @@
           else if (!token2) console.log(`No token2 ${c.form.action} :( - ${err}`);
         }
         if (token) {
-          if (typeof unsafeWindow !== 'undefined') unsafeWindow.booru.csrfToken = token;
+          if ('unsafeWindow' in window) window.unsafeWindow.booru.csrfToken = token;
           if (window.booru) window.booru.csrfToken = token;
           if (document.querySelector('meta[name="csrf-token"]')) document.querySelector('meta[name="csrf-token"]').content = token;
           if (c && token2) c.value = token2;
@@ -71,7 +71,7 @@
                 ||
           ((elem.tagName === 'A') && elem.href.endsWith('#') && !(Boolean(elem.dataset) && (elem.dataset.clickTab === 'write')))
         ) {
-          preventWrongCSRF(e, elem.form ? elem.form.authenticity_token : undefined);
+          preventWrongCSRF(e, elem.form ? elem.form.authenticity_token : null);
         }
         if (elem.tagName !== 'BODY') check(elem.parentNode);
       };
