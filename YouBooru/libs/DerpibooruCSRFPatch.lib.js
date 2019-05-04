@@ -1,7 +1,7 @@
 // updates CSRF token to avoid site fails because of some scripts requests
 
 (function() {
-  let prevented = false;
+  let prevented = true;
   function preventWrongCSRF(e, c) {
     if (e) {
       e.preventDefault();
@@ -72,6 +72,7 @@
       };
       check(e.target);
     });
+    setTimeout(() => { prevented = false; }, 30000);
     //setInterval(preventWrongCSRF, 60000);
   }
 }());
