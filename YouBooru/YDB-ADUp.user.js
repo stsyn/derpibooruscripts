@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.3.8
+// @version      0.3.9
 // @author       stsyn
 
 // @match        *://*/*
@@ -209,15 +209,15 @@
 			}
 			let s = InfernoAddElem('div',{style:'display:none',innerHTML:req.responseText},[]);
 			//document.body.appendChild(s);
-			document.body.appendChild(InfernoAddElem('form',{className:'hidden',id:'_ydb_reverse',enctype:"multipart/form-data",action:"/search/reverse",acceptCharset:"UTF-8",method:"post"},[
+			let ax = InfernoAddElem('form',{className:'hidden',id:'_ydb_reverse',enctype:"multipart/form-data",action:"/search/reverse",acceptCharset:"UTF-8",method:"post"},[
 				InfernoAddElem('input',{name:"utf8",value:"✓",type:'hidden'},[]),
-				InfernoAddElem('input',{name:"authenticity_token",value:s.querySelector('input[name="authenticity_token"]').value,type:'hidden'},[]),
+				InfernoAddElem('input',{name:"authenticity_token",value:s.querySelector('form[action="/search/reverse"] input[name="authenticity_token"]').value,type:'hidden'},[]),
 				InfernoAddElem('input',{name:"fuzziness",value:document.getElementById('ydb_fuzzyness').value,type:'hidden'},[]),
 				(document.getElementById('scraper_url').value == undefined?
 				 ux:
 				 InfernoAddElem('input',{name:"scraper_url",value:decodeURIComponent(document.getElementById('scraper_url').value),type:'hidden'},[])
 				)
-			]));
+			]);
 			let callback = function(rq) {
 				document.getElementById('ydb_head_hiddenable').style.display = 'inline';
 				s.innerHTML = rq.responseText;
@@ -269,7 +269,7 @@
 				let rq = new XMLHttpRequest();
 				rq.onreadystatechange = readyHandler(rq);
 				rq.open('POST', '/search/reverse');
-				rq.send(new FormData(document.querySelector('#_ydb_reverse')));
+				rq.send(new FormData(ax));
 			};
 			get();
 		};
