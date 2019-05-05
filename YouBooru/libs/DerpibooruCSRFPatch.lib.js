@@ -58,20 +58,22 @@
     const x = document.createElement('meta');
     x.name = 'csrf-ydb-tweak';
     document.head.appendChild(x);
-    document.body.addEventListener('click', e => {
-      if (prevented) return;
-      const check = function(elem) {
-        if (
-          ((elem.tagName === 'INPUT' || elem.tagName === 'BUTTON') && elem.type === 'submit' && elem.title.toLowerCase() !== 'search')
+    setTimeout(() => {
+        document.body.addEventListener('click', e => {
+        if (prevented && !(e.target.form && e.target.form.authenticity_token)) return;
+        const check = function(elem) {
+          if (
+            ((elem.tagName === 'INPUT' || elem.tagName === 'BUTTON') && elem.type === 'submit' && elem.title.toLowerCase() !== 'search')
                 ||
-          ((elem.tagName === 'A') && elem.href.endsWith('#') && !(Boolean(elem.dataset) && (elem.dataset.clickTab === 'write')))
-        ) {
-          preventWrongCSRF(e, elem.form ? elem.form.authenticity_token : null);
-        }
-        if (elem.tagName !== 'BODY') check(elem.parentNode);
-      };
-      check(e.target);
-    });
+            ((elem.tagName === 'A') && elem.href.endsWith('#') && !(Boolean(elem.dataset) && (elem.dataset.clickTab === 'write')))
+          ) {
+            preventWrongCSRF(e, elem.form ? elem.form.authenticity_token : null);
+          }
+          if (elem.tagName !== 'BODY') check(elem.parentNode);
+        };
+        check(e.target);
+      });
+    }, 1000);
     setTimeout(() => { prevented = false; }, 30000);
     // setInterval(preventWrongCSRF, 60000);
   }
