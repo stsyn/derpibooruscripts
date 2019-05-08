@@ -26,7 +26,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruCSRFPatch.lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.18
+// @version      0.9.19
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        none
@@ -38,7 +38,7 @@
 
 	let main = function() {
 	let scriptId = 'settings';
-	let internalVersion = '0.9.14';
+	let internalVersion = '0.9.19';
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
@@ -69,6 +69,8 @@
         if (settings.downsync == undefined) settings.downsync = settings.downsynch;
 		if (settings.sync == undefined) settings.sync = true;
 		if (settings.downsync == undefined) settings.downsync = settings.sync;
+		if (settings.syncInterval == undefined) settings.syncInterval = 360;
+		if (settings.silentSync == undefined) settings.silentSync = false;
 		if (settings.debugLength == undefined) settings.debugLength = 100;
 		if (settings.debugLevel == undefined) settings.debugLevel = 1;
 		if (settings.nonce == undefined || isNaN(settings.nonce)) settings.nonce = parseInt(Math.random()*Number.MAX_SAFE_INTEGER);
@@ -125,6 +127,10 @@
 				{type:'checkbox', name:'Allow setting uploading', parameter:'sync'},
 				{type:'breakline'},
 				{type:'checkbox', name:'Allow setting downloading', parameter:'downsync'},
+				{type:'breakline'},
+				{type:'input', name:'Syncronization interval (in minutes)', parameter:'syncInterval', validation:{type:'int',min:5,max:10080, default:360}},
+				{type:'breakline'},
+				{type:'checkbox', name:'Silent syncronization', parameter:'silentSync'},
 				{type:'breakline'},
 				{type:'breakline'},
 				{type:'text', name:'If you do not wish to backup anymore, simply remove ydb-related strings from your "Watched tags string".', styleS:{fontStyle:'italic'}},
@@ -340,30 +346,32 @@
 						}
 						if (settings.timestamp+60 < s.timestamp || force) {
 							for (let y in s.vs) {
-								console.log(y, s.vs[y]);
 								localStorage[y] = s.vs[y];
 							}
 							settings.timestamp = parseInt(Date.now()/1000);
 							write();
-							if (location.pathname != "/pages/yourbooru" && location.search != '?sync') location.reload();
+							if (location.pathname != "/pages/yourbooru" && location.search != '?sync' && !settings.silentSync) location.reload();
 							return;
 						}
 						settings.timestamp = parseInt(Date.now()/1000);
 						write();
-						if (!external) win.parentNode.removeChild(win);
+						debugLogger('YDB:S','Successfuly syncronized', 1);
+						if (!external && !settings.silentSync) win.parentNode.removeChild(win);
 						return;
 					}
 				}
 				errorCode = 2;
 				settings.timestamp = parseInt(Date.now()/1000);
 				write();
-				if (!external) win.parentNode.removeChild(win);
+				debugLogger('YDB:S','Failed to sync settings — nothing to parse. Updating impossible',2);
+				if (!external && !settings.silentSync) win.parentNode.removeChild(win);
 				return;
 			}
 			catch (e) {
 				settings.timestamp = parseInt(Date.now()/1000);
 				write();
-				if (!external) win.parentNode.removeChild(win);
+				debugLogger('YDB:S','Failed to sync settings. Updating impossible',2);
+				if (!external && !settings.silentSync) win.parentNode.removeChild(win);
 			}
 			return;
 		};
@@ -389,7 +397,7 @@
 			req.send();
 		};
 		if (!settings.downsync && !force && !external) return;
-		if (!external) win = callWindow([InfernoAddElem('h1',{innerHTML:'Fetching last settings, please wait a bit...'},[])]);
+		if (!external && !settings.silentSync) win = callWindow([InfernoAddElem('h1',{innerHTML:'Fetching last settings, please wait a bit...'},[])]);
 		get();
 	}
 
@@ -998,7 +1006,7 @@
 		let x = [];
 		let levels = ['.', '?', '!'];
 		let levelsClasses = ['flash--success','flash--site-notice','flash--warning'];
-		
+
 		let c3 = ChildsAddElem('div',{className:'block',style:'font-family: monospace;white-space: pre;width:100%'}, c, []);
 		let c2 = ChildsAddElem('div',{className:'block',style:'font-family: monospace;white-space: pre;width:100%'}, c, []);
 
@@ -1068,7 +1076,7 @@
 	};
 
 	addElem('style',{type:'text/css',innerHTML:windows},document.head);
-	if (settings.timestamp+21600 < parseInt(Date.now()/1000) && location.pathname != "/settings") {
+	if (settings.timestamp+(settings.syncInterval*60) < parseInt(Date.now()/1000) && location.pathname != "/settings") {
 		settings.nonce = parseInt(Math.random()*Number.MAX_SAFE_INTEGER);
 		try { telemetry();} catch(e) {}
 		getData();
