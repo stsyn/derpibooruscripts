@@ -62,7 +62,7 @@
     document.head.appendChild(x);
     setTimeout(() => {
         document.body.addEventListener('click', e => {
-        if (prevented && !(e.target.form && e.target.form.authenticity_token && !(specific[e.target.form.action] || specific._all))) return;
+        if (prevented && !(e.target.form && e.target.form.authenticity_token && !(specific[e.target.form.action] || specific._all) )) return;
         const check = function(elem) {
           if (
             ((elem.tagName === 'INPUT' || elem.tagName === 'BUTTON') && elem.type === 'submit' && elem.title.toLowerCase() !== 'search')
