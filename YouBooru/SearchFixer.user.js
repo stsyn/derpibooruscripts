@@ -26,7 +26,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.4.5
+// @version      0.4.6
 // @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
 // @author       stsyn
 // @grant        none
@@ -612,8 +612,8 @@ min-width:auto !important
 `},[]));
 		document.querySelector('form.header__search').classList.add('dropdown');
 		document.querySelector('form.header__search').appendChild(
-			InfernoAddElem('span',{className:'dropdown__content', style:'position:static;min-width:0;z-index:1'},[
-				InfernoAddElem('select',{id:'_ydb_s_qpusher_sf',className:'input header__input', style:'display:inline;width:5em', name:'sf', size:1},[
+			InfernoAddElem('span',{className:'dropdown__content', style:{position:'static',minWidth:0,zIndex:1}},[
+				InfernoAddElem('select',{id:'_ydb_s_qpusher_sf',className:'input header__input', style:{display:'inline', width:'5em'}, name:'sf', size:1},[
 					InfernoAddElem('option',{value:'created_at', innerHTML:'created_at'},[]),
 					InfernoAddElem('option',{value:'updated_at', innerHTML:'updated_at'},[]),
 					InfernoAddElem('option',{value:'first_seen_at', innerHTML:'first_seen_at'},[]),
@@ -626,19 +626,19 @@ min-width:auto !important
 					InfernoAddElem('option',{value:'tag_count', innerHTML:'tag_count'},[]),
 					InfernoAddElem('option',{value:'random', innerHTML:'random'},[]),
 				]),
-				InfernoAddElem('select',{id:'_ydb_s_qpusher_sd',className:'input header__input', style:'display:inline;width:3.5em', name:'sd', size:1},[
+				InfernoAddElem('select',{id:'_ydb_s_qpusher_sd',className:'input header__input', style:{display:'inline',width:'3.5em'}, name:'sd', size:1},[
 					InfernoAddElem('option',{value:'desc', innerHTML:'desc'},[]),
 					InfernoAddElem('option',{value:'asc', innerHTML:'asc'},[])
 				])
 			]));
 		if (withup) {
             document.querySelector('form.header__search').insertBefore(
-				InfernoAddElem('a',{id:'_ydb_s_finder',title:'Find this image position in entered query', style:'height:28px;padding:0', className:'header__link header__search__button'}, [
-					InfernoAddElem('i',{className:'fa',style:'color:#fff; width:28px; line-height:28px; text-align:center; font-size:110%; vertical-align:super;',innerHTML:'\uF03C'}, [])
+				InfernoAddElem('a',{id:'_ydb_s_finder',title:'Find this image position in entered query', style:{height:'28px',padding:0}, className:'header__link header__search__button'}, [
+					InfernoAddElem('i',{className:'fa',style:{color:'#fff', width:'28px', lineHeight:'28px', textAlign:'center', fontSize:'110%', verticalAlign:'super'},innerHTML:'\uF03C'}, [])
 				]),document.querySelector('form.header__search>a.header__search__button'));
 			document.querySelector('form.header__search').insertBefore(
-				InfernoAddElem('a',{id:'_ydb_s_qpusher',title:'Push search query to url bar', style:'height:28px;padding:0', href:location.href, className:'header__link header__search__button'}, [
-					InfernoAddElem('i',{className:'fa fa-arrow-up',style:'color:#fff; width:28px; line-height:28px; text-align:center; font-size:110%; vertical-align:super;'}, [])
+				InfernoAddElem('a',{id:'_ydb_s_qpusher',title:'Push search query to url bar', style:{height:'28px',padding:0}, href:location.href, className:'header__link header__search__button'}, [
+					InfernoAddElem('i',{className:'fa fa-arrow-up',style:{color:'#fff', width:'28px', lineHeight:'28px', textAlign:'center', fontSize:'110%', verticalAlign:'super'}}, [])
 				]),document.querySelector('form.header__search>a.header__search__button'));
 			document.getElementById('_ydb_s_qpusher').hash = '';
 		}
@@ -697,11 +697,11 @@ min-width:auto !important
 		let t = document.querySelectorAll('.tag.dropdown');
 		for (let j=0; j<t.length; j++) {
 			ChildsAddElem('span',{dataset:{tag:t[j].dataset.tagName}, className:'tag__dropdown__link'}, t[j].getElementsByClassName('dropdown__content')[0],[
-				InfernoAddElem('a',{style:'cursor:pointer', innerHTML:'Set query ', events:[{t:'click',f:function(e){
+				InfernoAddElem('a',{style:{cursor:'pointer'}, innerHTML:'Set query ', events:[{t:'click',f:function(e){
 					document.querySelector('form.header__search .input').value=e.target.parentNode.dataset.tag;
 					chall();
 				}}]},[]),
-				InfernoAddElem('a',{style:'cursor:pointer', innerHTML:'[+]', events:[{t:'click',f:function(e){
+				InfernoAddElem('a',{style:{cursor:'pointer'}, innerHTML:'[+]', events:[{t:'click',f:function(e){
 					document.querySelector('form.header__search .input').value+=(document.querySelector('form.header__search .input').value.trim == ''?'':',')+e.target.parentNode.dataset.tag;
 					chall();
 				}}]},[])
