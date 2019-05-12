@@ -21,15 +21,18 @@
 // @exclude      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
 
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
-// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0.lib.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0UW.lib.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruCSRFPatch.lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.4.6
+// @version      0.4.8
 // @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
 // @author       stsyn
-// @grant        none
+
+// @grant        unsafeWindow
+// @grant        GM_addStyle
+
 // @run-at       document-end
 // ==/UserScript==
 
@@ -41,7 +44,7 @@
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
-	try {if (window._YDB_public.settings[scriptId] != undefined) return;}
+	try {if (unsafeWindow._YDB_public.settings[scriptId] != undefined) return;}
 	catch(e) {}
 	if (aE) {if (!window._YDB_public.allowedToRun[scriptId]) return;}
 	let sversion = aE?window._YDB_public.version:GM_info.script.version;
@@ -86,7 +89,7 @@
 	let first_seen;
 	let debug = function(id, value, level) {
 		try {
-			window._YDB_public.funcs.log(id, value, level);
+			unsafeWindow._YDB_public.funcs.log(id, value, level);
 		}
 		catch(e) {
 			let levels = ['.', '?', '!'];
@@ -129,9 +132,9 @@
 	}
 
 	function register() {
-		if (window._YDB_public == undefined) window._YDB_public = {};
-		if (window._YDB_public.settings == undefined) window._YDB_public.settings = {};
-		window._YDB_public.settings.ssf = {
+		if (unsafeWindow._YDB_public == undefined) unsafeWindow._YDB_public = {};
+		if (unsafeWindow._YDB_public.settings == undefined) unsafeWindow._YDB_public.settings = {};
+		unsafeWindow._YDB_public.settings.ssf = {
 			name:'Search Sorting Fixer',
 			version:sversion,
 			container:'_ssf',
@@ -599,7 +602,7 @@
 
 	//adding a button, pushes query in header search
 	function pushQuery(withup) {
-        document.head.appendChild(InfernoAddElem('style',{type:"text/css", innerHTML:`
+        GM_addStyle(`
 @media(max-width: 800px) {
 
 .header__search .dropdown__content, .header__search:hover .dropdown__content {
@@ -609,7 +612,7 @@ width:auto;
 min-width:auto !important
 }
 }
-`},[]));
+`);
 		document.querySelector('form.header__search').classList.add('dropdown');
 		document.querySelector('form.header__search').appendChild(
 			InfernoAddElem('span',{className:'dropdown__content', style:{position:'static',minWidth:0,zIndex:1}},[
@@ -665,8 +668,8 @@ min-width:auto !important
 				let val = e.value;
 				let arg = args[i];
 				if (i == 0) {
-					if (window._YDB_public.funcs != undefined && window._YDB_public.funcs.tagAliases != undefined)
-						val = window._YDB_public.funcs.tagAliases(e.value,{});
+					if (unsafeWindow._YDB_public.funcs != undefined && unsafeWindow._YDB_public.funcs.tagAliases != undefined)
+						val = unsafeWindow._YDB_public.funcs.tagAliases(e.value,{});
 				}
 				let t = compileQueryComponent(val);
 				/*if (myURL.params[arg] == "" || myURL.params[arg] == undefined) {
@@ -683,7 +686,6 @@ min-width:auto !important
 				}
 			}
 			document.getElementById('_ydb_s_qpusher').search = s;
-			console.log(s);
 		};
 
 		if (document.getElementById('_ydb_s_qpusher')) setTimeout(function() {
