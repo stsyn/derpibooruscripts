@@ -25,10 +25,13 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.20
+// @version      0.5.21
 // @description  Feedz
 // @author       stsyn
+
 // @grant        unsafeWindow
+// @grant        GM_addStyle
+
 // @run-at       document-idle
 // ==/UserScript==
 
@@ -195,7 +198,8 @@
 	}
 
 	function register() {
-		addElem('style',{type:'text/css',innerHTML:feedCSS},document.head);
+		//addElem('style',{type:'text/css',id:'stylish-213',className:'stylish',innerHTML:feedCSS},document.getElementsByTagName('html')[0]);
+        GM_addStyle(feedCSS);
 		if (unsafeWindow._YDB_public == undefined) unsafeWindow._YDB_public = {};
 		if (unsafeWindow._YDB_public.settings == undefined) unsafeWindow._YDB_public.settings = {};
 		unsafeWindow._YDB_public.settings.feeds = {
