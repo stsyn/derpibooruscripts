@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.7.4
+// @version      0.7.5
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -34,6 +34,7 @@
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
 // @grant        unsafeWindow
+// @grant        GM_addStyle
 // @run-at       document-idle
 // ==/UserScript==
 
@@ -206,7 +207,8 @@ color: #0a0;
     }
 
     function register() {
-		addElem('style',{type:'text/css',innerHTML:style},document.head);
+		//addElem('style',{type:'text/css',innerHTML:style},document.head);
+        GM_addStyle(style);
         if (unsafeWindow._YDB_public == undefined) unsafeWindow._YDB_public = {};
         if (unsafeWindow._YDB_public.settings == undefined) unsafeWindow._YDB_public.settings = {};
 		unsafeWindow._YDB_public.settings.toolsUB = {
@@ -457,7 +459,8 @@ color: #0a0;
         let css = 'header ._ydb_t_textarea {resize:none;overflow:hidden;line-height:2em;white-space:pre}'+
             'header ._ydb_t_textarea:focus {max-width:calc(100vw - 350px);margin-top:1.5em;overflow:auto;position:absolute;width:calc(100vw - 350px);height:5em;z-index:5;white-space:pre-wrap}'+
             '#searchform textarea {min-width:100%;max-width:100%;min-height:2.4em;line-height:1.5em;height:7em}';
-        addElem('style',{type:'text/css',innerHTML:css},document.head);
+        //addElem('style',{type:'text/css',innerHTML:css},document.head);
+		GM_addStyle(css);
         let x = [document.getElementsByClassName('header__input--search')[0], document.querySelector('.js-search-form input')];
         let x2 = [document.getElementsByClassName('header__search__button')[0], document.querySelector('input[type="submit"][value="Search"]')];
         let y = [];
@@ -938,7 +941,7 @@ color: #0a0;
                             }
                         }
                         e.target.innerHTML = d.a+' (?)';
-                    }}],className:'tag__dropdown__link', style:'cursor:pointer', innerHTML:ls.aliases[i].a+' ('+(isEnabled?'-':'+')+')'}, t[j].getElementsByClassName('dropdown__content')[0]);
+                    }}],className:'tag__dropdown__link', style:{cursor:'pointer'}, innerHTML:ls.aliases[i].a+' ('+(isEnabled?'-':'+')+')'}, t[j].getElementsByClassName('dropdown__content')[0]);
                 }
             }
         }
@@ -1173,7 +1176,7 @@ color: #0a0;
 		}
 
 		let callback = function(r) {
-			let x = InfernoAddElem('div',{innerHTML:r.responseText,style:'display:none'},[]);
+			let x = InfernoAddElem('div',{innerHTML:r.responseText,style:{display:'none'}},[]);
 			let exit = function() {
 
 			};
@@ -1298,8 +1301,8 @@ color: #0a0;
 				t.style.maxHeight = baseSize*0.8+'px';
 				el.style.position = 'relative';
 				let x;
-				let y = InfernoAddElem('div',{className:'block__content communication__options _ydb_tools_compress', style:'display:none;text-align:center;font-size:150%;margin-bottom:2px'},[
-					InfernoAddElem('a',{href:'javascript://', style:'width:100%;display:inline-block;', events:[{t:'click',f:function() {
+				let y = InfernoAddElem('div',{className:'block__content communication__options _ydb_tools_compress', style:{display:'none',textAlign:'center',fontSize:'150%',marginBottom:'2px'}},[
+					InfernoAddElem('a',{href:'javascript://', style:{width:'100%',display:'inline-block'}, events:[{t:'click',f:function() {
 						t.classList.add('_ydb_t_comm_shrink');
 						t.style.maxHeight = baseSize*0.8+'px';
 						x.style.display = 'block';
@@ -1310,8 +1313,8 @@ color: #0a0;
 						InfernoAddElem('i',{innerHTML:'\uF062',className:'fa'},[])
 					])
 				]);
-				x = InfernoAddElem('div',{className:'block__content communication__options _ydb_tools_expand', style:'position:absolute;text-align:center;font-size:150%;bottom:'+(t.classList.contains('profile-about')?0:(el.querySelector('.communication__options').clientHeight+4))+'px;width:calc(100% - 14px)'},[
-					InfernoAddElem('a',{href:'javascript://', style:'width:100%;display:inline-block;',events:[{t:'click',f:function() {
+				x = InfernoAddElem('div',{className:'block__content communication__options _ydb_tools_expand', style:{position:'absolute',textAlign:'center',fontSize:'150%',bottom:(t.classList.contains('profile-about')?0:(el.querySelector('.communication__options').clientHeight+4))+'px',width:'calc(100% - 14px)'}},[
+					InfernoAddElem('a',{href:'javascript://', style:{width:'100%',display:'inline-block'},events:[{t:'click',f:function() {
 						t.classList.remove('_ydb_t_comm_shrink');
 						t.style.maxHeight = 'none';
 						x.style.display = 'none';
@@ -1509,7 +1512,8 @@ color: #0a0;
 	//canonical headers
 	function oldHeaders() {
 		let xs = `#content>.block>.block__header.flex:not(.image-metabar) {flex-wrap: wrap;}`;
-		document.head.appendChild(InfernoAddElem('style',{innerHTML:xs},[]))
+		//document.head.appendChild(InfernoAddElem('style',{innerHTML:xs},[]))
+		GM_addStyle(xs);
 	}
 
     //target _blank
@@ -2039,7 +2043,7 @@ color: #0a0;
 					eln.title = userbase_local.scratchpad[user.id];
 				}
 				if (user.aliases.length>0) {
-					let s = InfernoAddElem('div',{style:'width:100px;font-size:.86em'},[
+					let s = InfernoAddElem('div',{style:{width:'100px',fontSize:'.86em'}},[
 						InfernoAddElem('span',{innerHTML:'AKA '},[]),
 						InfernoAddElem('strong',{innerHTML:user.aliases.join(', ')},[]),
 						InfernoAddElem('br',{},[])
@@ -2133,7 +2137,7 @@ color: #0a0;
 	//mark as read
 	function readAll() {
 		if (location.pathname.startsWith('/notifications')) {
-			document.getElementById('content').insertBefore(InfernoAddElem('span',{style:'font-size:150%'},[
+			document.getElementById('content').insertBefore(InfernoAddElem('span',{style:{fontSize:'150%'}},[
 				InfernoAddElem('a',{innerHTML:'Read all',href:'#',events:[{t:'click', f:function() {
 					document.querySelectorAll('a[data-click-markread]').forEach(function(e,i,a) {
 						e.click();
@@ -2193,6 +2197,7 @@ color: #0a0;
 
     //selfbadges
     function badge(core) {
+        return true;
         let x = [];
         x = core.querySelectorAll('.communication__body__sender-name');
         for (let i=0; i<x.length; i++) {
@@ -2475,11 +2480,11 @@ color: #0a0;
 
 		let generateLine = function(user) {
 			if (user == undefined) return InfernoAddElem('div',{className:'alternating-color block__content flex flex--center-distributed flex--centered'},[
-					InfernoAddElem('div',{style:'flex-basis: 48px;'},[]),
+					InfernoAddElem('div',{style:{flexBasis:'48px'}},[]),
 					InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
 						InfernoAddElem('span',{innerHTML:'[USER NOT FOUND]'},[])
 					]),
-					InfernoAddElem('a',{className:'interaction--downvote',style:'padding:0 12px', events:[{t:'click',f:function(){removeUser(user);}}]},[
+					InfernoAddElem('a',{className:'interaction--downvote',style:{padding:'0 12px'}, events:[{t:'click',f:function(){removeUser(user);}}]},[
 						InfernoAddElem('i',{className:'fa fa-trash-alt'},[]),
 						InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Remove'},[])
 					])
@@ -2489,26 +2494,26 @@ color: #0a0;
 				getUserName(user.id, function(e) {user.name = e; UAwrite();});
 			}
 			return InfernoAddElem('div',{dataset:{username:user.name},className:'alternating-color block__content flex flex--center-distributed flex--centered'},[
-				InfernoAddElem('div',{style:'flex-basis: 48px;'},[
+				InfernoAddElem('div',{style:{flexBasis:'48px'}},[
 					InfernoAddElem('img',{width:48,height:48},[])
 				]),
-				InfernoAddElem('a',{className:'flex__grow',style:'padding-left:1em',href:'/profiles/'+nameEncode(user.name)},[
+				InfernoAddElem('a',{className:'flex__grow',style:{paddingLeft:'1em'},href:'/profiles/'+nameEncode(user.name)},[
 					InfernoAddElem('span',{innerHTML:user.name},[])
 				]),
-				InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
+				InfernoAddElem('span',{className:'flex__grow',style:{paddingLeft:'1em'}},[
 					InfernoAddElem('span',{innerHTML:userbase_local.scratchpad[user.id]==undefined?'':
 						userbase_local.scratchpad[user.id].split('\n')[0].substring(0, 100)
 					},[])
 				]),
-				InfernoAddElem('a',{style:'padding:0 12px', href:'/messages/new?to_id='+user.id},[
+				InfernoAddElem('a',{style:{padding:'0 12px'}, href:'/messages/new?to_id='+user.id},[
 					InfernoAddElem('i',{className:'fa fa-envelope'},[]),
 					InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Send message'},[])
 				]),
-				InfernoAddElem('a',{style:'padding:0 12px', href:'/messages?with='+user.id},[
+				InfernoAddElem('a',{style:{padding:'0 12px'}, href:'/messages?with='+user.id},[
 					InfernoAddElem('i',{className:'fa fa-clock'},[]),
 					InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Chat history'},[])
 				]),
-				InfernoAddElem('a',{className:'interaction--downvote',style:'padding:0 12px', href:'javascript://', events:[{t:'click',f:function(){removeUser(user);}}]},[
+				InfernoAddElem('a',{className:'interaction--downvote',style:{padding:'0 12px'}, href:'javascript://', events:[{t:'click',f:function(){removeUser(user);}}]},[
 					InfernoAddElem('i',{className:'fa fa-trash-alt'},[]),
 					InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Remove'},[])
 				])
@@ -2546,7 +2551,7 @@ color: #0a0;
 
 		users.sort(function(a,b) {return a.name<b.name?-1:(a.name>b.name?1:0);});
 
-		let cont = addElem('div',{className:'block',style:'width:100%'}, c);
+		let cont = addElem('div',{className:'block',style:{width:'100%'}}, c);
 		render();
 	}
 
@@ -2558,34 +2563,34 @@ color: #0a0;
 		let generateLine = function(user) {
             if (user == undefined)
                 return InfernoAddElem('div',{className:'alternating-color block__content flex flex--center-distributed flex--centered'},[
-                    InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
+                    InfernoAddElem('span',{className:'flex__grow',style:{paddingLeft:'1em'}},[
                         InfernoAddElem('a',{innerHTML:'Name', events:[{t:'click',f:function() {sortby='name';render();}}]},[])
                     ]),
-                    InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
+                    InfernoAddElem('span',{className:'flex__grow',style:{paddingLeft:'1em'}},[
                         InfernoAddElem('a',{innerHTML:'ID', events:[{t:'click',f:function() {sortby='id';render();}}]},[])
                     ]),
-                    InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
+                    InfernoAddElem('span',{className:'flex__grow',style:{paddingLeft:'1em'}},[
                         InfernoAddElem('a',{innerHTML:'Updated', events:[{t:'click',f:function() {sortby='updated';render();}}]},[])
                     ]),
-                    InfernoAddElem('span',{className:'flex__grow',style:'padding:0 12px'},[
+                    InfernoAddElem('span',{className:'flex__grow',style:{padding:'0 12px'}},[
                         InfernoAddElem('a',{innerHTML:'[Auto]', events:[{t:'click',f:function() {sortby='auto';render();}}]},[])
                     ]),
-                    InfernoAddElem('span',{className:'flex__grow',style:'padding:0 12px'},[])
+                    InfernoAddElem('span',{className:'flex__grow',style:{padding:'0 12px'}},[])
                 ]);
 			return InfernoAddElem('div',{className:'alternating-color block__content flex flex--center-distributed flex--centered'},[
-				InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
+				InfernoAddElem('span',{className:'flex__grow',style:{paddingLeft:'1em'}},[
 					InfernoAddElem('span',{innerHTML:user.name},[])
 				]),
-				InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
+				InfernoAddElem('span',{className:'flex__grow',style:{paddingLeft:'1em'}},[
 					InfernoAddElem('span',{innerHTML:user.id},[])
 				]),
-				InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
+				InfernoAddElem('span',{className:'flex__grow',style:{paddingLeft:'1em'}},[
 					InfernoAddElem('span',{innerHTML:user.updated},[])
 				]),
-				InfernoAddElem('span',{className:'flex__grow',style:'padding:0 12px'},[
+				InfernoAddElem('span',{className:'flex__grow',style:{padding:'0 12px'}},[
 					InfernoAddElem('span',{innerHTML:user.aliases.join(', ')},[])
 				]),
-				InfernoAddElem('span',{className:'flex__grow',style:'padding:0 12px'},[
+				InfernoAddElem('span',{className:'flex__grow',style:{padding:'0 12px'}},[
 					InfernoAddElem('span',{innerHTML:user.tags.join(', ')},[])
 				])
 			]);
@@ -2617,7 +2622,7 @@ color: #0a0;
 
         let tusers = [];
         let sortby = 'auto';
-		let container = ChildsAddElem('div',{id:'_ydb_userlist',className:'block',style:'width:100%'}, c, []);
+		let container = ChildsAddElem('div',{id:'_ydb_userlist',className:'block',style:{width:'100%'}}, c, []);
         render();
 
 	}
@@ -2631,10 +2636,10 @@ color: #0a0;
 
 		let generateLine = function(spoiler, state) {
 			return InfernoAddElem('div',{className:'alternating-color block__content flex flex--center-distributed flex--centered'},[
-				InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
+				InfernoAddElem('span',{className:'flex__grow',style:{paddingLeft:'1em'}},[
 					InfernoAddElem('span',{innerHTML:spoiler},[])
 				]),
-				InfernoAddElem('span',{className:'flex__grow',style:'padding-left:1em'},[
+				InfernoAddElem('span',{className:'flex__grow',style:{paddingLeft:'1em'}},[
 					InfernoAddElem('span',{innerHTML:state},[])
 				])
 			]);
@@ -2679,7 +2684,7 @@ color: #0a0;
 		let stop = false;
         elems.querySelector('h1').innerHTML = 'Checking watchlist tags...';
         let c = elems.querySelector('.wallcontainer');
-        let t = addElem('div',{id:'_ydb_temp', style:'display:none'}, document.getElementById('content'));
+        let t = addElem('div',{id:'_ydb_temp', style:{display:'none'}}, document.getElementById('content'));
         c.innerHTML = 'This may take few seconds. Do not close this page until finished<br><br>';
 		c.appendChild(InfernoAddElem('a',{innerHTML:'Abort', events:[{t:'click',f:function(e) {stop = true;}}]},[]));
 		c.appendChild(InfernoAddElem('br',{},[]));
