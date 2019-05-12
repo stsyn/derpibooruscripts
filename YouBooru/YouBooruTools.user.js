@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.7.5
+// @version      0.7.6
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1247,14 +1247,13 @@ color: #0a0;
 
 		for (let i=0; i<document.querySelectorAll('.tag.dropdown[data-tag-category="origin"] .tag__name').length; i++) {
 			let el = document.querySelectorAll('.tag.dropdown[data-tag-category="origin"] .tag__name')[i];
-			if (el.innerHTML == 'edit' || el.innerHTML == 'alternate version' || el.innerHTML == 'them\'s fightin\' herds' || el.innerHTML == 'derpibooru exclusive') continue;
+			if (el.innerHTML == 'edit' || el.innerHTML == 'alternate version' || el.innerHTML == 'screencap' || el.innerHTML == 'edited screencap' || el.innerHTML == 'them\'s fightin\' herds' || el.innerHTML == 'derpibooru exclusive') continue;
 			get(el);
 		}
 	}
 
 	function highlightArtist(e, name, editor) {
 		let highlight = function(e,n, editor) {
-			if (document.querySelector('.image_uploader a') == undefined) return;
 			for (let i=0; i<e.getElementsByClassName('communication__body').length; i++) {
 				let el = e.getElementsByClassName('communication__body')[i];
 				if (el.querySelector('.communication__body__sender-name a') != undefined && el.querySelector('.communication__body__sender-name a').innerHTML == n) {
