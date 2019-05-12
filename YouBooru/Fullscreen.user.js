@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.16
+// @version      0.7.17
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -36,6 +36,9 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/Fullscreen.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/Fullscreen.user.js
+
+// @grant        GM_addStyle
+
 // @run-at       document-start
 // ==/UserScript==
 
@@ -579,6 +582,7 @@ color: #777;
     let settings, state;
     let colors = {};
     let started = false;
+	let dictionary = {};
 
 	let ponymarks = {
 		bgs:{
@@ -757,18 +761,18 @@ color: #777;
                 ]}
             ]
         };
-        document.addEventListener('DOMContentLoaded', function() {addElem('span', {style:'display:none', type:'text', dataset:{value:JSON.stringify(fsData),origin:'script'}, className:'_YDB_reserved_register'}, document.body);});
+        document.addEventListener('DOMContentLoaded', function() {addElem('span', {style:{display:'none'}, type:'text', dataset:{value:JSON.stringify(fsData),origin:'script'}, className:'_YDB_reserved_register'}, document.body);});
     }
 
     function append(id) {
-        if (document.getElementById(id) != undefined) return 1;
-        addElem('style', {innerHTML:styles[id], id:id}, document.head);
+        if (dictionary[id]) dictionary[id].media = 'all';
+        else dictionary[id] = GM_addStyle(styles[id]);
         return 0;
     }
 
     function remove(id) {
-        if (document.getElementById(id) == undefined) return 1;
-        document.head.removeChild(document.getElementById(id));
+        if (!dictionary[id]) return 1;
+        dictionary[id].media = 'none';
         return 0;
     }
 
@@ -858,7 +862,7 @@ color: #777;
     }
 
     function init() {
-        objects.disable = addElem('a', {id:'_ydb_fs_disable', className:'', style:'display:none', innerHTML:'Disable', events:[{t:'click',f:disable}]},  document.querySelector('#content>.block:first-child'));
+        objects.disable = addElem('a', {id:'_ydb_fs_disable', className:'', style:{display:'none'}, innerHTML:'Disable', events:[{t:'click',f:disable}]},  document.querySelector('#content>.block:first-child'));
         objects.enable = addElem('a', {id:'_ydb_fs_enable', className:'header__link', innerHTML:'Fullscreen', events:[{t:'click',f:function() {enable(true);}}]}, document.body);
         document.getElementsByClassName('header__force-right')[0].insertBefore(objects.enable, document.getElementsByClassName('header__force-right')[0].childNodes[0]);
         started = true;
@@ -1425,7 +1429,7 @@ color: #777;
         popUps.main.appendChild(document.querySelector('header'));
         popUps.main.appendChild(document.querySelector('nav.header.header--secondary'));
         ChildsAddElem('div', {className:'block__header'}, popUps.main, [
-            InfernoAddElem('span',{innerHTML:'Image Tools:',style:'margin-left:1em'}, []),
+            InfernoAddElem('span',{innerHTML:'Image Tools:',style:{marginLeft:'1em'}}, []),
             InfernoAddElem('a',{className:'js-up', events:[{t:'click',f:function() {
                 document.querySelector('.image-metabar .js-up').click();
             }}]}, [
