@@ -26,7 +26,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.4.8
+// @version      0.4.9
 // @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
 // @author       stsyn
 
@@ -473,6 +473,7 @@
 		let cscore;
 		if (settings.pregain) cscore = preparam[myURL.params.sf];
 		else cscore = gainParams();
+        let sf = 'created_at';
 
 		if (myURL.params.sf == "score") {
 			prevUrl += ',(score:'+cscore+',id.'+dir+':'+id+')';
@@ -494,8 +495,10 @@
 		}
 		else if (myURL.params.sf == "first_seen_at") {
 			prevUrl += ',(first_seen_at.'+dir+':'+cscore+')';
+            sf = 'first_seen_at';
 		}
-		prevUrl+='&perpage=1&sf=created_at&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
+
+		prevUrl+='&perpage=1&sf='+sf+'&sd='+((myURL.params.sd=='asc'^type=='prev')?'asc':'desc');
         if (myURL.params.del != undefined && myURL.params.del != '') prevUrl+='&del='+myURL.params.del;
 		debug('SSF','Pre query: query '+prevUrl,0);
 		return prevUrl;
