@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:ADUp
-// @version      0.3.9
+// @version      0.3.10
 // @author       stsyn
 
 // @match        *://*/*
@@ -288,7 +288,7 @@
                 InfernoAddElem('span',{innerHTML:'Implied tags '}, [])
             ]), z.querySelector('.js-taginput-show'));
         }
-		y.appendChild(InfernoAddElem('span',{className:'tag _ydb_transparent',style:'opacity:0.75; cursor:pointer',innerHTML:tag+' ',events:[{t:'click',f:function(e) {
+		y.appendChild(InfernoAddElem('span',{className:'tag _ydb_transparent',style:{opacity:'0.75', cursor:'pointer'},innerHTML:tag+' ',events:[{t:'click',f:function(e) {
             insertImpliedTag(x, tag);
         }}]},[
 			InfernoAddElem('a',{href:'javascript://', innerHTML:'x', style:{display:'none'},dataset:{clickFocus:'.js-taginput-input',tagName:tag}},[
@@ -672,14 +672,14 @@
                         ])
                     ])
                 ]),
-                InfernoAddElem('div',{style:'padding-bottom:1em;font-size:1.1em;text-align:center'},[
+                InfernoAddElem('div',{style:{paddingBottom:'1em',fontSize:'1.1em',textAlign:'center'}},[
                     InfernoAddElem('strong',{id:'_ydb_old',innerHTML:'??? x ???'},[]),
                     InfernoAddElem('span',{innerHTML:' => '},[]),
                     InfernoAddElem('strong',{id:'_ydb_new',innerHTML:'??? x ???'},[])
                 ]),
                 InfernoAddElem('div',{id:'_ydb_diff_container'},[
-                    InfernoAddElem('img',{id:'_ydb_preview',style:'display:inline-block;width:320px;margin-right:10px'},[]),
-                    InfernoAddElem('canvas',{id:'_ydb_diff',style:'display:inline-block;width:320px;margin-right:10px'},[]),
+                    InfernoAddElem('img',{id:'_ydb_preview',style:{display:'inline-block',width:'320px',marginRight:'10px'}},[]),
+                    InfernoAddElem('canvas',{id:'_ydb_diff',style:{display:'inline-block',width:'320px',marginRight:'10px'}},[]),
                     preview
                 ])
             ]),document.querySelector('.image-other').childNodes[0]);
