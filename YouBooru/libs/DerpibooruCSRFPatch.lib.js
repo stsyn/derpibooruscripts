@@ -75,7 +75,7 @@
         };
         check(e.target);
       });
-    }, 1000);
+    }, 15000);
     setTimeout(() => { prevented = false; specific._all = false}, 30000);
     // setInterval(preventWrongCSRF, 60000);
   }
