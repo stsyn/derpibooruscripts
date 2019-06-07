@@ -26,7 +26,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.4.9
+// @version      0.4.10
 // @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
 // @author       stsyn
 
@@ -330,15 +330,16 @@
 						let param;
 						let s = 0;
 						if (u.search[s].id == id) s++;
+
 						if (myURL.params.sf == 'score') param='score';
 						else if (myURL.params.sf == 'width') param='width';
 						else if (myURL.params.sf == 'height') param='height';
 						else if (myURL.params.sf == 'comments') param='comment_count';
 						else if (myURL.params.sf == 'first_seen_at') param='first_seen_at';
 						else param = '';
-						if (u.search[s+1][param] == u.search[s][param]) {
+						if ((myURL.params.sf == 'tag_count' && u.search[s+1].tag_ids.length == u.search[s].tag_ids.length) || (myURL.params.sf != 'tag_count' && u.search[s+1][param] == u.search[s][param])) {
 							//мы чот нашли, но у соседней по тому же критерию то же самое, нужно уточнить, что ставить
-							request(compilePostQuery(type, u.search[s+1][param]), r.sel, type, 'post');
+							request(compilePostQuery(type, (myURL.params.sf == 'tag_count'?u.search[s+1].tag_ids.length:u.search[s+1][param])), r.sel, type, 'post');
 							return;
 						}
 						else {
