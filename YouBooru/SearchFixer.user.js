@@ -26,7 +26,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.4.10
+// @version      0.4.11
 // @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
 // @author       stsyn
 
@@ -60,10 +60,11 @@
 		//Which sortings type should be fixed
 		score:true,
 		random:true,
-		sizes:true,
-		comments:true,
+		sizes:false,
+		comments:false,
 		gallery:true,
 		first_seen_at:true,
+        tag_count:false,
 
 		//Fix random button
 		randomButton:true,
@@ -146,6 +147,7 @@
 				{type:'checkbox', name:'Fix comments sorting', parameter:'comments'},
 				{type:'checkbox', name:'Fix gallery sorting', parameter:'gallery'},
 				{type:'checkbox', name:'Fix first_seen_at', parameter:'first_seen_at'},
+				{type:'checkbox', name:'Fix tag_count', parameter:'tag_count'},
 				{type:'breakline'},
 				{type:'checkbox', name:'Fix random button', parameter:'randomButton'},
 				{type:'checkbox', name:'Flash on completion', parameter:'blink'},
@@ -154,7 +156,7 @@
 				{type:'checkbox', name:'Smart Find button at: score sorting', parameter:'scoreUp'},
 				{type:'checkbox', name:'; sizes sorting', parameter:'sizesUp'},
 				{type:'checkbox', name:'; comments sorting', parameter:'commentsUp'},
-				{type:'checkbox', name:'; unsupported sortings', parameter:'everyUp'}
+				{type:'checkbox', name:'; other sortings', parameter:'everyUp'}
 			]
 		};
 	}
@@ -793,6 +795,7 @@ min-width:auto !important
 		!(myURL.params.sf == 'score' && !settings.score) &&
 		!(myURL.params.sf == 'comments' && !settings.comments) &&
 		!(myURL.params.sf == 'first_seen_at' && !settings.first_seen_at) &&
+		!(myURL.params.sf == 'tag_count' && !settings.tag_count) &&
 		!(myURL.params.sf.startsWith('random') && !settings.random) &&
 		!(myURL.params.sf.startsWith('gallery_id') && !settings.gallery) &&
 		!((myURL.params.sf == 'width' || myURL.params.sf == 'height') && !settings.sizes)
