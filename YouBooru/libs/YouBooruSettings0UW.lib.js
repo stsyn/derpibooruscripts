@@ -1,6 +1,6 @@
 // ==UserScriptLib==
 // @name         YourBooru:Settings
-// @version      0.9.17L
+// @version      0.9.18L
 // @description  Global library script for YourBooru script family
 // @grant	 unsafeWindow
 // @author       stsyn
@@ -453,7 +453,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 		let callbackS = function (r) {
 			let x = addElem('div',{style:'display:none',innerHTML:r.responseText},document.body);
             if (x.querySelector('form.new_user') != undefined) return;
-			s = ChildsAddElem('div',{style:'display:none',className:'_ydb_settings_cloneForm'},document.body,[
+			s = ChildsAddElem('div',{style:{display:'none'},className:'_ydb_settings_cloneForm'},document.body,[
 				x.querySelector('form.edit_user')
 			]);
 			document.body.removeChild(x);
@@ -461,6 +461,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
             s.querySelector('#serve_webm').checked = localStorage.serve_webm;
             s.querySelector('#webm').checked = localStorage.webm;
             s.querySelector('#hide_uploader').checked = localStorage.hide_uploader;
+            setTimeout(() => {s.parentNode.removeChild(s);})
 			process();
 		};
 
