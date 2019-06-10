@@ -26,10 +26,11 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruCSRFPatch.lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.19
+// @version      0.9.20
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
-// @grant        none
+// @grant        unsafeWindow
+// @grant        GM_addStyle
 // @run-at       document-end
 // ==/UserScript==
 
@@ -38,14 +39,14 @@
 
 	let main = function() {
 	let scriptId = 'settings';
-	let internalVersion = '0.9.19';
+	let internalVersion = '0.9.20';
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
-	try {if (window._YDB_public.settings[scriptId] != undefined) return;}
+	try {if (unsafeWindow._YDB_public.settings[scriptId] != undefined) return;}
 	catch(e){}
-	if (aE) {if (!window._YDB_public.allowedToRun[scriptId]) return;}
-	let version = aE?window._YDB_public.version:GM_info.script.version;
+	if (aE) {if (!unsafeWindow._YDB_public.allowedToRun[scriptId]) return;}
+	let version = aE?unsafeWindow._YDB_public.version:GM_info.script.version;
 
 	let config;
 	let modules = [];
@@ -107,15 +108,15 @@
 	}
 
 	function register() {
-		if (window._YDB_public == undefined) window._YDB_public = {};
-		if (window._YDB_public.settings == undefined) window._YDB_public.settings = {};
+		if (unsafeWindow._YDB_public == undefined) unsafeWindow._YDB_public = {};
+		if (unsafeWindow._YDB_public.settings == undefined) unsafeWindow._YDB_public.settings = {};
 		let xversion;
 		if (version.indexOf('aE') == -1) {
 			if (GM_info.script.name == 'YourBooru:Settings') xversion = version+' (standalone)';
 			else xversion = internalVersion+' (served by '+GM_info.script.name+')';
 		}
 		else xversion = version;
-		window._YDB_public.settings.settings = {
+		unsafeWindow._YDB_public.settings.settings = {
 			name:'Settings',
 			container:'_ydb_config',
 			version:xversion,
@@ -148,11 +149,11 @@
 				{type:'input', name:'Filter (,)', parameter:'debugFilter'}
 			]
 		};
-		if (window._YDB_public.funcs == undefined) window._YDB_public.funcs = {};
-		window._YDB_public.funcs.callWindow = callWindow;
-		window._YDB_public.funcs.backgroundBackup = backgroundBackup;
-		window._YDB_public.funcs.log = debugLogger;
-		window._YDB_public.funcs.getNonce = function() {return settings.nonce;};
+		if (unsafeWindow._YDB_public.funcs == undefined) unsafeWindow._YDB_public.funcs = {};
+		unsafeWindow._YDB_public.funcs.callWindow = callWindow;
+		unsafeWindow._YDB_public.funcs.backgroundBackup = backgroundBackup;
+		unsafeWindow._YDB_public.funcs.log = debugLogger;
+		unsafeWindow._YDB_public.funcs.getNonce = function() {return settings.nonce;};
 	}
 
 	function hideBlock(e) {
@@ -324,7 +325,7 @@
 
 	function getData(force, external) {
 		let win;
-		let t = addElem('div',{id:'_ydb_dataArrive', style:'display:none'}, document.getElementById('content'));
+		let t = addElem('div',{id:'_ydb_dataArrive', style:{display:'none'}}, document.getElementById('content'));
 		let parse = function (request) {
 			try {
 				t.innerHTML = request.responseText;
@@ -479,9 +480,9 @@
 		};
 
 		let callbackS = function (r) {
-			let x = addElem('div',{style:'display:none',innerHTML:r.responseText},document.body);
+			let x = addElem('div',{style:{display:'none'},innerHTML:r.responseText},document.body);
             if (x.querySelector('form.new_user') != undefined) return;
-			s = ChildsAddElem('div',{style:'display:none',className:'_ydb_settings_cloneForm'},document.body,[
+			s = ChildsAddElem('div',{style:{display:'none'},className:'_ydb_settings_cloneForm'},document.body,[
 				x.querySelector('form.edit_user')
 			]);
 			document.body.removeChild(x);
@@ -489,6 +490,7 @@
             s.querySelector('#serve_webm').checked = localStorage.serve_webm;
             s.querySelector('#webm').checked = localStorage.webm;
             s.querySelector('#hide_uploader').checked = localStorage.hide_uploader;
+            setTimeout(() => {s.parentNode.removeChild(s);}, 15000);
 			process();
 		};
 
@@ -620,7 +622,7 @@
 			}
 
 			if (errorlevel>0) {
-				let x = addElem('div',{className:'flash flash--warning', style:'font-weight:500', innerHTML:errorlevel+' error(s) are preventing the settings from saving:'}, ec);
+				let x = addElem('div',{className:'flash flash--warning', style:{fontWeight:500}, innerHTML:errorlevel+' error(s) are preventing the settings from saving:'}, ec);
 				ec.insertBefore(x,ec.childNodes[0]);
 			}
 		}
@@ -629,7 +631,7 @@
 			let mx = modules[e.dataset.parent];
 			errorlevel += (validateChilds(e, mx.options, mx));
 			if (errorlevel>0 && virgin) {
-				let x = addElem('div',{className:'flash flash--warning', style:'font-weight:500', innerHTML:errorlevel+' error(s) are preventing the settings from saving:'}, ec);
+				let x = addElem('div',{className:'flash flash--warning', style:{fontWeight:500}, innerHTML:errorlevel+' error(s) are preventing the settings from saving:'}, ec);
 				ec.insertBefore(x,ec.childNodes[0]);
 			}
 		}
@@ -641,7 +643,7 @@
 			afterSave();
 			return;
 		}
-		window._YDB_public.handled = 0;
+		unsafeWindow._YDB_public.handled = 0;
 		if (validate(e) >0) {
 			e.preventDefault();
 			setTimeout(function() {document.querySelector('.edit_user input.button[type=submit]').removeAttribute('disabled');},500);
@@ -714,10 +716,10 @@
 		settings.timestamp = parseInt(Date.now()/1000);
 		settings.bgBackupflag = false;
 		write();
-		if (window._YDB_public.handled != 0) {
+		if (unsafeWindow._YDB_public.handled != 0) {
 			e.preventDefault();
 			let checker = function() {
-				if (window._YDB_public.handled != 0) setTimeout(checker, 100);
+				if (unsafeWindow._YDB_public.handled != 0) setTimeout(checker, 100);
 				else {
                     for (let i=0; i<containers.length; i++) {
                         let mx = modules[containers[i].dataset.parent];
@@ -743,8 +745,8 @@
 
 	function injectModule(k, editCont, listCont) {
 		let ss = {};
-		let s2 = window._YDB_public.settings[k];
-		try {ss = JSON.parse(localStorage[window._YDB_public.settings[k].container]);}
+		let s2 = unsafeWindow._YDB_public.settings[k];
+		try {ss = JSON.parse(localStorage[unsafeWindow._YDB_public.settings[k].container]);}
 		catch (ex) {console.log('Warning: '+k+' has empty storage!');}
 		modules[s2.container] = {name:s2.name, container:s2.container, changed:false, saved:ss, options:s2.s, onChanges:s2.onChanges};
 		if (s2.s != undefined && editCont != undefined) {
@@ -752,7 +754,7 @@
 			catch(e) {console.log('Error rendering '+k+'. '+e);}
 		}
 
-		if (listCont != undefined && !s2.hidden) addElem(s2.link!=undefined?'a':'div', {href:s2.link!=undefined?s2.link:'', style:'display:block', className:'block__content alternating-color', innerHTML:s2.name+' v. '+s2.version}, listCont);
+		if (listCont != undefined && !s2.hidden) addElem(s2.link!=undefined?'a':'div', {href:s2.link!=undefined?s2.link:'', style:{display:'block'}, className:'block__content alternating-color', innerHTML:s2.name+' v. '+s2.version}, listCont);
 	}
 
 	function injectLegacyModule(k, editCont, listCont) {
@@ -765,15 +767,15 @@
 			catch(e) {console.log('Error rendering '+k.name+'. '+e);}
 		}
 
-		if (listCont != undefined && !k.hidden) addElem(k.link!=undefined?'a':'div',  {href:k.link!=undefined?k.link:'', style:'display:block', className:'block__content alternating-color', innerHTML:k.name+' v. '+k.version}, listCont);
+		if (listCont != undefined && !k.hidden) addElem(k.link!=undefined?'a':'div',  {href:k.link!=undefined?k.link:'', style:{display:'block'}, className:'block__content alternating-color', innerHTML:k.name+' v. '+k.version}, listCont);
 	}
 
 	function listModules() {
 		let loadedList = {};
 		//loading, stage 1
-		if (window._YDB_public != undefined) {
-			if (window._YDB_public.settings != undefined) {
-				for (let k in window._YDB_public.settings) {
+		if (unsafeWindow._YDB_public != undefined) {
+			if (unsafeWindow._YDB_public.settings != undefined) {
+				for (let k in unsafeWindow._YDB_public.settings) {
 					injectModule(k);
 					loadedList[k] = true;
 				}
@@ -794,7 +796,7 @@
 
 		let timer = 50;
 		let handler = function() {
-			for (let k in window._YDB_public.settings) {
+			for (let k in unsafeWindow._YDB_public.settings) {
 				if (!loadedList[k]) {
 					injectModule(k);
 					loadedList[k] = true;
@@ -822,17 +824,17 @@
 		//localStorage._ydb_watchListFilterString = document.getElementById('user_watched_images_exclude_str').innerHTML;
 		let cont;
 		//preparing
-		document.getElementById('js-setting-table').insertBefore(cont = InfernoAddElem('div',{className:'block__tab hidden',dataset:{tab:'YourBooru'},style:'position:relative'}), document.querySelector('[data-tab="local"]').nextSibling);
+		document.getElementById('js-setting-table').insertBefore(cont = InfernoAddElem('div',{className:'block__tab hidden',dataset:{tab:'YourBooru'},style:{position:'relative'}}), document.querySelector('[data-tab="local"]').nextSibling);
 
 		let style = '._ydb_s_bigtextarea {resize:none;overflow:hidden;line-height:1.25em;white-space:pre;height:2.25em;vertical-align:top;}'+
 			'._ydb_s_bigtextarea:focus {overflow:auto;position:absolute;width:900px !important;height:10em;z-index:5;white-space:pre-wrap}';
-		addElem('style',{type:'text/css',innerHTML:style},document.head);
+		GM_addStyle(style);
 		addElem('a',{href:'#',innerHTML:'YourBooru',dataset:{clickTab:'YourBooru'}},document.getElementsByClassName('block__header')[0]);
 
 		let editCont = addElem('div',{className:'block'},cont);
 		let listCont = addElem('div',{className:'block'},cont);
 		ChildsAddElem('div', {className:'block__header'}, listCont, [
-			InfernoAddElem('span', {innerHTML:'Installed plugins', style:'margin-left:12px'})
+			InfernoAddElem('span', {innerHTML:'Installed plugins', style:{marginLeft:'12px'}})
 		]);
 
 		let el;
@@ -846,9 +848,9 @@
 		let loadedList = {};
 
 		//loading, stage 1
-		if (window._YDB_public != undefined) {
-			if (window._YDB_public.settings != undefined) {
-				for (let k in window._YDB_public.settings) {
+		if (unsafeWindow._YDB_public != undefined) {
+			if (unsafeWindow._YDB_public.settings != undefined) {
+				for (let k in unsafeWindow._YDB_public.settings) {
 					injectModule(k, editCont, listCont);
 					loadedList[k] = true;
 				}
@@ -871,7 +873,7 @@
 		ChildsAddElem('div', {className:'block__header'}, cont, [
 
 			InfernoAddElem('a', {target:'_blank', href:'javscript://', events:[{t:'click',f:function() {
-				window.open(getDonateLink()!=undefined?getDonateLink():'https://ko-fi.com/C0C8BVXS');
+				unsafeWindow.open(getDonateLink()!=undefined?getDonateLink():'https://ko-fi.com/C0C8BVXS');
 			}}]}, [
 				InfernoAddElem('i', {className:'fa fa-heart', style:'color:red'}, []),
 				InfernoAddElem('span', {innerHTML:' Support'}, [])
@@ -912,7 +914,7 @@
 
 		let timer = 50;
 		let handler = function() {
-			for (let k in window._YDB_public.settings) {
+			for (let k in unsafeWindow._YDB_public.settings) {
 				if (!loadedList[k]) {
 					injectModule(k, editCont, listCont);
 					loadedList[k] = true;
@@ -962,7 +964,7 @@
 				if (ex[x[i].id] == undefined) {
 					ex[x[i].id] = true;
 					active[x[i].id] = true;
-					ox.push(InfernoAddElem('label',{innerHTML:x[i].id+' ',style:'margin-right:9px'},[
+					ox.push(InfernoAddElem('label',{innerHTML:x[i].id+' ',style:{marginRight:'9px'}},[
 						InfernoAddElem('input',{type:'checkbox', dataset:{id:x[i].id}, checked:true, events:[{t:'change',f:function(e) {active[e.target.dataset.id] = e.target.checked; render();}}]},[])
 					]));
 				}
@@ -986,19 +988,19 @@
 					]));
 				}
 			}
-			ChildsAddElem('div',{className:'block',style:'width:100%'}, c2, u);
+			ChildsAddElem('div',{className:'block',style:{width:'100%'}}, c2, u);
 		};
 
 		document.querySelector('#content h1').innerHTML = 'Debug Logs';
 		let c = document.querySelector('#content .walloftext');
 		c.innerHTML = '';
-		ChildsAddElem('div',{className:'block',style:'width:100%'}, c, [
-			InfernoAddElem('select',{id:'_ydb_s_level',className:'input header__input', style:'display:inline', events:[{t:'change',f:render}], size:1},[
+		ChildsAddElem('div',{className:'block',style:{width:'100%'}}, c, [
+			InfernoAddElem('select',{id:'_ydb_s_level',className:'input header__input', style:{display:'inline'}, events:[{t:'change',f:render}], size:1},[
 				InfernoAddElem('option',{innerHTML:'Only errors', value:'2'},[]),
 				InfernoAddElem('option',{innerHTML:'Normal', value:'1'},[]),
 				InfernoAddElem('option',{innerHTML:'Verbose', value:'0'},[])
 			]),
-			InfernoAddElem('input',{type:'button', className:'button', style:'margin-left:2em', value:'Redraw', events:[{t:'click',f:render}]},[])
+			InfernoAddElem('input',{type:'button', className:'button', style:{marginLeft:'2em'}, value:'Redraw', events:[{t:'click',f:render}]},[])
 		]);
 
 		let s = '';
@@ -1007,8 +1009,8 @@
 		let levels = ['.', '?', '!'];
 		let levelsClasses = ['flash--success','flash--site-notice','flash--warning'];
 
-		let c3 = ChildsAddElem('div',{className:'block',style:'font-family: monospace;white-space: pre;width:100%'}, c, []);
-		let c2 = ChildsAddElem('div',{className:'block',style:'font-family: monospace;white-space: pre;width:100%'}, c, []);
+		let c3 = ChildsAddElem('div',{className:'block',style:{fontFamily:'monospace',whiteSpace:'pre',width:'100%'}}, c, []);
+		let c2 = ChildsAddElem('div',{className:'block',style:{fontFamily:'monospace',whiteSpace:'pre',width:'100%'}}, c, []);
 
 		render();
 	}
@@ -1066,16 +1068,16 @@
 		}
 	}
 
-	window.onbeforeunload = function(e) {
-		if (window._YDB_public.bgCalled) {
+	unsafeWindow.onbeforeunload = function(e) {
+		if (unsafeWindow._YDB_public.bgCalled) {
 			let checker = function() {
-				if (window._YDB_public.bgCalled) setTimeout(checker, 100);
+				if (unsafeWindow._YDB_public.bgCalled) setTimeout(checker, 100);
 			};
 			callWindow([InfernoAddElem('h1',{innerHTML:'Background copy in process...'},[])]);
 		}
 	};
 
-	addElem('style',{type:'text/css',innerHTML:windows},document.head);
+	GM_addStyle(windows);
 	if (settings.timestamp+(settings.syncInterval*60) < parseInt(Date.now()/1000) && location.pathname != "/settings") {
 		settings.nonce = parseInt(Math.random()*Number.MAX_SAFE_INTEGER);
 		try { telemetry();} catch(e) {}
