@@ -1,10 +1,12 @@
 // updates CSRF token to avoid site fails because of some scripts requests
 
+let updateCSRF = function() {};
+
 (function() {
   let prevented = true;
   let specific = {_all:true};
   function preventWrongCSRF(e, c) {
-    if (e) {
+    if (e && !e.custom) {
       e.preventDefault();
       e.stopPropagation();
     }
@@ -30,12 +32,17 @@
           if (window.booru) window.booru.csrfToken = token;
           if (document.querySelector('meta[name="csrf-token"]')) document.querySelector('meta[name="csrf-token"]').content = token;
           if (c && token2) c.value = token2;
-          if (e) {
+          if (e && !e.custom) {
             prevented = true;
 			if (c) specific[c.form.action] = true;
             e.target.click();
             setTimeout(() => { prevented = false; specific[c.form.action] = false}, 30000);
           }
+          else if (e.custom) {
+            prevented = true;
+            setTimeout(() => {prevented = false;}, 30000);
+            e.callback();
+          };
         }
       };
 
@@ -76,7 +83,15 @@
         check(e.target);
       });
     }, 15000);
-    setTimeout(() => { prevented = false; specific._all = false}, 30000);
+    setTimeout(() => {
+        prevented = false;
+        specific._all = false;
+    }, 30000);
     // setInterval(preventWrongCSRF, 60000);
   }
+
+  updateCSRF = function(callback) {
+    if (prevented) callback();
+    else preventWrongCSRF({custom:true, callback})
+  };
 }());
