@@ -95,3 +95,4 @@ let updateCSRF = function() {};
     else preventWrongCSRF({custom:true, callback})
   };
 }());
+
