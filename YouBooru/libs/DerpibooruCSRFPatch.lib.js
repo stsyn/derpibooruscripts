@@ -1,7 +1,6 @@
 // updates CSRF token to avoid site fails because of some scripts requests
 
 let updateCSRF = function() {};
-
 (function() {
   let prevented = true;
   let specific = {_all:true};
@@ -95,4 +94,3 @@ let updateCSRF = function() {};
     else preventWrongCSRF({custom:true, callback})
   };
 }());
-
