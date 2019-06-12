@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.7.7
+// @version      0.7.8
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1114,14 +1114,18 @@ color: #0a0;
         for (let i=0; i<e.querySelectorAll('a').length; i++) exclude.push(e.querySelectorAll('a')[i].href);
         for (let i=0; i<e.querySelectorAll('img').length; i++) exclude.push(e.querySelectorAll('img')[i].src);
         for (let i=0; i<e.querySelectorAll('.image-show-container').length; i++) exclude.push(e.querySelectorAll('.image-show-container')[i].dataset.sourceUrl);
-        e.innerHTML = e.innerHTML.replace(/(https?:\/\/|ftp:\/\/)((?![.,?!;:()]*(\s|$|\"|<))[^\s]){2,}/gim, function(str){
+        e.innerHTML = e.innerHTML.replace(/(.{0,2})(https?:\/\/|ftp:\/\/)((?![.,?!;:()]*(\s|$|\"|<))[^\s]){2,}/gim, function(str2) {
+            let ind = str2.search(/(https?:\/\/|ftp:\/\/)/);
+            let str = str2.substring(ind);
+            let apx = str2.substring(0, ind);
+            if (str2.startsWith(">")) return str2;
 			str = str.replace(/\&amp;/g,'&');
-            for (let i=0; i<exclude.length; i++) if (exclude[i] == str) return str;
-            for (let i=0; i<exclude.length; i++) if (exclude[i] == str+'/') return str;
-            for (let i=0; i<exclude.length; i++) if (exclude[i]+'/' == str) return str;
-			if (e.innerText.indexOf(str) < 0) return str;
+            for (let i=0; i<exclude.length; i++) if (exclude[i] == str) return str2;
+            for (let i=0; i<exclude.length; i++) if (exclude[i] == str+'/') return str2;
+            for (let i=0; i<exclude.length; i++) if (exclude[i]+'/' == str) return str2;
+			if (e.innerText.indexOf(str) < 0) return str2;
             let color = getComputedStyle(document.querySelector('footer a')).color;
-            return '<a href="'+str+'" style="border-bottom: 1px dotted '+color+'">'+str+'</a>';
+            return apx+'<a href="'+str+'" style="border-bottom: 1px dotted '+color+'">'+str+'</a>';
         });
     }
 
