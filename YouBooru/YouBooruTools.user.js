@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.7.6
+// @version      0.7.7
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -813,7 +813,8 @@ color: #0a0;
 			else {
 				xx.src = JSON.parse(x.getAttribute('data-uris')).thumb.replace('.webm','.gif');
 			}
-			elem.innerHTML = elem.innerHTML; //CBEPXPA3YM.JPEG
+            let clone = x.cloneNode(true);
+            x.parentNode.replaceChild(clone, x);
 		};
 		let work2 = function (elem) {
 			let ux = elem.querySelector('.block--warning');
@@ -2084,7 +2085,8 @@ color: #0a0;
 			let previewTab = document.querySelector('.ydb_scratchpad .communication__body__text');
 			let body = document.getElementById('_ydb_scratchpad').value;
 			let path = '/posts/preview';
-			fetchJson('POST', path, { body, anonymous:false })
+
+            fetchJson('POST', path, { body, anonymous:false})
 			.then(function (response) {
 				const errorMessage = '<div>Preview failed to load!</div>';
 				if (!response.ok)
@@ -2121,10 +2123,12 @@ color: #0a0;
 								}
 							}
 							userbase_local.scratchpad[id] = document.getElementById('_ydb_scratchpad').value;
-							UACLwrite();
-							getPreview();
-							e.target.classList.add('button--state-success');
-							setTimeout(function() {e.target.classList.remove('button--state-success');}, 200);
+							updateCSRF(() => {
+                                UACLwrite();
+                                getPreview();
+                                e.target.classList.add('button--state-success');
+                                setTimeout(function() {e.target.classList.remove('button--state-success');}, 200);
+                            });
 						}}]},[])
 					])
 				])
