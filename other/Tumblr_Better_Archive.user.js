@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         It's much better, than Tumblr's archive!
-// @version      0.2
+// @version      0.3
 // @description  try to take over the world!
 // @author       stsyn
 // @match        https://*.tumblr.com/archive2
@@ -8,6 +8,7 @@
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/other/Tumblr_Better_Archive.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/other/Tumblr_Better_Archive.user.js
 // @grant        GM_addStyle
+// @grant        unsafeWindow
 // ==/UserScript==
 
 
@@ -16,16 +17,8 @@
 Currently the only thing which reveals hidden posts for now.
 
 How to:
-1. You need to retrieve your Bearer auth token (instruction for Chrome, should work with any other browser):
-1.1. Go, for examle, here https://stasyan.ga/archive
-1.2. Hit F12, open "Network" tab
-1.3. Scroll down archive page, until you notice long url, which starts with "posts?fields%5Bblogs%5D=avatar%2Cname%2Ctitle%2Curl...".
-There should be at least two near, click on the second one
-1.4. Find "Request header" section and expand it
-1.5. Find "Autorization: Bearer" line, and copy the code. DO NOT SHARE THE CODE ANYWHERE!
-2. Open /archive2 page of the desired blog.
-3. Paste Bearer auth token in the input.
-4. You may use limitless archive now :)
+1. Open /archive2 page of the desired blog.
+2. Profit.
 
 *************************/
 
@@ -60,7 +53,7 @@ There should be at least two near, click on the second one
 
         let render = (line, preview2) => {
             if (line.type == 'text') {
-                let newText = line.text;
+                let newText = line.text.replace('\n', '<br>');
                 if (line.formatting) {
                     line.formatting.forEach(f => {
                         let inner = line.text.substring(f.start, f.end);
@@ -72,6 +65,9 @@ There should be at least two near, click on the second one
                         }
                         else if (f.type=='bold') {
                             newText = newText.replace(inner, '<strong>'+inner+'</strong>');
+                        }
+                        else if (f.type=='italic') {
+                            newText = newText.replace(inner, '<em>'+inner+'</em>');
                         }
                     });
                 }
@@ -212,6 +208,9 @@ There should be at least two near, click on the second one
             mainRender();
             return false;
         });
+
+        document.getElementById('BKey').value = unsafeWindow.___INITIAL_STATE___.apiFetchStore.API_TOKEN;
+        document.getElementById('BConfirm').click();
     }
 
     setTimeout(preRender, 1000);
