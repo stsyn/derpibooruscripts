@@ -19,7 +19,7 @@ How to:
 1. You need to retrieve your Bearer auth token (instruction for Chrome, should work with any other browser):
 1.1. Go, for examle, here https://stasyan.ga/archive
 1.2. Hit F12, open "Network" tab
-1.3. Scroll down archive page, until you notice long url, which starts with "osts?fields%5Bblogs%5D=avatar%2Cname%2Ctitle%2Curl...".
+1.3. Scroll down archive page, until you notice long url, which starts with "posts?fields%5Bblogs%5D=avatar%2Cname%2Ctitle%2Curl...".
 There should be at least two near, click on the second one
 1.4. Find "Request header" section and expand it
 1.5. Find "Autorization: Bearer" line, and copy the code. DO NOT SHARE THE CODE ANYWHERE!
