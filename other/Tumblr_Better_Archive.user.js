@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         It's much better, than Tumblr's archive!
-// @version      0.3
+// @version      0.4
 // @description  try to take over the world!
 // @author       stsyn
-// @match        https://*.tumblr.com/archive2
+// @match        https://*/archive2
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/other/Tumblr_Better_Archive.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/other/Tumblr_Better_Archive.user.js
@@ -28,8 +28,8 @@ How to:
     'use strict';
     let root, container, header, prefs = {}, data, preview;
     let linkSchema = 'https://api.tumblr.com/v2/blog/%BLOGNAME%/posts?fields%5Bblogs%5D=avatar%2Cname%2Ctitle%2Curl%2Cupdated%2Cfirst_post_timestamp%2Cposts%2Cdescription';
-    let style = `._3Lynt{width:60%; float:left;} .J9VCO {width:100%; height:50px} #preview {width:36%; right:1%; top:60px; position:fixed; overflow-y:auto; height:90vh; align-items:left}
-    #preview .re{border-left:3px solid #999; width:95%; padding-left:2%} #preview img {max-width:99%} .post.selected{background-color:#9d9}`;
+    let style = `._3Lynt{width:60%; float:left;} .J9VCO {width:100%; height:50px} #preview {width:36%; right:1%; top:60px; position:fixed; overflow-y:auto; height:90vh; align-items:normal}
+    #preview .re{border-left:3px solid #999; width:95%; padding-left:2%} #preview img {max-width:99%} #preview video {width:99%} .post.selected{background-color:#9d9}`;
 
     function prepareURL(data) {
         let url = linkSchema.replace('%BLOGNAME%', prefs.blogName);
@@ -74,10 +74,22 @@ How to:
                 preview2.appendChild(InfernoAddElem('div', {className:line.subtype=='heading1'?'_3LoFw':'', innerHTML:newText}, []));
             }
             else if (line.type == 'image') {
-
                 preview2.appendChild(InfernoAddElem('a', {href:line.slimMedia.mediaUrlTemplate.replace('{id}', '1280')}, [
                     InfernoAddElem('img', {src:line.slimMedia.mediaUrlTemplate.replace('{id}', '540')}, [])
                 ]));
+            }
+            else if (line.type == 'video') {
+                preview2.appendChild(InfernoAddElem('video', {poster:line.poster[0].url, controls:''}, [
+                    InfernoAddElem('source', {src:line.media.url, type:line.media.type}, [])
+                ]));
+                preview2.appendChild(InfernoAddElem('a', {href:line.media.url, target:'_blank', innerHTML:'[Direct link]'}, []));
+            }
+            else if (line.type == 'audio') {
+                let lnk = 'https://a.tumblr.com/'+line.media.url.split('/').pop().split('?')[0]+'o1.mp3';
+                preview2.appendChild(InfernoAddElem('audio', {controls:''}, [
+                    InfernoAddElem('source', {src:lnk, type:'audio/mpeg'}, [])
+                ]));
+                preview2.appendChild(InfernoAddElem('a', {href:line.media.url, target:'_blank', innerHTML:'[Direct link]'}, []));
             }
         };
         console.log(post);
@@ -93,7 +105,7 @@ How to:
 
     function mainRender() {
         let render = (data => {
-            document.getElementById('Oindex').value = parseInt(prefs.offset/10+1);
+            document.getElementById('Oindex').value = parseInt(prefs.offset/20+1);
             container.innerHTML = '';
             data.response.posts.forEach((post, index) => {
                 let from = (post.trail[0]? post.trail[0].blog.name : '');
@@ -119,7 +131,7 @@ How to:
         });
 
         let req = () => {
-            fetch(prepareURL({offset:prefs.offset, page:parseInt(prefs.offset/10)}), {
+            fetch(prepareURL({offset:prefs.offset, page:parseInt(prefs.offset/20)}), {
                 method:'GET',
                 headers: {
                     Accept:'application/json;format=camelcase',
@@ -203,7 +215,7 @@ How to:
             if (!prefs.blogName) return;
             e.preventDefault();
 
-            prefs.offset = (parseInt(document.getElementById('Oindex').value)-1)*10;
+            prefs.offset = (parseInt(document.getElementById('Oindex').value)-1)*20;
 
             mainRender();
             return false;
