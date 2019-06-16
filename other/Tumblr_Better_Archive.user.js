@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         It's much better, than Tumblr's archive!
-// @version      0.1
+// @version      0.2
 // @description  try to take over the world!
 // @author       stsyn
 // @match        https://*.tumblr.com/archive2
@@ -54,7 +54,7 @@ There should be at least two near, click on the second one
         let renderHead = (data, preview2) => {
             preview2.appendChild(InfernoAddElem('div', {className:'_3LoFw'}, [
                 InfernoAddElem('img', {src:data.blog.avatar.mediaUrlTemplates[0].url.replace('{id}', '30')}, []),
-                InfernoAddElem('span', {innerHTML:data.blog.title+' ('+data.blog.name+')'}, [])
+                InfernoAddElem('a', {href:data.blog.url, target:'_blank', innerHTML:data.blog.title+' ('+data.blog.name+')'}, [])
             ]))
         };
 
@@ -63,10 +63,15 @@ There should be at least two near, click on the second one
                 let newText = line.text;
                 if (line.formatting) {
                     line.formatting.forEach(f => {
+                        let inner = line.text.substring(f.start, f.end);
                         if (f.type=='link') {
-                            let inner = line.text.substring(f.start, f.end);
-                            console.log(inner);
-                            newText = newText.replace(inner, '<a href="'+f.link+'" target="_blank">'+inner+'</a>');
+                            newText = newText.replace(inner, '<a href="'+f.url+'" target="_blank">'+inner+'</a>');
+                        }
+                        else if (f.type=='mention') {
+                            newText = newText.replace(inner, '<a href="'+f.blog.url+'" target="_blank">'+inner+'</a>');
+                        }
+                        else if (f.type=='bold') {
+                            newText = newText.replace(inner, '<strong>'+inner+'</strong>');
                         }
                     });
                 }
@@ -92,17 +97,25 @@ There should be at least two near, click on the second one
 
     function mainRender() {
         let render = (data => {
+            document.getElementById('Oindex').value = parseInt(prefs.offset/10+1);
             container.innerHTML = '';
             data.response.posts.forEach((post, index) => {
+                let from = (post.trail[0]? post.trail[0].blog.name : '');
+                let orig = (post.trail[0]? post.trail[0].blog.url+post.trail[0].post.id : '');
                 container.appendChild(
                     InfernoAddElem('div', {className:'J9VCO post', dataset:{index}}, [
                         InfernoAddElem('div', {className:'SOOWB'}, [
                             InfernoAddElem('strong', {innerHTML:post.isNsfw?'[NSFW] ':''}, []),
+                            InfernoAddElem('span', {innerHTML:' '}, []),
+                            InfernoAddElem('a', {href:post.postUrl, target:'_blank',innerHTML:'[Link]'}, []),
+                            InfernoAddElem('span', {innerHTML:' '}, []),
+                            InfernoAddElem('a', {href:orig, target:'_blank',innerHTML:from}, []),
+                            InfernoAddElem('span', {innerHTML:' '}, []),
                             InfernoAddElem('strong', {innerHTML:post.id}, []),
                             InfernoAddElem('span', {innerHTML:', '}, []),
                             InfernoAddElem('strong', {innerHTML:post.date}, []),
                             InfernoAddElem('span', {innerHTML:', '+post.summary}, []),
-                            InfernoAddElem('a', {style:'float:right',innerHTML:'[Reblog]', href:'https://www.tumblr.com/reblog/'+post.id+'/'+post.reblogKey}, [])
+                            InfernoAddElem('a', {style:'float:right',innerHTML:'[Reblog]', target:'_blank', href:'https://www.tumblr.com/reblog/'+post.id+'/'+post.reblogKey}, [])
                         ])
                     ])
                 )
@@ -138,9 +151,10 @@ There should be at least two near, click on the second one
                     InfernoAddElem('div', {className:'_7g80D'}, [
                         InfernoAddElem('header', {className:'_3Is8U _7g80D _2-JOb'}, [
                             InfernoAddElem('a', {innerHTML:'This is not a Tumblr archive. This is better.', href:'/archive2', className:'_3cK_B _3s2qw _1kUcg'}, []),
-                            header = InfernoAddElem('span', {className:'_3cK_B _3s2qw _1kUcg'}, [
+                            header = InfernoAddElem('form', {className:'_3cK_B _3s2qw _1kUcg'}, [
                                 InfernoAddElem('span', {innerHTML:'< prev', className:'_3cK_B _3s2qw _1kUcg prev'}, []),
-                                InfernoAddElem('span', {innerHTML:'&nbsp;', className:'_3cK_B _3s2qw _1kUcg prev'}, []),
+                                InfernoAddElem('input', {id:'Oindex', style:'width:4em'}, []),
+                                InfernoAddElem('input', {type:'submit',id:'Osend', value:'Go', className:'_3cK_B _3s2qw _1kUcg'}, []),
                                 InfernoAddElem('span', {innerHTML:'next >', className:'_3cK_B _3s2qw _1kUcg next'}, [])
                             ])
                         ])
@@ -187,7 +201,17 @@ There should be at least two near, click on the second one
 
             mainRender();
             return false;
-        })
+        });
+
+        document.getElementById('Osend').addEventListener('click', e => {
+            if (!prefs.blogName) return;
+            e.preventDefault();
+
+            prefs.offset = (parseInt(document.getElementById('Oindex').value)-1)*10;
+
+            mainRender();
+            return false;
+        });
     }
 
     setTimeout(preRender, 1000);
