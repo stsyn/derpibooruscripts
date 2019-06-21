@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.7.8
+// @version      0.7.9
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -2437,6 +2437,9 @@ color: #0a0;
 				userbase.pending.splice(i, 1);
 				break;
 			}
+            UAwrite();
+            UACLwrite();
+            location.reload();
 		};
 
 		let fetchAvatara = function(user, target) {
