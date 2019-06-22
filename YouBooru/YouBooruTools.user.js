@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.7.9
+// @version      0.7.10
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -2816,7 +2816,7 @@ color: #0a0;
 	try {shrinkComms(document);} catch(e) {error("shrinkComms", e)};
 	try {hiddenImg(document, true);} catch(e) {error("hiddenImg", e)};
 	try {getArtists();} catch(e) {error("getArtists", e)};
-	try {resizeEverything(true);} catch(e) {error("resizeEverything", e)};
+	try {setTimeout(() => {resizeEverything(true);}, 100)} catch(e) {error("resizeEverything", e)};
 	try {addGalleryOption();} catch(e) {error("addGalleryOption", e)};
 	try {contacts();} catch(e) {error("contacts", e)};
 	try {fixDupes();} catch(e) {error('fixDupes', e)};
