@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.7.10
+// @version      0.7.11
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -211,12 +211,6 @@ color: #0a0;
         GM_addStyle(style);
         if (unsafeWindow._YDB_public == undefined) unsafeWindow._YDB_public = {};
         if (unsafeWindow._YDB_public.settings == undefined) unsafeWindow._YDB_public.settings = {};
-		unsafeWindow._YDB_public.settings.toolsUB = {
-            name:'Tools (Userbase)',
-            container:'_ydb_toolsUBLocal',
-            version:sversion,
-			hidden:true
-		};
 		unsafeWindow._YDB_public.settings.tools = {
             name:'Tools',
             container:'_ydb_tools',
@@ -337,6 +331,12 @@ color: #0a0;
                 }
             }
         };
+		unsafeWindow._YDB_public.settings.toolsUB = {
+            name:'Tools (Userbase debug page)',
+            container:'_ydb_toolsUBLocal',
+            version:sversion,
+			link:'/pages/yourbooru?usersDebug'
+		};
         if (unsafeWindow._YDB_public.funcs == undefined) unsafeWindow._YDB_public.funcs = {};
         unsafeWindow._YDB_public.funcs.tagAliases = tagAliases;
         unsafeWindow._YDB_public.funcs.tagComplexParser = goodParse;
@@ -2373,14 +2373,14 @@ color: #0a0;
 
 	// contacts module
 	function contacts() {
-		if (document.querySelector('.js-burger-links a.header__link[href*="messages"]') == undefined) return;
-		let cc = document.querySelector('.js-burger-links a.header__link[href*="messages"]');
+		if (document.querySelector('.js-burger-links a.header__link[href*="conversations"]') == undefined) return;
+		let cc = document.querySelector('.js-burger-links a.header__link[href*="conversations"]');
 		cc.querySelector('i').classList.add('fa-address-book');
 		cc.querySelector('i').classList.remove('fa-envelope');
 		cc.lastChild.data = ' Contacts';
 		cc.href='/pages/yourbooru?contactList';
 
-		if (location.pathname.startsWith('/messages/new')) {
+		if (location.pathname.startsWith('/conversations/new')) {
 			let x = [];
 			for (let i=0; i<userbase_local.friendlist.length; i++) {
 				x.push(InfernoAddElem('span',{className:'button',innerHTML:userbase.users[userbase_local.friendlist[i]].name,events:[{t:'click',f:function() {
@@ -2515,11 +2515,11 @@ color: #0a0;
 						userbase_local.scratchpad[user.id].split('\n')[0].substring(0, 100)
 					},[])
 				]),
-				InfernoAddElem('a',{style:{padding:'0 12px'}, href:'/messages/new?to_id='+user.id},[
+				InfernoAddElem('a',{style:{padding:'0 12px'}, href:'/conversations/new?to_id='+user.id},[
 					InfernoAddElem('i',{className:'fa fa-envelope'},[]),
 					InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Send message'},[])
 				]),
-				InfernoAddElem('a',{style:{padding:'0 12px'}, href:'/messages?with='+user.id},[
+				InfernoAddElem('a',{style:{padding:'0 12px'}, href:'/conversations?with='+user.id},[
 					InfernoAddElem('i',{className:'fa fa-clock'},[]),
 					InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Chat history'},[])
 				]),
