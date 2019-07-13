@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.17
+// @version      0.7.18
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -1103,7 +1103,7 @@ color: #777;
 
         let s = '';
         if (document.getElementsByClassName('js-notification-ticker')[0] != undefined && parseInt(document.getElementsByClassName('js-notification-ticker')[0].innerHTML) > 0) s += ' '+parseInt(document.getElementsByClassName('js-notification-ticker')[0].dataset.notificationCount);
-        if (parseInt(document.querySelector('a[href*="/messages"] .fa-embedded__text').innerHTML) > 0) s += (s.length>0?'+':' ')+'M'+parseInt(document.querySelector('a[href*="/messages"] .fa-embedded__text').innerHTML);
+        if (parseInt(document.querySelector('a[href*="/conversations"] .fa-embedded__text').innerHTML) > 0) s += (s.length>0?'+':' ')+'M'+parseInt(document.querySelector('a[href*="/conversations"] .fa-embedded__text').innerHTML);
 
         if (s.length>0) {
             objects.mainButtonNotify.innerHTML = s;
