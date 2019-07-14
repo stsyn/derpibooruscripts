@@ -26,7 +26,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruCSRFPatch.lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.20
+// @version      0.9.21
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        unsafeWindow
@@ -394,7 +394,7 @@
 		let get = function() {
 			let req = new XMLHttpRequest();
 			req.onreadystatechange = readyHandler(req);
-			req.open('GET', '/settings');
+			req.open('GET', '/settings/edit');
 			req.send();
 		};
 		if (!settings.downsync && !force && !external) return;
@@ -490,6 +490,7 @@
             s.querySelector('#serve_webm').checked = localStorage.serve_webm;
             s.querySelector('#webm').checked = localStorage.webm;
             s.querySelector('#hide_uploader').checked = localStorage.hide_uploader;
+            s.querySelector('#chan_nsfw').checked = localStorage.chan_nsfw;
             setTimeout(() => {s.parentNode.removeChild(s);}, 15000);
 			process();
 		};
@@ -1078,12 +1079,12 @@
 	};
 
 	GM_addStyle(windows);
-	if (settings.timestamp+(settings.syncInterval*60) < parseInt(Date.now()/1000) && location.pathname != "/settings") {
+	if (settings.timestamp+(settings.syncInterval*60) < parseInt(Date.now()/1000) && location.pathname != "/settings/edit") {
 		settings.nonce = parseInt(Math.random()*Number.MAX_SAFE_INTEGER);
 		try { telemetry();} catch(e) {}
 		getData();
 	}
-	if (location.pathname == "/settings") setTimeout(settingPage, 50);
+	if (location.pathname == "/settings/edit") setTimeout(settingPage, 50);
 	else setTimeout(listModules, 50);
 	if (location.pathname == "/pages/yourbooru") yourbooruPage();
 	register();
