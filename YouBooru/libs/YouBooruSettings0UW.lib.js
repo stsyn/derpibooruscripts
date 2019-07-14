@@ -1,8 +1,9 @@
 // ==UserScriptLib==
 // @name         YourBooru:Settings
-// @version      0.9.18L
+// @version      0.9.21L
 // @description  Global library script for YourBooru script family
-// @grant	 unsafeWindow
+// @grant	     unsafeWindow
+// @grant        GM_addStyle
 // @author       stsyn
 // ==/UserScriptLib==
 
@@ -14,16 +15,20 @@
 if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(192&o))return e;a[s]=(15&r)<<12|(63&t)<<6|63&o}else{if(!r)return e;a[s]=r}16383==s&&(_.push(String.fromCharCode.apply(String,a)),s=-1)}return s>0&&(a.length=s,_.push(String.fromCharCode.apply(String,a))),_.join("")}function Lt(e){var r,t,o,n=[],s=0,i=e.length;if("object"==typeof e)return e;for(R(e,0,i,n,0),o=0;i>o;++o)r=n[o],r>=1&&127>=r?++s:s+=!r||r>=128&&2047>=r?2:3;for(t=[],s=0,o=0;i>o;++o)r=n[o],r>=1&&127>=r?t[s++]=r<<24>>24:!r||r>=128&&2047>=r?(t[s++]=(192|r>>6&31)<<24>>24,t[s++]=(128|63&r)<<24>>24):(t[s++]=(224|r>>12&15)<<24>>24,t[s++]=(128|r>>6&63)<<24>>24,t[s++]=(128|63&r)<<24>>24);return t}function yt(e){return e[1]+e[0]}function Ct(e,t,o,n){function s(){try{for(var e,r=(new Date).getTime();rr(a.c.yb);)if(i=yt(a.c.yb.Pb)/yt(a.c.Tb),(new Date).getTime()-r>200)return n(i),Nt(s,0),0;n(1),e=S(a.c.Nb),Nt(o.bind(null,e),0)}catch(t){o(null,t)}}var i,_,a={},c=void 0===o&&void 0===n;if("function"!=typeof o&&(_=o,o=n=0),n=n||function(e){return void 0!==_?r(e,_):void 0},o=o||function(e,r){return void 0!==_?postMessage({action:Ft,cbn:_,result:e,error:r}):void 0},c){for(a.c=w({},Lt(e),Vt(t));rr(a.c.yb););return S(a.c.Nb)}try{a.c=w({},Lt(e),Vt(t)),n(0)}catch(u){return o(null,u)}Nt(s,0)}function zt(e,t,o){function n(){try{for(var e,r=0,i=(new Date).getTime();rr(c.d.yb);)if(++r%1e3==0&&(new Date).getTime()-i>200)return _&&(s=yt(c.d.yb.Z.g)/a,o(s)),Nt(n,0),0;o(1),e=Et(S(c.d.Nb)),Nt(t.bind(null,e),0)}catch(u){t(null,u)}}var s,i,_,a,c={},u=void 0===t&&void 0===o;if("function"!=typeof t&&(i=t,t=o=0),o=o||function(e){return void 0!==i?r(_?e:-1,i):void 0},t=t||function(e,r){return void 0!==i?postMessage({action:It,cbn:i,result:e,error:r}):void 0},u){for(c.d=L({},e);rr(c.d.yb););return Et(S(c.d.Nb))}try{c.d=L({},e),a=yt(c.d.Tb),_=a>-1,o(0)}catch(f){return t(null,f)}Nt(n,0)}var Ft=1,It=2,xt=3,Nt="function"==typeof setImmediate?setImmediate:setTimeout,Ot=4294967296,At=[4294967295,-Ot],Ht=[0,-0x8000000000000000],Gt=[0,0],Wt=[1,0],Tt=function(){var e,r,t,o=[];for(e=0;256>e;++e){for(t=e,r=0;8>r;++r)0!=(1&t)?t=t>>>1^-306674912:t>>>=1;o[e]=t}return o}(),Zt=function(){var e,r,t,o=2,n=[0,1];for(t=2;22>t;++t)for(r=1<<(t>>1)-1,e=0;r>e;++e,++o)n[o]=t<<24>>24;return n}(),Yt=function(){var e,r,t,o,n=[];for(r=8;r>=0;--r)for(o=1<<9-r-1,e=1<<9-r,t=o;e>t;++t)n[t]=(r<<6)+(e-t<<6>>>9-r-1);return n}(),Vt=function(){var e=[{s:16,f:64,m:0},{s:20,f:64,m:0},{s:19,f:64,m:1},{s:20,f:64,m:1},{s:21,f:128,m:1},{s:22,f:128,m:1},{s:23,f:128,m:1},{s:24,f:255,m:1},{s:25,f:255,m:1}];return function(r){return e[r-1]||e[6]}}();return"undefined"==typeof onmessage||"undefined"!=typeof window&&void 0!==unsafeWindow.document||!function(){onmessage=function(r){r&&r.gc&&(r.gc.action==It?e.decompress(r.gc.gc,r.gc.cbn):r.gc.action==Ft&&e.compress(r.gc.gc,r.gc.Rc,r.gc.cbn))}}(),{compress:Ct,decompress:zt}}();this.LZMA=this.LZMA_WORKER=e;
 
     //https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
-    function addElem(e,l,n){var t=InfernoAddElem(e,l,[]);return n.appendChild(t),t}function ChildsAddElem(e,l,n,t){var d=InfernoAddElem(e,l,t);return n.appendChild(d),d}function InfernoAddElem(e,l,n){var t;if(null!=l&&null!=l.id&&null!=document.getElementById(l.id))if(0==document.querySelectorAll(e+"#"+l.id).length)(t=document.getElementById(l.id)).parentNode.removeChild(t),t=document.createElement(e);else for(t=document.getElementById(l.id);t.firstChild;)t.removeChild(t.firstChild);else t=document.createElement(e);for(var d in l)"events"==d||"dataset"==d||"innerHTML"==d||"checked"==d||"value"==d||"selected"==d||"className"==d||"style"==d&&"object"==typeof l.style||t.setAttribute(d,l[d]);if(null!=l.dataset)for(var d in l.dataset)t.dataset[d]=l.dataset[d];if(null!=l.className&&(t.className=l.className),null!=l.innerHTML&&(t.innerHTML=l.innerHTML),null!=l.value&&(t.value=l.value),null!=l.checked&&(t.checked=l.checked),null!=l.selected&&(t.selected=l.selected),null!=l.events&&l.events.forEach(function(e,l,n){t.addEventListener(e.t,e.f)}),"object"==typeof l.style)for(var d in l.style)t.style[d]=l.style[d];return null!=n&&null!=n.length&&n.forEach(function(e,l,n){t.appendChild(e)}),t}
+    function addElem(e,l,n){return n.appendChild(InfernoAddElem(e,l,[]))}function ChildsAddElem(e,l,n,t){return n.appendChild(InfernoAddElem(e,l,t))}function InfernoAddElem(e,l,n){var t;if(null!=l&&null!=l.id&&null!=document.getElementById(l.id))if(0==document.querySelectorAll(e+"#"+l.id).length)(t=document.getElementById(l.id)).parentNode.removeChild(t),t=document.createElement(e);else for(t=document.getElementById(l.id);t.firstChild;)t.removeChild(t.firstChild);else t=document.createElement(e);for(let d in l)"events"==d||"dataset"==d||"innerHTML"==d||"checked"==d||"value"==d||"selected"==d||"className"==d||"style"==d&&"object"==typeof l.style||t.setAttribute(d,l[d]);if(null!=l.dataset)for(let d in l.dataset)t.dataset[d]=l.dataset[d];if(null!=l.className&&(t.className=l.className),null!=l.innerHTML&&(t.innerHTML=l.innerHTML),null!=l.value&&(t.value=l.value),null!=l.checked&&(t.checked=l.checked),null!=l.selected&&(t.selected=l.selected),null!=l.events&&l.events.forEach(function(e,l,n){t.addEventListener(e.t,e.f)}),"object"==typeof l.style)for(let d in l.style)t.style[d]=l.style[d];return null!=n&&null!=n.length&&n.forEach(function(e,l,n){t.appendChild(e)}),t}
 
 	let main = function() {
 	let scriptId = 'settings';
-	let internalVersion = '0.9.18LUW';
+	let internalVersion = '0.9.21LUW';
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
 	try {if (unsafeWindow._YDB_public.settings[scriptId] != undefined) return;}
 	catch(e){}
+	if (!aE) {
+        try {if (typeof GM_addStyle == 'undefined') return;}
+        catch(e){}
+    }
 	if (aE) {if (!unsafeWindow._YDB_public.allowedToRun[scriptId]) return;}
 	let version = aE?unsafeWindow._YDB_public.version:GM_info.script.version;
 
@@ -49,6 +54,8 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
         if (settings.downsync == undefined) settings.downsync = settings.downsynch;
 		if (settings.sync == undefined) settings.sync = true;
 		if (settings.downsync == undefined) settings.downsync = settings.sync;
+		if (settings.syncInterval == undefined) settings.syncInterval = 360;
+		if (settings.silentSync == undefined) settings.silentSync = false;
 		if (settings.debugLength == undefined) settings.debugLength = 100;
 		if (settings.debugLevel == undefined) settings.debugLevel = 1;
 		if (settings.nonce == undefined || isNaN(settings.nonce)) settings.nonce = parseInt(Math.random()*Number.MAX_SAFE_INTEGER);
@@ -105,6 +112,10 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 				{type:'checkbox', name:'Allow setting uploading', parameter:'sync'},
 				{type:'breakline'},
 				{type:'checkbox', name:'Allow setting downloading', parameter:'downsync'},
+				{type:'breakline'},
+				{type:'input', name:'Syncronization interval (in minutes)', parameter:'syncInterval', validation:{type:'int',min:5,max:10080, default:360}},
+				{type:'breakline'},
+				{type:'checkbox', name:'Silent syncronization', parameter:'silentSync'},
 				{type:'breakline'},
 				{type:'breakline'},
 				{type:'text', name:'If you do not wish to backup anymore, simply remove ydb-related strings from your "Watched tags string".', styleS:{fontStyle:'italic'}},
@@ -188,7 +199,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 						renderer(e, ss, x, s[k], mod);
 						if (nav && k==0) {
 							addElem('span', {
-								style:'margin-left:.5em; float:right',
+								style:{marginLeft:'.5em', float:'right'},
 								className:'button',
 								innerHTML:'<i class="fa fa-arrow-up"></i>',
 								events:[{
@@ -207,7 +218,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 							addElem('span', {
 								className:'button commission__category',
 								innerHTML:'Delete',
-								style:'margin-left:0.5em',
+								style:{marginLeft:'0.5em'},
 								events:[{
 									t:'click',
 									f:function(ex) {
@@ -218,7 +229,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 
 							if (nav) {
 								addElem('span', {
-									style:'margin-left:.5em; float:right',
+									style:{marginLeft:'.5em', float:'right'},
 									className:'button',
 									innerHTML:'<i class="fa fa-arrow-down"></i>',
 									events:[{
@@ -298,7 +309,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 
 	function getData(force, external) {
 		let win;
-		let t = addElem('div',{id:'_ydb_dataArrive', style:'display:none'}, document.getElementById('content'));
+		let t = addElem('div',{id:'_ydb_dataArrive', style:{display:'none'}}, document.getElementById('content'));
 		let parse = function (request) {
 			try {
 				t.innerHTML = request.responseText;
@@ -320,30 +331,32 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 						}
 						if (settings.timestamp+60 < s.timestamp || force) {
 							for (let y in s.vs) {
-								console.log(y, s.vs[y]);
 								localStorage[y] = s.vs[y];
 							}
 							settings.timestamp = parseInt(Date.now()/1000);
 							write();
-							if (location.pathname != "/pages/yourbooru" && location.search != '?sync') location.reload();
+							if (location.pathname != "/pages/yourbooru" && location.search != '?sync' && !settings.silentSync) location.reload();
 							return;
 						}
 						settings.timestamp = parseInt(Date.now()/1000);
 						write();
-						if (!external) win.parentNode.removeChild(win);
+						debugLogger('YDB:S','Successfuly syncronized', 1);
+						if (!external && !settings.silentSync) win.parentNode.removeChild(win);
 						return;
 					}
 				}
 				errorCode = 2;
 				settings.timestamp = parseInt(Date.now()/1000);
 				write();
-				if (!external) win.parentNode.removeChild(win);
+				debugLogger('YDB:S','Failed to sync settings — nothing to parse. Updating impossible',2);
+				if (!external && !settings.silentSync) win.parentNode.removeChild(win);
 				return;
 			}
 			catch (e) {
 				settings.timestamp = parseInt(Date.now()/1000);
 				write();
-				if (!external) win.parentNode.removeChild(win);
+				debugLogger('YDB:S','Failed to sync settings. Updating impossible',2);
+				if (!external && !settings.silentSync) win.parentNode.removeChild(win);
 			}
 			return;
 		};
@@ -365,11 +378,11 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 		let get = function() {
 			let req = new XMLHttpRequest();
 			req.onreadystatechange = readyHandler(req);
-			req.open('GET', '/settings');
+			req.open('GET', '/settings/edit');
 			req.send();
 		};
 		if (!settings.downsync && !force && !external) return;
-		if (!external) win = callWindow([InfernoAddElem('h1',{innerHTML:'Fetching last settings, please wait a bit...'},[])]);
+		if (!external && !settings.silentSync) win = callWindow([InfernoAddElem('h1',{innerHTML:'Fetching last settings, please wait a bit...'},[])]);
 		get();
 	}
 
@@ -461,6 +474,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
             s.querySelector('#serve_webm').checked = localStorage.serve_webm;
             s.querySelector('#webm').checked = localStorage.webm;
             s.querySelector('#hide_uploader').checked = localStorage.hide_uploader;
+            s.querySelector('#chan_nsfw').checked = localStorage.chan_nsfw;
             setTimeout(() => {s.parentNode.removeChild(s);}, 15000);
 			process();
 		};
@@ -593,7 +607,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 			}
 
 			if (errorlevel>0) {
-				let x = addElem('div',{className:'flash flash--warning', style:'font-weight:500', innerHTML:errorlevel+' error(s) are preventing the settings from saving:'}, ec);
+				let x = addElem('div',{className:'flash flash--warning', style:{fontWeight:500}, innerHTML:errorlevel+' error(s) are preventing the settings from saving:'}, ec);
 				ec.insertBefore(x,ec.childNodes[0]);
 			}
 		}
@@ -602,7 +616,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 			let mx = modules[e.dataset.parent];
 			errorlevel += (validateChilds(e, mx.options, mx));
 			if (errorlevel>0 && virgin) {
-				let x = addElem('div',{className:'flash flash--warning', style:'font-weight:500', innerHTML:errorlevel+' error(s) are preventing the settings from saving:'}, ec);
+				let x = addElem('div',{className:'flash flash--warning', style:{fontWeight:500}, innerHTML:errorlevel+' error(s) are preventing the settings from saving:'}, ec);
 				ec.insertBefore(x,ec.childNodes[0]);
 			}
 		}
@@ -725,7 +739,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 			catch(e) {console.log('Error rendering '+k+'. '+e);}
 		}
 
-		if (listCont != undefined && !s2.hidden) addElem(s2.link!=undefined?'a':'div', {href:s2.link!=undefined?s2.link:'', style:'display:block', className:'block__content alternating-color', innerHTML:s2.name+' v. '+s2.version}, listCont);
+		if (listCont != undefined && !s2.hidden) addElem(s2.link!=undefined?'a':'div', {href:s2.link!=undefined?s2.link:'', style:{display:'block'}, className:'block__content alternating-color', innerHTML:s2.name+' v. '+s2.version}, listCont);
 	}
 
 	function injectLegacyModule(k, editCont, listCont) {
@@ -738,7 +752,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 			catch(e) {console.log('Error rendering '+k.name+'. '+e);}
 		}
 
-		if (listCont != undefined && !k.hidden) addElem(k.link!=undefined?'a':'div',  {href:k.link!=undefined?k.link:'', style:'display:block', className:'block__content alternating-color', innerHTML:k.name+' v. '+k.version}, listCont);
+		if (listCont != undefined && !k.hidden) addElem(k.link!=undefined?'a':'div',  {href:k.link!=undefined?k.link:'', style:{display:'block'}, className:'block__content alternating-color', innerHTML:k.name+' v. '+k.version}, listCont);
 	}
 
 	function listModules() {
@@ -795,17 +809,17 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 		//localStorage._ydb_watchListFilterString = document.getElementById('user_watched_images_exclude_str').innerHTML;
 		let cont;
 		//preparing
-		document.getElementById('js-setting-table').insertBefore(cont = InfernoAddElem('div',{className:'block__tab hidden',dataset:{tab:'YourBooru'},style:'position:relative'}), document.querySelector('[data-tab="local"]').nextSibling);
+		document.getElementById('js-setting-table').insertBefore(cont = InfernoAddElem('div',{className:'block__tab hidden',dataset:{tab:'YourBooru'},style:{position:'relative'}}), document.querySelector('[data-tab="local"]').nextSibling);
 
 		let style = '._ydb_s_bigtextarea {resize:none;overflow:hidden;line-height:1.25em;white-space:pre;height:2.25em;vertical-align:top;}'+
 			'._ydb_s_bigtextarea:focus {overflow:auto;position:absolute;width:900px !important;height:10em;z-index:5;white-space:pre-wrap}';
-		addElem('style',{type:'text/css',innerHTML:style},document.head);
+		GM_addStyle(style);
 		addElem('a',{href:'#',innerHTML:'YourBooru',dataset:{clickTab:'YourBooru'}},document.getElementsByClassName('block__header')[0]);
 
 		let editCont = addElem('div',{className:'block'},cont);
 		let listCont = addElem('div',{className:'block'},cont);
 		ChildsAddElem('div', {className:'block__header'}, listCont, [
-			InfernoAddElem('span', {innerHTML:'Installed plugins', style:'margin-left:12px'})
+			InfernoAddElem('span', {innerHTML:'Installed plugins', style:{marginLeft:'12px'}})
 		]);
 
 		let el;
@@ -935,7 +949,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 				if (ex[x[i].id] == undefined) {
 					ex[x[i].id] = true;
 					active[x[i].id] = true;
-					ox.push(InfernoAddElem('label',{innerHTML:x[i].id+' ',style:'margin-right:9px'},[
+					ox.push(InfernoAddElem('label',{innerHTML:x[i].id+' ',style:{marginRight:'9px'}},[
 						InfernoAddElem('input',{type:'checkbox', dataset:{id:x[i].id}, checked:true, events:[{t:'change',f:function(e) {active[e.target.dataset.id] = e.target.checked; render();}}]},[])
 					]));
 				}
@@ -959,19 +973,19 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 					]));
 				}
 			}
-			ChildsAddElem('div',{className:'block',style:'width:100%'}, c2, u);
+			ChildsAddElem('div',{className:'block',style:{width:'100%'}}, c2, u);
 		};
 
 		document.querySelector('#content h1').innerHTML = 'Debug Logs';
 		let c = document.querySelector('#content .walloftext');
 		c.innerHTML = '';
-		ChildsAddElem('div',{className:'block',style:'width:100%'}, c, [
-			InfernoAddElem('select',{id:'_ydb_s_level',className:'input header__input', style:'display:inline', events:[{t:'change',f:render}], size:1},[
+		ChildsAddElem('div',{className:'block',style:{width:'100%'}}, c, [
+			InfernoAddElem('select',{id:'_ydb_s_level',className:'input header__input', style:{display:'inline'}, events:[{t:'change',f:render}], size:1},[
 				InfernoAddElem('option',{innerHTML:'Only errors', value:'2'},[]),
 				InfernoAddElem('option',{innerHTML:'Normal', value:'1'},[]),
 				InfernoAddElem('option',{innerHTML:'Verbose', value:'0'},[])
 			]),
-			InfernoAddElem('input',{type:'button', className:'button', style:'margin-left:2em', value:'Redraw', events:[{t:'click',f:render}]},[])
+			InfernoAddElem('input',{type:'button', className:'button', style:{marginLeft:'2em'}, value:'Redraw', events:[{t:'click',f:render}]},[])
 		]);
 
 		let s = '';
@@ -979,9 +993,9 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 		let x = [];
 		let levels = ['.', '?', '!'];
 		let levelsClasses = ['flash--success','flash--site-notice','flash--warning'];
-		
-		let c3 = ChildsAddElem('div',{className:'block',style:'font-family: monospace;white-space: pre;width:100%'}, c, []);
-		let c2 = ChildsAddElem('div',{className:'block',style:'font-family: monospace;white-space: pre;width:100%'}, c, []);
+
+		let c3 = ChildsAddElem('div',{className:'block',style:{fontFamily:'monospace',whiteSpace:'pre',width:'100%'}}, c, []);
+		let c2 = ChildsAddElem('div',{className:'block',style:{fontFamily:'monospace',whiteSpace:'pre',width:'100%'}}, c, []);
 
 		render();
 	}
@@ -1048,13 +1062,13 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 		}
 	};
 
-	addElem('style',{type:'text/css',innerHTML:windows},document.head);
-	if (settings.timestamp+21600 < parseInt(Date.now()/1000) && location.pathname != "/settings") {
+	GM_addStyle(windows);
+	if (settings.timestamp+(settings.syncInterval*60) < parseInt(Date.now()/1000) && location.pathname != "/settings/edit") {
 		settings.nonce = parseInt(Math.random()*Number.MAX_SAFE_INTEGER);
 		try { telemetry();} catch(e) {}
 		getData();
 	}
-	if (location.pathname == "/settings") setTimeout(settingPage, 50);
+	if (location.pathname == "/settings/edit") setTimeout(settingPage, 50);
 	else setTimeout(listModules, 50);
 	if (location.pathname == "/pages/yourbooru") yourbooruPage();
 	register();
