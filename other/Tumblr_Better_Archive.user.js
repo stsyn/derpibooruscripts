@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         It's much better, than Tumblr's archive!
-// @version      0.6
+// @version      0.7
 // @description  try to take over the world!
 // @author       stsyn
 // @match        https://*/archive2
@@ -26,7 +26,7 @@ How to:
 
 (function() {
     'use strict';
-    let root, container, header, prefs = {}, data, preview, search, searchData = {};
+    let root, container, header, prefs = {}, data, preview, search, searchData = {}, indexDB = {};
     let linkSchema = 'https://api.tumblr.com/v2/blog/%BLOGNAME%/posts?fields%5Bblogs%5D=avatar%2Cname%2Ctitle%2Curl%2Cupdated%2Cfirst_post_timestamp%2Cposts%2Cdescription';
     let style = `._3Lynt{width:60%; float:left;} .J9VCO {width:100%; height:50px} #preview {width:36%; right:1%; top:60px; position:fixed; overflow-y:auto; height:90vh; align-items:normal}
     #preview .re{border-left:3px solid #999; width:95%; padding-left:2%} #preview img {max-width:99%} #preview video {width:99%} .post.selected{background-color:#9d9}`;
@@ -108,6 +108,7 @@ How to:
             document.getElementById('Oindex').value = parseInt(prefs.offset/20+1);
             container.innerHTML = '';
             data.response.posts.forEach((post, index) => {
+                indexDB[''+post.id] = post;
                 let from = ((post.trail[0] && post.trail[0].blog)? post.trail[0].blog.name : '');
                 let orig = ((post.trail[0] && post.trail[0].blog)? post.trail[0].blog.url+post.trail[0].post.id : '');
                 container.appendChild(
@@ -214,7 +215,8 @@ How to:
                 InfernoAddElem('div', {className:'_2B7lk'}, [
                     InfernoAddElem('div', {className:'_7g80D'}, [
                         InfernoAddElem('header', {className:'_3Is8U _7g80D _2-JOb'}, [
-                            InfernoAddElem('a', {innerHTML:'This is not a Tumblr archive. This is better.', href:'/archive2', className:'_3cK_B _3s2qw _1kUcg'}, []),
+                            InfernoAddElem('a', {innerHTML:'TBA', href:'/archive2', className:'_3cK_B _3s2qw _1kUcg'}, []),
+                            InfernoAddElem('a', {innerHTML:'(export index)', id:'export', className:'_3cK_B _3s2qw _1kUcg'}, []),
                             search = InfernoAddElem('form', {className:'_3cK_B _3s2qw _1kUcg'}, [
                                 InfernoAddElem('span', {innerHTML:'Find', className:'_3cK_B _3s2qw _1kUcg'}, []),
                                 InfernoAddElem('input', {id:'Svalue', style:'width:10em'}, []),
@@ -312,9 +314,25 @@ How to:
             return false;
         });
 
+        document.getElementById('export').addEventListener('click', e => {
+            let blob = new Blob([JSON.stringify(indexDB)], {type: "application/json"});
+            let url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.download = prefs.blogName+'.json';
+            a.href = url;
+            a.target = "_blank";
+            a.click();
+        });
+
         document.getElementById('BKey').value = unsafeWindow.___INITIAL_STATE___.apiFetchStore.API_TOKEN;
         document.getElementById('BConfirm').click();
     }
 
     setTimeout(preRender, 1000);
+    window.onbeforeunload = function (evt) {
+        let message = "You sure?";
+        if (typeof evt == "undefined") evt = window.event;
+        if (evt) evt.returnValue = message;
+        return message;
+    };
 })();
