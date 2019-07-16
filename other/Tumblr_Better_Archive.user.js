@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         It's much better, than Tumblr's archive!
-// @version      0.4
+// @version      0.6
 // @description  try to take over the world!
 // @author       stsyn
 // @match        https://*/archive2
@@ -26,7 +26,7 @@ How to:
 
 (function() {
     'use strict';
-    let root, container, header, prefs = {}, data, preview;
+    let root, container, header, prefs = {}, data, preview, search, searchData = {};
     let linkSchema = 'https://api.tumblr.com/v2/blog/%BLOGNAME%/posts?fields%5Bblogs%5D=avatar%2Cname%2Ctitle%2Curl%2Cupdated%2Cfirst_post_timestamp%2Cposts%2Cdescription';
     let style = `._3Lynt{width:60%; float:left;} .J9VCO {width:100%; height:50px} #preview {width:36%; right:1%; top:60px; position:fixed; overflow-y:auto; height:90vh; align-items:normal}
     #preview .re{border-left:3px solid #999; width:95%; padding-left:2%} #preview img {max-width:99%} #preview video {width:99%} .post.selected{background-color:#9d9}`;
@@ -108,8 +108,8 @@ How to:
             document.getElementById('Oindex').value = parseInt(prefs.offset/20+1);
             container.innerHTML = '';
             data.response.posts.forEach((post, index) => {
-                let from = (post.trail[0]? post.trail[0].blog.name : '');
-                let orig = (post.trail[0]? post.trail[0].blog.url+post.trail[0].post.id : '');
+                let from = ((post.trail[0] && post.trail[0].blog)? post.trail[0].blog.name : '');
+                let orig = ((post.trail[0] && post.trail[0].blog)? post.trail[0].blog.url+post.trail[0].post.id : '');
                 container.appendChild(
                     InfernoAddElem('div', {className:'J9VCO post', dataset:{index}}, [
                         InfernoAddElem('div', {className:'SOOWB'}, [
@@ -126,8 +126,64 @@ How to:
                             InfernoAddElem('a', {style:'float:right',innerHTML:'[Reblog]', target:'_blank', href:'https://www.tumblr.com/reblog/'+post.id+'/'+post.reblogKey}, [])
                         ])
                     ])
-                )
+                );
+
+                let found = () => {
+                    container.lastChild.click();
+                    searchData.isGoing = false;
+                    searchData.lastId = post.id;
+                    alert('Found');
+                };
+
+                if (searchData.isGoing && searchData.lastId > post.id) {
+                    if (searchData.type == 'text') {
+                        if (post.summary.indexOf(searchData.value) > -1) found();
+                    }
+                    else if (searchData.type == 'origPostId') {
+                        post.trail.forEach(v => {
+                            if (v.post && v.post.id == searchData.value) found();
+                        });
+                    }
+                    else if (searchData.type == 'origTitle') {
+                        post.trail.forEach(v => {
+                            if (v.blog && v.blog.title.indexOf(searchData.value) > -1) found();
+                        });
+                    }
+                    else if (searchData.type == 'origShortname') {
+                        post.trail.forEach(v => {
+                            if (v.blog && v.blog.name == searchData.value) found();
+                        });
+                    }
+                    else if (search.type == 'imageId') {
+                        post.content.forEach(c => {
+                            if (c.type && c.type == 'image' && c.slimMedia && c.slimMedia.mediaUrlTemplate && c.slimMedia.mediaUrlTemplate.indexOf('_'+search.value) > -1) found();
+                        });
+                        post.trail.forEach(v => {
+                            if (v.content) {
+                                v.content.forEach(c => {
+                                    if (c.type && c.type == 'image' && c.slimMedia && c.slimMedia.mediaUrlTemplate && c.slimMedia.mediaUrlTemplate.indexOf('_'+search.value) > -1) found();
+                                });
+                            }
+                        });
+                    }
+                    else if (search.type == 'blogImageId') {
+                        post.content.forEach(c => {
+                            if (c.type && c.type == 'image' && c.slimMedia && c.slimMedia.mediaUrlTemplate && c.slimMedia.mediaUrlTemplate.indexOf('_'+search.value) > -1) found();
+                        });
+                        post.trail.forEach(v => {
+                            if (v.content) {
+                                v.content.forEach(c => {
+                                    if (c.type && c.type == 'image' && c.slimMedia && c.slimMedia.mediaUrlTemplate &&
+                                        c.slimMedia.mediaUrlTemplate.indexOf(new RegExp(search.value+'(o|)(\\d{1,2}|)_', '')) > -1) found();
+                                });
+                            }
+                        });
+                    }
+                }
             });
+            if (searchData.isGoing) {
+                document.querySelector('._3cK_B._3s2qw._1kUcg.next').click();
+            }
         });
 
         let req = () => {
@@ -159,6 +215,21 @@ How to:
                     InfernoAddElem('div', {className:'_7g80D'}, [
                         InfernoAddElem('header', {className:'_3Is8U _7g80D _2-JOb'}, [
                             InfernoAddElem('a', {innerHTML:'This is not a Tumblr archive. This is better.', href:'/archive2', className:'_3cK_B _3s2qw _1kUcg'}, []),
+                            search = InfernoAddElem('form', {className:'_3cK_B _3s2qw _1kUcg'}, [
+                                InfernoAddElem('span', {innerHTML:'Find', className:'_3cK_B _3s2qw _1kUcg'}, []),
+                                InfernoAddElem('input', {id:'Svalue', style:'width:10em'}, []),
+                                InfernoAddElem('span', {innerHTML:' as ', className:'_3cK_B _3s2qw _1kUcg'}, []),
+                                InfernoAddElem('select', {id:'Stype', style:'width:8em'}, [
+                                    InfernoAddElem('option', {value:'origPostId', innerHTML:'Origin post id'}, []),
+                                    InfernoAddElem('option', {value:'text', innerHTML:'Post text'}, []),
+                                    InfernoAddElem('option', {value:'imageId', innerHTML:'Unique image id (w/o blog image id)'}, []),
+                                    InfernoAddElem('option', {value:'blogImageId', innerHTML:'Blog image id'}, []),
+                                    InfernoAddElem('option', {value:'origTitle', innerHTML:'Origin blog name'}, []),
+                                    InfernoAddElem('option', {value:'origShortname', innerHTML:'Origin blog subdomain'}, [])
+                                ]),
+                                InfernoAddElem('input', {type:'submit',id:'Ssend', value:'Go', className:'_3cK_B _3s2qw _1kUcg'}, []),
+                                InfernoAddElem('input', {type:'submit',id:'Scont', value:'Continue', className:'_3cK_B _3s2qw _1kUcg'}, [])
+                            ]),
                             header = InfernoAddElem('form', {className:'_3cK_B _3s2qw _1kUcg'}, [
                                 InfernoAddElem('span', {innerHTML:'< prev', className:'_3cK_B _3s2qw _1kUcg prev'}, []),
                                 InfernoAddElem('input', {id:'Oindex', style:'width:4em'}, []),
@@ -216,6 +287,26 @@ How to:
             e.preventDefault();
 
             prefs.offset = (parseInt(document.getElementById('Oindex').value)-1)*20;
+
+            mainRender();
+            return false;
+        });
+
+        document.getElementById('Ssend').addEventListener('click', e => {
+            searchData.lastId = Infinity;
+            document.getElementById('Scont').click();
+            e.preventDefault();
+
+            return false;
+        });
+
+        document.getElementById('Scont').addEventListener('click', e => {
+            searchData.type = document.getElementById('Stype').value;
+            searchData.value = document.getElementById('Svalue').value;
+            searchData.isGoing = true;
+
+            if (!prefs.blogName) return;
+            e.preventDefault();
 
             mainRender();
             return false;
