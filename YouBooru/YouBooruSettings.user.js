@@ -26,7 +26,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruCSRFPatch.lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.22
+// @version      0.9.23
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        unsafeWindow
@@ -1037,8 +1037,8 @@
 		if (location.search == "") YB_createEmpty();
 		else if (location.search == "?") YB_createEmpty();
 		else {
-            document.getElementById('content').removeChild(document.querySelector('#content>p'));
-            document.getElementById('content').removeChild(document.querySelector('#content>a'));
+            if (document.querySelector('#content>p')) document.getElementById('content').removeChild(document.querySelector('#content>p'));
+            if (document.querySelector('#content>a')) document.getElementById('content').removeChild(document.querySelector('#content>a'));
 			let u = x.split('?');
 			if (u[0] == "backup") setTimeout(function() {
 				document.querySelector('#content h1').innerHTML = 'Syncing...';
