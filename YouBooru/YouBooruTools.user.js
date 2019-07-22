@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.7.11
+// @version      0.7.12
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -335,7 +335,7 @@ color: #0a0;
             name:'Tools (Userbase debug page)',
             container:'_ydb_toolsUBLocal',
             version:sversion,
-			link:'/pages/yourbooru?usersDebug'
+			link:'/pages/api?usersDebug'
 		};
         if (unsafeWindow._YDB_public.funcs == undefined) unsafeWindow._YDB_public.funcs = {};
         unsafeWindow._YDB_public.funcs.tagAliases = tagAliases;
@@ -2378,7 +2378,7 @@ color: #0a0;
 		cc.querySelector('i').classList.add('fa-address-book');
 		cc.querySelector('i').classList.remove('fa-envelope');
 		cc.lastChild.data = ' Contacts';
-		cc.href='/pages/yourbooru?contactList';
+		cc.href='/pages/api?contactList';
 
 		if (location.pathname.startsWith('/conversations/new')) {
 			let x = [];
@@ -2515,7 +2515,7 @@ color: #0a0;
 						userbase_local.scratchpad[user.id].split('\n')[0].substring(0, 100)
 					},[])
 				]),
-				InfernoAddElem('a',{style:{padding:'0 12px'}, href:'/conversations/new?to_id='+user.id},[
+				InfernoAddElem('a',{style:{padding:'0 12px'}, href:'/conversations/new?recipient='+nameEncode(user.name)},[
 					InfernoAddElem('i',{className:'fa fa-envelope'},[]),
 					InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Send message'},[])
 				]),
@@ -2765,6 +2765,8 @@ color: #0a0;
         if (location.search == "") return;
         else if (location.search == "?") return;
         else {
+            document.getElementById('content').removeChild(document.querySelector('#content>p'));
+            document.getElementById('content').removeChild(document.querySelector('#content>a'));
             let u = x.split('?');
 			if (u[0] == 'contactList') YDB_contacts();
 			else if (u[0] == 'usersDebug') YDB_Userlist();
@@ -2821,7 +2823,7 @@ color: #0a0;
 	try {contacts();} catch(e) {error("contacts", e)};
 	try {fixDupes();} catch(e) {error('fixDupes', e)};
 	try {appendCustomNav();} catch(e) {error('appendCustomNav', e)};
-    if (location.pathname == "/pages/yourbooru") {
+    if (location.pathname == "/pages/api") {
         YDB();
     }
 	unsafeWindow.addEventListener('load',listRunWhenDone);
