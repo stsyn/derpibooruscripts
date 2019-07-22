@@ -1,6 +1,6 @@
 // ==UserScriptLib==
 // @name         YourBooru:Settings
-// @version      0.9.21L
+// @version      0.9.22L
 // @description  Global library script for YourBooru script family
 // @grant	     unsafeWindow
 // @grant        GM_addStyle
@@ -19,7 +19,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 
 	let main = function() {
 	let scriptId = 'settings';
-	let internalVersion = '0.9.21LUW';
+	let internalVersion = '0.9.22LUW';
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
@@ -121,7 +121,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 				{type:'text', name:'If you do not wish to backup anymore, simply remove ydb-related strings from your "Watched tags string".', styleS:{fontStyle:'italic'}},
 				{type:'breakline'},
 				{type:'breakline'},
-				{type:'buttonLink', name:'Sync', href:'/pages/yourbooru?sync'},
+				{type:'buttonLink', name:'Sync', href:'/pages/api?sync'},
 				{type:'breakline'},
 				{type:'header', name:'Logs'},
 				{type:'input', name:'Debug log length', parameter:'debugLength', validation:{type:'int',min:0,max:500, default:200}},
@@ -335,7 +335,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 							}
 							settings.timestamp = parseInt(Date.now()/1000);
 							write();
-							if (location.pathname != "/pages/yourbooru" && location.search != '?sync' && !settings.silentSync) location.reload();
+							if (location.pathname != "/pages/api" && location.search != '?sync' && !settings.silentSync) location.reload();
 							return;
 						}
 						settings.timestamp = parseInt(Date.now()/1000);
@@ -863,15 +863,15 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 				InfernoAddElem('i', {className:'fa fa-heart', style:'color:red'}, []),
 				InfernoAddElem('span', {innerHTML:' Support'}, [])
 			]),
-			InfernoAddElem('a', {target:'_blank', href:'/pages/yourbooru?help'}, [
+			InfernoAddElem('a', {target:'_blank', href:'/pages/api?help'}, [
 				InfernoAddElem('i', {className:'fa fa-question'}, []),
 				InfernoAddElem('span', {innerHTML:' Help'}, [])
 			]),
-			InfernoAddElem('a', {target:'_blank', href:'/pages/yourbooru?logs'}, [
+			InfernoAddElem('a', {target:'_blank', href:'/pages/api?logs'}, [
 				InfernoAddElem('i', {className:'fa fa-bug'}, []),
 				InfernoAddElem('span', {innerHTML:' Debug logs'}, [])
 			]),
-			InfernoAddElem('a', {target:'_blank', href:'/pages/yourbooru?backup'}, [
+			InfernoAddElem('a', {target:'_blank', href:'/pages/api?backup'}, [
 				InfernoAddElem('i', {className:'fa fa-bug'}, []),
 				InfernoAddElem('span', {innerHTML:' Test backup'}, [])
 			])
@@ -926,7 +926,9 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 	////////////////////////////
 
 	function YB_createEmpty() {
-		if (document.querySelector('#content h1').innerHTML != 'Schrödinger\'s Pony') return;
+		if (document.querySelector('#content h1').innerHTML != 'API') return;
+        document.getElementById('content').removeChild(document.querySelector('#content>p'));
+        document.getElementById('content').removeChild(document.querySelector('#content>a'));
 		document.querySelector('#content h1').innerHTML = 'Derp!';
 		document.querySelector('#content .walloftext').innerHTML = '<p>I know the script is callled "YourBooru", but as much as I would want it to be truly yours, I could not find a page you specified. Nope. Nothing at all! I tried though.</p><p>Make sure that the URL you are trying to access is valid and that you aren\'t trying to hunt ghosts here. Otherwise you might have hit a bug and it would be a good idea to report it to me!</p>';
 	}
@@ -1019,6 +1021,8 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 		if (location.search == "") YB_createEmpty();
 		else if (location.search == "?") YB_createEmpty();
 		else {
+            document.getElementById('content').removeChild(document.querySelector('#content>p'));
+            document.getElementById('content').removeChild(document.querySelector('#content>a'));
 			let u = x.split('?');
 			if (u[0] == "backup") setTimeout(function() {
 				document.querySelector('#content h1').innerHTML = 'Syncing...';
@@ -1070,7 +1074,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 	}
 	if (location.pathname == "/settings/edit") setTimeout(settingPage, 50);
 	else setTimeout(listModules, 50);
-	if (location.pathname == "/pages/yourbooru") yourbooruPage();
+	if (location.pathname == "/pages/api") yourbooruPage();
 	register();
 	};
 
