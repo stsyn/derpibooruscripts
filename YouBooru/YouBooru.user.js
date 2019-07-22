@@ -25,7 +25,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.22
+// @version      0.5.23
 // @description  Feedz
 // @author       stsyn
 
@@ -1305,6 +1305,8 @@
 		if (location.search == "") return;
 		else if (location.search == "?") return;
 		else {
+            if (document.querySelector('#content>p')) document.getElementById('content').removeChild(document.querySelector('#content>p'));
+            if (document.querySelector('#content>a')) document.getElementById('content').removeChild(document.querySelector('#content>a'));
 			let u = x.split('?');
 			if (u[0] == "addFeed") YB_addFeed(u);
 			else if (u[0] == "feeds") YB_feedsPage();
