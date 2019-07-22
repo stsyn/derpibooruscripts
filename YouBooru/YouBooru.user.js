@@ -25,7 +25,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.21
+// @version      0.5.22
 // @description  Feedz
 // @author       stsyn
 
@@ -1311,12 +1311,12 @@
 		}
 	}
 
-	addElem('a',{className:'header__link',href:'/pages/yourbooru?feeds', innerHTML:'Feeds'},document.querySelector('.header--secondary .header__dropdown .dropdown__content'));
+	addElem('a',{className:'header__link',href:'/pages/api?feeds', innerHTML:'Feeds'},document.querySelector('.header--secondary .header__dropdown .dropdown__content'));
 	let cont = document.getElementsByClassName('column-layout__main')[0];
 	if (location.pathname == '/' || location.pathname == '') setTimeout(init, 10);
 	else {
 		preRun();
-		if (location.pathname == "/pages/yourbooru") YDB();
+		if (location.pathname == "/pages/api") YDB();
         else if (location.pathname == "/search" || location.pathname == '/search/index') {
             let u = parseURL(location.href);
             if (u.params.name != undefined) YB_addFeed2(u);
