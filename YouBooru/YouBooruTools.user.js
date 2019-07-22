@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.7.12
+// @version      0.7.13
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -2765,8 +2765,8 @@ color: #0a0;
         if (location.search == "") return;
         else if (location.search == "?") return;
         else {
-            document.getElementById('content').removeChild(document.querySelector('#content>p'));
-            document.getElementById('content').removeChild(document.querySelector('#content>a'));
+            if (document.querySelector('#content>p')) document.getElementById('content').removeChild(document.querySelector('#content>p'));
+            if (document.querySelector('#content>a')) document.getElementById('content').removeChild(document.querySelector('#content>a'));
             let u = x.split('?');
 			if (u[0] == 'contactList') YDB_contacts();
 			else if (u[0] == 'usersDebug') YDB_Userlist();
