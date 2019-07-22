@@ -26,7 +26,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruCSRFPatch.lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.21
+// @version      0.9.22
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        unsafeWindow
@@ -137,7 +137,7 @@
 				{type:'text', name:'If you do not wish to backup anymore, simply remove ydb-related strings from your "Watched tags string".', styleS:{fontStyle:'italic'}},
 				{type:'breakline'},
 				{type:'breakline'},
-				{type:'buttonLink', name:'Sync', href:'/pages/yourbooru?sync'},
+				{type:'buttonLink', name:'Sync', href:'/pages/api?sync'},
 				{type:'breakline'},
 				{type:'header', name:'Logs'},
 				{type:'input', name:'Debug log length', parameter:'debugLength', validation:{type:'int',min:0,max:500, default:200}},
@@ -351,7 +351,7 @@
 							}
 							settings.timestamp = parseInt(Date.now()/1000);
 							write();
-							if (location.pathname != "/pages/yourbooru" && location.search != '?sync' && !settings.silentSync) location.reload();
+							if (location.pathname != "/pages/api" && location.search != '?sync' && !settings.silentSync) location.reload();
 							return;
 						}
 						settings.timestamp = parseInt(Date.now()/1000);
@@ -879,15 +879,15 @@
 				InfernoAddElem('i', {className:'fa fa-heart', style:'color:red'}, []),
 				InfernoAddElem('span', {innerHTML:' Support'}, [])
 			]),
-			InfernoAddElem('a', {target:'_blank', href:'/pages/yourbooru?help'}, [
+			InfernoAddElem('a', {target:'_blank', href:'/pages/api?help'}, [
 				InfernoAddElem('i', {className:'fa fa-question'}, []),
 				InfernoAddElem('span', {innerHTML:' Help'}, [])
 			]),
-			InfernoAddElem('a', {target:'_blank', href:'/pages/yourbooru?logs'}, [
+			InfernoAddElem('a', {target:'_blank', href:'/pages/api?logs'}, [
 				InfernoAddElem('i', {className:'fa fa-bug'}, []),
 				InfernoAddElem('span', {innerHTML:' Debug logs'}, [])
 			]),
-			InfernoAddElem('a', {target:'_blank', href:'/pages/yourbooru?backup'}, [
+			InfernoAddElem('a', {target:'_blank', href:'/pages/api?backup'}, [
 				InfernoAddElem('i', {className:'fa fa-bug'}, []),
 				InfernoAddElem('span', {innerHTML:' Test backup'}, [])
 			])
@@ -1035,6 +1035,8 @@
 		if (location.search == "") YB_createEmpty();
 		else if (location.search == "?") YB_createEmpty();
 		else {
+            document.getElementById('content').removeChild(document.querySelector('#content>p'));
+            document.getElementById('content').removeChild(document.querySelector('#content>a'));
 			let u = x.split('?');
 			if (u[0] == "backup") setTimeout(function() {
 				document.querySelector('#content h1').innerHTML = 'Syncing...';
@@ -1086,7 +1088,7 @@
 	}
 	if (location.pathname == "/settings/edit") setTimeout(settingPage, 50);
 	else setTimeout(listModules, 50);
-	if (location.pathname == "/pages/yourbooru") yourbooruPage();
+	if (location.pathname == "/pages/api") yourbooruPage();
 	register();
 	};
 
