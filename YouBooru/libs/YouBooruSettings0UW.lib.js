@@ -1,6 +1,6 @@
 // ==UserScriptLib==
 // @name         YourBooru:Settings
-// @version      0.9.22L
+// @version      0.9.23L
 // @description  Global library script for YourBooru script family
 // @grant	     unsafeWindow
 // @grant        GM_addStyle
@@ -19,7 +19,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 
 	let main = function() {
 	let scriptId = 'settings';
-	let internalVersion = '0.9.22LUW';
+	let internalVersion = '0.9.23LUW';
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
@@ -1021,8 +1021,8 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 		if (location.search == "") YB_createEmpty();
 		else if (location.search == "?") YB_createEmpty();
 		else {
-            document.getElementById('content').removeChild(document.querySelector('#content>p'));
-            document.getElementById('content').removeChild(document.querySelector('#content>a'));
+            if (document.querySelector('#content>p')) document.getElementById('content').removeChild(document.querySelector('#content>p'));
+            if (document.querySelector('#content>a')) document.getElementById('content').removeChild(document.querySelector('#content>a'));
 			let u = x.split('?');
 			if (u[0] == "backup") setTimeout(function() {
 				document.querySelector('#content h1').innerHTML = 'Syncing...';
