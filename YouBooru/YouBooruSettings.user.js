@@ -39,7 +39,7 @@
 
 	let main = function() {
 	let scriptId = 'settings';
-	let internalVersion = '0.9.20';
+	let internalVersion = '0.9.23';
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
@@ -473,7 +473,7 @@
 			let get = function() {
 				let req = new XMLHttpRequest();
 				req.onreadystatechange = readyHandler(req);
-				req.open('POST', '/update_settings');
+				req.open('POST', '/settings');
 				req.send(new FormData(s.querySelector('form')));
 			};
 			get();
