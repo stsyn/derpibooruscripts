@@ -1,6 +1,6 @@
 // ==UserScriptLib==
 // @name         YourBooru:Settings
-// @version      0.9.23L
+// @version      0.9.23aL
 // @description  Global library script for YourBooru script family
 // @grant	     unsafeWindow
 // @grant        GM_addStyle
@@ -19,7 +19,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 
 	let main = function() {
 	let scriptId = 'settings';
-	let internalVersion = '0.9.23LUW';
+	let internalVersion = '0.9.23aLUW';
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
@@ -457,7 +457,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 			let get = function() {
 				let req = new XMLHttpRequest();
 				req.onreadystatechange = readyHandler(req);
-				req.open('POST', '/update_settings');
+				req.open('POST', '/settings');
 				req.send(new FormData(s.querySelector('form')));
 			};
 			get();
