@@ -73,7 +73,7 @@ let updateCSRF = function() {};
           if (
             ((elem.tagName === 'INPUT' || elem.tagName === 'BUTTON') && elem.type === 'submit' && elem.title.toLowerCase() !== 'search')
                 ||
-            ((elem.tagName === 'A') && elem.href.endsWith('#') && !(Boolean(elem.dataset) && (elem.dataset.clickTab === 'write')))
+            ((elem.tagName === 'A') && elem.href.endsWith('#') && !(Boolean(elem.dataset) && (elem.dataset.clickTab === 'write' || elem.className.indexOf('interaction') > -1)))
           ) {
             preventWrongCSRF(e, elem.form ? elem.form.authenticity_token : null);
           }
