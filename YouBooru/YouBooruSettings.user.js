@@ -26,7 +26,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruCSRFPatch.lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.23
+// @version      0.9.25
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        unsafeWindow
@@ -39,7 +39,7 @@
 
 	let main = function() {
 	let scriptId = 'settings';
-	let internalVersion = '0.9.23';
+	let internalVersion = '0.9.20';
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
@@ -215,7 +215,7 @@
 						renderer(e, ss, x, s[k], mod);
 						if (nav && k==0) {
 							addElem('span', {
-								style:'margin-left:.5em; float:right',
+								style:{marginLeft:'.5em', float:'right'},
 								className:'button',
 								innerHTML:'<i class="fa fa-arrow-up"></i>',
 								events:[{
@@ -234,7 +234,7 @@
 							addElem('span', {
 								className:'button commission__category',
 								innerHTML:'Delete',
-								style:'margin-left:0.5em',
+								style:{marginLeft:'.5em'},
 								events:[{
 									t:'click',
 									f:function(ex) {
@@ -245,7 +245,7 @@
 
 							if (nav) {
 								addElem('span', {
-									style:'margin-left:.5em; float:right',
+									style:{marginLeft:'.5em', float:'right'},
 									className:'button',
 									innerHTML:'<i class="fa fa-arrow-down"></i>',
 									events:[{
@@ -876,7 +876,7 @@
 			InfernoAddElem('a', {target:'_blank', href:'javscript://', events:[{t:'click',f:function() {
 				unsafeWindow.open(getDonateLink()!=undefined?getDonateLink():'https://ko-fi.com/C0C8BVXS');
 			}}]}, [
-				InfernoAddElem('i', {className:'fa fa-heart', style:'color:red'}, []),
+				InfernoAddElem('i', {className:'fa fa-heart', style:{color:'red'}}, []),
 				InfernoAddElem('span', {innerHTML:' Support'}, [])
 			]),
 			InfernoAddElem('a', {target:'_blank', href:'/pages/api?help'}, [
@@ -942,9 +942,7 @@
 	////////////////////////////
 
 	function YB_createEmpty() {
-		if (document.querySelector('#content h1').innerHTML != 'API') return;
-        document.getElementById('content').removeChild(document.querySelector('#content>p'));
-        document.getElementById('content').removeChild(document.querySelector('#content>a'));
+		if (document.querySelector('#content h1').innerHTML != 'Schrödinger\'s Pony') return;
 		document.querySelector('#content h1').innerHTML = 'Derp!';
 		document.querySelector('#content .walloftext').innerHTML = '<p>I know the script is callled "YourBooru", but as much as I would want it to be truly yours, I could not find a page you specified. Nope. Nothing at all! I tried though.</p><p>Make sure that the URL you are trying to access is valid and that you aren\'t trying to hunt ghosts here. Otherwise you might have hit a bug and it would be a good idea to report it to me!</p>';
 	}
@@ -1037,8 +1035,8 @@
 		if (location.search == "") YB_createEmpty();
 		else if (location.search == "?") YB_createEmpty();
 		else {
-            if (document.querySelector('#content>p')) document.getElementById('content').removeChild(document.querySelector('#content>p'));
-            if (document.querySelector('#content>a')) document.getElementById('content').removeChild(document.querySelector('#content>a'));
+            document.getElementById('content').removeChild(document.querySelector('#content>p'));
+            document.getElementById('content').removeChild(document.querySelector('#content>a'));
 			let u = x.split('?');
 			if (u[0] == "backup") setTimeout(function() {
 				document.querySelector('#content h1').innerHTML = 'Syncing...';
