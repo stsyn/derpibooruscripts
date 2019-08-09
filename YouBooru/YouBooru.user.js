@@ -25,7 +25,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.23
+// @version      0.5.24
 // @description  Feedz
 // @author       stsyn
 
@@ -218,7 +218,7 @@
 				{type:'checkbox', name:'Trim garbage from HTML', parameter:'optimizeLS', styleS:{display:'none'}},
 				{type:'array', parameter:'feedz', addText:'Add feed', customOrder:true, s:[
 					[
-						{type:'input', name:'Name', parameter:'name',styleI:{width:'33em', marginRight:'.5em'},validation:{type:'unique'}},
+						{type:'input', name:'Name', parameter:'name',styleI:{width:'31.5em', marginRight:'.5em'},validation:{type:'unique'}},
 						{type:'select', name:'Sorting', parameter:'sort',styleI:{marginRight:'.5em'}, values:[
 							{name:'Upload date', value:'created_at'},
 							{name:'Modification date', value:'updated_at'},
@@ -435,7 +435,7 @@
 	}
 
 	function write(w) {
-		localStorage._ydb_feeds = JSON.stringify(f_s_c);
+		localStorage._ydb_feeds = JSON.stringify(w || f_s_c);
 		localStorage._ydb_caches = JSON.stringify(feedzCache);
 		localStorage._ydb_cachesUrls = JSON.stringify(feedzURLs);
 		localStorage._ydb_cachesEvents = JSON.stringify(feedzEvents);
