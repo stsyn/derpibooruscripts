@@ -14,6 +14,10 @@ function InfernoAddElem(tag, values, childs) {
 	var t;
     if (typeof values == 'undefined') values = {};
     if (typeof values == 'string') values = {innerHTML:values};
+    if (typeof childs == 'undefined' && Array.isArray(values)) {
+        childs = values;
+        values = {};
+    }
 	if (values != undefined && values.id != undefined && document.getElementById(values.id) != undefined) {
 		if (document.querySelectorAll(tag+'#'+values.id).length == 0) {
 			t = document.getElementById(values.id);
