@@ -1,6 +1,6 @@
 // ==UserScriptLib==
 // @name         YourBooru:Settings
-// @version      0.9.24L
+// @version      0.9.25L
 // @description  Global library script for YourBooru script family
 // @grant	     unsafeWindow
 // @grant        GM_addStyle
@@ -21,7 +21,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 
 	let main = function() {
 	let scriptId = 'settings';
-	let internalVersion = '0.9.24LUW';
+	let internalVersion = '0.9.25LUW';
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
@@ -220,7 +220,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 							addElem('span', {
 								className:'button commission__category',
 								innerHTML:'Delete',
-								style:{marginLeft:'0.5em'},
+								style:{marginLeft:'.5em'},
 								events:[{
 									t:'click',
 									f:function(ex) {
@@ -862,7 +862,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 			InfernoAddElem('a', {target:'_blank', href:'javscript://', events:[{t:'click',f:function() {
 				unsafeWindow.open(getDonateLink()!=undefined?getDonateLink():'https://ko-fi.com/C0C8BVXS');
 			}}]}, [
-				InfernoAddElem('i', {className:'fa fa-heart', style:'color:red'}, []),
+				InfernoAddElem('i', {className:'fa fa-heart', style:{color:'red'}}, []),
 				InfernoAddElem('span', {innerHTML:' Support'}, [])
 			]),
 			InfernoAddElem('a', {target:'_blank', href:'/pages/api?help'}, [
