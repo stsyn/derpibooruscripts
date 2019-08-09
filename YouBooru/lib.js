@@ -12,6 +12,7 @@ function ChildsAddElem(tag, values,parent, childs) {
 
 function InfernoAddElem(tag, values, childs) {
 	var t;
+    if (typeof values == 'undefined') values = {};
     if (typeof values == 'string') values = {innerHTML:values};
 	if (values != undefined && values.id != undefined && document.getElementById(values.id) != undefined) {
 		if (document.querySelectorAll(tag+'#'+values.id).length == 0) {
