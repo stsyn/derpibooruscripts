@@ -104,7 +104,7 @@
 		let levels = ['!', '?', '.'];
 		x.push({id:id,level:level,val:val,ts:Date.now()});
 		if (x.length > settings.debugLength) x = x.slice(-settings.debugLength);
-        if (level == 0) {
+        if (level == 2) {
             console.log('['+['.', '?', '!'][level]+'] ['+id+'] '+value);
             console.trace();
         }
