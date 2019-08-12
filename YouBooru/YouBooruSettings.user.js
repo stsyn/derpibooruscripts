@@ -26,7 +26,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruCSRFPatch.lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.26
+// @version      0.9.27
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        unsafeWindow
@@ -39,7 +39,7 @@
 
 	let main = function() {
 	let scriptId = 'settings';
-	let internalVersion = '0.9.26';
+	let internalVersion = '0.9.27';
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
@@ -105,7 +105,7 @@
 		x.push({id:id,level:level,val:val,ts:Date.now()});
 		if (x.length > settings.debugLength) x = x.slice(-settings.debugLength);
         if (level == 2) {
-            console.log('['+['.', '?', '!'][level]+'] ['+id+'] '+value);
+            console.log('['+['.', '?', '!'][level]+'] ['+id+'] '+val);
             console.trace();
         }
 		localStorage._ydb_dlog = JSON.stringify(x);
