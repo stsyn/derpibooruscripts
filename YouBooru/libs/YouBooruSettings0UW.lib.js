@@ -91,7 +91,7 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 		x.push({id:id,level:level,val:val,ts:Date.now()});
 		if (x.length > settings.debugLength) x = x.slice(-settings.debugLength);
         if (level == 2) {
-            console.log('['+['.', '?', '!'][level]+'] ['+id+'] '+value);
+            console.log('['+['.', '?', '!'][level]+'] ['+id+'] '+val);
             console.trace();
         }
 		localStorage._ydb_dlog = JSON.stringify(x);
