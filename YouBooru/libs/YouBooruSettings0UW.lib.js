@@ -1,6 +1,6 @@
 // ==UserScriptLib==
 // @name         YourBooru:Settings
-// @version      0.9.25L
+// @version      0.9.26L
 // @description  Global library script for YourBooru script family
 // @grant	     unsafeWindow
 // @grant        GM_addStyle
@@ -17,11 +17,11 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
     //https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
     if (typeof addElem == 'undefined') function addElem(e,l,n){return n.appendChild(InfernoAddElem(e,l,[]))}
     if (typeof ChildsAddElem == 'undefined') function ChildsAddElem(e,l,n,t){return n.appendChild(InfernoAddElem(e,l,t))}
-    if (typeof InfernoAddElem == 'undefined') function InfernoAddElem(e,t,d){var l;if(null!=t&&null!=t.id&&null!=document.getElementById(t.id))if(0==document.querySelectorAll(e+"#"+t.id).length)(l=document.getElementById(t.id)).parentNode.removeChild(l),l=document.createElement(e);else for(l=document.getElementById(t.id);l.firstChild;)l.removeChild(l.firstChild);else l=document.createElement(e);for(let e in t)"events"==e||"dataset"==e||"innerHTML"==e||"checked"==e||"disabled"==e||"value"==e||"selected"==e||"className"==e||"style"==e&&"object"==typeof t.style||l.setAttribute(e,t[e]);if(void 0!==t.dataset)for(let e in t.dataset)l.dataset[e]=t.dataset[e];if(void 0!==t.className&&(l.className=t.className),void 0!==t.innerHTML&&(l.innerHTML=t.innerHTML),void 0!==t.value&&(l.value=t.value),void 0!==t.checked&&(l.checked=t.checked),void 0!==t.selected&&(l.selected=t.selected),void 0!==t.disabled&&(l.disabled=t.disabled),void 0!==t.events)if(Array.isArray(t.events))t.events.forEach(function(e,t,d){l.addEventListener(e.t,e.f)});else for(let e in t.events)l.addEventListener(e,t.events[e]);if("object"==typeof t.style)for(let e in t.style)l.style[e]=t.style[e];return d&&null!=d.length&&d.forEach(function(e,t,d){l.appendChild(null==e.parentNode?e:e.cloneNode(!0))}),l}
+    if (typeof InfernoAddElem == 'undefined') function InfernoAddElem(e,t,d){var l;if(void 0===t&&(t={}),"string"==typeof t&&(t={innerHTML:t}),void 0===d&&Array.isArray(t)&&(d=t,t={}),null!=t&&null!=t.id&&null!=document.getElementById(t.id))if(0==document.querySelectorAll(e+"#"+t.id).length)(l=document.getElementById(t.id)).parentNode.removeChild(l),l=document.createElement(e);else for(l=document.getElementById(t.id);l.firstChild;)l.removeChild(l.firstChild);else l=document.createElement(e);for(let e in t)"events"==e||"dataset"==e||"innerHTML"==e||"checked"==e||"disabled"==e||"value"==e||"selected"==e||"className"==e||"style"==e&&"object"==typeof t.style||l.setAttribute(e,t[e]);if(void 0!==t.dataset)for(let e in t.dataset)l.dataset[e]=t.dataset[e];if(void 0!==t.className&&(l.className=t.className),void 0!==t.innerHTML&&(l.innerHTML=t.innerHTML),void 0!==t.value&&(l.value=t.value),void 0!==t.checked&&(l.checked=t.checked),void 0!==t.selected&&(l.selected=t.selected),void 0!==t.disabled&&(l.disabled=t.disabled),void 0!==t.events)if(Array.isArray(t.events))t.events.forEach(function(e,t,d){l.addEventListener(e.t,e.f)});else for(let e in t.events)l.addEventListener(e,t.events[e]);if("object"==typeof t.style)for(let e in t.style)l.style[e]=t.style[e];return d&&null!=d.length&&d.forEach(function(e,t,d){l.appendChild(null==e.parentNode?e:e.cloneNode(!0))}),l}
 
 	let main = function() {
 	let scriptId = 'settings';
-	let internalVersion = '0.9.25LUW';
+	let internalVersion = '0.9.26LUW';
 	let aE = false;
 	try {if (GM_info == undefined) {aE = true;}}
 	catch(e) {aE = true;}
@@ -90,6 +90,10 @@ if(n+2>=i)return e;if(t=255&e[++n],128!=(192&t))return e;if(o=255&e[++n],128!=(1
 		let levels = ['!', '?', '.'];
 		x.push({id:id,level:level,val:val,ts:Date.now()});
 		if (x.length > settings.debugLength) x = x.slice(-settings.debugLength);
+        if (level == 0) {
+            console.log('['+['.', '?', '!'][level]+'] ['+id+'] '+value);
+            console.trace();
+        }
 		localStorage._ydb_dlog = JSON.stringify(x);
 	}
 
