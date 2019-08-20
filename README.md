@@ -18,26 +18,23 @@ Here are the userscripts related to the https://derpibooru.org. Most of them are
 ## Detailed technical descriptions
 
 ### YDB:Settings
-Main settings provider which allows to construct UI-based settings for userscript on Derpibooru settings page. Can be used as separate userscript, since 0.9.12 can be used as library, through.
+Main settings provider which allows to construct UI-based settings for userscript on Derpibooru settings page. Can be used as separate userscript, since 0.9.12 can be used as library, through. Since 0.9.17, only UW-version is maintainable.
 
 #### Implementing
 Despite the fact that the script was developed for the internal needs of the YDB (this is evident in some elements of the design), you can use it for your own purposes. Due to the nature of its development, it's always working realtime as normal userscript (not as typical function-library), but always no more than one instance of the script is active (which was launched first). See YDB tab in settings to make sure, which instantion works right now.
 
-If you want to guarantee it's startup in your work without having standalone installation of YDB:S, you need to require special library-based build of YDB:S:
-
-``` javascript
-// @grant        none
-// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0.lib.js
-```
-
-If your script has **any // @grant**, you should use **unsafeWindow** object instead of **window** and following lines in declaration:
+If you want to guarantee it's startup in your work without having standalone installation of YDB:S, you need to require special library-based build of YDB:S and a few @grant's:
 
 ``` javascript
 // @grant        unsafeWindow
+// @grant        GM_addStyle
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0UW.lib.js
 ```
 
 You **must not** add that lines if your script has run-at property set as **document-start**. You should provide to end users a link for a standalone version or just believe, that they have any other script which integrated YDB:S as a library.
+
+Not -UW version leaved only for backend compability and shouldn't be used at all. You have to declare **unsafeWindow** and **GM_addStyle** and use *unsafeWindow* instead of *window* in your script, if you want settings being accessible.
+
 
 #### Usage
 Threre is a sample code of implementing settings by using YDB:S:
