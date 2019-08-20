@@ -25,7 +25,7 @@ if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (unsafeWindow.
 
   try {
     if (typeof unsafeWindow == 'undefined' || typeof GM_addStyle == 'undefined') {
-        register(true);
+        register(true, unsafeWindow || window);
         return;
     }
     if (unsafeWindow._YDB_public.settings[scriptId] != undefined) return;
