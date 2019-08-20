@@ -1109,5 +1109,6 @@ if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (win.self === 
   if (location.pathname == "/pages/api") yourbooruPage();
   register();
 };
+
 main();
 }
