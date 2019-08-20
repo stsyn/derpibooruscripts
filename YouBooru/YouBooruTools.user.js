@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.8.1
+// @version      0.8.2
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1340,7 +1340,6 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   function highlightArtist(e, artist) {
     let highlight = function(e,n, editor) {
       for (let i=0; i<e.getElementsByClassName('communication__body').length; i++) {
-        if (!ls.oldHighlight) return;
         let el = e.getElementsByClassName('communication__body')[i];
         if (el.querySelector('.communication__body__sender-name a') != undefined && el.querySelector('.communication__body__sender-name a').innerHTML == n) {
           el.querySelector('.communication__body__sender-name a').classList.add(editor?'flash--warning':'flash--success');
@@ -1354,8 +1353,6 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   }
 
   function editArtistMetainfo() {
-    const selector = '.tag.dropdown[data-tag-category="origin"][data-tag-name*="artist:"] .tag__name, .tag.dropdown[data-tag-category="origin"][data-tag-name*="colorist:"] .tag__name, .tag.dropdown[data-tag-category="origin"][data-tag-name*="photographer:"] .tag__name';
-    if (document.querySelectorAll(selector).length > 5) return;
     let commLink = (r) => {
       if (r.commState == 'none' || r.commState == undefined) return InfernoAddElem('span', {}, []);
       return InfernoAddElem('span', {className:'commissions'}, [
