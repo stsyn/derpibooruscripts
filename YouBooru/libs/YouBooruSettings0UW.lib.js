@@ -8,7 +8,8 @@
 // ==/UserScriptLib==
 
     // This is beta version
-if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (unsafeWindow.self === unsafeWindow.top)) {
+let win = (typeof unsafeWindow == 'undefined' ? window : unsafeWindow);
+if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (win.self === win.top)) {
   let main = function() {
 
   //https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
