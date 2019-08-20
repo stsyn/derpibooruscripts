@@ -26,6 +26,7 @@ if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (win.self === 
 
   try {
     if (typeof unsafeWindow == 'undefined' || typeof GM_addStyle == 'undefined') {
+        //it won't work anyway, but maybe we can put some libs inside
         register(true, (typeof unsafeWindow == 'undefined' ? window : unsafeWindow));
         return;
     }
