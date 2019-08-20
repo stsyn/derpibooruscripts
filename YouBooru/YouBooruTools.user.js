@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.8.0
+// @version      0.8.1
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1304,7 +1304,6 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     let checked=0;
     let get = function(el) {
       let dt = parseInt(Date.now()/1000);
-      console.log(userbase.users[userbase.artists[el.innerHTML]].updated, (userbase.users[userbase.artists[el.innerHTML]].updated > parseInt(Date.now()/1000)-60*60*24*28));
       if (userbase.artists[el.innerHTML] != undefined && (userbase.users[userbase.artists[el.innerHTML]].updated > parseInt(Date.now()/1000)-60*60*24*28)) {
         let n = userbase.users[userbase.artists[el.innerHTML]].name;
         let ax = {
@@ -1355,6 +1354,8 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   }
 
   function editArtistMetainfo() {
+    const selector = '.tag.dropdown[data-tag-category="origin"][data-tag-name*="artist:"] .tag__name, .tag.dropdown[data-tag-category="origin"][data-tag-name*="colorist:"] .tag__name, .tag.dropdown[data-tag-category="origin"][data-tag-name*="photographer:"] .tag__name';
+    if (document.querySelectorAll(selector).length > 5) return;
     let commLink = (r) => {
       if (r.commState == 'none' || r.commState == undefined) return InfernoAddElem('span', {}, []);
       return InfernoAddElem('span', {className:'commissions'}, [
@@ -1376,8 +1377,9 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         artists.sort((a,b) => {return b.count - a.count;});
         let container = v.querySelector('._ydb_who_did_this');
         if (!container) {
-          v.insertBefore(container = InfernoAddElem('div', {innerHTML:'Created by ', className:'_ydb_who_did_this'}), v.firstChild);
+          v.insertBefore(container = InfernoAddElem('div', {className:'_ydb_who_did_this'}), v.firstChild);
         }
+        container.innerHTML = 'Created by ';
 
         artists.forEach((artist, i) => {
           let badges = [];
@@ -2439,7 +2441,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
           ])
         ])
         ,document.querySelector('.column-layout__left').firstChild);
-      getPreview();
+      setTimeout(getPreview, 200);
     }
   }
 
