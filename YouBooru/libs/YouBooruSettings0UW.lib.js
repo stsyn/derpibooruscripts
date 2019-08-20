@@ -24,8 +24,10 @@ if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (unsafeWindow.
   let internalVersion = '0.9.28LUW';
 
   try {
-    if (typeof unsafeWindow == 'undefined') return;
-    if (typeof GM_addStyle == 'undefined') return;
+    if (typeof unsafeWindow == 'undefined' || typeof GM_addStyle == 'undefined') {
+        register(true);
+        return;
+    }
     if (unsafeWindow._YDB_public.settings[scriptId] != undefined) return;
   }
   catch(e){}
@@ -95,16 +97,17 @@ if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (unsafeWindow.
     localStorage._ydb_dlog = JSON.stringify(x);
   }
 
-  function register() {
-    if (unsafeWindow._YDB_public == undefined) unsafeWindow._YDB_public = {};
-    if (unsafeWindow._YDB_public.settings == undefined) unsafeWindow._YDB_public.settings = {};
+  function register(onlyLibs, win) {
+    win = win || unsafeWindow;
+    if (win._YDB_public == undefined) win._YDB_public = {};
+    if (win._YDB_public.settings == undefined) win._YDB_public.settings = {};
     let xversion;
     if (version.indexOf('aE') == -1) {
       if (GM_info.script.name == 'YourBooru:Settings') xversion = version+' (standalone)';
       else xversion = internalVersion+' (served by '+GM_info.script.name+')';
     }
     else xversion = version;
-    unsafeWindow._YDB_public.settings.settings = {
+    if (!onlyLibs) win._YDB_public.settings.settings = {
       name:'Settings',
       container:'_ydb_config',
       version:xversion,
@@ -138,11 +141,11 @@ if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (unsafeWindow.
         {type:'input', name:'Filter (,)', parameter:'debugFilter'}
       ]
     };
-    if (unsafeWindow._YDB_public.funcs == undefined) unsafeWindow._YDB_public.funcs = {};
-    unsafeWindow._YDB_public.funcs.callWindow = callWindow;
-    unsafeWindow._YDB_public.funcs.backgroundBackup = backgroundBackup;
-    unsafeWindow._YDB_public.funcs.log = debugLogger;
-    unsafeWindow._YDB_public.funcs.getNonce = function() {return settings.nonce;};
+    if (win._YDB_public.funcs == undefined) win._YDB_public.funcs = {};
+    win._YDB_public.funcs.callWindow = callWindow;
+    if (!onlyLibs) win._YDB_public.funcs.backgroundBackup = backgroundBackup;
+    win._YDB_public.funcs.log = debugLogger;
+    win._YDB_public.funcs.getNonce = function() {return settings.nonce;};
   }
 
   function hideBlock(e) {
