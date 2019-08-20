@@ -7,6 +7,7 @@
 // @author       stsyn
 // ==/UserScriptLib==
 
+
     // This is beta version
 let win = (typeof unsafeWindow == 'undefined' ? window : unsafeWindow);
 if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (win.self === win.top)) {
