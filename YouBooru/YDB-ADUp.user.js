@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          YDB:ADUp
-// @version       0.3.13
+// @version       0.3.12
 // @author        stsyn
 
 // @match         *://*/*
@@ -306,9 +306,13 @@
     x.querySelector('.input.js-taginput-input').value = tText;
   }
 
-  function drawEmptyTag(tag) {
+  function drawEmptyTag(tag, tagData) {
+    let category;
+    if (tagData) {
+      category = tagData.category;
+    }
     if (tag == '') return InfernoAddElem('span');
-    return InfernoAddElem('span',{className:'tag',innerHTML:tag+' '},[
+    return InfernoAddElem('span',{className:'tag',innerHTML:tag+' ', dataset:{tagCategory:category}},[
       InfernoAddElem('a',{style:{display:'none'},dataset:{tagName:tag}},[
     ])]);
   }
@@ -340,6 +344,7 @@
         checkedTags[name] = {name:name,implied_tags:[]};
       }
 
+      if (data.tag) checkedTags[name].category = data.tag.category;
       checkedTags[name].notReady = false;
       checkedTags[name].drawn = false;
 
@@ -468,7 +473,7 @@
       if (tags.length == 0) return false;
       return InfernoAddElem('div',{className:'alternating-color block__content'},[
         InfernoAddElem('div',{className:''},[
-          drawEmptyTag(d.name),
+          drawEmptyTag(d.name, d),
           InfernoAddElem('span',{innerHTML:'implies — '},[]),
           InfernoAddElem('span',{},tags),
           InfernoAddElem('a',{href:'javascript://',className:'action block__header__title',innerHTML:'Insert', events:[{t:'click',f:function(e) {
@@ -513,7 +518,7 @@
 
       return InfernoAddElem('div',{className:'alternating-color block__content'},[
         InfernoAddElem('div',{className:' '+color},[
-          drawEmptyTag(d.name),
+          drawEmptyTag(d.name, d),
           InfernoAddElem('span',{innerHTML:' — '},[]),
           InfernoAddElem('strong',{innerHTML:d.dnp_type, style:{color:color}},[]),
           InfernoAddElem('span',{innerHTML:suggestion==''?'':' — '},[]),
@@ -622,6 +627,7 @@
         if (ratingsReason != ratingCheck.dnp_type) gotten = true;
 
         if (gotten) {
+          console.log(ratingCheck.dnp_type, ratingsReason);
           let drawn = false;
           for (let x in checkedTags) {
             if (checkedTags[x].notReady) continue;
@@ -634,8 +640,8 @@
           if (ratingCheck.dnp_type != '') {
             drawn = true;
             container.appendChild(render(ratingCheck));
-            ratingsReason = ratingCheck.dnp_type;
           }
+          ratingsReason = ratingCheck.dnp_type;
 
           for (let i=0; i<x.getElementsByClassName('tag').length; i++) {
             let y = x.getElementsByClassName('tag')[i];
