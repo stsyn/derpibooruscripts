@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          YDB:ADUp
-// @version       0.3.12
+// @version       0.3.14
 // @author        stsyn
 
 // @match         *://*/*
