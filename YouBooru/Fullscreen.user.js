@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.18
+// @version      0.7.19
 // @description  Make Fullscreen great again!
 // @author       St@SyaN
 
@@ -379,12 +379,13 @@ height:4em;
 
 
 ._fs_down.active {
-height:65vh;
+height:66vh;
 }
 ._fs_down.active ._fs_down_container{
 margin-top:1vh;
-height:64vh;
+height:55vh;
 overflow-y:auto;
+padding-bottom:11vh;
 }
 ._fs_down.active ._fs_down_back{
 height:100%;
