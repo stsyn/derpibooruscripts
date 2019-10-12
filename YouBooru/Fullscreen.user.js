@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name     Resurrected Derp Fullscreen
 // @namespace  https://github.com/stsyn/derp-fullscreen/
-// @version    0.7.20
+// @version    0.7.21
 // @description  Make Fullscreen great again!
 // @author     St@SyaN
 
@@ -796,10 +796,11 @@ color: #777;
     };
     document.addEventListener('DOMContentLoaded', function() {addElem('span', {style:{display:'none'}, type:'text', dataset:{value:JSON.stringify(fsData),origin:'script'}, className:'_YDB_reserved_register'}, document.body);});
   }
-  
+
   function append(id, accentFix) {
     if (dictionary[id] && !accentFix) dictionary[id].media = 'all';
-    dictionary[id] = GM_addStyle(styles[id]);
+    else dictionary[id] = GM_addStyle(styles[id]);
+    if (accentFix) dictionary[id] = GM_addStyle(styles[id]);
     return 0;
   }
 
