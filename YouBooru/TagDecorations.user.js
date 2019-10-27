@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Tag decorations
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  some silly tag decorations
 // @author       stsyn
 // @include      /http[s]*://(www.|)(trixie|derpi)booru.org/*/
@@ -103,7 +103,7 @@ pattern2 {
   const theme = themes.indexOf(document.body.dataset.theme);
 
   for (let i in commonColors) {
-    style = style.replace(new RegExp(i+'(;| )', 'g'), commonColors[i][theme] + '$1');
+    style = style.replace(new RegExp(i+'(;| |,)', 'g'), commonColors[i][theme] + '$1');
   }
 
   console.log(style, commonColors);
