@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.8.2
+// @version      0.8.3
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -198,13 +198,18 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         {type:'checkbox', name:'Force hiding (Ignorantia non est argumentum!)', parameter:'force'},
         {type:'header', name:'UI'},
         {type:'checkbox', name:'Bigger search fields', parameter:'patchSearch'},
+        {type:'breakline'},
         {type:'checkbox', name:'Deactive downvote if upvoted (and reverse)', parameter:'deactivateButtons'},
+        {type:'breakline'},
         {type:'checkbox', name:'Hide images immediately', parameter:'fastHide'},
+        {type:'breakline'},
         {type:'checkbox', name:'Old headers style', parameter:'oldHead'},
         {type:'breakline'},
         {type:'checkbox', name:'Hide obvious badges', parameter:'hideBadges'},
         {type:'checkbox', name:' and not really obvious', parameter:'hideBadgesX'},
         {type:'checkbox', name:' and donation based implications', parameter:'hideBadgesP'},
+        {type:'breakline'},
+        {type:'checkbox', name:'Compact image spoiler in posts', parameter:'smallerSpoilers'},
         {type:'breakline'},
         {type:'input', name:'Shrink comments and posts longer than (px)', parameter:'shrinkComms', validation:{type:'int',min:280, default:500}},
         {type:'breakline'},
@@ -362,27 +367,31 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     fl = ls.hidden;
   }
   register();
-  if (ls.patchSearch == undefined) {
+  if (ls.patchSearch === undefined) {
     ls.patchSearch = true;
     write(ls);
   }
-  if (ls.version == undefined) {
+  if (ls.smallerSpoilers === undefined) {
+    ls.smallerSpoilers = true;
+    write(ls);
+  }
+  if (ls.version === undefined) {
     ls.version = version;
     write(ls);
   }
-  if (ls.shrinkComms == undefined) {
+  if (ls.shrinkComms === undefined) {
     ls.shrinkComms = 500;
     write(ls);
   }
-  if (ls.fastHide == undefined) {
+  if (ls.fastHide === undefined) {
     ls.fastHide = true;
     write(ls);
   }
-  if (ls.oldHead == undefined) {
+  if (ls.oldHead === undefined) {
     ls.oldHead = true;
     write(ls);
   }
-  if (ls.hideBadges == undefined) {
+  if (ls.hideBadges === undefined) {
     ls.hideBadges = true;
     ls.hideBadgesX = false;
     write(ls);
@@ -398,7 +407,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     ls.greenText = false;
     write(ls);
   }
-  if (ls.greenText == undefined) {
+  if (ls.greenText === undefined) {
     ls.greenText = true;
     if (localStorage._fucken_grin_ == 'caught') ls.greenText = false;
     write(ls);
@@ -585,7 +594,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       let date = new Date(Date.now()-param*24*60*60*1000);
       let c = '(';
       let cc = 'created_at:';
-      c+=cc+date.getFullYear()+'-'+((date.getMonth()+1)<10?('0'+(date.getMonth()+1)):(date.getMonth()+1))+'-'+(date.getDate()<10?('0'+date.getDate()):date.getDate());
+      c += cc + date.getFullYear() + '-' + (date.getMonth()+1).toString().padStart(2, '0') + '-' + date.getDate().toString().padStart(2, '0');
       return c+')';
     };
 
@@ -594,7 +603,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       let c = '(';
       let cc = 'created_at:';
       for (let i = date.getFullYear() - 1; i>2011; i--)
-        c+=(c==='('?'':' || ')+cc+i+'-'+((date.getMonth()+1)<10?('0'+(date.getMonth()+1)):(date.getMonth()+1))+'-'+(date.getDate()<10?('0'+date.getDate()):date.getDate());
+        c += (c == '(' ? '' : ' || ') + cc + i + '-' + (date.getMonth()+1).toString().padStart(2, '0') + '-' + date.getDate().toString().padStart(2, '0');
       return c+')';
     };
 
@@ -603,7 +612,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       let c = '(';
       let cc = 'first_seen_at:';
       for (let i = date.getFullYear() - 1; i>2011; i--)
-        c+=(c==='('?'':' || ')+cc+i+'-'+((date.getMonth()+1)<10?('0'+(date.getMonth()+1)):(date.getMonth()+1))+'-'+(date.getDate()<10?('0'+date.getDate()):date.getDate());
+        c += (c == '(' ? '' : ' || ') + cc + i + '-' + (date.getMonth()+1).toString().padStart(2, '0') + '-' + date.getDate().toString().padStart(2, '0');
       return c+')';
     };
 
@@ -612,6 +621,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       let tl = JSON.parse(document.getElementsByClassName('js-datastore')[0].dataset.spoileredTagList);
       let tags = tl.reduce(function(prev, cur, i, a) {
         if (localStorage['bor_tags_'+cur] == undefined) return prev;
+        let tname = JSON.parse(localStorage['bor_tags_'+cur]).name;
         let quotes = (/(\(|\))/.test(tname)?'"':'');
         return prev + quotes + tname + quotes + (i+1 == a.length?'':' || ');
       }, '');
@@ -1132,7 +1142,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       let e = ex.querySelectorAll('.block.communication')[i];
       let a = e.querySelector('a.communication__interaction.post-reply');
       if (a) {
-        let imageId = a.pathname.split('/')[2];
+        let imageId = parseInt(a.pathname.split('/')[2]);
         if (isNaN(imageId)) continue;
         if (imgid && imgid != imageId) continue;
         if (commPreviewData[imageId] && commPreviewData[imageId] != 'pending') {
@@ -1152,7 +1162,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
             })
               .then(data => {
               if (!data) return;
-              let cc = InfernoAddElem('div',data);
+              const cc = InfernoAddElem('div',data);
               let thumb = cc.querySelector('.image-container.thumb');
               if (!thumb) {
                 thumb = InfernoAddElem('div', {className:'image-container thumb_tiny', innerHTML:'<div class="media-box__overlay js-spoiler-info-overlay">HIDDEN</div><a href="/'+imageId+'"><picture><img src="/tagblocked.svg"></picture></a></div>'})
@@ -1217,6 +1227,8 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   //highlight artist
   function getArtists() {
     let remained = 0;
+    let checked=0;
+
     if (!isThisImage()) return;
     let initHighlight = function() {
       editArtistMetainfo();
@@ -1230,78 +1242,6 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       });
     }
 
-    let callback = function(r) {
-      let x = InfernoAddElem('div',{innerHTML:r.responseText,style:{display:'none'}},[]);
-      let exit = function() {
-
-      };
-      for (let i=0; i<x.querySelectorAll('.tag-info__more strong').length; i++) {
-        let acx = x.querySelectorAll('.tag-info__more strong')[i];
-        if (acx.innerHTML == 'Associated users:') {
-          let n = acx.nextSibling.nextSibling;
-          // added already
-          if (artists.indexOf(n.innerHTML) > -1) {
-            exit();
-            return;
-          }
-
-          let ax = {
-            name:n.innerHTML,
-            isEditor:r.el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'),
-            tag:r.el.innerHTML,
-            count:parseInt(r.el.parentNode.querySelector('.tag__count').innerHTML.replace('(', ''))
-          };
-          artists.push(ax);
-          initHighlight(ax);
-          highlightArtist(document, ax);
-          if (getUser(n.innerHTML).id == 0) {
-            addUserInBase(n.innerHTML, undefined, {tags:[r.el.innerHTML]})
-          }
-          else {
-            let user = getUser(n.innerHTML);
-            addUserInBase(user.name, user.id, {tags:[r.el.innerHTML]})
-          }
-
-          //more than one user
-          while (n.nextSibling != undefined && n.nextSibling.nextSibling != undefined && n.nextSibling.nextSibling.tagName == 'A') {
-            n = n.nextSibling.nextSibling;
-            artists.push({
-              name:n.innerHTML,
-              isEditor:r.el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'),
-              tag:r.el.innerHTML,
-              count:parseInt(r.el.parentNode.querySelector('.tag__count').innerHTML.replace('(', ''))
-            });
-            initHighlight(ax);
-            highlightArtist(document, ax);
-            if (getUser(n.innerHTML).id == 0) {
-              addUserInBase(n.innerHTML, undefined, {tags:[r.el.innerHTML]})
-            }
-            else {
-              let user = getUser(n.innerHTML);
-              addUserInBase(user.name, user.id, {tags:[r.el.innerHTML]})
-            }
-          };
-          break;
-        }
-      }
-      exit();
-    };
-
-    let readyHandler = function(request) {
-      return function () {
-        if (request.readyState === 4) {
-          if (request.status === 200) return callback(request);
-          else if (request.status === 0) {
-            return false;
-          }
-          else {
-            return false;
-          }
-        }
-      };
-    };
-
-    let checked=0;
     let get = function(el) {
       let dt = parseInt(Date.now()/1000);
       if (userbase.artists[el.innerHTML] != undefined && (userbase.users[userbase.artists[el.innerHTML]].updated > parseInt(Date.now()/1000)-60*60*24*28)) {
@@ -1320,19 +1260,76 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       }
       else {
         if (checked > 1) return;
-        let req = new XMLHttpRequest();
-        req.el = el;
-        req.u = (userbase.artists[el.innerHTML] != undefined);
-        req.onreadystatechange = readyHandler(req);
-        req.open('GET', el.href);
         checked++;
-        req.send();
+
+        fetchJson('GET', el.href)
+        .then(resp => {
+          return {
+            el,
+            u:(userbase.artists[el.innerHTML] != undefined),
+            text:resp.text()
+          }
+        })
+        .then(r => {
+          let x = InfernoAddElem('div',{innerHTML:r.responseText,style:{display:'none'}},[]);
+          let exit = (() => { });
+          for (let i=0; i<x.querySelectorAll('.tag-info__more strong').length; i++) {
+            let acx = x.querySelectorAll('.tag-info__more strong')[i];
+            if (acx.innerHTML == 'Associated users:') {
+              let n = acx.nextSibling.nextSibling;
+              // added already
+              if (artists.indexOf(n.innerHTML) > -1) {
+                exit();
+                return;
+              }
+
+              let ax = {
+                name:n.innerHTML,
+                isEditor:r.el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'),
+                tag:r.el.innerHTML,
+                count:parseInt(r.el.parentNode.querySelector('.tag__count').innerHTML.replace('(', ''))
+              };
+              artists.push(ax);
+              initHighlight(ax);
+              highlightArtist(document, ax);
+              if (getUser(n.innerHTML).id == 0) {
+                addUserInBase(n.innerHTML, undefined, {tags:[r.el.innerHTML]})
+              }
+              else {
+                let user = getUser(n.innerHTML);
+                addUserInBase(user.name, user.id, {tags:[r.el.innerHTML]})
+              }
+
+              //more than one user
+              while (n.nextSibling != undefined && n.nextSibling.nextSibling != undefined && n.nextSibling.nextSibling.tagName == 'A') {
+                n = n.nextSibling.nextSibling;
+                artists.push({
+                  name:n.innerHTML,
+                  isEditor:r.el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'),
+                  tag:r.el.innerHTML,
+                  count:parseInt(r.el.parentNode.querySelector('.tag__count').innerHTML.replace('(', ''))
+                });
+                initHighlight(ax);
+                highlightArtist(document, ax);
+                if (getUser(n.innerHTML).id == 0) {
+                  addUserInBase(n.innerHTML, undefined, {tags:[r.el.innerHTML]})
+                }
+                else {
+                  let user = getUser(n.innerHTML);
+                  addUserInBase(user.name, user.id, {tags:[r.el.innerHTML]})
+                }
+              };
+              break;
+            }
+          }
+          exit();
+        });
       }
     };
 
     for (let i=0; i<document.querySelectorAll('.tag.dropdown[data-tag-category="origin"] .tag__name').length; i++) {
       let el = document.querySelectorAll('.tag.dropdown[data-tag-category="origin"] .tag__name')[i];
-      if (el.innerHTML == 'edit' || el.innerHTML == 'alternate version' || el.innerHTML == 'screencap' || el.innerHTML == 'edited screencap' || el.innerHTML == 'them\'s fightin\' herds' || el.innerHTML == 'derpibooru exclusive') continue;
+      if (!(el.innerHTML.startsWith('artist:') || el.innerHTML.startsWith('editor:') || el.innerHTML.startsWith('photographer:') || el.innerHTML.startsWith('colorist:'))) continue;
       get(el);
     }
   }
@@ -2060,7 +2057,6 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
 
     let _addGroup = function(group) {
       if (!userbase_local.groups[group]) {
-        console.log(group);
         userbase_local.groups[group] = [];
         clwrite();
         return true;
@@ -2646,6 +2642,28 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     ]), document.querySelector('.header.header--secondary .hide-mobile').firstChild);
   }
 
+  // smaller spoilers
+  function smallSpoilers() {
+    if (!ls.smallerSpoilers) return;
+    const style = `
+.block.communication .image-show-container .image-filtered {
+  max-width: 240px;
+  max-height: 240px;
+  overflow-y: scroll;
+  scrollbar-width: thin;
+  zoom: 0.75;
+}
+
+.block.communication .image-show-container .image-filtered::-webkit-scrollbar {
+  width: 6px;
+}
+
+.block.communication .image-show-container .image-filtered::-webkit-scrollbar-thumb {
+  background-color: #888;
+}`;
+    GM_addStyle(style);
+  }
+
   // contacts module
   function contacts() {
     if (document.querySelector('.js-burger-links a.header__link[href*="conversations"]') == undefined) return;
@@ -2722,14 +2740,9 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     };
 
     let removeUser = function(user) {
-      for (let i=0; i<userbase_local.friendlist.length; i++) if (user.id == userbase_local.friendlist[i]) {
-        userbase_local.friendlist.splice(i, 1);
-        break;
-      }
-      for (let i=0; i<userbase.pending.length; i++) if (user.id == userbase.pending[i]) {
-        userbase.pending.splice(i, 1);
-        break;
-      }
+      if (userbase_local.friendlist.indexOf(user.id) > -1) userbase_local.friendlist.splice(userbase_local.friendlist.indexOf(user.id), 1);
+      if (userbase.pending.indexOf(user.id) > -1) userbase.pending.splice(userbase.pending.indexOf(user.id), 1);
+
       UAwrite();
       UACLwrite();
       location.reload();
@@ -2743,7 +2756,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         InfernoAddElem('td'),
         InfernoAddElem('td'),
         InfernoAddElem('td',[
-          InfernoAddElem('a',{className:'interaction--downvote', href:'javascript://', events:{'click':() => {removeUser(user);}}},[
+          InfernoAddElem('a',{className:'interaction--downvote', href:'javascript://', events:{'click':() => removeUser(user)}},[
             InfernoAddElem('i',{className:'fa fa-trash-alt'}),
             InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Remove'})
           ])
@@ -2914,16 +2927,16 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       if (user == undefined)
         return InfernoAddElem('tr',[
           InfernoAddElem('td',[
-            InfernoAddElem('a',{innerHTML:'Name', events:{'click':function() {sortby='name';render();}}},[])
+            InfernoAddElem('a',{innerHTML:'Name', events:{'click':() => {sortby='name';render();} }},[])
           ]),
           InfernoAddElem('td',[
-            InfernoAddElem('a',{innerHTML:'ID', events:{'click':function() {sortby='id';render();}}},[])
+            InfernoAddElem('a',{innerHTML:'ID', events:{'click':() => {sortby='id';render();} }},[])
           ]),
           InfernoAddElem('td',[
-            InfernoAddElem('a',{innerHTML:'Updated', events:{'click':function() {sortby='updated';render();}}},[])
+            InfernoAddElem('a',{innerHTML:'Updated', events:{'click':() => {sortby='updated';render();} }},[])
           ]),
           InfernoAddElem('td',[
-            InfernoAddElem('a',{innerHTML:'[Auto]', events:{'click':function() {sortby='auto';render();}}},[])
+            InfernoAddElem('a',{innerHTML:'[Auto]', events:{'click':() => {sortby='auto';render();} }},[])
           ]),
           InfernoAddElem('td'),
           InfernoAddElem('td'),
@@ -2948,13 +2961,13 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
           InfernoAddElem('span',user.tags.join(', '))
         ]),
         InfernoAddElem('td',[
-          InfernoAddElem('span',user.awards?'Badges:'+user.awards.length:'')
+          InfernoAddElem('span',user.awards?'Badges: '+user.awards.length:'')
         ]),
         InfernoAddElem('td',[
           InfernoAddElem('span',{style:{whiteSpace:'nowrap'}, innerHTML:(user.commState?user.commState:' ')})
         ]),
         InfernoAddElem('td',[
-          InfernoAddElem('a',{innerHTML:'Update', events:{'click':() => {updateUser(user, () => {render()});}}})
+          InfernoAddElem('a',{innerHTML:'Update', events:{'click':() => updateUser(user, () => render())}})
         ])
       ]);
     };
@@ -3215,6 +3228,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   try {fixDupes();} catch(e) {error('fixDupes', e)};
   try {appendCustomNav();} catch(e) {error('appendCustomNav', e)};
   try {highlightFaves();} catch(e) {error('highlightFaves', e)};
+  try {smallSpoilers();} catch(e) {error('smallerSpoilers', e)};
   if (location.pathname == "/pages/api") {
     YDB();
   }
