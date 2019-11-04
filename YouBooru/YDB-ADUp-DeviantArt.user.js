@@ -101,7 +101,6 @@
     }
     catch(e) {}
 
-    console.log(document.querySelector('.dev-meta-actions:not(.patched)'));
     if (document.querySelector('.dev-meta-actions:not(.patched)')) {
       l = window.location.pathname;
       DA(i);
