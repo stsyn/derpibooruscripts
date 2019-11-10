@@ -1,45 +1,22 @@
 // ==UserScript==
-// @name     Resurrected Derp Fullscreen
-// @namespace  https://github.com/stsyn/derp-fullscreen/
-// @version    0.7.21
+// @name         Resurrected Derp Fullscreen
+// @namespace    https://github.com/stsyn/derp-fullscreen/
+// @version      0.7.22
 // @description  Make Fullscreen great again!
-// @author     St@SyaN
+// @author       stsyn
 
-// @include    *://trixiebooru.org/*
-// @include    *://derpibooru.org/*
-// @include    *://www.trixiebooru.org/*
-// @include    *://www.derpibooru.org/*
-// @include    *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/*
-// @include    *://*.orzgs6djmvrg633souxg64th.*.*/*
-// @include    *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
-// @include    *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
+// @include      /http[s]*://(www.|)(trixie|derpi)booru.org/*/
+// @exclude      /http[s]*://(www.|)(trixie|derpi)booru.org/adverts/*/
+// @exclude      /http[s]*://(www.|)(trixie|derpi)booru.org/*.json/
 
-// @exclude    *://trixiebooru.org/adverts/*
-// @exclude    *://derpibooru.org/adverts/*
-// @exclude    *://www.trixiebooru.org/adverts/*
-// @exclude    *://www.derpibooru.org/adverts/*
-// @exclude    *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/adverts/*
-// @exclude    *://*.orzgs6djmvrg633souxg64th.*.*/adverts/*
-// @exclude    *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
-// @exclude    *://*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
-
-// @exclude    *://trixiebooru.org/*.json
-// @exclude    *://derpibooru.org/*.json
-// @exclude    *://www.trixiebooru.org/*.json
-// @exclude    *://www.derpibooru.org/*.json
-// @exclude    *://*.o53xo.orzgs6djmvrg633souxg64th.*.json
-// @exclude    *://*.orzgs6djmvrg633souxg64th.*.json
-// @exclude    *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.json
-// @exclude    *://*.mrsxe4djmjxw64tvfzxxezy.*.json
-
-// @require    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/Fullscreen.user.js
-// @updateURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/Fullscreen.user.js
+// @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/Fullscreen.user.js
 
-// @grant    GM_addStyle
+// @grant        GM_addStyle
 
-// @run-at     document-start
+// @run-at       document-start
 // ==/UserScript==
 
 
@@ -1429,12 +1406,9 @@ color: #777;
     popUps.down = addElem('div', {id:'_fs_down', className:'_fs_down'}, document.body);
     popUps.downBack = addElem('div', {id:'_fs_down_back', className:'_fs_down_back tag', dataset:{tagCategory:settings.style}}, popUps.down);
     popUps.downContainer = addElem('div', {id:'_fs_down_container', className:'_fs_down_container'}, popUps.down);
-    objects.mainButton = InfernoAddElem('a', {id:'_fs_main', events:[{
-      t:'click',
-      f:function() {
-        callPopup('main');
-      }
-    }]}, [
+    objects.mainButton = InfernoAddElem('a', {id:'_fs_main', events:{
+      'click':() => callPopup('main')
+    }}, [
       InfernoAddElem('span', {}, [
         InfernoAddElem('i', {className:'fa', innerHTML:'\uf0c9'}, []),
         objects.mainButtonNotify = InfernoAddElem('span', {}, [])
@@ -1464,15 +1438,15 @@ color: #777;
     popUps.main.appendChild(document.querySelector('nav.header.header--secondary'));
     ChildsAddElem('div', {className:'block__header'}, popUps.main, [
       InfernoAddElem('span',{innerHTML:'Image Tools:',style:{marginLeft:'1em'}}, []),
-      InfernoAddElem('a',{className:'js-up', events:[{t:'click',f:function() {
-        document.querySelector('.image-metabar .js-up').click();
-      }}]}, [
+      InfernoAddElem('a',{className:'js-up', events:{'click':() =>
+        document.querySelector('.image-metabar .js-up').click()
+      }}, [
         InfernoAddElem('i',{className:'fa fa-chevron-up'},[]),
         InfernoAddElem('span',{innerHTML:' Find'},[])
       ]),
-      InfernoAddElem('a',{className:'js-random', events:[{t:'click',f:function() {
-        document.querySelector('.image-metabar .js-rand').click();
-      }}]}, [
+      InfernoAddElem('a',{className:'js-random', events:{'click':() =>
+        document.querySelector('.image-metabar .js-rand').click()
+      }}, [
         InfernoAddElem('i',{className:'fa fa-random'},[]),
         InfernoAddElem('span',{innerHTML:' Random'},[])
       ]),
@@ -1513,8 +1487,10 @@ color: #777;
       //objects.dcontainer.addEventListener("click",disgustingLoadedImgFetch);
       objects.dcontainer.addEventListener("wheel", wheelListener);
       advancedTagTools();
-      pub.isVideo = JSON.parse(objects.icontainer.dataset.uris).full.split('.').pop() == 'webm';
-      pub.gif = JSON.parse(objects.icontainer.dataset.uris).full.split('.').pop() == 'gif';
+      const extension = JSON.parse(objects.icontainer.dataset.uris).full.split('.').pop();
+      pub.isVideo = extension == 'webm';
+      pub.gif = extension == 'gif';
+      pub.isSvg = document.querySelector('.image-size').innerText.split(' ')[1] == 'SVG';
       if ((pub.gif || pub.isVideo) && settings.singleMode) {
         let x = JSON.parse(objects.icontainer.dataset.uris);
         for (let i in x) {
@@ -1522,7 +1498,19 @@ color: #777;
         }
         objects.icontainer.dataset.uris = JSON.stringify(x);
         objects.dcontainer.dataset.uris = JSON.stringify(x);
+        console.log(objects.image);
         // я устал с этим скриптом бороться :(
+      }
+
+      if (pub.isSvg) {
+        let x = JSON.parse(objects.icontainer.dataset.uris);
+        const full = x.full.replace(/\.png$/, '.svg');
+        for (let i in x) {
+          x[i] = full;
+        }
+        objects.icontainer.dataset.uris = JSON.stringify(x);
+        objects.dcontainer.dataset.uris = JSON.stringify(x);
+        objects.image.src = full;
       }
     }
     else {
