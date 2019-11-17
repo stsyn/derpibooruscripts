@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.23
+// @version      0.7.24
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -837,30 +837,39 @@ color: #777;
     }
 
     if (pub.scaled != 'false') {
+      let bufferWidth = objects.image.style.width, bufferHeight = objects.image.style.height,
+          bufferTop = objects.image.style.marginTop, bufferLeft = objects.image.style.marginLeft;
       if (!pub.wide) {
-        objects.image.style.width = forced?window.innerWidth+'px':'100vw';
+        bufferWidth = forced?window.innerWidth+'px':'100vw';
         pub.zoom = window.innerWidth/objects.icontainer.dataset.width;
-        objects.image.style.height = forced?(window.innerWidth/objects.icontainer.dataset.aspectRatio)+'px':'auto';
+        bufferHeight = forced?(window.innerWidth/objects.icontainer.dataset.aspectRatio)+'px':'auto';
         let aspectRatio = window.innerWidth / window.innerHeight;
         let zoomRatio = objects.icontainer.dataset.width / window.innerWidth;
 
-        objects.image.style.marginLeft = '0';
-        objects.image.style.marginTop = (window.innerHeight - (objects.icontainer.dataset.height / zoomRatio)) / 2+'px';
+        bufferLeft = '0';
+        bufferTop = (window.innerHeight - (objects.icontainer.dataset.height / zoomRatio)) / 2+'px';
 
         if (pub.isVideo && pub.scaled == 'true') {
-          objects.image.style.marginTop = '0';
+          bufferTop = '0';
         }
       }
       else {
         let aspectRatio = window.innerWidth / window.innerHeight;
         let zoomRatio = objects.icontainer.dataset.height / window.innerHeight;
 
-        objects.image.style.marginTop = '0';
-        objects.image.style.height = forced?window.innerHeight+'px':'100vh';
+        bufferTop = '0';
+        bufferHeight = forced?window.innerHeight+'px':'100vh';
         pub.zoom = window.innerHeight/objects.icontainer.dataset.height;
-        objects.image.style.width = forced?(window.innerHeight*objects.icontainer.dataset.aspectRatio)+'px':'auto';
+        bufferWidth = forced?(window.innerHeight*objects.icontainer.dataset.aspectRatio)+'px':'auto';
 
-        objects.image.style.marginLeft = (window.innerWidth - (objects.icontainer.dataset.width / zoomRatio)) / 2+'px';
+        bufferLeft = (window.innerWidth - (objects.icontainer.dataset.width / zoomRatio)) / 2+'px';
+      }
+      if (bufferWidth != objects.image.style.width || bufferHeight != objects.image.style.height ||
+          bufferTop != objects.image.style.marginTop || bufferLeft != objects.image.style.marginLeft) {
+        objects.image.style.width = bufferWidth;
+        objects.image.style.height = bufferHeight;
+        objects.image.style.marginTop = bufferTop;
+        objects.image.style.marginLeft = bufferLeft;
       }
     }
   }
@@ -941,23 +950,6 @@ color: #777;
     ac.style.top = orig.getBoundingClientRect().bottom + 'px';
   }
 
-  function checkMargin() {
-    let de = document.documentElement;
-    let scrWidth = de.clientWidth,scrHeight = de.clientHeight;
-    if (pub.dta === 0) return;
-    if (!isNaN(parseInt(objects.image.style.marginTop))) {
-      if (parseInt(objects.image.style.marginTop)<=0) {
-        objects.image.style.marginTop = -(pub.zoom*objects.icontainer.dataset.height*(scrHeight/2-parseInt(objects.image.style.marginTop))/(objects.icontainer.dataset.height*(pub.zoom-pub.dta))-scrHeight/2)+'px';
-      }
-    }
-    if (!isNaN(parseInt(objects.image.style.marginLeft))) {
-      if (parseInt(objects.image.style.marginLeft)<=0) {
-        objects.image.style.marginLeft = -(pub.zoom*objects.icontainer.dataset.width*(scrWidth/2-parseInt(objects.image.style.marginLeft))/(objects.icontainer.dataset.width*(pub.zoom-pub.dta))-scrWidth/2)+'px';
-      }
-    }
-    pub.dta=0;
-  }
-
   function zeroZoom() {
     let de = document.documentElement;
     pub.zoom = pub.defzoom;
@@ -996,6 +988,8 @@ color: #777;
     if (pub.zoom < 0.02) pub.zoom = 0.02;
     addScrolls();
     let xScale = de.clientWidth/(objects.icontainer.dataset.width*pub.zoom), yScale = de.clientHeight/(objects.icontainer.dataset.height*pub.zoom);
+
+
     if (!settings.singleMode) {
       if (isNaN(parseInt(objects.image.style.marginTop))) {
         initalZoom(false);
@@ -1004,25 +998,45 @@ color: #777;
         initalZoom(true);
       }
     }
-    objects.image.style.height=objects.icontainer.dataset.height*pub.zoom+'px';
-    objects.image.style.width=objects.icontainer.dataset.width*pub.zoom+'px';
+
+    let bufferWidth = parseInt(objects.image.style.width), bufferHeight = parseInt(objects.image.style.height),
+        bufferTop = parseInt(objects.image.style.marginTop), bufferLeft = parseInt(objects.image.style.marginLeft);
+
+    bufferHeight = objects.icontainer.dataset.height*pub.zoom;
+    bufferWidth = objects.icontainer.dataset.width*pub.zoom;
     if (settings.singleMode && !(pub.isVideo || pub.gif)) {
       let isWide = (objects.icontainer.dataset.width/objects.icontainer.dataset.height > 1);
       let newsrc;
       if (isWide) {
-        if (parseInt(objects.image.style.width) > 1280 && objects.icontainer.dataset.width > 1280) newsrc = JSON.parse(objects.icontainer.dataset.uris).full;
+        if (bufferWidth > 1280 && objects.icontainer.dataset.width > 1280) newsrc = JSON.parse(objects.icontainer.dataset.uris).full;
         else newsrc = JSON.parse(objects.icontainer.dataset.uris).large;
       }
       else {
-        if ((parseInt(objects.image.style.width) > 1280 && objects.icontainer.dataset.width > 1024) || (parseInt(objects.image.style.height) > 4096 && objects.icontainer.dataset.height > 4096)) newsrc = JSON.parse(objects.icontainer.dataset.uris).full;
+        if ((bufferWidth > 1280 && objects.icontainer.dataset.width > 1024) || (bufferHeight > 4096 && objects.icontainer.dataset.height > 4096)) newsrc = JSON.parse(objects.icontainer.dataset.uris).full;
         else newsrc = JSON.parse(objects.icontainer.dataset.uris).tall;
       }
-      if (objects.image.src != newsrc) objects.image.src = newsrc;
+      if (objects.image.src.replace(/http(s|):/, '') != newsrc) {
+        objects.image.src = newsrc;
+      }
     }
 
-    checkMargin();
+    if (pub.dta !== 0) {
+      let scrWidth = de.clientWidth,scrHeight = de.clientHeight;
+      if (!isNaN(parseInt(bufferTop))) {
+        if (bufferTop <= 0) {
+          bufferTop = -(pub.zoom*objects.icontainer.dataset.height*(scrHeight/2-bufferTop)/(objects.icontainer.dataset.height*(pub.zoom-pub.dta))-scrHeight/2);
+        }
+      }
+      if (!isNaN(parseInt(bufferLeft))) {
+        if (bufferLeft <= 0) {
+          bufferLeft = -(pub.zoom*objects.icontainer.dataset.width*(scrWidth/2-bufferLeft)/(objects.icontainer.dataset.width*(pub.zoom-pub.dta))-scrWidth/2);
+        }
+      }
+      pub.dta=0;
+    }
+
     if (objects.icontainer.dataset.height*pub.zoom < de.clientHeight) {
-      objects.image.style.marginTop = (de.clientHeight - objects.icontainer.dataset.height*pub.zoom) / 2+'px';
+      bufferTop = (de.clientHeight - objects.icontainer.dataset.height*pub.zoom) / 2;
       objects.scroll_rgt.style.display = 'none';
     }
     else {
@@ -1030,17 +1044,17 @@ color: #777;
       let vx = de.clientHeight*4/10;
       if (pub.mouseY < vx) {
         let v = 1-pub.mouseY/vx;
-        objects.image.style.marginTop = (isNaN(parseInt(objects.image.style.marginTop))?0:parseInt(objects.image.style.marginTop))+settings.scrollSpeed*v*6+'px';
+        bufferTop = (isNaN(bufferTop)? 0 :bufferTop) + settings.scrollSpeed*v*6;
       }
       if (pub.mouseY > de.clientHeight*6/10) {
         let v = (pub.mouseY-de.clientHeight*6/10)/vx;
-        objects.image.style.marginTop = (isNaN(parseInt(objects.image.style.marginTop))?0:parseInt(objects.image.style.marginTop))-settings.scrollSpeed*v*6+'px';
+        bufferTop = (isNaN(bufferTop)? 0 :bufferTop)-settings.scrollSpeed*v*6;
       }
 
-      if (parseInt(objects.image.style.marginTop)>0) objects.image.style.marginTop = '0px';
-      if (-parseInt(objects.image.style.marginTop)>=(objects.icontainer.dataset.height*pub.zoom-de.clientHeight)) objects.image.style.marginTop = -(objects.icontainer.dataset.height*pub.zoom-de.clientHeight)+1+'px';
+      if (bufferTop>0) bufferTop = 0;
+      if (-bufferTop>=(objects.icontainer.dataset.height*pub.zoom-de.clientHeight)) bufferTop = -(objects.icontainer.dataset.height*pub.zoom-de.clientHeight)+1;
       if (singleDefSize) {
-        objects.image.style.marginTop = '0px';
+        bufferTop = 0;
         objects.scroll_rgt.style.display = 'none';
       }
     }
@@ -1050,31 +1064,45 @@ color: #777;
       let vx = de.clientWidth*4/10;
       if (pub.mouseX < vx) {
         let v = 1-pub.mouseX/vx;
-        objects.image.style.marginLeft = (isNaN(parseInt(objects.image.style.marginLeft))?0:parseInt(objects.image.style.marginLeft))+settings.scrollSpeed*v*6+'px';
+        bufferLeft = (isNaN(bufferLeft)?0:bufferLeft)+settings.scrollSpeed*v*6;
       }
       if (pub.mouseX > de.clientWidth*6/10) {
         let v = (pub.mouseX-de.clientWidth*6/10)/vx;
-        objects.image.style.marginLeft = (isNaN(parseInt(objects.image.style.marginLeft))?0:parseInt(objects.image.style.marginLeft))-settings.scrollSpeed*v*6+'px';
+        bufferLeft = (isNaN(bufferLeft)?0:bufferLeft)-settings.scrollSpeed*v*6;
       }
 
-      if (parseInt(objects.image.style.marginLeft)>0) objects.image.style.marginLeft = '0px';
-      if (-parseInt(objects.image.style.marginLeft)>=(objects.icontainer.dataset.width*pub.zoom-de.clientWidth)) objects.image.style.marginLeft = -(objects.icontainer.dataset.width*pub.zoom-de.clientWidth)+1+'px';
+      if (bufferLeft>0) bufferLeft = 0;
+      if (-bufferLeft>=(objects.icontainer.dataset.width*pub.zoom-de.clientWidth)) bufferLeft = -(objects.icontainer.dataset.width*pub.zoom-de.clientWidth)+1;
       if (singleDefSize) {
-        objects.image.style.marginLeft = '0px';
+        bufferLeft = 0;
         objects.scroll_bot.style.display = 'none';
       }
     }
     else
     {
-      objects.image.style.marginLeft = (de.clientWidth - objects.icontainer.dataset.width*pub.zoom) / 2+'px';
+      bufferLeft = (de.clientWidth - objects.icontainer.dataset.width*pub.zoom) / 2;
       objects.scroll_bot.style.display = 'none';
     }
-    objects.scroll_bot.style.left = -(isNaN(parseInt(objects.image.style.marginLeft))?0:parseInt(objects.image.style.marginLeft))*xScale+'px';
-    objects.scroll_rgt.style.top = -(isNaN(parseInt(objects.image.style.marginTop))?0:parseInt(objects.image.style.marginTop))*yScale+'px';
+    objects.scroll_bot.style.left = -(isNaN(parseInt(bufferLeft))?0:parseInt(bufferLeft))*xScale+'px';
+    objects.scroll_rgt.style.top = -(isNaN(parseInt(bufferTop))?0:parseInt(bufferTop))*yScale+'px';
+
+    bufferWidth = parseInt(bufferWidth) + 'px';
+    bufferHeight = parseInt(bufferHeight) + 'px';
+    bufferTop = parseInt(bufferTop) + 'px';
+    bufferLeft = parseInt(bufferLeft) + 'px';
+
+    if (bufferWidth != objects.image.style.width || bufferHeight != objects.image.style.height ||
+          bufferTop != objects.image.style.marginTop || bufferLeft != objects.image.style.marginLeft) {
+      objects.image.style.width = bufferWidth;
+      objects.image.style.height = bufferHeight;
+      objects.image.style.marginTop = bufferTop;
+      objects.image.style.marginLeft = bufferLeft;
+    }
   }
 
   function addScrolls() {
     if (pub.scaled != 'false' && !settings.singleMode) return;
+    if (document.getElementById('_fs_scroll_bot')) return;
     let de = document.documentElement;
     let scrWidth = de.clientWidth, xScale = de.clientWidth/(objects.icontainer.dataset.width*pub.zoom);
     let scrHeight = de.clientHeight, yScale = de.clientHeight/(objects.icontainer.dataset.height*pub.zoom);
@@ -1132,7 +1160,7 @@ color: #777;
       }
       else {
         if (pub.static>0) {
-          pub.static =0;
+          pub.static = 0;
           state.hidden = false;
           pub.hidden = false;
           write();
