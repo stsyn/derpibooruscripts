@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.2.0
+// @version      0.2.1
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
@@ -79,6 +79,12 @@
 
     target.classList.add('patched');
   }
+  
+  function DA404() {
+    const code = parseInt(location.href.split('-').pop()).toString(36);
+    document.getElementById('deviantART-v5').classList.add('patched');
+    document.getElementById('description').appendChild(InfernoAddElem('a', {href:'https://fav.me/d'+code, innerHTML:'https://fav.me/d'+code}));
+  }
 
   function DA(p) {
     dunno = p;
@@ -138,7 +144,11 @@
     }
     catch(e) {}
 
-    if (document.querySelector('.dev-meta-actions:not(.patched)')) {
+    if (document.querySelector('#deviantART-v5.error-404:not(.patched)')) {
+      l = window.location.pathname;
+      DA404();
+    }
+    else if (document.querySelector('.dev-meta-actions:not(.patched)')) {
       l = window.location.pathname;
       DA(i);
     } else if (document.querySelector('._3fcE7._15yPL.fXGZA.WikyH:not(.patched)')) {
