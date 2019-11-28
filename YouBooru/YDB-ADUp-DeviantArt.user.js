@@ -118,7 +118,7 @@
       if (isSourcePng) {
         dlink = dlink.replace(/(https:\/\/[0-9a-z\-\.]+\/f\/[0-9a-f\-]+\/[0-9a-z\-]+\.png\/v1\/fill\/[0-9a-z_,]+\/[0-9a-z_\-]+)(\.jpg)(.*)/,'$1.png$3');
       } else {
-        dlink = dlink.replace(/(https:\/\/[0-9a-z\-\.]+\/f\/[0-9a-f\-]+\/[0-9a-z\-]+\.jpg\/v1\/fill\/w_[0-9]+,h_[0-9]+,q_)([0-9]+)(,[a-z]+\/[a-z0-6_\-]+\.jpg.*)/,'$1100$3');
+        dlink = dlink.replace(/(https:\/\/[0-9a-z\-\.]+\/f\/[0-9a-f\-]+\/[0-9a-z\-]+\.jpg\/v1\/fill\/w_[0-9]+,h_[0-9]+,q_)([0-9]+)(,[a-z]+\/[a-z0-9_\-]+\.jpg.*)/,'$1100$3');
       }
       spawn(dlink, 'failsafe');
 
