@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.2.3
+// @version      0.2.4
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
@@ -131,7 +131,7 @@
       spawn(dlink, 'intermediary');
       
       // leak
-      const code = Array.from(document.querySelectorAll(".embed-code[value*=\"http://fav.me\"]")).pop().value.split("/").pop();
+      const code = parseInt(location.href.split('-').pop()).toString(36);
       dlink = `http://orig01.deviantart.net/x_by_x-${code}.png`;
       spawn(dlink, "leak");
     }
