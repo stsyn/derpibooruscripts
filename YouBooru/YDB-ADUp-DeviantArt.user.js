@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.2.4
+// @version      0.2.5
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
@@ -81,9 +81,12 @@
   }
   
   function DA404() {
-    const code = parseInt(location.href.split('-').pop()).toString(36);
+    let code = parseInt(location.href.split('-').pop()).toString(36);
+    if (code == 'NaN') {
+      code = parseInt(location.href.split('/').pop()).toString(36);
+    }
     document.getElementById('deviantART-v5').classList.add('patched');
-    document.getElementById('description').appendChild(InfernoAddElem('a', {href:'https://fav.me/d'+code, innerHTML:'https://fav.me/d'+code}));
+    document.getElementById('description').appendChild(InfernoAddElem('a', {href:`http://orig01.deviantart.net/x_by_x-d${code}.png`, innerHTML:'https://fav.me/d'+code}));
   }
 
   function DA(p) {
@@ -132,7 +135,7 @@
       
       // leak
       const code = parseInt(location.href.split('-').pop()).toString(36);
-      dlink = `http://orig01.deviantart.net/x_by_x-${code}.png`;
+      dlink = `http://orig01.deviantart.net/x_by_x-d${code}.png`;
       spawn(dlink, "leak");
     }
 
