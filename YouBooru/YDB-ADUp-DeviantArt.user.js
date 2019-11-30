@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.2.2
+// @version      0.2.3
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
@@ -129,7 +129,11 @@
         dlink = o.dataset.superFullImg.replace(/\/v1\/fill.*$/, '').replace('.com/f/', '.com/intermediary/f/').replace(/\?token=.*$/, '');
       }
       spawn(dlink, 'intermediary');
-
+      
+      // leak
+      const code = Array.from(document.querySelectorAll(".embed-code[value*=\"http://fav.me\"]")).pop().value.split("/").pop();
+      dlink = `http://orig01.deviantart.net/x_by_x-${code}.png`;
+      spawn(dlink, "leak");
     }
 
     if (document.querySelector('.dev-description .text.block') != undefined) text = '[bq]'+document.querySelector('.dev-description .text.block').innerText+'[/bq]';
