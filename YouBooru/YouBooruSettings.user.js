@@ -2,23 +2,9 @@
 // @name         YourBooru:Settings
 // @namespace    http://tampermonkey.net/
 
-// @include      *://trixiebooru.org/*
-// @include      *://derpibooru.org/*
-// @include      *://www.trixiebooru.org/*
-// @include      *://www.derpibooru.org/*
-// @include      *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/*
-// @include      *://*.orzgs6djmvrg633souxg64th.*.*/*
-// @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
-// @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
-
-// @exclude      *://trixiebooru.org/adverts/*
-// @exclude      *://derpibooru.org/adverts/*
-// @exclude      *://www.trixiebooru.org/adverts/*
-// @exclude      *://www.derpibooru.org/adverts/*
-// @exclude      *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/adverts/*
-// @exclude      *://*.orzgs6djmvrg633souxg64th.*.*/adverts/*
-// @exclude      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
-// @exclude      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
+// @include      /http[s]*:\/\/(www\.|philomena\.)(trixie|derpi)booru.org\/.*/
+// @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/adverts\/.*/
+// @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*\.json.*/
 
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/SettingsData0.js
@@ -26,7 +12,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruCSRFPatch.lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.28
+// @version      0.9.29
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        unsafeWindow
@@ -38,7 +24,7 @@
   'use strict';
 
   let scriptId = 'settings';
-  let internalVersion = '0.9.28';
+  let internalVersion = '0.9.29';
   try {if (unsafeWindow._YDB_public.settings[scriptId] != undefined) return;}
   catch(e){}
   let version = GM_info.script.version;
@@ -773,7 +759,7 @@
     modules[s2.container] = {name:s2.name, container:s2.container, changed:false, saved:ss, options:s2.s, onChanges:s2.onChanges};
     if (s2.s != undefined && editCont != undefined) {
       try {renderCustom(s2, editCont, modules[s2.container]);}
-      catch(e) {console.log('Error rendering '+k+'. '+e);}
+      catch(e) {console.log('Error rendering '+k+'. '+e); console.trace(e);}
     }
 
     if (listCont != undefined && !s2.hidden) addElem(s2.link!=undefined?'a':'div', {href:s2.link!=undefined?s2.link:'', style:{display:'block'}, className:'block__content alternating-color', innerHTML:s2.name+' v. '+s2.version}, listCont);
