@@ -15,10 +15,14 @@ function createElement(tag, values, children) {
 
     var classes = tag.split('.');
     tag = classes.shift();
-    values.className = (values.className || '') + ' ' + classes.join(' ');
+    values.className = (values.className ? values.className + ' ' : '') + classes.join(' ');
     var id = tag.split('#');
     tag = id.shift();
-    values.id = id.shift() || values.id;
+    id = id.shift();
+
+    if (id) {
+        values.id = id;
+    }
 
     element = document.createElement(tag);
 
