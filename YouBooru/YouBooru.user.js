@@ -566,7 +566,6 @@
         }
       }
     }
-    console.log();
     if (!hasSpoiler) return;
     let spoilerInfo = iContainer.querySelector('.media-box__overlay.js-spoiler-info-overlay');
     spoilerInfo.classList.remove('hidden');
@@ -599,7 +598,6 @@
 
       spoiler.style.left = '0';
       spoiler.style.top = '0';
-      console.log(data.spoilerType, event);
       if (data.spoilerType != 'static') {
         let ac = data.spoilerType;
         if (ac == 'hover') ac = 'mouseenter';
