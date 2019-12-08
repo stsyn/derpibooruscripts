@@ -13,6 +13,13 @@ function createElement(tag, values, children) {
         values = {};
     }
 
+    var classes = tag.split('.');
+    tag = classes.shift();
+    values.className = (values.className || '') + ' ' + classes.join(' ');
+    var id = tag.split('#');
+    tag = id.shift();
+    values.id = id.shift() || values.id;
+
     element = document.createElement(tag);
 
     var applyNotAsAttribute = ['events', 'dataset', 'innerHTML', 'checked', 'disabled', 'value', 'selected', 'className', 'style'];
