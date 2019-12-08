@@ -2,10 +2,11 @@
 
 let updateCSRF = function() {};
 (function() {
+  let everythingLost = false;
   let prevented = true;
   let specific = {_all:true};
   function preventWrongCSRF(e, c) {
-    if (e && !e.custom) {
+    if (e && !e.custom && !everythingLost) {
       e.preventDefault();
       e.stopPropagation();
     }
@@ -23,6 +24,7 @@ let updateCSRF = function() {};
           }
         }
         catch (err) {
+          everythingLost = true;
           if (!token) console.log(`No token :( - ${err}`);
           else if (!token2) console.log(`No token2 ${c.form.action} :( - ${err}`);
         }
