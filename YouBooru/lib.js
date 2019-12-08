@@ -85,7 +85,7 @@ function fetchJson(verb, endpoint, body) {
     credentials: 'same-origin',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-Token': unsafeWindow.booru.csrfToken,
+      'X-CSRF-Token': ((unsafeWindow || window).booru && (unsafeWindow || window).booru.csrfToken) || '',
     },
   };
 
