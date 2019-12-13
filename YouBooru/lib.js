@@ -94,5 +94,5 @@ function fetchJson(verb, endpoint, body) {
     data.body = JSON.stringify(body);
   }
 
-  return fetch(endpoint, data).then(response => response.json());
+  return fetch(endpoint, data);
 }
