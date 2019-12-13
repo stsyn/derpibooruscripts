@@ -479,7 +479,8 @@
 
   function fetchFirstSeen(id) {
     fetchJson('GET', '/'+id+'.json')
-    .then(function(response) {
+    .then(response => response.json())
+    .then(response => {
       first_seen = response.first_seen_at;
       preparam.first_seen_at = first_seen;
     });
