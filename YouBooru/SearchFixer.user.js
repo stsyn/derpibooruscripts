@@ -13,7 +13,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.4.12
+// @version      0.4.13
 // @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
 // @author       stsyn
 
@@ -80,7 +80,7 @@
     };
   };
   let galleryLastImageId;
-
+  
   const sfToFunction = {
     comments: 'comments_count',
     score: 'score',
@@ -461,7 +461,7 @@
 
   // find
   function compileXQuery(page, pp) {
-    const sff = sfToFunction[myURL.params.sf];
+    const sff = sfToFunction[myURL.params.sf] || (myURL.params.sf && myURL.params.sf.startsWith('gallery_id'));
     const sf = sff ? myURL.params.sf : 'created_at';
 
     debug('SSF','Pagination query: page '+page+', query '+myURL.params.q+', sort '+sf,0);
@@ -479,8 +479,7 @@
 
   function fetchFirstSeen(id) {
     fetchJson('GET', '/'+id+'.json')
-    .then(response => response.json())
-    .then(response => {
+    .then(function(response) {
       first_seen = response.first_seen_at;
       preparam.first_seen_at = first_seen;
     });
@@ -663,7 +662,6 @@
   if (settings.first_seen_at === undefined) settings.first_seen_at = true;
   register();
   let myURL = parseURL(location.href);
-  if (myURL.params.sf && myURL.params.sf.startsWith('gallery_id')) return;
   let id = parseInt(myURL.path.slice(1));
 
   if (isNaN(id)) {
@@ -673,7 +671,7 @@
 
   pushQuery(!isNaN(id));
   if (!isNaN(id) && settings.pregain) preparam = gainParams(true);
-
+  
   if (
     !philomena &&
     !isNaN(id) &&
