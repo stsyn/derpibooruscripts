@@ -29,13 +29,12 @@ let updateCSRF = function() {};
           else if (!token2) console.log(`No token2 ${c.form.action} :( - ${err}`);
         }
         if (token) {
-          if ('unsafeWindow' in window) window.unsafeWindow.booru.csrfToken = token;
-          if (window.booru) window.booru.csrfToken = token;
+          (window.unsafeWindow || window).booru.csrfToken = token;
           if (document.querySelector('meta[name="csrf-token"]')) document.querySelector('meta[name="csrf-token"]').content = token;
           if (c && token2) c.value = token2;
           if (e && !e.custom) {
             prevented = true;
-			if (c) specific[c.form.action] = true;
+            if (c) specific[c.form.action] = true;
             e.target.click();
             setTimeout(() => { prevented = false; specific[c.form.action] = false}, 30000);
           }
