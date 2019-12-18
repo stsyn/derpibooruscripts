@@ -1,30 +1,17 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.8.3
+// @version      0.8.4
 // @description  Some UI tweaks and more
 // @author       stsyn
 
-// @include      *://trixiebooru.org/*
-// @include      *://derpibooru.org/*
-// @include      *://www.trixiebooru.org/*
-// @include      *://www.derpibooru.org/*
-// @include      *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/*
-// @include      *://*.orzgs6djmvrg633souxg64th.*.*/*
-// @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/*
-// @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/*
-
-// @exclude      *://trixiebooru.org/adverts/*
-// @exclude      *://derpibooru.org/adverts/*
-// @exclude      *://www.trixiebooru.org/adverts/*
-// @exclude      *://www.derpibooru.org/adverts/*
-// @exclude      *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/adverts/*
-// @exclude      *://*.orzgs6djmvrg633souxg64th.*.*/adverts/*
-// @exclude      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
-// @exclude      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
+// @include      /http[s]*:\/\/(www\.|philomena\.)(trixie|derpi)booru.org\/.*/
+// @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/adverts\/.*/
+// @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*\.json.*/
 
 // @require      https://raw.githubusercontent.com/blueimp/JavaScript-MD5/master/js/md5.min.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagDB0.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/badgesDB0.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0UW.lib.js
@@ -130,54 +117,6 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     catch(e) {setTimeout(_getTagDB,500);}
   }
   _getTagDB();
-
-  //probably that should be in library...
-  function parseURL(url) {
-    var a = document.createElement('a');
-    a.href = url;
-    return {
-      source: url,
-      protocol: a.protocol.replace(':',''),
-      host: a.hostname,
-      port: a.port,
-      query: a.search,
-      params: (function(){
-        var ret = {},
-            seg = a.search.replace(/^\?/,'').split('&'),
-            len = seg.length, i = 0, s;
-        for (;i<len;i++) {
-          if (!seg[i]) { continue; }
-          s = seg[i].split('=');
-          ret[s[0]] = s[1];
-        }
-        return ret;
-      })(),
-      file: (a.pathname.match(/\/([^\/?#]+)$/i) || [,''])[1],
-      hash: a.hash.replace('#',''),
-      path: a.pathname.replace(/^([^\/])/,'/$1'),
-      relative: (a.href.match(/tps?:\/\/[^\/]+(.+)/) || [,''])[1],
-      segments: a.pathname.replace(/^\//,'').split('/')
-    };
-  }
-
-  function fetchJson(verb, endpoint, body) {
-    if (!endpoint.startsWith('https://'+location.hostname)) endpoint = 'https://'+location.hostname+endpoint;
-    const data = {
-      method: verb,
-      credentials: 'same-origin',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': unsafeWindow.booru.csrfToken,
-      },
-    };
-
-    if (body) {
-      body._method = verb;
-      data.body = JSON.stringify(body);
-    }
-
-    return fetch(endpoint, data);
-  }
 
   function write(ls2) {
     localStorage._ydb_tools = JSON.stringify(ls2);
@@ -879,7 +818,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
           document.getElementById('container').insertBefore(InfernoAddElem('div',{className:'flash flash--warning', innerHTML:'Invalid or outdated token!'}),document.getElementById('content'));
           break;
         }
-        if (document.getElementsByClassName('js-resizable-media-container')[0] != undefined) unspoil(document.getElementsByClassName('js-resizable-media-container')[0]);
+        if (document.getElementsByClassName('js-resizable-media-container')[0] != undefined) setTimeout(() => unspoil(document.getElementsByClassName('js-resizable-media-container')[0]), 100);
         else if (document.getElementsByClassName('image-show-container')[0] != undefined) unspoil(document.getElementsByClassName('image-show-container')[0]);
 
       }
@@ -1225,7 +1164,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   }
 
   //highlight artist
-  function getArtists() {
+    function getArtists() {
     let remained = 0;
     let checked=0;
 
@@ -1263,18 +1202,17 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         checked++;
 
         fetchJson('GET', el.href)
-        .then(resp => {
-          return {
+        .then(resp => resp.text())
+        .then(rtxt => {
+          const r = {
             el,
-            u:(userbase.artists[el.innerHTML] != undefined),
-            text:resp.text()
-          }
-        })
-        .then(r => {
-          let x = InfernoAddElem('div',{innerHTML:r.responseText,style:{display:'none'}},[]);
-          let exit = (() => { });
+            u: (userbase.artists[el.innerHTML] != undefined),
+            text: rtxt
+          };
+          const x = createElement('div', r.text);
+          const exit = (() => { });
           for (let i=0; i<x.querySelectorAll('.tag-info__more strong').length; i++) {
-            let acx = x.querySelectorAll('.tag-info__more strong')[i];
+            const acx = x.querySelectorAll('.tag-info__more strong')[i];
             if (acx.innerHTML == 'Associated users:') {
               let n = acx.nextSibling.nextSibling;
               // added already
@@ -1284,10 +1222,10 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
               }
 
               let ax = {
-                name:n.innerHTML,
-                isEditor:r.el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'),
-                tag:r.el.innerHTML,
-                count:parseInt(r.el.parentNode.querySelector('.tag__count').innerHTML.replace('(', ''))
+                name: n.innerHTML,
+                isEditor: r.el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'),
+                tag: r.el.innerHTML,
+                count: parseInt(r.el.parentNode.querySelector('.tag__count').innerHTML.substring(1))
               };
               artists.push(ax);
               initHighlight(ax);
@@ -1303,11 +1241,11 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
               //more than one user
               while (n.nextSibling != undefined && n.nextSibling.nextSibling != undefined && n.nextSibling.nextSibling.tagName == 'A') {
                 n = n.nextSibling.nextSibling;
-                artists.push({
-                  name:n.innerHTML,
-                  isEditor:r.el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'),
-                  tag:r.el.innerHTML,
-                  count:parseInt(r.el.parentNode.querySelector('.tag__count').innerHTML.replace('(', ''))
+                artists.push(ax = {
+                  name :n.innerHTML,
+                  isEditor: r.el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'),
+                  tag: r.el.innerHTML,
+                  count: parseInt(r.el.parentNode.querySelector('.tag__count').innerHTML.substring(1))
                 });
                 initHighlight(ax);
                 highlightArtist(document, ax);
@@ -1315,7 +1253,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
                   addUserInBase(n.innerHTML, undefined, {tags:[r.el.innerHTML]})
                 }
                 else {
-                  let user = getUser(n.innerHTML);
+                  const user = getUser(n.innerHTML);
                   addUserInBase(user.name, user.id, {tags:[r.el.innerHTML]})
                 }
               };
@@ -2552,7 +2490,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         }
       }
     }
-    debug('YDB:T','Spoiler '+spoiler.name+' cannot be added — entry does not found.',2);
+    debug('YDB:T','Spoiler '+spoiler.name+' cannot be added — entry does not found.',0);
     return false;
   }
 
