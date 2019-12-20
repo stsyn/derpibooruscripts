@@ -1,6 +1,6 @@
 // ==UserScriptLib==
 // @name         YourBooru:Settings
-// @version      0.9.28L
+// @version      0.9.30L
 // @description  Global library script for YourBooru script family
 // @grant	     unsafeWindow
 // @grant        GM_addStyle
@@ -19,7 +19,7 @@ if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (win.self === 
   if (typeof InfernoAddElem == 'undefined') function InfernoAddElem(e,t,d){var l;if(void 0===t&&(t={}),"string"==typeof t&&(t={innerHTML:t}),void 0===d&&Array.isArray(t)&&(d=t,t={}),null!=t&&null!=t.id&&null!=document.getElementById(t.id))if(0==document.querySelectorAll(e+"#"+t.id).length)(l=document.getElementById(t.id)).parentNode.removeChild(l),l=document.createElement(e);else for(l=document.getElementById(t.id);l.firstChild;)l.removeChild(l.firstChild);else l=document.createElement(e);for(let e in t)"events"==e||"dataset"==e||"innerHTML"==e||"checked"==e||"disabled"==e||"value"==e||"selected"==e||"className"==e||"style"==e&&"object"==typeof t.style||l.setAttribute(e,t[e]);if(void 0!==t.dataset)for(let e in t.dataset)l.dataset[e]=t.dataset[e];if(void 0!==t.className&&(l.className=t.className),void 0!==t.innerHTML&&(l.innerHTML=t.innerHTML),void 0!==t.value&&(l.value=t.value),void 0!==t.checked&&(l.checked=t.checked),void 0!==t.selected&&(l.selected=t.selected),void 0!==t.disabled&&(l.disabled=t.disabled),void 0!==t.events)if(Array.isArray(t.events))t.events.forEach(function(e,t,d){l.addEventListener(e.t,e.f)});else for(let e in t.events)l.addEventListener(e,t.events[e]);if("object"==typeof t.style)for(let e in t.style)l.style[e]=t.style[e];return d&&null!=d.length&&d.forEach(function(e,t,d){l.appendChild(null==e.parentNode?e:e.cloneNode(!0))}),l}
 
   let scriptId = 'settings';
-  let internalVersion = '0.9.28LUW';
+  let internalVersion = '0.9.30LUW';
   let version = GM_info.script.version;
   let settings;
 
@@ -40,6 +40,7 @@ if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (win.self === 
 
   let config;
   let modules = [];
+  let settings;
   let resaved = false;
   let errorCode = 0;
   let windows = '._ydb_window {position:fixed;z-index:999;width:80vw;height:80vh;top:10vh;left:10vw;overflow-y:auto} ._ydb_warn{background:#f00 !important}';
@@ -149,7 +150,7 @@ if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (win.self === 
     if (!win._YDB_public.funcs.callWindow) win._YDB_public.funcs.callWindow = callWindow;
     if (!onlyLibs && !win._YDB_public.funcs.backgroundBackup) win._YDB_public.funcs.backgroundBackup = backgroundBackup;
     if (!win._YDB_public.funcs.log) win._YDB_public.funcs.log = debugLogger;
-    if (!win._YDB_public.funcs.getNonce) win._YDB_public.funcs.getNonce = function() {return settings.nonce;};
+    if (!win._YDB_public.funcs.getNonce) win._YDB_public.funcs.getNonce = () => settings.nonce;
   }
 
   function hideBlock(e) {
@@ -668,7 +669,7 @@ if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (win.self === 
     unsafeWindow._YDB_public.handled = 0;
     if (validate(e) >0) {
       e.preventDefault();
-      setTimeout(function() {document.querySelector('.edit_user input.button[type=submit]').removeAttribute('disabled');},500);
+      setTimeout(() => document.querySelector('.edit_user button.button[type=submit]').removeAttribute('disabled'),500);
       return;
     }
     let changed = false;
@@ -740,7 +741,7 @@ if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (win.self === 
     write();
     if (unsafeWindow._YDB_public.handled != 0) {
       e.preventDefault();
-      let checker = function() {
+      const checker = () => {
         if (unsafeWindow._YDB_public.handled != 0) setTimeout(checker, 100);
         else {
           for (let i=0; i<containers.length; i++) {
@@ -748,8 +749,8 @@ if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (win.self === 
             if (mx.changed) localStorage[mx.container] = JSON.stringify(mx.saved);
           }
           resaved = true;
-          document.querySelector('.edit_user input.button[type=submit]').removeAttribute('disabled');
-          document.querySelector('.edit_user input.button[type=submit]').click();
+          document.querySelector('.edit_user button.button[type=submit]').removeAttribute('disabled');
+          document.querySelector('.edit_user button.button[type=submit]').click();
         }
       };
       setTimeout(checker, 100);
@@ -773,7 +774,7 @@ if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (win.self === 
     modules[s2.container] = {name:s2.name, container:s2.container, changed:false, saved:ss, options:s2.s, onChanges:s2.onChanges};
     if (s2.s != undefined && editCont != undefined) {
       try {renderCustom(s2, editCont, modules[s2.container]);}
-      catch(e) {console.log('Error rendering '+k+'. '+e);}
+      catch(e) {console.log('Error rendering '+k+'. '+e); console.trace(e);}
     }
 
     if (listCont != undefined && !s2.hidden) addElem(s2.link!=undefined?'a':'div', {href:s2.link!=undefined?s2.link:'', style:{display:'block'}, className:'block__content alternating-color', innerHTML:s2.name+' v. '+s2.version}, listCont);
@@ -927,10 +928,10 @@ if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (win.self === 
       document.getElementsByClassName('block__header')[0].childNodes[i].addEventListener('click', function(e) {location.hash = e.target.href.split('#')[1];});
     }
 
-    document.querySelector('input.button[type=submit]').addEventListener('click', save);
+    document.querySelector('button.button[type=submit]').addEventListener('click', save);
     setTimeout(hh, 500);
     if (location.hash.slice(1) == 'backup') {
-      document.querySelector('input.button[type=submit]').click();
+      document.querySelector('button.button[type=submit]').click();
     }
     validate();
 
@@ -1110,7 +1111,4 @@ if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (win.self === 
   else setTimeout(listModules, 50);
   if (location.pathname == "/pages/api") yourbooruPage();
   register();
-};
-
-main();
-}
+})();
