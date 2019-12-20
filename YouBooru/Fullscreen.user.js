@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.25
+// @version      0.7.26
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -1445,7 +1445,7 @@ color: #777;
 
     document.querySelector('.image-metabar').childNodes[1].insertBefore(objects.mainButton,document.querySelector('.interaction--fave'));
     //document.querySelectorAll('#content>div')[3].appendChild(document.getElementById('image_options_area'));    console.log(document.getElementsByTagName('form'), document.getElementById('js-comment-form'));
-    if (document.getElementById('js-comment-form') != undefined) popUps.coms.appendChild(document.getElementById('js-comment-form'));
+    if (document.querySelector('form[action*="/comments"][method="post"]')) popUps.coms.appendChild(document.querySelector('form[action*="/comments"][method="post"]'));
     popUps.coms.appendChild(document.getElementById('comments'));
     //popUps.downContainer.appendChild(document.querySelector('#content>.block:first-child').cloneNode(true));
     //if (popUps.downContainer.childNodes[0].classList.contains('center--layout')) popUps.downContainer.childNodes[0].style.textAlign='center';
@@ -1478,10 +1478,10 @@ color: #777;
         InfernoAddElem('i',{className:'fa fa-random'},[]),
         InfernoAddElem('span',{innerHTML:' Random'},[])
       ]),
-      document.querySelectorAll('#content>.block:first-child>* [class*="js-notification"')[0].cloneNode(true),
-      document.querySelectorAll('#content>.block:first-child>* [class*="js-notification"')[1].cloneNode(true),
+      document.querySelectorAll('#content>.block:first-child>* .js-subscription-link')[0].cloneNode(true),
+      document.querySelectorAll('#content>.block:first-child>* .js-subscription-link')[1].cloneNode(true),
       document.querySelector('#content>.block:first-child>* .dropdown').cloneNode(true),
-      document.querySelector('#content>.block:first-child>* [title="Related Images"').cloneNode(true),
+      //document.querySelector('#content>.block:first-child>* [title="Related Images"').cloneNode(true),
       document.querySelector('#content>.block:first-child>*>div:nth-child(4)').cloneNode(true)
     ]);
     document.querySelector('#_ydb_fs_mainPopup>.block__header>div:last-child').style.display = 'inline';
@@ -1577,7 +1577,7 @@ color: #777;
     }
 
     document.getElementById('content').appendChild(popUps.downContainer.childNodes[0]);
-    if (document.getElementById('js-comment-form') != undefined) document.querySelector('#content>.layout--narrow').appendChild(document.getElementById('js-comment-form'));
+    if (document.querySelector('form[action*="/comments"][method="post"]')) document.querySelector('#content>.layout--narrow').appendChild(document.querySelector('form[action*="/comments"][method="post"]'));
     document.querySelector('#content>.layout--narrow').appendChild(document.getElementById('comments'));
     //document.getElementById('content').appendChild(popUps.coms.getElementsByTagName('div')[0]);
     document.querySelector('a[title="'+settings.button+'"]').classList.remove('ydb_top_right_link');
@@ -1620,12 +1620,6 @@ color: #777;
       cm_bg();
     });},1000);
   });
-
-  if (state.colorApi == 3) {
-    state.enabled = false;
-    state.colorApi = 4;
-    write();
-  }
 
   if (settings.colorAccent) prePreColor();
   if ((parseInt(location.pathname.slice(1))>=0 && location.pathname.split('/')[2] == undefined) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && location.pathname.split('/')[3] == undefined)) {
