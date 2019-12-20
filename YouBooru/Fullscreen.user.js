@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.24
+// @version      0.7.25
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
-// @include      /http[s]*:\/\/(www.|)(trixie|derpi)booru.org\/.*/
+// @include      /http[s]*:\/\/(www.|philomena\.)(trixie|derpi)booru.org\/.*/
 // @exclude      /http[s]*:\/\/(www.|)(trixie|derpi)booru.org\/adverts\/.*/
 // @exclude      /http[s]*:\/\/(www.|)(trixie|derpi)booru.org\/.*\.json.*/
 
@@ -22,7 +22,7 @@
 
 (function() {
   'use strict';
-  let currentColorApi = 3;
+  let currentColorApi = 4;
   let styles = {};
   styles.general = `
 #_ydb_fs_enable {
@@ -1620,6 +1620,12 @@ color: #777;
       cm_bg();
     });},1000);
   });
+
+  if (state.colorApi == 3) {
+    state.enabled = false;
+    state.colorApi = 4;
+    write();
+  }
 
   if (settings.colorAccent) prePreColor();
   if ((parseInt(location.pathname.slice(1))>=0 && location.pathname.split('/')[2] == undefined) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && location.pathname.split('/')[3] == undefined)) {
