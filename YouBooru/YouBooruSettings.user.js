@@ -12,7 +12,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruCSRFPatch.lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.29
+// @version      0.9.30
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        unsafeWindow
@@ -24,7 +24,7 @@
   'use strict';
 
   let scriptId = 'settings';
-  let internalVersion = '0.9.29';
+  let internalVersion = '0.9.30';
   try {if (unsafeWindow._YDB_public.settings[scriptId] != undefined) return;}
   catch(e){}
   let version = GM_info.script.version;
@@ -135,7 +135,7 @@
     unsafeWindow._YDB_public.funcs.callWindow = callWindow;
     unsafeWindow._YDB_public.funcs.backgroundBackup = backgroundBackup;
     unsafeWindow._YDB_public.funcs.log = debugLogger;
-    unsafeWindow._YDB_public.funcs.getNonce = function() {return settings.nonce;};
+    unsafeWindow._YDB_public.funcs.getNonce = () => settings.nonce;
   }
 
   function hideBlock(e) {
@@ -654,7 +654,7 @@
     unsafeWindow._YDB_public.handled = 0;
     if (validate(e) >0) {
       e.preventDefault();
-      setTimeout(function() {document.querySelector('.edit_user input.button[type=submit]').removeAttribute('disabled');},500);
+      setTimeout(() => document.querySelector('.edit_user button.button[type=submit]').removeAttribute('disabled'),500);
       return;
     }
     let changed = false;
@@ -726,7 +726,7 @@
     write();
     if (unsafeWindow._YDB_public.handled != 0) {
       e.preventDefault();
-      let checker = function() {
+      const checker = () => {
         if (unsafeWindow._YDB_public.handled != 0) setTimeout(checker, 100);
         else {
           for (let i=0; i<containers.length; i++) {
@@ -734,8 +734,8 @@
             if (mx.changed) localStorage[mx.container] = JSON.stringify(mx.saved);
           }
           resaved = true;
-          document.querySelector('.edit_user input.button[type=submit]').removeAttribute('disabled');
-          document.querySelector('.edit_user input.button[type=submit]').click();
+          document.querySelector('.edit_user button.button[type=submit]').removeAttribute('disabled');
+          document.querySelector('.edit_user button.button[type=submit]').click();
         }
       };
       setTimeout(checker, 100);
@@ -913,10 +913,10 @@
       document.getElementsByClassName('block__header')[0].childNodes[i].addEventListener('click', function(e) {location.hash = e.target.href.split('#')[1];});
     }
 
-    document.querySelector('input.button[type=submit]').addEventListener('click', save);
+    document.querySelector('button.button[type=submit]').addEventListener('click', save);
     setTimeout(hh, 500);
     if (location.hash.slice(1) == 'backup') {
-      document.querySelector('input.button[type=submit]').click();
+      document.querySelector('button.button[type=submit]').click();
     }
     validate();
 
