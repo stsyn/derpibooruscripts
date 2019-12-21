@@ -2,7 +2,7 @@
 // @name         YourBooru:Feeds
 // @namespace    http://tampermonkey.net/
 
-// @include      /http[s]*:\/\/(www\.|philomena\.)(trixie|derpi)booru.org\/.*/
+// @include      /http[s]*:\/\/(www\.|philomena\.|)(trixie|derpi)booru.org\/.*/
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/adverts\/.*/
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*\.json.*/
 
@@ -12,7 +12,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.25
+// @version      0.5.26
 // @description  Feedz
 // @author       stsyn
 
