@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.26
+// @version      0.7.27
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
-// @include      /http[s]*:\/\/(www.|philomena\.)(trixie|derpi)booru.org\/.*/
-// @exclude      /http[s]*:\/\/(www.|)(trixie|derpi)booru.org\/adverts\/.*/
-// @exclude      /http[s]*:\/\/(www.|)(trixie|derpi)booru.org\/.*\.json.*/
+// @include      /http[s]*:\/\/(www\.|philomena\.|)(trixie|derpi)booru.org\/.*/
+// @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/adverts\/.*/
+// @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*\.json.*/
 
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 
