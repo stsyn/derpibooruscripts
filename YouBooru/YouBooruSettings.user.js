@@ -2,7 +2,7 @@
 // @name         YourBooru:Settings
 // @namespace    http://tampermonkey.net/
 
-// @include      /http[s]*:\/\/(www\.|philomena\.)(trixie|derpi)booru.org\/.*/
+// @include      /http[s]*:\/\/(www\.|philomena\.|)(trixie|derpi)booru.org\/.*/
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/adverts\/.*/
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*\.json.*/
 
@@ -12,7 +12,7 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruCSRFPatch.lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.30
+// @version      0.9.31
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        unsafeWindow
