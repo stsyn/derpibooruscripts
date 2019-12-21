@@ -40,7 +40,6 @@ if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (win.self === 
 
   let config;
   let modules = [];
-  let settings;
   let resaved = false;
   let errorCode = 0;
   let windows = '._ydb_window {position:fixed;z-index:999;width:80vw;height:80vh;top:10vh;left:10vw;overflow-y:auto} ._ydb_warn{background:#f00 !important}';
