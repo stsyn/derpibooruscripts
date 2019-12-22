@@ -60,11 +60,12 @@ function createElement(tag, values, children) {
         var textCollection = null;
         for (i = 0; i < children.length; i++) {
             var c = children[i];
-            if (typeof c == 'string') {
+            if (c === undefined || c === null) continue;
+            if (typeof c !== 'object') {
                 if (textCollection === null) {
-                    textCollection = c;
+                    textCollection = c.toString();
                 } else {
-                    textCollection += c;
+                    textCollection += c.toString();
                 }
             } else {
                 if (textCollection) {
