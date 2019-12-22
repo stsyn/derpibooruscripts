@@ -9,11 +9,11 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0UW.lib.js
-// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruCSRFPatch.lib.js
+// /require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruCSRFPatch.lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.4.14
+// @version      0.4.15
 // @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
 // @author       stsyn
 
