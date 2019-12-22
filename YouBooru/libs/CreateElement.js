@@ -15,7 +15,9 @@ function createElement(tag, values, children) {
 
     var classes = tag.split('.');
     tag = classes.shift();
-    values.className = (values.className ? values.className + ' ' : '') + classes.join(' ');
+    if (classes.length > 0) {
+      values.className = (values.className ? values.className + ' ' : '') + classes.join(' ');
+    }
     var id = tag.split('#');
     tag = id.shift();
     id = id.shift();
@@ -40,7 +42,9 @@ function createElement(tag, values, children) {
 
     if (values.dataset !== undefined) {
         for (i in values.dataset) {
-            element.dataset[i] = values.dataset[i];
+            if (values.dataset[i] !== undefined && values.dataset[i] !== null) {
+                element.dataset[i] = values.dataset[i];
+            }
         }
     }
     if (values.events !== undefined) {
@@ -61,7 +65,7 @@ function createElement(tag, values, children) {
         for (i = 0; i < children.length; i++) {
             var c = children[i];
             if (c === undefined || c === null) continue;
-            if (typeof c !== 'object') {
+            if (typeof c !== 'object' || c.nodeType !== Node.ELEMENT_NODE) {
                 if (textCollection === null) {
                     textCollection = c.toString();
                 } else {
