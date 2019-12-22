@@ -622,7 +622,6 @@
                   drawn = true;
                 }
               }
-              console.log(checkedTags[name]);
               checkedTags[name].implied_tags.forEach(tag => addTag(x, tag));
             }
             checkedTags[name].drawn = true;
