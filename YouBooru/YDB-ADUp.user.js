@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          YDB:ADUp
-// @version       0.3.14
+// @version       0.3.15
 // @author        stsyn
 
 // @match         *://*/*
@@ -15,6 +15,7 @@
 // @exclude       *://*.mrsxe4djmjxw64tvfzxxezy.*.*/adverts/*
 
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0UW.lib.js
+// @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL   https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp.user.js
 
@@ -80,35 +81,6 @@
     }
   }
 
-  //srsly?..
-  function parseURL(url) {
-    var a = document.createElement('a');
-    a.href = url;
-    return {
-      source: url,
-      protocol: a.protocol.replace(':',''),
-      host: a.hostname,
-      port: a.port,
-      query: a.search,
-      params: (function(){
-        var ret = {},
-          seg = a.search.replace(/^\?/,'').split('&'),
-          len = seg.length, i = 0, s;
-        for (;i<len;i++) {
-          if (!seg[i]) { continue; }
-          s = seg[i].split('=');
-          ret[s[0]] = s[1];
-        }
-        return ret;
-      })(),
-      file: (a.pathname.match(/\/([^\/?#]+)$/i) || [,''])[1],
-      hash: a.hash.replace('#',''),
-      path: a.pathname.replace(/^([^\/])/,'/$1'),
-      relative: (a.href.match(/tps?:\/\/[^\/]+(.+)/) || [,''])[1],
-      segments: a.pathname.replace(/^\//,'').split('/')
-    };
-  }
-
   function fetchExtData(url) {
     let req = new XMLHttpRequest();
     req.open('GET', '/images/'+url.params.origin+'.json', false);
@@ -122,7 +94,7 @@
   }
 
   function hasData() {
-    return !!document.getElementById('image_tag_input').value || !!document.getElementById('image_source_url').value || !!document.getElementById('scraper_url').value || !!document.getElementById('image_description').value;
+    return document.getElementById('image_tag_input').value || document.getElementById('image_source_url').value || document.getElementById('image_scraper_url').value || document.getElementById('image_description').value;
   }
 
   function fillDData1(url) {
@@ -156,13 +128,13 @@
     if (!hasData()) {
       fillDData1(url)
     } else {
-      document.getElementById('new_image').insertBefore(
-        InfernoAddElem('div',{className:"dnp-warning", style:{marginBottom:'0.5em'}, id:'_ydb_warning'},[
-          InfernoAddElem('h4',{innerHTML:"Override prefilled page content with ADUp fetch data?"},[]),
-          InfernoAddElem('p',{},[
-            InfernoAddElem('a',{innerHTML:'OK', events:{'click':function() {fillDData1(url); document.getElementById('_ydb_warning').style.display = 'none'}}},[]),
-            InfernoAddElem('span',{innerHTML:" "},[]),
-            InfernoAddElem('a',{innerHTML:'Cancel', events:{'click':function() {document.getElementById('_ydb_warning').style.display = 'none'}}},[])
+      document.querySelector('form[action="/images"]').insertBefore(
+        createElement('div#_ydb_warning.dnp-warning', {style: {marginBottom: '0.5em'}},[
+          createElement('h4', "Override prefilled page content with ADUp fetch data?"),
+          createElement('p', [
+            createElement('a', {events:{'click':() => {fillDData1(url); document.getElementById('_ydb_warning').style.display = 'none'}}}, 'OK'),
+            createElement('span', ' '),
+            createElement('a', {events:{'click':() => document.getElementById('_ydb_warning').style.display = 'none'}}, 'Cancel')
           ])
         ]),
         document.querySelector('.dnp-warning'));
@@ -193,7 +165,7 @@
   }
 
   function reverse(url) {
-    let build = function(req) {
+    const build = function(req) {
       let ux;
       if (document.getElementById('scraper_url').value == undefined) {
         if (document.getElementById('image_image').files.length > 0) {
@@ -208,18 +180,18 @@
           return;
         }
       }
-      let s = InfernoAddElem('div',{style:'display:none',innerHTML:req.responseText},[]);
+      const s = createElement('div',{style:'display:none'}, req.responseText);
       //document.body.appendChild(s);
-      let ax = InfernoAddElem('form',{className:'hidden',id:'_ydb_reverse',enctype:"multipart/form-data",action:"/search/reverse",acceptCharset:"UTF-8",method:"post"},[
-        InfernoAddElem('input',{name:"utf8",value:"✓",type:'hidden'},[]),
-        InfernoAddElem('input',{name:"authenticity_token",value:s.querySelector('form[action="/search/reverse"] input[name="authenticity_token"]').value,type:'hidden'},[]),
-        InfernoAddElem('input',{name:"fuzziness",value:document.getElementById('ydb_fuzzyness').value,type:'hidden'},[]),
+      const ax = createElement('form#_ydb_reverse.hidden', {enctype:"multipart/form-data",action:"/search/reverse",acceptCharset:"UTF-8",method:"post"},[
+        createElement('input',{name:"utf8",value:"✓",type:'hidden'}),
+        createElement('input',{name:"authenticity_token",value:s.querySelector('form[action="/search/reverse"] input[name="authenticity_token"]').value,type:'hidden'}),
+        createElement('input',{name:"fuzziness",value:document.getElementById('ydb_fuzzyness').value,type:'hidden'}),
         (document.getElementById('scraper_url').value == undefined?
          ux:
-         InfernoAddElem('input',{name:"scraper_url",value:decodeURIComponent(document.getElementById('scraper_url').value),type:'hidden'},[])
+         createElement('input',{name:"scraper_url",value:decodeURIComponent(document.getElementById('scraper_url').value),type:'hidden'})
         )
       ]);
-      let callback = function(rq) {
+      const callback = function(rq) {
         document.getElementById('ydb_head_hiddenable').style.display = 'inline';
         s.innerHTML = rq.responseText;
         let t = document.getElementById('_ydb_similarGallery');
@@ -230,11 +202,11 @@
           let ix = x.querySelector('.image-container.thumb');
           t.parentNode.style.display = 'block';
           t.appendChild(
-            InfernoAddElem('div',{className:'media-box'},[
-              InfernoAddElem('a',{className:'media-box__header media-box__header--link media-box__header--small',target:'_blank',href:'/images/'+ix.dataset.imageId,innerHTML:'>>'+ix.dataset.imageId},[]),
-              InfernoAddElem('div',{className:'media-box__content media-box__content--small'},[
-                InfernoAddElem('div',{className:'image-container thumb'},[
-                  InfernoAddElem('a',{events:[{t:'click',f:function(ex) {
+            createElement('div.media-box', [
+              createElement('a.media-box__header.media-box__header--link.media-box__header--small', {target:'_blank', href:'/images/'+ix.dataset.imageId}, '>>'+ix.dataset.imageId),
+              createElement('div.media-box__content.media-box__content--small', [
+                createElement('div.image-container.thumb', [
+                  createElement('a',{events:{'click':(ex) => {
                     for (let i=0; i<document.getElementById('_ydb_similarGallery').childNodes.length; i++) document.getElementById('_ydb_similarGallery').childNodes[i].style.opacity = 1;
                     let x = ex.target;
                     while (!x.classList.contains('media-box')) x = x.parentNode;
@@ -243,9 +215,9 @@
                     fetchExtData(url);
                     fillData1(url);
                     diff(url);
-                  }}]},[
-                    InfernoAddElem('picture',{},[
-                      InfernoAddElem('img',{src:JSON.parse(ix.dataset.uris).thumb})
+                  }}},[
+                    createElement('picture', [
+                      createElement('img',{src:JSON.parse(ix.dataset.uris).thumb})
                     ])
                   ])
                 ])
@@ -255,10 +227,10 @@
         }
         else {
           if (document.querySelector('#_ydb_similarGallery strong') != undefined) document.querySelector('#_ydb_similarGallery strong').innerHTML = 'Nothing is found';
-          else document.getElementById('_ydb_similarGallery').appendChild(InfernoAddElem('strong',{innerHTML:'Nothing is found'},[]));
+          else document.getElementById('_ydb_similarGallery').appendChild(createElement('strong', 'Nothing is found'));
         }
       };
-      let readyHandler = function(rq) {
+      const readyHandler = function(rq) {
         return function () {
           if (rq.readyState === 4) {
             if (rq.status === 200) return callback(rq);
@@ -266,61 +238,52 @@
           return false;
         };
       };
-      let get = function() {
-        let rq = new XMLHttpRequest();
+      const get = function() {
+        const rq = new XMLHttpRequest();
         rq.onreadystatechange = readyHandler(rq);
         rq.open('POST', '/search/reverse');
         rq.send(new FormData(ax));
       };
       get();
     };
-    let req = new XMLHttpRequest();
+    const req = new XMLHttpRequest();
     req.open('GET', '/search/reverse', false);
     req.send();
     build(req);
   }
 
   function addTag(x, tag) {
-    if (x.parentNode.parentNode.querySelector('a[data-tag-name="'+tag+'"]') != undefined) return;
-    let z = x.parentNode.parentNode;
+    const z = x.parentNode.parentNode;
+    if (z.querySelector(`._ydb_transparent a[data-tag-name="${tag}"]`)) return;
+    if (document.querySelector(`.js-taginput-fancy .tag a[data-tag-name="${tag}"]`)) return;
     let y = z.querySelector('._ydb_tag_placeholder');
-    if (y == undefined) {
-      y = z.insertBefore(InfernoAddElem('div',{style:'min-height:0',className:'_ydb_tag_placeholder js-taginput input input--wide tagsinput', dataset:{clickFocus:'.js-taginput-input.js-taginput-tag_input'}}, [
-        InfernoAddElem('span',{innerHTML:'Implied tags '}, [])
+    if (!y) {
+      y = z.insertBefore(createElement('div._ydb_tag_placeholder.js-taginput.input.input--wide.tagsinput', {style:'min-height:0', dataset:{clickFocus:'.js-taginput-input', target:'[name="image[tag_input]"]'}}, [
+        createElement('span', 'Implied tags ')
       ]), z.querySelector('.js-taginput-show'));
     }
-    y.appendChild(InfernoAddElem('span',{className:'tag _ydb_transparent',style:{opacity:'0.75', cursor:'pointer'},innerHTML:tag+' ',events:[{t:'click',f:function(e) {
-      insertImpliedTag(x, tag);
-    }}]},[
-      InfernoAddElem('a',{href:'javascript://', innerHTML:'x', style:{display:'none'},dataset:{clickFocus:'.js-taginput-input',tagName:tag}},[
-      ])
+    y.appendChild(createElement('span.tag._ydb_transparent',{style:{opacity:'0.75', cursor:'pointer'}, dataset:{clickAddtag: tag, tagName: tag}},[
+      tag+' ',
+      createElement('a',{href:'javascript://', style:{display:'none'},dataset:{clickFocus:'.js-taginput-input',tagName:tag}}, 'x')
     ]));
   }
 
-  function insertImpliedTag(x,name) {
-    let e = new Event("keydown")
-    e.keyCode = 13;
-    let tText = document.querySelector('.input.js-taginput-input').value;
-    x.querySelector('.input.js-taginput-input').value = name;
-    x.querySelector('.input.js-taginput-input').dispatchEvent(e);
-    x.querySelector('.input.js-taginput-input').value = tText;
-  }
-
-  function drawEmptyTag(tag, tagData) {
+  function drawEmptyTag(tagData, addable) {
     let category;
     if (tagData) {
       category = tagData.category;
     }
-    if (tag == '') return InfernoAddElem('span');
-    return InfernoAddElem('span',{className:'tag',innerHTML:tag+' ', dataset:{tagCategory:category}},[
-      InfernoAddElem('a',{style:{display:'none'},dataset:{tagName:tag}},[
-    ])]);
+    if (tagData.name == '') return createElement('span');
+    return createElement('span.tag', {dataset:{tagCategory:category}},[
+      tagData.name+' ',
+      createElement('a', {style:{display:'none'}, dataset:{tagName: tagData.name, clickAddtag: addable ? tagData.name : null}})
+    ]);
   }
 
   function tagCheck() {
     let gotten;
 
-    let ratingTags = {
+    const ratingTags = {
       safe:'safe',
       suggestive:'sexual',
       questionable:'sexual',
@@ -330,18 +293,17 @@
       grotesque:'grotesque'
     };
 
-    let handleTagData = function (name, data) {
+    const handleTagData = function (name, data) {
       if (data.fail) {
         delete checkedTags[name];
         return;
       }
 
-      if ((data.tag != undefined && data.tag.implied_tags != '') || settings.implicationDisallow) {
-        let implied_tags = data.tag.implied_tags;
-        checkedTags[name] = {name:name,implied_tags:implied_tags};
+      if ((data.tag && data.tag.implied_tags) || settings.implicationDisallow) {
+        checkedTags[name] = {name, implied_tags: data.tag.implied_tags};
       }
       else {
-        checkedTags[name] = {name:name,implied_tags:[]};
+        checkedTags[name] = {name, implied_tags: []};
       }
 
       if (data.tag) checkedTags[name].category = data.tag.category;
@@ -349,37 +311,36 @@
       checkedTags[name].drawn = false;
 
       let dnp = data.dnp_entries;
-      if (dnp == undefined) {
+      if (!dnp) {
         checkedTags[name].dnp_type = 'Tag does not exist';
       }
       else if (data.tag.images == 0) {
         checkedTags[name].dnp_type = 'Tag has no images';
       }
-      else if (dnp.length>0) for (let j=0; j<dnp.length; j++) {
-        let d = dnp[j];
-        d.name = name;
-        d.implied_tags = checkedTags[name].implied_tags;
-        checkedTags[name] = d;
-        gotten = true;
+      else if (dnp.length > 0) {
+        dnp.forEach(d => {
+          d.name = name;
+          d.implied_tags = checkedTags[name].implied_tags;
+          checkedTags[name] = d;
+          gotten = true;
+        });
       }
       else if (checkedTags[name].implied_tags.length == 0) {
         checkedTags[name].ok = true;
       }
-
     };
 
-    let handleBatchTagData = function (name, data) {
+    const handleBatchTagData = function (name, data) {
       if (data.fail) {
         delete checkedTags[name];
         return;
       }
 
-      if ((data.implied_tags && data.implied_tags != '') || settings.implicationDisallow) {
-        let implied_tags = data.implied_tags.split(/\s*,\s*/);
-        checkedTags[name] = {name:name,implied_tags:implied_tags};
+      if ((data.implied_tags) || settings.implicationDisallow) {
+        checkedTags[name] = {name, implied_tags: data.implied_tags};
       }
       else {
-        checkedTags[name] = {name:name,implied_tags:[]};
+        checkedTags[name] = {name, implied_tags:[]};
       }
 
       checkedTags[name].notReady = false;
@@ -390,22 +351,22 @@
         checkedTags[name].dnp_type = 'Tag has no images';
         return;
       }
-      else if (dnp != undefined && dnp.length>0) for (let j=0; j<dnp.length; j++) {
-        let d = dnp[j];
-        d.name = name;
-        d.implied_tags = checkedTags[name].implied_tags;
-        checkedTags[name] = d;
-        gotten = true;
+      else if (dnp && dnp.length>0) {
+        dnp.forEach(d => {
+          d.name = name;
+          d.implied_tags = checkedTags[name].implied_tags;
+          checkedTags[name] = d;
+          gotten = true;
+        });
       }
       else if (checkedTags[name].implied_tags.length == 0) {
         checkedTags[name].ok = true;
       }
-
     };
 
-    let checkTag = function (name, y) {
+    const checkTag = function (name, y) {
       fetch('/tags/'+encodeURIComponent((name).replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/ /g,'+').replace(/\:/g,'-colon-').replace(/\//g,'-fwslash-'))+'.json',{method:'GET'})
-      .then(function (response) {
+      .then(response => {
         const errorMessage = {fail:true};
         if (!response.ok)
           return errorMessage;
@@ -424,7 +385,7 @@
       });
     };
 
-    let batchCheckTag = function (names, target) {
+    const batchCheckTag = function (names, target) {
       if (names.length == 1) {
         checkTag(names[0], target.querySelector('.tag a[data-tag-name="'+names[0]+'"]').parentNode);
         return;
@@ -443,55 +404,49 @@
           return;
         }
 
-        if (data.tags != undefined) {
-          for (let i=0; i<data.tags.length; i++) {
-            let x = data.tags[i];
-            if (!!x.aliased_to) {
-              let newTag = x.aliased_to;
-              let y = target.querySelector('.tag a[data-tag-name="'+names[0]+'"]').parentNode;
+        if (data.tags) {
+          data.tags.forEach(x => {
+            if (x.aliased_to) {
+              const newTag = x.aliased_to;
+              const y = target.querySelector('.tag a[data-tag-name="'+names[0]+'"]').parentNode;
               y.getElementsByTagName('a')[0].dataset.tagName = newTag;
               y.firstChild.textContent = newTag+' ';
               x = {fail:true};
             }
             handleBatchTagData(x.name, x);
             names.splice(names.indexOf(x.name));
-          }
-          for (let i=0; i<names.length; i++) {
-            checkedTags[names[i]].dnp_type = 'Tag does not exist';
-          }
+          });
+          names.forEach(name => checkedTags[name].dnp_type = 'Tag does not exist');
         }
 
       });
     };
 
-    let implyRender = function (x, d) {
-      let tags = [];// = d.implied_tags.join(', ');
-      for (let i=0; i<d.implied_tags.length; i++) {
-        if (x.parentNode.parentNode.querySelector('.tag:not(._ydb_transparent) a[data-tag-name="'+d.implied_tags[i]+'"]') != undefined) continue;
-        tags.push(drawEmptyTag(d.implied_tags[i]));
-      }
+    const implyRender = function (x, d) {
+      const tags = d.implied_tags.filter(tag => !document.querySelector(`.js-taginput-fancy .tag:not(._ydb_transparent) a[data-tag-name="${tag}"]`)).map(tag => drawEmptyTag({name: tag}));
       if (tags.length == 0) return false;
-      return InfernoAddElem('div',{className:'alternating-color block__content'},[
-        InfernoAddElem('div',{className:''},[
-          drawEmptyTag(d.name, d),
-          InfernoAddElem('span',{innerHTML:'implies — '},[]),
-          InfernoAddElem('span',{},tags),
-          InfernoAddElem('a',{href:'javascript://',className:'action block__header__title',innerHTML:'Insert', events:[{t:'click',f:function(e) {
-            for (let i=0; i<d.implied_tags.length; i++) {
-              if (x.querySelector('.tag._ydb_transparent a[data-tag-name="'+d.implied_tags[i]+'"]') != undefined)
-                x.querySelector('.tag._ydb_transparent a[data-tag-name="'+d.implied_tags[i]+'"]').click();
-            }
-          }}]},[]),
-          InfernoAddElem('a',{href:'javascript://',className:'action block__header__title',innerHTML:'Hide', events:[{t:'click',f:function(e) {
+      return createElement('div.alternating-color.block__content', [
+        createElement('div',[
+          drawEmptyTag(d),
+          'implies — ',
+          createElement('span', tags),
+          createElement('a.action.block__header__title',{href:'javascript://', events:{'click':() => {
+            d.implied_tags.forEach(tag => {
+              if (document.querySelector(`.tag._ydb_transparent a[data-tag-name="${tag}"]`)) {
+                document.querySelector(`.tag._ydb_transparent a[data-tag-name="${tag}"]`).click();
+              }
+            });
+          }}}, 'Insert'),
+          createElement('a.action.block__header__title',{href:'javascript://', events:{'click':(e) => {
             d.ok = true;
             d.drawn = false;
             e.target.parentNode.parentNode.style.display = 'none';
-          }}]},[])
+          }}}, 'Hide')
         ])
       ]);
     };
 
-    let render = function (d) {
+    const render = function (d) {
       let color = 'flash--site-notice', suggestion = '';
       if (d.dnp_type=='Artist Upload Only') {
         suggestion = 'You won\'t be able to finish uploading.';
@@ -516,22 +471,22 @@
         color = 'flash--warning';
       }
 
-      return InfernoAddElem('div',{className:'alternating-color block__content'},[
-        InfernoAddElem('div',{className:' '+color},[
-          drawEmptyTag(d.name, d),
-          InfernoAddElem('span',{innerHTML:' — '},[]),
-          InfernoAddElem('strong',{innerHTML:d.dnp_type, style:{color:color}},[]),
-          InfernoAddElem('span',{innerHTML:suggestion==''?'':' — '},[]),
-          InfernoAddElem('span',{innerHTML:suggestion},[])
+      return createElement('div.alternating-color.block__content', [
+        createElement('div', {className: ' '+color}, [
+          drawEmptyTag(d),
+          ' — ',
+          createElement('strong', {style: {color}}, d.dnp_type),
+          (!suggestion ? '' : ' — '),
+          suggestion
         ]),
-        InfernoAddElem('span',{innerHTML:' '},[]),
-        InfernoAddElem('span',{innerHTML:d.conditions},[]),
-        InfernoAddElem('br',{},[]),
-        InfernoAddElem('em',{innerHTML:d.reason},[])
+        ' ',
+        d.conditions,
+        createElement('br'),
+        createElement('em', d.reason)
       ]);
     };
 
-    let checkRatingTags = function (ratings) {
+    const checkRatingTags = function (ratings) {
       let warning = '';
       let wx = {name:''};
       if (ratings.safe == 0 && ratings.sexual == 0 && ratings.grimdark == 0 && ratings.grotesque == 0) {
@@ -557,7 +512,7 @@
         return {dnp_type:''};
       }
 
-      let container = document.getElementById('ydb_dnp_container');
+      const container = document.getElementById('ydb_dnp_container');
       wx.dnp_type = warning;
       wx.ratings = true;
       document.getElementById('ratings-warning').style.display = 'block';
@@ -565,8 +520,8 @@
       return wx;
     };
 
-    let checker = function (target, method) {
-      let container = document.getElementById('ydb_dnp_container');
+    const checker = function (target, method) {
+      const container = document.getElementById('ydb_dnp_container');
 
       for (let i=0; i<document.querySelectorAll(target).length; i++) {
         let ratings = {
@@ -627,7 +582,6 @@
         if (ratingsReason != ratingCheck.dnp_type) gotten = true;
 
         if (gotten) {
-          console.log(ratingCheck.dnp_type, ratingsReason);
           let drawn = false;
           for (let x in checkedTags) {
             if (checkedTags[x].notReady) continue;
@@ -659,8 +613,8 @@
               }
             }
 
-            if (checkedTags[name].implied_tags.length>0) {
-              let elem = implyRender(x, checkedTags[name]);
+            const elem = implyRender(x, checkedTags[name]);
+            if (checkedTags[name].implied_tags.length > 0) {
               if (elem) {
                 if (!checkedTags[name].ok && settings.implicationNotify) {
                   container.appendChild(elem);
@@ -668,14 +622,13 @@
                   drawn = true;
                 }
               }
-              for (let ai=0; ai<checkedTags[name].implied_tags.length; ai++) addTag(x, checkedTags[name].implied_tags[ai]);
+              console.log(checkedTags[name]);
+              checkedTags[name].implied_tags.forEach(tag => addTag(x, tag));
             }
             checkedTags[name].drawn = true;
           }
           if (!drawn) {
-            container.appendChild(InfernoAddElem('div',{className:'block__content'},[
-              InfernoAddElem('span',{innerHTML:'Nothing'},[]),
-            ]));
+            container.appendChild(createElement('div.block__content', 'Nothing'));
           }
         }
       }
@@ -693,7 +646,7 @@
     let c = document.querySelector('#js-image-upload-previews .scraper-preview--label .scraper-preview--input:checked').value;
     if (currentImage != c) {
       currentImage = c;
-      document.getElementById('js-image-upload-preview').src =  document.querySelector('#js-image-upload-previews .scraper-preview--label .scraper-preview--input:checked+.scraper-preview--image-wrapper img').src;
+      document.getElementById('js-image-upload-preview').src = document.querySelector('#js-image-upload-previews .scraper-preview--label .scraper-preview--input:checked+.scraper-preview--image-wrapper img').src;
     }
   }
 
@@ -726,10 +679,11 @@
       url += '&originView='+encodeURIComponent(JSON.parse(document.getElementsByClassName('image-show-container')[0].dataset.uris).large);
       url += '&originWidth='+document.getElementsByClassName('image-show-container')[0].dataset.width;
       url += '&originHeight='+document.getElementsByClassName('image-show-container')[0].dataset.height;
-      ChildsAddElem('a',{href:'/images/new'+url},document.querySelector('#image_options_area .block__header'), [
-        InfernoAddElem('i',{className:'fa fa-copy'},[]),
-        InfernoAddElem('span',{innerHTML:' Upload copy'},[])
-      ]);
+      document.querySelector('#image_options_area .block__header').appendChild(
+        createElement('a',{href:'/images/new'+url}, [
+          createElement('i.fa.fa-copy'),
+          ' Upload copy'
+        ]));
     }
     else if (location.pathname == '/images/new') {
       let url = parseURL(location.href);
@@ -744,37 +698,42 @@
         actionsNames.push('Insert all implications');
         actionsNames.push('Hide all implications');
         for (let i=0; i<actionsNames.length; i++) {
-          actions.push(InfernoAddElem('a',{innerHTML:actionsNames[i],style:'margin-right:0.85em;cursor:pointer',events:[{t:'click',f:function() {
-            document.querySelectorAll('#ydb_dnp_container .block__content a.action:nth-child('+(i+1)+')').forEach(function(v) {v.click();});
-          }}]},[]));
+          actions.push(createElement('a',{style:'margin-right:0.85em;cursor:pointer', events:{'click':() => {
+            document.querySelectorAll('#ydb_dnp_container .block__content a.action:nth-child('+(i+1)+')').forEach((v) => v.click());
+          }}}, actionsNames[i]));
         }
       }
 
-      let preview = InfernoAddElem('img',{id:'js-image-upload-preview',style:{display:'inline-block',width:'320px'}},[]);
-      document.querySelector('.image-other').insertBefore(InfernoAddElem('div',{},[
-        InfernoAddElem('div',{className:'block'},[
-          InfernoAddElem('div',{className:'block__header'},[
-            InfernoAddElem('strong',{innerHTML:'Similar images',className:'block__header__title'},[]),
-            InfernoAddElem('span',{id:'ydb_head_hiddenable'},[
-              InfernoAddElem('a',{id:'reverseButton',innerHTML:'Check', events:[{t:'click',f:function(e) {e.target.parentNode.style.display = 'none';document.getElementById('_ydb_similarGallery').innerHTML = ''; document.getElementById('_ydb_similarGallery').appendChild(InfernoAddElem('strong',{innerHTML:'Fetching...'},[]));reverse(url);}}]},[]),
-              InfernoAddElem('strong',{innerHTML:'Fuzziness',className:'block__header__title'},[]),
-              InfernoAddElem('input',{id:'ydb_fuzzyness',className:'header__input input',value:0.45},[])
+      let preview = createElement('img#js-image-upload-preview', {style:{display:'inline-block',width:'320px'}});
+      document.querySelector('.image-other').insertBefore(createElement('div', [
+        createElement('div.block',[
+          createElement('div.block__header',[
+            createElement('strong.block__header__title', 'Similar images'),
+            createElement('span#ydb_head_hiddenable', [
+              createElement('a#reverseButton',{ events:{'click':(e) => {
+                e.target.parentNode.style.display = 'none';
+                document.getElementById('_ydb_similarGallery').innerHTML = '';
+                document.getElementById('_ydb_similarGallery').appendChild(createElement('strong', 'Fetching...'));
+                reverse(url);
+              }}},'Check'),
+              createElement('strong.block__header__title', 'Fuzziness'),
+              createElement('input#ydb_fuzzyness.header__input.input', {value:0.45})
             ])
           ]),
-          InfernoAddElem('div',{className:'block__content'},[
-            InfernoAddElem('div',{id:'_ydb_similarGallery'},[
-              InfernoAddElem('strong',{innerHTML:'Not executed'},[])
+          createElement('div.block__content', [
+            createElement('div#_ydb_similarGallery', [
+              createElement('strong', 'Not executed')
             ])
           ])
         ]),
-        InfernoAddElem('div',{style:{paddingBottom:'1em',fontSize:'1.1em',textAlign:'center'}},[
-          InfernoAddElem('strong',{id:'_ydb_old',innerHTML:'??? x ???'},[]),
-          InfernoAddElem('span',{innerHTML:' => '},[]),
-          InfernoAddElem('strong',{id:'_ydb_new',innerHTML:'??? x ???'},[])
+        createElement('div', {style:{paddingBottom:'1em',fontSize:'1.1em',textAlign:'center'}},[
+          createElement('strong#_ydb_old', '??? x ???'),
+          ' => ',
+          createElement('strong#_ydb_new', '??? x ???')
         ]),
-        InfernoAddElem('div',{id:'_ydb_diff_container'},[
-          InfernoAddElem('img',{id:'_ydb_preview',style:{display:'inline-block',width:'320px',marginRight:'10px'}},[]),
-          InfernoAddElem('canvas',{id:'_ydb_diff',style:{display:'inline-block',width:'320px',marginRight:'10px'}},[]),
+        createElement('div#_ydb_diff_container', [
+          createElement('img#_ydb_preview', {style:{display:'inline-block',width:'320px',marginRight:'10px'}}),
+          createElement('canvas#_ydb_diff', {style:{display:'inline-block',width:'320px',marginRight:'10px'}}),
           preview
         ])
       ]),document.querySelector('.image-other').childNodes[0]);
@@ -790,34 +749,32 @@
         }
         overRideSize = false;
         if (document.querySelector('#_ydb_similarGallery strong') != undefined) document.querySelector('#_ydb_similarGallery strong').innerHTML = 'Not executed';
-        else document.getElementById('_ydb_similarGallery').appendChild(InfernoAddElem('strong',{innerHTML:'<br>Not executed'},[]));
+        else document.getElementById('_ydb_similarGallery').appendChild(createElement('strong', '<br>Not executed'));
       });
       preview.addEventListener('load', function() {
         if (document.getElementById('image_image').files.length > 0) {
           overRideSize = false;
           if (document.querySelector('#_ydb_similarGallery strong') != undefined) document.querySelector('#_ydb_similarGallery strong').innerHTML = 'Not executed';
-          else document.getElementById('_ydb_similarGallery').appendChild(InfernoAddElem('strong',{innerHTML:'<br>Not executed'},[]));
+          else document.getElementById('_ydb_similarGallery').appendChild(createElement('strong', '<br>Not executed'));
         }
         diff(url);
       });
 
       setTimeout(fillData1, 70, url);
 
-      document.getElementById('new_image').insertBefore(InfernoAddElem('div',{className:'block'},[
-        InfernoAddElem('div',{className:'block__header'},[
-          InfernoAddElem('span',{className:'block__header__title',innerHTML:'DNP entries and warnings. '},[]),
-          InfernoAddElem('span',{className:'block__header__title'},actions)
+      document.querySelector('form[action="/images"]').insertBefore(createElement('div.block',[
+        createElement('div.block__header', [
+          createElement('span.block__header__title', 'DNP entries and warnings. '),
+          createElement('span.block__header__title', actions)
         ]),
-        InfernoAddElem('div',{id:'ydb_dnp_container', className:'js-taginput', style:{maxHeight:'40vh',overflowY:'auto'}},[
-          InfernoAddElem('div',{className:'block__content'},[
-            InfernoAddElem('span',{innerHTML:'Nothing'},[]),
-          ])
+        createElement('div#ydb_dnp_container.js-taginput', {style:{maxHeight:'40vh',overflowY:'auto'}}, [
+          createElement('div.block__content', 'Nothing')
         ])
       ]),document.querySelector('h4+.field'));
 
-      document.getElementById('new_image').insertBefore(InfernoAddElem('div',{className:'dnp-warning', id:'ratings-warning'},[
-        InfernoAddElem('h4','You forgot rating tags!',),
-        InfernoAddElem('p','You won\'t upload image if you click "Upload" right now.')
+      document.querySelector('form[action="/images"]').insertBefore(createElement('div#ratings-warning.dnp-warning', [
+        createElement('h4', 'You forgot rating tags!',),
+        createElement('p', 'You won\'t upload image if you click "Upload" right now.')
       ]),document.querySelector('#new_image .actions:last-child'));
 
       tagCheck();
