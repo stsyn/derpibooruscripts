@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.27
+// @version      0.7.28
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -9,6 +9,7 @@
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/adverts\/.*/
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*\.json.*/
 
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/Fullscreen.user.js
@@ -335,6 +336,10 @@ text-shadow:0 0 0.15em #000, 0 0 0.15em #000;
 
 #content>.block:first-child>.block__header [href*="/download/"]:hover {
 opacity:.7;
+}
+
+#content .image-show-container .block--warning {
+max-width: 800px;
 }
 `;
 
@@ -693,16 +698,16 @@ color: #777;
     write();
   }
 
-  if (settings.extended == undefined) settings.extended = true;
-  if (settings.scrollSpeed == undefined) settings.scrollSpeed = 20;
-  if (settings.scrollMultiply == undefined) settings.scrollMultiply = 5;
-  if (settings.staticTime == undefined) settings.staticTime = 20;
-  if (settings.staticEnabled == undefined) settings.staticEnabled = true;
-  if (settings.commentLink == undefined) settings.commentLink = true;
-  if (settings.colorAccent == undefined) settings.colorAccent = false;
-  if (settings.style == undefined) settings.style = 'rating';
-  if (settings.button == undefined) settings.button = 'Download (short filename)';
-  if (settings.pony_mark == undefined) settings.pony_mark = 'none';
+  if (settings.extended === undefined) settings.extended = true;
+  if (settings.scrollSpeed === undefined) settings.scrollSpeed = 20;
+  if (settings.scrollMultiply === undefined) settings.scrollMultiply = 5;
+  if (settings.staticTime === undefined) settings.staticTime = 20;
+  if (settings.staticEnabled === undefined) settings.staticEnabled = true;
+  if (settings.commentLink === undefined) settings.commentLink = true;
+  if (settings.colorAccent === undefined) settings.colorAccent = false;
+  if (settings.style === undefined) settings.style = 'rating';
+  if (settings.button === undefined) settings.button = 'Download (short filename)';
+  if (settings.pony_mark === undefined) settings.pony_mark = 'none';
   settings.scrollSpeed = parseInt(settings.scrollSpeed);
   settings.scrollMultiply = parseInt(settings.scrollMultiply);
   settings.staticTime = parseInt(settings.staticTime);
@@ -724,7 +729,8 @@ color: #777;
         {type:'checkbox', name:'Remove href from comments link', parameter:'commentLink'},
         {type:'breakline'},
         {type:'checkbox', name:'New experimental UI', parameter:'new'},
-        {type:'checkbox', name:'All in one mode (beta)', parameter:'singleMode'},
+        {type:'checkbox', name:'All in one mode', parameter:'singleMode'},
+        //{type:'checkbox', name:'Enchanced webm controls', parameter:'webmControls'},
         {type:'breakline'},
         {type:'checkbox', name:'Autohide UI', parameter:'staticEnabled'},
         {type:'input', name:'Autohide timeout', parameter:'staticTime', validation:{type:'int',min:0, max:600, default:50}},
@@ -900,15 +906,13 @@ color: #777;
     if (settings.singleMode && objects.dcontainer != undefined) {
       append('imageZoom');
       if (!pub.isVideo) {
-        objects.fullImage = InfernoAddElem('img',{style:{display:'none'},src:JSON.parse(objects.icontainer.dataset.uris).full, events:[{t:'load',f:function() {
-          objects.dcontainer.addEventListener('click', singleEvent);
-          //objects.icontainer.addEventListener('click', dropExecution);
-        }}]},[]);
+        objects.fullImage = createElement('img',{style:{display:'none'}, src:JSON.parse(objects.icontainer.dataset.uris).full, events:{
+          load:() => objects.dcontainer.addEventListener('click', singleEvent)}});
       }
       else {
-        if (!/full.webm/.test(objects.image.querySelector('[type="video/webm"]').src)) {
-          objects.image.querySelector('[type="video/webm"]').src = JSON.parse(objects.icontainer.dataset.uris).webm;
-          objects.image.querySelector('[type="video/mp4"]').src = JSON.parse(objects.icontainer.dataset.uris).mp4;
+        if (!/\/[\d]+.webm$/.test(objects.image.querySelector('[type="video/webm"]').src)) {
+          objects.image.querySelector('[type="video/webm"]').src = JSON.parse(objects.icontainer.dataset.uris).full;
+          objects.image.querySelector('[type="video/mp4"]').src = JSON.parse(objects.icontainer.dataset.uris).full.replace(/\.webm$/, '.mp4');
           objects.image.addEventListener('click', singleEvent);
         }
       }
@@ -1125,17 +1129,17 @@ color: #777;
 
     }
 
-    if (objects.image != undefined && pub.isVideo && settings.singleMode && (!/\/full.webm/.test(objects.image.querySelector('[type="video/webm"]').src) || !singleFirstChange)) {
+    if (objects.image && pub.isVideo && settings.singleMode && (!/\/[\d]+.webm/.test(objects.image.querySelector('[type="video/webm"]').src) || !singleFirstChange)) {
       objects.image.removeAttribute('src');
-      objects.image.querySelector('[type="video/webm"]').src = JSON.parse(objects.icontainer.dataset.uris).webm;
-      objects.image.querySelector('[type="video/mp4"]').src = JSON.parse(objects.icontainer.dataset.uris).mp4;
+      objects.image.querySelector('[type="video/webm"]').src = JSON.parse(objects.icontainer.dataset.uris).full;
+      objects.image.querySelector('[type="video/mp4"]').src = JSON.parse(objects.icontainer.dataset.uris).full.replace(/\.webm$/, '.mp4');
       rescale();
       singleFirstChange = true;
     }
 
     if (pub.scaled == 'false' || settings.singleMode) setMargin();
 
-    if (objects.dcontainer != undefined) {
+    if (objects.dcontainer) {
       if ((pub.scaled == 'true' || (settings.singleMode && pub.defzoom >= pub.zoom)) && pub.mouseY/window.innerHeight >= (popUps.down.classList.contains('active')?0.3:0.85) && !popUps.back.classList.contains('active')) popUps.down.classList.add('active');
       else popUps.down.classList.remove('active');
     }
@@ -1233,9 +1237,9 @@ color: #777;
       initalZoom();
     }
     objects.dcontainer.dataset.scaled = pub.scaled;
-    if (pub.isVideo && !/full.webm/.test(objects.image.querySelector('[type="video/webm"]').src)) {
-      objects.image.querySelector('[type="video/webm"]').src = JSON.parse(objects.icontainer.dataset.uris).webm;
-      objects.image.querySelector('[type="video/mp4"]').src = JSON.parse(objects.icontainer.dataset.uris).mp4;
+    if (pub.isVideo && !/\/[\d]+.webm$/.test(objects.image.querySelector('[type="video/webm"]').src)) {
+      objects.image.querySelector('[type="video/webm"]').src = JSON.parse(objects.icontainer.dataset.uris).full;
+      objects.image.querySelector('[type="video/mp4"]').src = JSON.parse(objects.icontainer.dataset.uris).full.replace(/\.webm$/, '.mp4');
     }
     return false;
   }
@@ -1416,6 +1420,7 @@ color: #777;
     }
     if (!settings.new) append('keepVanila');
     if (settings.staticEnabled) append('hider');
+    // if (settings.webmControls) append('webmControls');
   }
 
   function enable(notInital) {
@@ -1510,7 +1515,7 @@ color: #777;
     listener();
 
     //to avoid bugs on unloaded images
-    if (objects.dcontainer != undefined) {
+    if (objects.dcontainer) {
       objects.dcontainer.addEventListener("DOMNodeInserted",loadedImgFetch);
       //objects.dcontainer.addEventListener("click",disgustingLoadedImgFetch);
       objects.dcontainer.addEventListener("wheel", wheelListener);
@@ -1522,11 +1527,10 @@ color: #777;
       if ((pub.gif || pub.isVideo) && settings.singleMode) {
         let x = JSON.parse(objects.icontainer.dataset.uris);
         for (let i in x) {
-          if (pub.gif) x[i] = x.full;
+          x[i] = x.full;
         }
         objects.icontainer.dataset.uris = JSON.stringify(x);
         objects.dcontainer.dataset.uris = JSON.stringify(x);
-        console.log(objects.image);
         // я устал с этим скриптом бороться :(
       }
 
@@ -1611,14 +1615,20 @@ color: #777;
       }, 200);
       setTimeout(function() {enableColor(true);},777);
     });
-    setTimeout(function() {if (document.getElementById('_fs_color_setting') != undefined) document.getElementById('_fs_color_setting').addEventListener('change',function(e) {
-      remove('colorAccent');
-      objects.colorAccent.dataset.tagCategory = e.target.value;
-      enableColor(true);
-    });},1000);
-    setTimeout(function() {if (document.getElementById('_fs_pony_mark_setting') != undefined) document.getElementById('_fs_pony_mark_setting').addEventListener('change',function(e) {
-      cm_bg();
-    });},1000);
+    setTimeout(() => {
+      if (document.getElementById('_fs_color_setting')) {
+        document.getElementById('_fs_color_setting').addEventListener('change',(e) => {
+          remove('colorAccent');
+          objects.colorAccent.dataset.tagCategory = e.target.value;
+          enableColor(true);
+        });
+      }
+    },1000);
+    setTimeout(() => {
+      if (document.getElementById('_fs_pony_mark_setting')) {
+        document.getElementById('_fs_pony_mark_setting').addEventListener('change', cm_bg);
+      }
+   },1000);
   });
 
   if (settings.colorAccent) prePreColor();
