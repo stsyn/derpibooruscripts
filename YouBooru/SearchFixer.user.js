@@ -13,7 +13,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.4.15
+// @version      0.4.16
 // @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
 // @author       stsyn
 
@@ -27,7 +27,7 @@
   'use strict';
 
   const scriptId = 'ssf';
-  const philomena = location.hostname.split('.')[0] == 'philomena';
+  const philomena = true;
   const sversion = GM_info.script.version;
   try {if (unsafeWindow._YDB_public.settings[scriptId] != undefined) return;}
   catch(e) {}
