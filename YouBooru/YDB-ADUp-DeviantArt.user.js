@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.2.5
+// @version      0.2.6
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
@@ -97,7 +97,7 @@
       return;
     }
 
-    hasFull = !!(document.querySelector('.dev-meta-actions:not(.patched) .dev-page-download'));
+    hasFull = false; //!!(document.querySelector('.dev-meta-actions:not(.patched) .dev-page-download'));
     let dlink, text = '';
     if (hasFull) {
       let xlink = document.querySelector('.dev-meta-actions:not(.patched) .dev-page-download').href;
@@ -132,7 +132,7 @@
         dlink = o.dataset.superFullImg.replace(/\/v1\/fill.*$/, '').replace('.com/f/', '.com/intermediary/f/').replace(/\?token=.*$/, '');
       }
       spawn(dlink, 'intermediary');
-      
+
       // leak
       const code = parseInt(location.href.split('-').pop()).toString(36);
       dlink = `http://orig01.deviantart.net/x_by_x-d${code}.png`;
