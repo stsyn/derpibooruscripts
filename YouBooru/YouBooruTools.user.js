@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.8.6
+// @version      0.8.7
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -263,7 +263,8 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     unsafeWindow._YDB_public.funcs.tagComplexCombine = goodCombine;
     unsafeWindow._YDB_public.funcs.tagSimpleCombine = simpleCombine;
     unsafeWindow._YDB_public.funcs.searchForDuplicates = searchForDuplicates;
-    unsafeWindow._YDB_public.funcs.upvoteDownvoteDisabler = function(elem, inital) {
+    unsafeWindow._YDB_public.funcs.compactURL = compactURL;
+    unsafeWindow._YDB_public.funcs.upvoteDownvoteDisabler = (elem, inital) => {
       commentButtons(elem, inital);
       deactivateButtons(elem, inital);
       hiddenImg(elem, inital);
@@ -404,7 +405,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   function bigSearch() {
     GM_addStyle(css.bigSearch);
     let x = [document.getElementsByClassName('header__input--search')[0], document.querySelector('.js-search-form input')];
-    let x2 = [document.getElementsByClassName('header__search__button')[0], document.querySelector('input[type="submit"][value="Search"]')];
+    let x2 = [document.getElementsByClassName('header__search__button')[0], document.querySelector('form#searchform[action*="/search"] button[type="submit"]')];
     for (let i=0; i<x.length; i++) {
       if (x[i] == null) return;
 
@@ -430,10 +431,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
 
   //tag tools
   function simpleParse(x) {
-    x = x.replace(/(\|\|| OR )/g, ',');
-    let y = x.split(',');
-    for (let i=0; i<y.length; i++) y[i] = y[i].trim();
-    return y;
+    return x.replace(/(\|\|| OR | AND | \&\&)/g, ',').split(',').map(y => y.trim());
   }
 
   function goodParse(x) {
@@ -496,7 +494,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   }
 
   function searchForDuplicates(a) {
-    return a.filter(function(a, c, d) {
+    return a.filter((a, c, d) => {
       return d.indexOf(a) === c
     })
   }
@@ -519,7 +517,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   function checkAliases() {
     let data = readTagTools();
     for (let i in data) {
-      if (data[i].t == null) data[i].t = getTimestamp();
+      if (!data[i].t) data[i].t = getTimestamp();
       if (data[i].t+3600<getTimestamp()) {
         delete data[i];
         continue;
@@ -596,6 +594,10 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     return original;
   }
 
+  function compactURL(link) {
+    return encodeURIComponent(link.replace(/ /g, '+')).replace(/%2B/g,'+').replace(/%2A/g, '*').replace(/%2C/g, ',').replace(/%3A/g, ':');
+  }
+
   function tagAliases(original, opt) {
     let limit = 8192;
     checkAliases();
@@ -632,15 +634,15 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       return q2;
     };
 
-    let compressSyntax = function (orig) {
+    const compressSyntax = orig => {
       let q2 = orig.replace(/ \&\& /g, ',');
       q2 = q2.replace(/ \|\| /g, ' OR ');
       while (q2.indexOf(', ')>-1) q2 = q2.replace(/, /g, ',');
       while (q2.indexOf(' ,')>-1) q2 = q2.replace(/ ,/g, ',');
-      q2 = q2.replace(new RegExp(' AND ','g'), ',');
-      q2 = q2.replace(new RegExp(' NOT ','g'), ' -');
-      q2 = q2.replace(new RegExp('^NOT ','g'), '-');
-      q2 = q2.replace(/[ ,\(]!/g, function(str){return str[0]+'-';});
+      q2 = q2.replace(/ AND /g, ',');
+      q2 = q2.replace(/ NOT /g, ' -');
+      q2 = q2.replace(/'^NOT /g, '-');
+      q2 = q2.replace(/[ ,\(]!/g, str => str[0]+'-');
       q2 = q2.replace(/^ +/g,'');
       q2 = q2.replace(/ +$/g,'');
       while (q2.indexOf('  ')>-1) q2 = q2.replace(/  /g, ' ');
@@ -648,37 +650,34 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     };
 
     let compressAliases = function (orig) {
-      /*let tags = goodParse(orig);
-            let tt = getTagShortAliases();
-            for (let i=0; i<tags.tags.length; i++) {
-                if (tt[tags.tags[i].v] != undefined) {
-                    tags.tags[i].v = tt[tags.tags[i].v];
-                }
-            }
-            let q2 = goodCombine(tags);
-            return q2;*/
-
-      //disabled for now
-      return orig;
-    };
-
-    let compressArtists = function (orig) {
-      /*let tags = goodParse(orig);
-            for (let i=0; i<tags.tags.length; i++) {
-                if (tags.tags[i].v.startsWith('artist:')) {
-                    tags.tags[i].v = tags.tags[i].v.replace('artist:','ar*:');
-                }
-            }
-            let q2 = goodCombine(tags);*/
-      //disabled because of glitches
-      return orig;
-    };
-
-    let toLowerCase = function (orig) {
-      let tags = goodParse(orig);
+      /*const tags = goodParse(orig);
+      const tt = getTagShortAliases();
+      if (!tt) return orig;
       for (let i=0; i<tags.tags.length; i++) {
-        tags.tags[i].v = tags.tags[i].v.toLowerCase();
+        if (tt[tags.tags[i].v]) {
+          tags.tags[i].v = tt[tags.tags[i].v];
+        }
       }
+      let q2 = goodCombine(tags);
+      return q2;*/
+    };
+
+    const compressArtists = orig => {
+      let tags = goodParse(orig);
+      tags.tags.forEach(tag => {
+        if (tag.v.startsWith('artist:')) {
+          tag.v = tag.v.replace('artist:','ar*:');
+        }
+      });
+      let q2 = goodCombine(tags);
+      return q2;
+    };
+
+    const toLowerCase = orig => {
+      let tags = goodParse(orig);
+      tags.tags.forEach(tag => {
+        tag.v = tag.v.toLowerCase();
+      });
       let q2 = goodCombine(tags);
       return q2;
     };
@@ -712,13 +711,13 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     let q = cycledParse(q2);
     if (opt.legacy) q = smartLegacy(q);
     q = artists(q);
-    if (q.length > limit) q = compressSyntax(q);
-    if (q.length > limit) q = compressAliases(q);
-    if (q.length > limit) q = compressArtists(q);
+    if (compactURL(q).length > limit) q = compressSyntax(q);
+    //if (compactURL(q).length > limit) q = compressAliases(q);
+    if (compactURL(q).length > limit) q = compressArtists(q);
     q = unspoilTag(q);
 
     if (q!=q2) {
-      debug('YDB:T','Query '+original+' compressed to '+q,0);
+      debug('YDB:T',`Query with length ${original.length} transformed to ${q.length}`,0);
       udata[md5(q)] = {q:original, t:getTimestamp()};
       writeTagTools(udata);
     }
@@ -726,8 +725,8 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   }
 
   function unspoil(cont) {
-    let work = function (elem) {
-      let ux = elem.querySelector('.media-box__overlay.js-spoiler-info-overlay');
+    const work = elem => {
+      const ux = elem.querySelector('.media-box__overlay.js-spoiler-info-overlay');
       if (ux.innerHTML == '') return;
 
       let ix = elem.querySelector('video');
@@ -762,9 +761,11 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       ux.classList.add('hidden');
       x.classList.remove('hidden');
     };
-    if (cont != undefined) {
-      if (cont.querySelectorAll('.media-box').length > 0) for (let i=0; i<cont.querySelectorAll('.media-box').length; i++) {
-        work(cont.querySelectorAll('.media-box')[i]);
+    if (cont) {
+      if (cont.querySelectorAll('.media-box').length > 0) {
+        for (let i=0; i<cont.querySelectorAll('.media-box').length; i++) {
+          work(cont.querySelectorAll('.media-box')[i]);
+        }
       }
       else if (cont.classList.contains('image-show-container')) work2(cont);
     }
@@ -800,12 +801,12 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     for (let i=0; i<qc.tags.length; i++) {
       if (qc.tags[i].v.startsWith('__ydb_unspoil')) {
         let n = qc.tags[i].v.split(':').pop();
-        if (unsafeWindow._YDB_public.funcs.getNonce == undefined) {
+        if (!unsafeWindow._YDB_public.funcs.getNonce) {
           document.getElementById('container').insertBefore(InfernoAddElem('div',{className:'flash flash--warning', innerHTML:'YDB:Settings 0.9.1+ strongly recommended! Using unsafe nonce.'},[]),document.getElementById('content'));
         }
 
         let nonce;
-        if (unsafeWindow._YDB_public.funcs.getNonce == undefined) nonce = 'unsafe_nonce';
+        if (!unsafeWindow._YDB_public.funcs.getNonce) nonce = 'unsafe_nonce';
         else nonce = unsafeWindow._YDB_public.funcs.getNonce();
 
         if (data[s] == undefined) {
@@ -818,20 +819,20 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
           document.getElementById('container').insertBefore(InfernoAddElem('div',{className:'flash flash--warning', innerHTML:'Invalid or outdated token!'}),document.getElementById('content'));
           break;
         }
-        if (document.getElementsByClassName('js-resizable-media-container')[0] != undefined) setTimeout(() => unspoil(document.getElementsByClassName('js-resizable-media-container')[0]), 100);
-        else if (document.getElementsByClassName('image-show-container')[0] != undefined) unspoil(document.getElementsByClassName('image-show-container')[0]);
+        if (document.getElementsByClassName('js-resizable-media-container')[0]) setTimeout(() => unspoil(document.getElementsByClassName('js-resizable-media-container')[0]), 100);
+        else if (document.getElementsByClassName('image-show-container')[0]) unspoil(document.getElementsByClassName('image-show-container')[0]);
 
       }
     }
 
     if (data[s] != undefined) {
       document.getElementsByClassName('header__input--search')[0].value = data[s].q;
-      if (document.querySelector('#imagelist_container .block__header__title') != undefined && !ls.oldName) {
+      if (document.querySelector('#imagelist_container .block__header__title') && !ls.oldName) {
         let x = document.querySelector('#imagelist_container .block__header__title').innerHTML;
         x = x.slice(0,14)+data[s].q;
         document.querySelector('#imagelist_container .block__header__title').innerHTML = x;
       }
-      if (document.querySelector('.js-search-form .input') != undefined) document.querySelector('.js-search-form .input').value = data[s].q;
+      if (document.querySelector('.js-search-form .input')) document.querySelector('.js-search-form .input').value = data[s].q;
 
       data[s].t = getTimestamp();
     }
@@ -839,9 +840,9 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       el.value = tagAliases(el.value, {legacy:true});
     };
 
-    document.getElementsByClassName('header__search__button')[0].addEventListener('click',function() {aliaseParse(document.getElementsByClassName('header__input--search')[0]);});
-    if (document.querySelector('form[action*="/search"] input[type="submit"][value="Search"]')!=undefined)
-      document.querySelector('form[action*="/search"] input[type="submit"][value="Search"]').addEventListener('click',function() {aliaseParse(document.querySelector('.js-search-form .input'));});
+    document.getElementsByClassName('header__search__button')[0].addEventListener('click',() => aliaseParse(document.getElementsByClassName('header__input--search')[0]));
+    if (document.querySelector('form#searchform[action*="/search"] button[type="submit"]'))
+      document.querySelector('form#searchform[action*="/search"] button[type="submit"]').addEventListener('click',() => aliaseParse(document.querySelector('.js-search-form .input')));
   }
 
   function asWatchlist() {
