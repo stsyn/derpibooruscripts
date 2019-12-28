@@ -12,7 +12,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.26
+// @version      0.5.27
 // @description  Feedz
 // @author       stsyn
 
@@ -128,8 +128,8 @@
 
   function register() {
     GM_addStyle(feedCSS);
-    if (unsafeWindow._YDB_public == undefined) unsafeWindow._YDB_public = {};
-    if (unsafeWindow._YDB_public.settings == undefined) unsafeWindow._YDB_public.settings = {};
+    if (!unsafeWindow._YDB_public) unsafeWindow._YDB_public = {};
+    if (!unsafeWindow._YDB_public.settings) unsafeWindow._YDB_public.settings = {};
     unsafeWindow._YDB_public.settings.feeds = {
       name:'Feeds',
       container:'_ydb_feeds',
@@ -149,14 +149,16 @@
             {type:'input', name:'Name', parameter:'name',styleI:{width:'31.5em', marginRight:'.5em'},validation:{type:'unique'}},
             {type:'select', name:'Sorting', parameter:'sort',styleI:{marginRight:'.5em'}, values:[
               {name:'Upload date', value:'created_at'},
-              {name:'Modification date', value:'updated_at'},
+              {name:'Mod. date', value:'updated_at'},
               {name:'Creation date', value:'first_seen_at'},
               {name:'Score', value:'score'},
+              {name:'Upvotes', value:'upvotes'},
+              {name:'Downvotes', value:'downvotes'},
               {name:'Wilson score', value:'wilson'},
               {name:'Relevance', value:'relevance'},
               {name:'Width', value:'width'},
               {name:'Height', value:'height'},
-              {name:'Comments', value:'comments'},
+              {name:'Comments', value:'comment_count'},
               {name:'Tag count', value:'tag_count'},
               {name:'Random', value:'random'},
               {name:'Gallery', value:'gallery_id'}
@@ -181,15 +183,16 @@
             {type:'input', name:'...or caching interval', parameter:'ccache',styleI:{width:'3.2em', marginRight:'.4em'}, validation:{type:'int',min:0,max:99999}},
             {type:'checkbox', name:'Double size', parameter:'double',styleI:{marginRight:'.4em'}},
             {type:'checkbox', name:'Show on home page', parameter:'mainPage',styleI:{marginRight:'.4em'}},
-            {type:'buttonLink', attrI:{title:'Copy-paste this link somewhere to share this feed!',target:'_blank'},styleI:{marginRight:'.5em'}, name:'Share', i:function(module,elem) {
+            {type:'buttonLink', attrI:{title:'Copy-paste this link somewhere to share this feed!',target:'_blank'},styleI:{marginRight:'.5em'}, name:'Share', i:(module,elem) => {
               const f = module.saved.feedz[elem.parentNode.dataset.id];
               if (!f) {
                 elem.innerHTML = '------';
                 return;
               }
               let q = f.query;
-              if (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.tagAliases)
+              if (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.tagAliases) {
                 q = encodeURIComponent(unsafeWindow._YDB_public.funcs.tagAliases(f.query, {legacy:false}));
+              }
               elem.href = '/search?name='+encodeURIComponent(f.name)+'&q='+q.replace(/\%20/g,'+')+'&sf='+f.sort+'&sd='+f.sd+'&cache='+f.cache+'&ccache='+f.ccache;
             }},
             {type:'button', name:'Nuke cache  (╯°□°）╯', action:resetCache}
@@ -589,7 +592,7 @@
       else image.src = iContainer.getAttribute('data-thumb');
     }
     else {
-      if (!s) s = '/tagblocked.svg';
+      if (!s) s = '/images/tagblocked.svg';
       spoiler.src = s;
 
       // chrome bug
