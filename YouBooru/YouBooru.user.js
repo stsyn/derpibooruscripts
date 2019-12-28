@@ -12,7 +12,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.27
+// @version      0.5.28
 // @description  Feedz
 // @author       stsyn
 
@@ -476,10 +476,19 @@
 
   /*********************************/
 
+  function encode(link) {
+    if (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.compactURL) {
+      return unsafeWindow._YDB_public.funcs.compactURL(link);
+    }
+    else {
+      return encodeURIComponent(link.replace(/ /g, '+')).replace(/%2B/g,'+');
+    }
+  }
+
   function compileURL(f, act) {
     let tx = customQueries(f);
-    let s = '/search?q='+encodeURIComponent(tx.replace(new RegExp(' ','g'),'+')).replace(new RegExp('%2B','g'),'+')+'&sf='+f.sort+'&sd='+f.sd;
-    if (act && (unsafeWindow._YDB_public.funcs || unsafeWindow._YDB_public.funcs.feedURLs)) {
+    let s = `/search?q=${encode(tx)}&sf=${f.sort}&sd=${f.sd}`;
+    if (act && (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.feedURLs)) {
       for (let i in unsafeWindow._YDB_public.funcs.feedURLs) s += unsafeWindow._YDB_public.funcs.feedURLs[i](f);
     }
     return s;
@@ -487,8 +496,8 @@
 
   function compileJSONURL(f, act) {
     let tx = customQueries(f);
-    let s = '/search.json?q='+encodeURIComponent(tx.replace(new RegExp(' ','g'),'+')).replace(new RegExp('%2B','g'),'+')+'&sf='+f.sort+'&sd='+f.sd;
-    if (act && (unsafeWindow._YDB_public.funcs || unsafeWindow._YDB_public.funcs.feedURLs)) {
+    let s = `/search.json?q=${encode(tx)}&sf=${f.sort}&sd=${f.sd}`;
+    if (act && (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.feedURLs)) {
       for (let i in unsafeWindow._YDB_public.funcs.feedURLs) s += unsafeWindow._YDB_public.funcs.feedURLs[i](f);
     }
     return s;
@@ -772,8 +781,8 @@
     }
 
     setTimeout(() => {
-      feed.observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
+      feed.observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
           if (mutation.type == 'attributes') {
             let u = mutation.target.classList;
             if (u.contains('interaction--fave') || u.contains('interaction--upvote') || u.contains('interaction--downvote') || u.contains('interaction--hide')) {
@@ -824,8 +833,8 @@
       }
     }
     setTimeout(() => {
-      feed.observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
+      feed.observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
           if (mutation.type == 'attributes') {
             let u = mutation.target.classList;
             if (u.contains('interaction--fave') || u.contains('interaction--upvote') || u.contains('interaction--downvote') || u.contains('interaction--hide')) {
@@ -967,7 +976,7 @@
     feedz[i] = f;
     write();
 
-    if (unsafeWindow._YDB_public.funcs.backgroundBackup!=undefined) unsafeWindow._YDB_public.funcs.backgroundBackup(function() {
+    if (unsafeWindow._YDB_public.funcs.backgroundBackup) unsafeWindow._YDB_public.funcs.backgroundBackup(() => {
       if (history.length == 1) close();
       else history.back();
     });
@@ -998,7 +1007,7 @@
     feedz[i] = f;
     write();
 
-    if (unsafeWindow._YDB_public.funcs.backgroundBackup!=undefined) unsafeWindow._YDB_public.funcs.backgroundBackup(function() {
+    if (unsafeWindow._YDB_public.funcs.backgroundBackup) unsafeWindow._YDB_public.funcs.backgroundBackup(() => {
       if (history.length == 1) close();
       else if (u.params.feedId != undefined) location.href = '/search?q='+customQueries(f)+'&sf='+f.sort+'&sd='+f.sd+'&feedId='+i;
       else location.href = '/settings#YourBooru';
@@ -1036,16 +1045,14 @@
       if (x) c.innerHTML += '<br><br><span id="yy_add" class="button">Add feed</span> <span id="yy_cancel" class="button">Cancel</span> <span id="yy_include"></span>';
 
 
-      document.getElementById('yy_cancel').addEventListener('click', function() {
+      document.getElementById('yy_cancel').addEventListener('click', () => {
         if (history.length == 1) close();
         else history.back();
       });
 
-      document.getElementById('yy_add').addEventListener('click', function() {
-        YB_insertFeed(u);
-      });
+      document.getElementById('yy_add').addEventListener('click', () => YB_insertFeed(u));
 
-      document.getElementById('yy_include').addEventListener('click', function() {
+      document.getElementById('yy_include').addEventListener('click', () => {
         u[1] = decodeURIComponent(u[1])+'_'+parseInt(65536*Math.random());
         YB_insertFeed(u);
       });
@@ -1105,7 +1112,7 @@
           createElement('span', 'Update: '),
           createElement('span#yy_cache', [
             createElement('span', 'after '),
-            createElement('input.input', {value: decodeURIComponent(u.params.cache), name: 'cache', events: {input:(e) => {
+            createElement('input.input', {value: decodeURIComponent(u.params.cache), name: 'cache', events: {input:e => {
               if (e.target.value == '0' || !e.target.value) {
                 document.getElementById('yy_ccache').style.opacity = '1';
                 document.querySelector('#yy_ccache input').removeAttribute('disabled');
@@ -1113,13 +1120,13 @@
               else {
                 document.getElementById('yy_cache').style.opacity = '1';
                 document.getElementById('yy_ccache').style.opacity = '.2';
-                document.querySelector('#yy_ccache input').setAttribute('disabled',true);
+                document.querySelector('#yy_ccache input').setAttribute('disabled', true);
               }
             }}})
           ]),
           createElement('span#yy_ccache',[
             createElement('span', ' each '),
-            createElement('input.input', {value: decodeURIComponent(u.params.ccache), name:'ccache', events:{input:(e) => {
+            createElement('input.input', {value: decodeURIComponent(u.params.ccache), name:'ccache', events:{input:e => {
               if (e.target.value == '0' || !e.target.value) {
                 document.getElementById('yy_cache').style.opacity = '1';
                 document.querySelector('#yy_cache input').removeAttribute('disabled');
@@ -1127,17 +1134,17 @@
               else {
                 document.getElementById('yy_ccache').style.opacity = '1';
                 document.getElementById('yy_cache').style.opacity = '.2';
-                document.querySelector('#yy_cache input').setAttribute('disabled',true);
+                document.querySelector('#yy_cache input').setAttribute('disabled', true);
               }
             }}},[])
           ]),
           createElement('span', ' minutes'),
           createElement('br'),
           createElement('label', 'Double size ',[
-            createElement('input',{checked: (u.params.feedId!=undefined ? feedz[u.params.feedId].double : false), name: 'double', type: 'checkbox'})
+            createElement('input',{checked: (u.params.feedId ? feedz[u.params.feedId].double : false), name: 'double', type: 'checkbox'})
           ]),
           createElement('label',' Show on main page ',[
-            createElement('input',{checked: (u.params.feedId!=undefined ? feedz[u.params.feedId].mainPage : true), name: 'mainPage', type: 'checkbox'})
+            createElement('input',{checked: (u.params.feedId ? feedz[u.params.feedId].mainPage : true), name: 'mainPage', type: 'checkbox'})
           ]),
           createElement('br'),
           createElement('br'),
@@ -1160,7 +1167,7 @@
       document.querySelector('#yy_ccache input').setAttribute('disabled',true);
     }
 
-    document.getElementById('yy_cancel').addEventListener('click', function() {
+    document.getElementById('yy_cancel').addEventListener('click', () => {
       if (history.length == 1) close();
       else {
         let q = '';
@@ -1171,11 +1178,9 @@
       }
     });
 
-    document.getElementById('yy_add').addEventListener('click', function() {
-      YB_insertFeed2(u);
-    });
+    document.getElementById('yy_add').addEventListener('click', () => YB_insertFeed2(u));
 
-    document.getElementById('yy_include').addEventListener('click', function() {
+    document.getElementById('yy_include').addEventListener('click', () => {
       u.params.name = decodeURIComponent(u.params.name)+'_'+parseInt(65536*Math.random());
       YB_insertFeed2(u);
     });
@@ -1188,8 +1193,6 @@
     if (!location.search) return;
     else if (location.search == "?") return;
     else {
-      if (document.querySelector('#content>p')) document.getElementById('content').removeChild(document.querySelector('#content>p'));
-      if (document.querySelector('#content>a')) document.getElementById('content').removeChild(document.querySelector('#content>a'));
       let u = x.split('?');
       if (u[0] == "addFeed") YB_addFeed(u);
       else if (u[0] == "feeds") YB_feedsPage();
