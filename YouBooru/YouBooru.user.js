@@ -12,7 +12,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.28
+// @version      0.5.29
 // @description  Feedz
 // @author       stsyn
 
@@ -29,6 +29,7 @@
 
   let privated = false;
   const feedCSS = '._ydb_feedloading {display:none} ._ydb_feedshadow .block__content {opacity:0.5} ._ydb_feedshadow ._ydb_feedloading{display:block !important; position:absolute; width:100%; top:48%; pointer-events:none; text-align:center}';
+  let sizingCSSNode;
   let data={};
 
   let config = {
@@ -128,6 +129,8 @@
 
   function register() {
     GM_addStyle(feedCSS);
+    const sizingCSS = GM_addStyle('');
+    sizingCSSNode = Array.from(document.styleSheets).find(ss => ss.ownerNode === sizingCSS);
     if (!unsafeWindow._YDB_public) unsafeWindow._YDB_public = {};
     if (!unsafeWindow._YDB_public.settings) unsafeWindow._YDB_public.settings = {};
     unsafeWindow._YDB_public.settings.feeds = {
@@ -212,30 +215,16 @@
     };
   }
 
-  function resizing(elem) {
-    const ccont = document.getElementsByClassName('column-layout__main')[0];
-    const mwidth = parseInt(ccont.clientWidth) - 14;
-    const twidth = parseInt(mwidth/parseInt(config.imagesInFeeds*(privated?1.2:1))-8);
-    elem.getElementsByClassName('media-box__header')[0].style.width = twidth+'px';
-    elem.getElementsByClassName('media-box__content')[0].style.width = twidth+'px';
-    elem.getElementsByClassName('media-box__content')[0].style.height = twidth+'px';
-    elem.getElementsByClassName('media-box__header')[0].classList[twidth < 200 ? 'add' : 'remove']('media-box__header--small');
-  }
-
   function resizeEverything() {
+    while (sizingCSSNode.cssRules.length > 0) sizingCSSNode.deleteRule(0);
     const ccont = document.getElementsByClassName('column-layout__main')[0];
     const mwidth = parseInt(ccont.clientWidth) - 14;
     const twidth = parseInt(mwidth/parseInt(config.imagesInFeeds*(privated?1.2:1))-8);
-    for (let i=0; i<document.getElementsByClassName('_ydb_resizible').length; i++) {
-      resizing(document.getElementsByClassName('_ydb_resizible')[i]);
-    }
-
-    for (let i=0; i<document.getElementsByClassName('_ydb_row_resizable').length; i++) {
-      const c = document.getElementsByClassName('_ydb_row_resizable')[i];
-      let s = twidth+22+7;
-      if (c.classList.contains('_ydb_row_double')) s*=2;
-      c.style.height = s+'px';
-    }
+    const s = twidth+22+7;
+    sizingCSSNode.addRule('._ydb_row_resizable', `height: ${s}px`);
+    sizingCSSNode.addRule('._ydb_row_resizable._ydb_row_double', `height: ${s * 2}px`);
+    sizingCSSNode.addRule('._ydb_row_resizable .media-box__header', `width: ${twidth}px`);
+    sizingCSSNode.addRule('._ydb_row_resizable .media-box__content', `width: ${twidth}px; height: ${twidth}px;`);
   }
 
   function preRun() {
@@ -306,9 +295,9 @@
       }
     }
     f_s_c.firstSeenAtImplemented = true;
-    if (unsafeWindow._YDB_public.funcs.backgroundBackup!=undefined && updated) {
-      setTimeout(function() {
-        unsafeWindow._YDB_public.funcs.backgroundBackup(function() {});
+    if (unsafeWindow._YDB_public.funcs.backgroundBackup && updated) {
+      setTimeout(() => {
+        unsafeWindow._YDB_public.funcs.backgroundBackup(() => {});
         write();
       }, 3000);
     }
@@ -368,7 +357,6 @@
 
   function postRun() {
     const keyForDeletion = ['loaded', 'container', 'temp', 'reload', 'internalId', 'url', 'observer', 'postprocessors'];
-    resizeEverything();
     let x = JSON.parse(JSON.stringify(f_s_c));
     x.feedz.forEach(feed => {
       for (let key in feed) {
@@ -667,6 +655,20 @@
     postRun();
   }
 
+  function observer(feed) {
+    return new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        if (mutation.type == 'attributes') {
+          let u = mutation.target.classList;
+          if (u.contains('interaction--fave') || u.contains('interaction--upvote') || u.contains('interaction--downvote') || u.contains('interaction--hide')) {
+            updateEvents(feed.container.querySelector('.media-box[data-image-id="'+mutation.target.dataset.imageId+'"]'), feed);
+            localStorage._ydb_cachesEvents = JSON.stringify(feedzEvents);
+          }
+        }
+      });
+    });
+  }
+
   function updateEvents(elem, feed) {
     let obj = {};
     try {
@@ -729,9 +731,11 @@
         if (!elem) break;
 
         const iContainer = elem.querySelector('.media-box__content .image-container');
-        const image = elem.querySelector('.media-box__content .image-container a img');
+        const link = iContainer.getElementsByTagName('a')[0];
+        const image = link.getElementsByTagName('img')[0];
+        const header = elem.getElementsByClassName('media-box__header')[0];
 
-        if (!config.doNotRemoveControls) elem.getElementsByClassName('media-box__header')[0].style.display = 'none';
+        if (!config.doNotRemoveControls) header.style.display = 'none';
 
         let act = 'nope';
         let faved = false;
@@ -745,9 +749,9 @@
           }
         })
 
-        if (act == 'up') elem.querySelector('.media-box__header .interaction--upvote').classList.add('active');
-        else if (act == 'down') elem.querySelector('.media-box__header .interaction--downvote').classList.add('active');
-        if (faved) elem.querySelector('.media-box__header .interaction--fave').classList.add('active');
+        if (act == 'up') header.getElementsByClassName('interaction--upvote')[0].classList.add('active');
+        else if (act == 'down') header.getElementsByClassName('interaction--downvote')[0].classList.add('active');
+        if (faved) header.getElementsByClassName('interaction--fave')[0].classList.add('active');
 
         let temp = (JSON.parse(iContainer.getAttribute('data-uris')));
         iContainer.setAttribute('data-thumb', temp.thumb.replace(/webm$/,'gif'));
@@ -763,13 +767,14 @@
         iContainer.classList.add('thumb');
         elem.querySelector('.media-box__content').classList.remove('media-box__content--small');
 
+        compactImageURL(link);
+
         const th = elem.querySelector('picture *[src], video *[src]');
         if (th) th.src = th.src.replace('/thumb_small.','/thumb.');
-        resizing(elem);
         elem.classList.add('_ydb_resizible');
 
         if (image) {
-          image.onload = (e) => spoiler(e, aloff);
+          image.onload = e => spoiler(e, aloff);
           if (!image.src) {
             spoiler(image, aloff);
           }
@@ -781,18 +786,8 @@
     }
 
     setTimeout(() => {
-      feed.observer = new MutationObserver(mutations => {
-        mutations.forEach(mutation => {
-          if (mutation.type == 'attributes') {
-            let u = mutation.target.classList;
-            if (u.contains('interaction--fave') || u.contains('interaction--upvote') || u.contains('interaction--downvote') || u.contains('interaction--hide')) {
-              updateEvents(feed.container.querySelector('.media-box[data-image-id="'+mutation.target.dataset.imageId+'"]'), feed);
-              localStorage._ydb_cachesEvents = JSON.stringify(feedzEvents);
-            }
-          }
-        });
-      });
-      setTimeout(() => {feed.observer.observe(feed.container, {attributes: true, childList: true, characterData: true, subtree:true });},250);
+      feed.observer = observer(feed);
+      setTimeout(() => feed.observer.observe(feed.container, {attributes: true, childList: true, characterData: true, subtree:true}), 250);
     },1000);
 
 
@@ -801,10 +796,20 @@
       unsafeWindow._YDB_public.funcs.upvoteDownvoteDisabler(c, true);
   }
 
+  function compactImageURL(linkElem) {
+    if (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.compactURL) {
+      let q = parseURL(linkElem.href).params.q;
+      if (q) {
+        q = unsafeWindow._YDB_public.funcs.compactURL(decodeURIComponent(q));
+        linkElem.href = linkElem.href.replace(/(\?|&)(q=.*)&/, `$1${q}&`).replace(/(\?|&)(q=.*)$/, `$1${q}`);
+      }
+    }
+  }
+
   function fillParsed(feed, id, pre) {
     const c = feed.container;
     let aloff = false;
-    if (unsafeWindow._YDB_public.funcs != undefined && unsafeWindow._YDB_public.funcs.tagSimpleParser != undefined) {
+    if (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.tagSimpleParser) {
       let t = unsafeWindow._YDB_public.funcs.tagSimpleParser(feed.query);
       aloff = !!t.find(x => x.startsWith('__ydb_Unspoil'));
     }
@@ -819,31 +824,18 @@
         if (!elem) break;
         const image = elem.querySelector('.media-box__content .image-container a img');
         if (image) {
-          image.onload = (e) => spoiler(e, aloff);
+          image.onload = e => spoiler(e, aloff);
           if (!image.src) {
             spoiler(image, aloff);
           }
         }
-        const mwidth = parseInt(cont.clientWidth) - 14;
-        const twidth = parseInt(mwidth/parseInt(config.imagesInFeeds*(privated?1.2:1))-8);
-        resizing(elem);
         if (i >= parseInt(config.imagesInFeeds*(privated?1.2:1)*(feed.double?2:1))) elem.classList.add('hidden');
         else elem.classList.remove('hidden');
         applyEvents(elem, feed);
       }
     }
     setTimeout(() => {
-      feed.observer = new MutationObserver(mutations => {
-        mutations.forEach(mutation => {
-          if (mutation.type == 'attributes') {
-            let u = mutation.target.classList;
-            if (u.contains('interaction--fave') || u.contains('interaction--upvote') || u.contains('interaction--downvote') || u.contains('interaction--hide')) {
-              updateEvents(feed.container.querySelector(`.media-box[data-image-id="${mutation.target.dataset.imageId}"]`), feed);
-              localStorage._ydb_cachesEvents = JSON.stringify(feedzEvents);
-            }
-          }
-        });
-      });
+      feed.observer = observer(feed)
       feed.observer.observe(feed.container, {attributes: true, childList: true, characterData: true, subtree:true });
     },1000);
 
@@ -863,6 +855,7 @@
     data.spoilerType = document.getElementsByClassName('js-datastore')[0].getAttribute('data-spoiler-type');
     data.spoilers = JSON.parse(document.getElementsByClassName('js-datastore')[0].getAttribute('data-spoilered-tag-list'));
     preRun();
+    resizeEverything();
     cont.style.minWidth = 'calc(100% - 338px)';
     if (cont.childNodes.length == 1) config.hasWatchList = false;
     else config.hasWatchList = true;
@@ -878,10 +871,6 @@
       if (f.mainPage === undefined) f.mainPage = true;
       if (!(privated || f.mainPage)) continue;
 
-      const mwidth = parseInt(cont.clientWidth) - 14;
-      const twidth = parseInt(mwidth/parseInt(config.imagesInFeeds*(privated?1.2:1))-8);
-      let s = twidth+22+7;
-      if (f.double) s*=2;
       f.internalId = i;
       f.temp = createElement('div');
 
@@ -908,8 +897,7 @@
         ]),
         f.container = createElement('div.block__content.js-resizable-media-container._ydb_row_resizable',
           {
-            className: (f.double ? ' _ydb_row_double' : ''),
-            style: {height: s + 'px'}
+            className: (f.double ? ' _ydb_row_double' : '')
           })
       ]));
 
@@ -1203,7 +1191,7 @@
     createElement('a.header__link', {href: '/pages/api?feeds'}, 'Feeds'));
   const cont = document.getElementsByClassName('column-layout__main')[0];
 
-  if (location.pathname == '/' || location.pathname == '') setTimeout(init, 500);
+  if (location.pathname == '/' || location.pathname == '') setTimeout(init, 250);
   else {
     preRun();
     if (location.pathname == "/pages/api") YDB();
