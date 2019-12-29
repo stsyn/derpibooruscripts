@@ -12,7 +12,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.29
+// @version      0.5.30
 // @description  Feedz
 // @author       stsyn
 
@@ -801,7 +801,7 @@
       let q = parseURL(linkElem.href).params.q;
       if (q) {
         q = unsafeWindow._YDB_public.funcs.compactURL(decodeURIComponent(q));
-        linkElem.href = linkElem.href.replace(/(\?|&)(q=.*)&/, `$1${q}&`).replace(/(\?|&)(q=.*)$/, `$1${q}`);
+        linkElem.href = linkElem.href.replace(/(\?|&)(q=.*)&/, `$1q=${q}&`).replace(/(\?|&)(q=.*)$/, `$1q=${q}`);
       }
     }
   }
