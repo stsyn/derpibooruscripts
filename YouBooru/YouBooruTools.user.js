@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.8.7
+// @version      0.8.8
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -40,9 +40,8 @@
   let result;
   let version = 0;
   let artists = [];
-  let commPreviewData = {};
-  let bps = ['princess luna','tempest shadow','starlight glimmer','rarity','oc:blackjack','princess celestia'];
-  let sps = [{name:'solo',image:'https://derpicdn.net/img/view/2016/8/22/1231050.png'},
+  const bps = ['princess luna','tempest shadow','starlight glimmer','rarity','oc:blackjack','princess celestia'];
+  const sps = [{name:'solo',image:'https://derpicdn.net/img/view/2016/8/22/1231050.png'},
              {name:'patreon preview',image:'https://derpicdn.net/img/view/2016/6/3/1169448.png'},
              {name:'80s',image:'https://derpicdn.net/img/view/2016/5/5/1147241.png'},
              {name:'op is trying to start shit',image:'https://derpicdn.net/img/view/2015/8/28/967369.jpg'},
@@ -57,9 +56,9 @@
              {name:'crotchboobs',image:'https://derpicdn.net/img/view/2013/4/22/305692.png'},
              {name:'foot fetish',image:'https://derpicdn.net/img/view/2013/4/20/303577.png'}
             ];
-  let best_pony_for_today = bps[parseInt(Math.random()*Math.random()*bps.length)];
-  let spoiler_for_today = sps[parseInt(Math.random()*sps.length)];
-  let hidden = {
+  const best_pony_for_today = bps[parseInt(Math.random()*Math.random()*bps.length)];
+  const spoiler_for_today = sps[parseInt(Math.random()*sps.length)];
+  const hidden = {
     normal:[
       {
         big:'https://derpicdn.net/img/view/2017/10/23/large.png',
@@ -73,14 +72,14 @@
       }
     ]
   };
-  let debug = function(id, value, level) {
+  const debug = function(id, value, level) {
     try {unsafeWindow._YDB_public.funcs.log(id, value, level);}
     catch(e) {
-      console.log('['+['.', '?', '!'][level]+'] ['+id+'] '+value);
+      console.log('[' + ['.', '?', '!'][level] + '] [' + id + '] ' + value);
       if (level == 2) console.trace();
     }
   };
-  let css = {
+  const css = {
     general:`body[data-theme*=dark] ._ydb_green{background:#5b9b26;color:#e0e0e0!important}
 body ._ydb_green{background:#67af2b!important;color:#fff!important}
 body[data-theme*=dark] ._ydb_orange{background:#8b5b26;color:#e0e0e0!important}
@@ -124,8 +123,8 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
 
   function register() {
     GM_addStyle(css.general);
-    if (unsafeWindow._YDB_public == undefined) unsafeWindow._YDB_public = {};
-    if (unsafeWindow._YDB_public.settings == undefined) unsafeWindow._YDB_public.settings = {};
+    if (!unsafeWindow._YDB_public) unsafeWindow._YDB_public = {};
+    if (!unsafeWindow._YDB_public.settings) unsafeWindow._YDB_public.settings = {};
     unsafeWindow._YDB_public.settings.tools = {
       name:'Tools',
       container:'_ydb_tools',
@@ -220,10 +219,10 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
                 d.changed = false;
                 if (d.w) {
                   unsafeWindow._YDB_public.handled++;
-                  let t = InfernoAddElem('div',{},[
-                    InfernoAddElem('h1',{},[]),,
-                    InfernoAddElem('div',{className:'wallcontainer'},[]),
-                      InfernoAddElem('div',{className:'walloftext'},[])
+                  let t = createElement('div', [
+                    createElement('h1'),
+                    createElement('div.wallcontainer'),
+                    createElement('div.walloftext')
                   ]);
                   t = unsafeWindow._YDB_public.funcs.callWindow([t]);
                   processing[d.a] = true;
@@ -272,8 +271,8 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   }
 
   function isThisImage() {
-    return ((parseInt(location.pathname.slice(1))>=0 && location.pathname.split('/')[2] == undefined) ||
-            (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && location.pathname.split('/')[3] == undefined));
+    return ((parseInt(location.pathname.slice(1))>=0 && !location.pathname.split('/')[2]) ||
+            (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && !location.pathname.split('/')[3]));
   }
 
   function writeDate(date) {
@@ -478,16 +477,16 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   function goodCombine(yx) {
     let pos = 0, ns = '';
     for (let i=0; i<yx.tags.length; i++) {
-      ns+=yx.orig.substring(pos,yx.tags[i].offset);
-      pos+=(yx.tags[i].offset-pos)+yx.tags[i].length;
-      ns+=yx.tags[i].v;
+      ns += yx.orig.substring(pos,yx.tags[i].offset);
+      pos += (yx.tags[i].offset - pos) + yx.tags[i].length;
+      ns += yx.tags[i].v;
     }
-    ns+=yx.orig.substring(pos);
+    ns += yx.orig.substring(pos);
     return ns;
   }
 
-  function simpleCombine(y,separator) {
-    if (separator == undefined) separator = ' OR ';
+  function simpleCombine(y, separator) {
+    if (!separator) separator = ' OR ';
     let s = '';
     for (let i=0; i<y.length; i++) s += y[i] + (i<y.length-1?separator:'');
     return s;
@@ -775,20 +774,20 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   function aliases() {
     if (document.querySelector('#searchform > .block .block__header.flex') != undefined) {
       document.querySelector('#searchform > .block .block__header.flex').insertBefore(
-        InfernoAddElem('div',{className:'dropdown block__header__dropdown-tab'},[
-          InfernoAddElem('a',{innerHTML:'YDB tags '},[
-            InfernoAddElem('span',{dataset:{clickPreventdefault:true}},[
-              InfernoAddElem('i',{className:'fa fa-caret-down'},[])
+        createElement('div.dropdown.block__header__dropdown-tab',[
+          createElement('a', 'YDB tags ', [
+            createElement('span',{dataset:{clickPreventdefault:true}},[
+              createElement('i.fa.fa-caret-down')
             ])
           ]),
-          InfernoAddElem('div',{className:'dropdown__content'},[
-            InfernoAddElem('a',{dataset:{searchAdd:'__ydb_LastYears:0',searchShowHelp:''},innerHTML:'Created at that day of previous years'},[]),
-            InfernoAddElem('a',{dataset:{searchAdd:'__ydb_LastYearsAlt:0',searchShowHelp:''},innerHTML:'First seen at that day of previous years'},[]),
-            InfernoAddElem('a',{dataset:{searchAdd:'__ydb_Spoilered',searchShowHelp:''},innerHTML:'Spoilered by filter'},[]),
-            InfernoAddElem('a',{dataset:{searchAdd:'__ydb_Hidden',searchShowHelp:''},innerHTML:'Hidden by filter'},[]),
-            InfernoAddElem('a',{dataset:{searchAdd:'__ydb_Unspoil',searchShowHelp:''},innerHTML:'Unspoil result'},[]),
-            InfernoAddElem('a',{dataset:{searchAdd:'__ydb_Yesterday',searchShowHelp:''},innerHTML:'Uploaded yesterday'},[]),
-            InfernoAddElem('a',{dataset:{searchAdd:'__ydb_DaysAgo:2',searchShowHelp:''},innerHTML:'Uploaded X days ago'},[])
+          createElement('div.dropdown__content',[
+            createElement('a',{dataset:{searchAdd:'__ydb_LastYears:0',searchShowHelp:''}}, 'Created at that day of previous years'),
+            createElement('a',{dataset:{searchAdd:'__ydb_LastYearsAlt:0',searchShowHelp:''}}, 'First seen at that day of previous years'),
+            createElement('a',{dataset:{searchAdd:'__ydb_Spoilered',searchShowHelp:''}}, 'Spoilered by filter'),
+            createElement('a',{dataset:{searchAdd:'__ydb_Hidden',searchShowHelp:''}}, 'Hidden by filter'),
+            createElement('a',{dataset:{searchAdd:'__ydb_Unspoil',searchShowHelp:''}}, 'Unspoil result'),
+            createElement('a',{dataset:{searchAdd:'__ydb_Yesterday',searchShowHelp:''}}, 'Uploaded yesterday'),
+            createElement('a',{dataset:{searchAdd:'__ydb_DaysAgo:2',searchShowHelp:''}}, 'Uploaded X days ago')
           ])
         ]),
         document.querySelector('#searchform > .block .block__header.flex .flex__right'));
@@ -809,7 +808,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         if (!unsafeWindow._YDB_public.funcs.getNonce) nonce = 'unsafe_nonce';
         else nonce = unsafeWindow._YDB_public.funcs.getNonce();
 
-        if (data[s] == undefined) {
+        if (!data[s]) {
           document.getElementById('container').insertBefore(InfernoAddElem('div',{className:'flash flash--warning', innerHTML:'Query lifetime expired. Please search again.'}),document.getElementById('content'));
           break;
         }
@@ -825,7 +824,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       }
     }
 
-    if (data[s] != undefined) {
+    if (data[s]) {
       document.getElementsByClassName('header__input--search')[0].value = data[s].q;
       if (document.querySelector('#imagelist_container .block__header__title') && !ls.oldName) {
         let x = document.querySelector('#imagelist_container .block__header__title').innerHTML;
@@ -846,7 +845,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   }
 
   function asWatchlist() {
-    if (ls.aliases != undefined) for (let i=0; i<ls.aliases.length; i++) {
+    if (ls.aliases) for (let i=0; i<ls.aliases.length; i++) {
       if (ls.aliases[i].w) {
         let s = simpleParse(ls.aliases[i].b);
         let ts = {};
@@ -902,6 +901,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         for (let i=0; i<x.getElementsByClassName('tag').length; i++) {
           let gotten = false;
           let y = x.getElementsByClassName('tag')[i];
+          y.dataset.tagName = y.getElementsByTagName('a')[0].dataset.tagName;
           let z;
           if (method == 'standart') z = y.getElementsByTagName('a')[0].dataset.tagName;
           else if (method == 'suggested') {
@@ -948,14 +948,14 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
           let x = el.textContent.replace(/^\s+/g,'');
           let els = [el];
           let z = el.nextSibling;
-          while (z != undefined && z.tagName != 'BR' && z.tagName != 'BLOCKQUOTE') {
+          while (z && z.tagName != 'BR' && z.tagName != 'BLOCKQUOTE') {
             els.push(z);
-            if (z.outerHTML != undefined) x += z.outerHTML;
+            if (z.outerHTML) x += z.outerHTML;
             else x += z.textContent;
             z = z.nextSibling;
           }
           if (x.startsWith('>')) {
-            let t = InfernoAddElem('span',{className:'_ydb_greentext',innerHTML:x},[]);
+            let t = createElement('span._ydb_greentext', x);
             et.insertBefore(t,el);
             for (let j=0; j<els.length; j++) {
               et.removeChild(els[j]);
@@ -971,14 +971,14 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   //help
   function YDBSpoilersHelp() {
     for (let i=0; i<document.getElementsByClassName('textile_help').length; i++) {
-      document.getElementsByClassName('textile_help')[i].insertBefore(InfernoAddElem('span',{},[
-        InfernoAddElem('ins','YDB Spoilers:'),
-        InfernoAddElem('span',' +'),
-        InfernoAddElem('strong','$'),
-        InfernoAddElem('span','Spoiler name+[bq]Spoiler body[/bq], [bq]'),
-        InfernoAddElem('strong','$'),
-        InfernoAddElem('span','Nameless spoiler body[/bq] ([bq] can be replaced with [spoiler])'),
-        InfernoAddElem('br')
+      document.getElementsByClassName('textile_help')[i].insertBefore(createElement('span', [
+        createElement('ins','YDB Spoilers:'),
+        ' +',
+        createElement('strong','$'),
+        'Spoiler name+[bq]Spoiler body[/bq], [bq]',
+        createElement('strong','$'),
+        'Nameless spoiler body[/bq] ([bq] can be replaced with [spoiler])',
+        createElement('br')
       ]), document.getElementsByClassName('textile_help')[i].getElementsByTagName('strong')[0]);
     }
   }
@@ -1075,72 +1075,12 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     });
   }
 
-  function fixPreview(ex, imgid) {
-    if (isThisImage()) return;
-    let x = 0;
-    for (let i=0; i<ex.querySelectorAll('.block.communication').length; i++) {
-      let e = ex.querySelectorAll('.block.communication')[i];
-      let a = e.querySelector('a.communication__interaction.post-reply');
-      if (a) {
-        let imageId = parseInt(a.pathname.split('/')[2]);
-        if (isNaN(imageId)) continue;
-        if (imgid && imgid != imageId) continue;
-        if (commPreviewData[imageId] && commPreviewData[imageId] != 'pending') {
-          e.querySelector('.image-constrained').className = 'image-constrained';
-          e.querySelector('.image-constrained').innerHTML = '';
-          e.querySelector('.image-constrained').appendChild(commPreviewData[imageId].cloneNode(true));
-          DB_processImages(e);
-        }
-        else if (commPreviewData[imageId] != 'pending') {
-          commPreviewData[imageId] = 'pending';
-          setTimeout(() => {
-            fetchJson('GET', '/search?q=id:'+imageId)
-              .then(function (response) {
-              if (!response.ok)
-                return false;
-              return response.text();
-            })
-              .then(data => {
-              if (!data) return;
-              const cc = InfernoAddElem('div',data);
-              let thumb = cc.querySelector('.image-container.thumb');
-              if (!thumb) {
-                thumb = InfernoAddElem('div', {className:'image-container thumb_tiny', innerHTML:'<div class="media-box__overlay js-spoiler-info-overlay">HIDDEN</div><a href="/'+imageId+'"><picture><img src="/tagblocked.svg"></picture></a></div>'})
-              } else {
-                thumb.className = 'image-container thumb_tiny';
-              }
-              commPreviewData[imageId] = thumb;
-              e.querySelector('.image-constrained').className = 'image-constrained';
-              e.querySelector('.image-constrained').innerHTML = '';
-              e.querySelector('.image-constrained').appendChild(thumb);
-              fixPreview(ex, imageId);
-              DB_processImages(e);
-
-            })
-          }, x*333);
-          x++;
-        }
-      }
-    }
-  }
-
   function urlSearch(e) {
-    let i;
-    for (i=0; i<e.querySelectorAll('.communication__body__text').length; i++) {
-      greentext(e.querySelectorAll('.communication__body__text')[i]);
-      urlSearchInElem(e.querySelectorAll('.communication__body__text')[i]);
-      YDBSpoilers(e.querySelectorAll('.communication__body__text')[i]);
-    }
-    for (i=0; i<e.querySelectorAll('.profile-about').length; i++) {
-      greentext(e.querySelectorAll('.profile-about')[i]);
-      urlSearchInElem(e.querySelectorAll('.profile-about')[i]);
-      YDBSpoilers(e.querySelectorAll('.profile-about')[i]);
-    }
-    for (i=0; i<e.querySelectorAll('.image-description').length; i++) {
-      greentext(e.querySelectorAll('.image-description')[i]);
-      urlSearchInElem(e.querySelectorAll('.image-description')[i]);
-      YDBSpoilers(e.querySelectorAll('.image-description')[i]);
-    }
+    Array.from(e.querySelectorAll('.communication__body__text, .profile-about, .image-description')).forEach(elem => {
+      greentext(elem);
+      urlSearchInElem(elem);
+      YDBSpoilers(elem);
+    });
   }
 
   //gallery sort
@@ -1165,7 +1105,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   }
 
   //highlight artist
-    function getArtists() {
+  function getArtists() {
     let remained = 0;
     let checked=0;
 
@@ -1282,7 +1222,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         }
       }
     };
-    if (name != undefined) highlight(e, artist.name, artist.editor);
+    if (artist) highlight(e, artist.name, artist.editor);
     else {
       for (let i=0; i<artists.length; i++) highlight(e, artists[i].name, artists[i].isEditor);
     }
@@ -1829,7 +1769,10 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     };
 
     let getName = function(id, callback) {
-
+      return;
+      
+      /*  DISABLED UNTIL I FIND WORKAROUND ON PHILOMENA
+      
       fetch('/lists/user_comments/'+id,{method:'GET'})
         .then(function (response) {
         const errorMessage = {fail:true};
@@ -1856,7 +1799,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
           debug('YDB:U','Failed to find userName in reponse while performing "updateName" on user with id '+id+'.', 2);
         }
       });
-
+      */
     };
 
     let updateId = function(user, callback) {
@@ -2243,7 +2186,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
             let t = document.querySelector('.profile-top__name-header').nextSibling.wholeText;
             t = t.substring(21,t.length-2).trim();
             let aliases = [t];
-            let id = document.querySelector('a[href*="/lists/user_comments"]').href.split('/').pop();
+            let id = getUidOnPage();
 
             createUser(name, id, {aliases:aliases});
           }
@@ -2342,7 +2285,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     }
     if (document.querySelector('.profile-top__name-header') != undefined) {
       let name = document.querySelector('.profile-top__name-header').innerHTML.slice(0, -10);
-      let id = document.querySelector('a[href*="/lists/user_comments"]').href.split('/').pop();
+      let id = getUidOnPage();
       let content = '';
       if (userbase_local.scratchpad[id] != undefined) content = userbase_local.scratchpad[id];
       document.querySelector('.column-layout__left').insertBefore(
@@ -2602,6 +2545,10 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
 }`;
     GM_addStyle(style);
   }
+  
+  function getUidOnPage() {
+    return parseInt(document.querySelector('a[href*="comments?cq=user_id"]').href.split('%3A').pop());
+  }
 
   // contacts module
   function contacts() {
@@ -2643,7 +2590,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     };
 
     if (document.getElementsByClassName('profile-top__name-and-links')[0] != undefined) {
-      let uid = parseInt(document.querySelector('a[href*="/lists/user_comments"]').href.split('/').pop());
+      const uid = getUidOnPage();
       let added = false;
       for (let i=0; i<userbase_local.friendlist.length; i++) {
         if (uid == userbase_local.friendlist[i]) {
@@ -3123,7 +3070,6 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     linksPatch(targ);
     showUploader(targ);
     compressBadges(targ);
-    fixPreview(targ);
     setTimeout(function() {shrinkComms(targ)},200);
   }
 
@@ -3172,7 +3118,8 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     YDB();
   }
   unsafeWindow.addEventListener('load',listRunWhenDone);
-  if (document.getElementById('comments') != undefined) document.getElementById('comments').addEventListener("DOMNodeInserted", listener);
-  if (document.querySelector('.communication-edit__tab[data-tab="preview"]') != undefined) document.querySelector('.communication-edit__tab[data-tab="preview"]').addEventListener("DOMNodeInserted", listener);
+  if (document.getElementById('comments')) document.getElementById('comments').addEventListener("DOMNodeInserted", listener);
+  if (document.querySelector('.communication-edit__tab[data-tab="preview"]'))
+    document.querySelector('.communication-edit__tab[data-tab="preview"]').addEventListener("DOMNodeInserted", listener);
 
 })();
