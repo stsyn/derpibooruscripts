@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.8.9
+// @version      0.8.10
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -2338,47 +2338,6 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     }
   }
 
-  //filling
-  function resizeEverything(inital) {
-    let ccont = document.getElementsByClassName('column-layout__main')[0];
-    if (ccont == undefined) return;
-    let mwidth = parseInt(ccont.clientWidth) - 14;
-    let twidth = parseInt(mwidth/5-8);
-    for (let i=0; i<document.getElementsByClassName('js-resizable-media-container').length; i++) {
-      let el = document.getElementsByClassName('js-resizable-media-container')[i];
-      for (let j=0; j<el.querySelectorAll('.media-box:not(._ydb_resizible)').length; j++) {
-        let eli = el.querySelectorAll('.media-box:not(._ydb_resizible)')[j];
-        eli.style.width = twidth+'px';
-        eli.getElementsByClassName('media-box__header')[0].style.width = twidth+'px';
-        eli.getElementsByClassName('media-box__content')[0].style.width = twidth+'px';
-        eli.getElementsByClassName('media-box__content')[0].style.height = twidth+'px';
-        if (twidth < 150) {
-          eli.getElementsByClassName('media-box__header')[0].classList.remove('media-box__header--large');
-          eli.getElementsByClassName('media-box__header')[0].classList.add('media-box__header--small');
-          eli.getElementsByClassName('media-box__content')[0].classList.remove('media-box__content--large');
-          eli.getElementsByClassName('media-box__content')[0].classList.add('media-box__content--small');
-          eli.getElementsByClassName('image-container')[0].classList.remove('thumb');
-          eli.getElementsByClassName('image-container')[0].classList.add('thumb_small');
-          eli.getElementsByClassName('image-container')[0].dataset.size = 'thumb_small';
-          if (eli.querySelector('[src*="derpicdn.net"]') != undefined) eli.querySelector('[src*="derpicdn.net"]').src =  eli.querySelector('[src*="derpicdn.net"]').src.replace('/thumb.','/thumb_small.');
-          if (eli.querySelector('[src*="derpicdn.net"]') != undefined) eli.querySelector('[src*="derpicdn.net"]').srcset =  eli.querySelector('[src*="derpicdn.net"]').srcset.replace('/thumb.','/thumb_small.');
-        }
-        else {
-          eli.getElementsByClassName('media-box__content')[0].classList.add('media-box__content--large');
-          eli.getElementsByClassName('media-box__content')[0].classList.remove('media-box__content--small');
-          eli.getElementsByClassName('image-container')[0].classList.add('thumb');
-          eli.getElementsByClassName('image-container')[0].classList.remove('thumb_small');
-          eli.getElementsByClassName('image-container')[0].dataset.size = 'thumb';
-          eli.getElementsByClassName('media-box__header')[0].classList.add('media-box__header--large');
-          eli.getElementsByClassName('media-box__header')[0].classList.remove('media-box__header--small');
-          if (eli.querySelector('[src*="derpicdn.net"]') != undefined) eli.querySelector('[src*="derpicdn.net"]').src = eli.querySelector('[src*="derpicdn.net"]').src.replace('/thumb_small.','/thumb.');
-          if (eli.querySelector('[src*="derpicdn.net"]') != undefined) eli.querySelector('[src*="derpicdn.net"]').srcset =  eli.querySelector('[src*="derpicdn.net"]').srcset.replace('/thumb_small.','/thumb.');
-        }
-      }
-    }
-    if (document.getElementsByClassName('js-resizable-media-container').length > 0 && inital) unsafeWindow.addEventListener('resize',resizeEverything);
-  }
-
   //broken preview
   function fixDupes() {
     let cs = document.querySelectorAll('.grid.grid--dupe-report-list:not(._ydb_patched)');
@@ -3105,7 +3064,6 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   try {shrinkComms(document);} catch(e) {error("shrinkComms", e)};
   try {hiddenImg(document, true);} catch(e) {error("hiddenImg", e)};
   try {getArtists();} catch(e) {error("getArtists", e)};
-  try {setTimeout(() => {resizeEverything(true);}, 100)} catch(e) {error("resizeEverything", e)};
   try {addGalleryOption();} catch(e) {error("addGalleryOption", e)};
   try {contacts();} catch(e) {error("contacts", e)};
   try {fixDupes();} catch(e) {error('fixDupes', e)};
