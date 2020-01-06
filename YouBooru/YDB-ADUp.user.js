@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          YDB:ADUp
-// @version       0.3.15
+// @version       0.4.0
 // @author        stsyn
 
 // @match         *://*/*
@@ -45,21 +45,63 @@
   let currentImage = '';
   let loadLimit = 2;
   let settings = {
-    implicationDisallow:false,
-    implicationDefaultInsert:true,
-    implicationNotify:true,
-    implicationDefaultRecursive:false,
-    implicationAutoDelete:true,
-    batchLoader:true
+    implicationDisallow: false,
+    implicationDefaultInsert: true,
+    implicationNotify: true,
+    implicationDefaultRecursive: false,
+    implicationAutoDelete: true,
+    batchLoader: true,
+    smartSuggestions: true
   };
 
+  const tagRules = [
+    {
+      type: 'error',
+      message: 'No origin provided!',
+      checker: {
+        op: 'nor',
+        params: ['artist:*', 'screencap', 'artist needed', 'anonymous artist']
+      }
+    }, {
+      type: 'error',
+      message: 'No character tag!',
+      checker: {
+        op: 'nor',
+        params: ['%character', '%oc', 'no pony']
+      }
+    }, {
+      type: 'error',
+      message: '%tag:solo *% should be used only in sexual context. Use just %tag:solo%.',
+      suggestions: ['solo'],
+      checker: {
+        op: 'and',
+        params: [{
+          op: 'or',
+          params: ['solo female', 'solo male', 'solo futa']
+        }, 'safe']
+      }
+    }, {
+      type: 'suggestion',
+      message: 'Only original characters tagged, maybe %tag:oc only% should be used?',
+      suggestions: ['oc only'],
+      checker: {
+        op: 'and',
+        params: [
+          'oc:*',
+          {op: 'not', params: ['%character']},
+          {op: 'not', params: ['oc only']}
+        ]
+      }
+    }
+  ];
+
   function register() {
-    if (unsafeWindow._YDB_public == undefined) unsafeWindow._YDB_public = {};
-    if (unsafeWindow._YDB_public.funcs == undefined) unsafeWindow._YDB_public.funcs = {};
+    if (!unsafeWindow._YDB_public) unsafeWindow._YDB_public = {};
+    if (!unsafeWindow._YDB_public.funcs) unsafeWindow._YDB_public.funcs = {};
     unsafeWindow._YDB_public.funcs.getDerpHomeDomain = getDerpHomeDomain;
 
     if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname)) {
-      if (unsafeWindow._YDB_public.settings == undefined) unsafeWindow._YDB_public.settings = {};
+      if (!unsafeWindow._YDB_public.settings) unsafeWindow._YDB_public.settings = {};
       unsafeWindow._YDB_public.settings._adup = {
         name:'ADUp',
         version:GM_info.script.version,
@@ -69,7 +111,9 @@
           {type:'checkbox', name:'Turn off implication predictor', parameter:'implicationDisallow'},
           {type:'checkbox', name:'Batch tag loader', parameter:'batchLoader'},
           {type:'breakline'},
-          {type:'checkbox', name:'Notify about implication', parameter:'implicationNotify'}/*,
+          {type:'checkbox', name:'Notify about implication', parameter:'implicationNotify'},
+          {type:'breakline'},
+          {type:'checkbox', name:'Smart tag suggestions', parameter:'smartSuggestions'}/*,
           {type:'breakline'},
           {type:'breakline'},
           {type:'checkbox', name:'Show implied tags by default', parameter:'implicationDefaultInsert'},
@@ -99,7 +143,7 @@
 
   function fillDData1(url) {
     if (decodeURIComponent(url.params.tags) != 'undefined') {
-      if (url.params.origTags != undefined) {
+      if (url.params.origTags) {
         document.getElementById('image_tag_input').value = url.params.origTags+','+decodeURIComponent(url.params.tags);
       }
       else {
@@ -112,7 +156,7 @@
       document.getElementById('image_source_url').value = decodeURIComponent(url.params.src);
     }
     if (decodeURIComponent(url.params.newImg) != 'undefined') {
-      document.getElementById('scraper_url').value = decodeURIComponent(url.params.newImg);
+      document.getElementById('image_scraper_url').value = decodeURIComponent(url.params.newImg);
       onceLoaded = true;
       document.getElementById('js-scraper-preview').click();
     }
@@ -133,7 +177,7 @@
           createElement('h4', "Override prefilled page content with ADUp fetch data?"),
           createElement('p', [
             createElement('a', {events:{'click':() => {fillDData1(url); document.getElementById('_ydb_warning').style.display = 'none'}}}, 'OK'),
-            createElement('span', ' '),
+            ' ',
             createElement('a', {events:{'click':() => document.getElementById('_ydb_warning').style.display = 'none'}}, 'Cancel')
           ])
         ]),
@@ -167,7 +211,7 @@
   function reverse(url) {
     const build = function(req) {
       let ux;
-      if (document.getElementById('scraper_url').value == undefined) {
+      if (!document.getElementById('image_scraper_url').value) {
         if (document.getElementById('image_image').files.length > 0) {
           ux = document.querySelector('.input.js-scraper').cloneNode(true);
           ux.id = 'image';
@@ -184,11 +228,11 @@
       //document.body.appendChild(s);
       const ax = createElement('form#_ydb_reverse.hidden', {enctype:"multipart/form-data",action:"/search/reverse",acceptCharset:"UTF-8",method:"post"},[
         createElement('input',{name:"utf8",value:"✓",type:'hidden'}),
-        createElement('input',{name:"authenticity_token",value:s.querySelector('form[action="/search/reverse"] input[name="authenticity_token"]').value,type:'hidden'}),
+        createElement('input',{name:"_csrf_token",value:s.querySelector('form[action="/search/reverse"] input[name="_csrf_token"]').value,type:'hidden'}),
         createElement('input',{name:"fuzziness",value:document.getElementById('ydb_fuzzyness').value,type:'hidden'}),
-        (document.getElementById('scraper_url').value == undefined?
+        (!document.getElementById('image_scraper_url').value?
          ux:
-         createElement('input',{name:"scraper_url",value:decodeURIComponent(document.getElementById('scraper_url').value),type:'hidden'})
+         createElement('input',{name:"image[scraper_url]",value:decodeURIComponent(document.getElementById('image_scraper_url').value),type:'hidden'})
         )
       ]);
       const callback = function(rq) {
@@ -197,17 +241,18 @@
         let t = document.getElementById('_ydb_similarGallery');
         t.innerHTML = '';
         let e = s.querySelector('table');
-        if (e!=undefined) for (let i=1; i<e.querySelectorAll('tr').length; i++) {
+        if (e) for (let i=1; i<e.querySelectorAll('tr').length; i++) {
           let x = e.querySelectorAll('tr')[i];
           let ix = x.querySelector('.image-container.thumb');
           t.parentNode.style.display = 'block';
+
           t.appendChild(
             createElement('div.media-box', [
               createElement('a.media-box__header.media-box__header--link.media-box__header--small', {target:'_blank', href:'/images/'+ix.dataset.imageId}, '>>'+ix.dataset.imageId),
               createElement('div.media-box__content.media-box__content--small', [
                 createElement('div.image-container.thumb', [
                   createElement('a',{events:{'click':(ex) => {
-                    for (let i=0; i<document.getElementById('_ydb_similarGallery').childNodes.length; i++) document.getElementById('_ydb_similarGallery').childNodes[i].style.opacity = 1;
+                    Array.from(document.getElementById('_ydb_similarGallery').childNodes[i]).forEach(elem => elem.style.opacity = 1);
                     let x = ex.target;
                     while (!x.classList.contains('media-box')) x = x.parentNode;
                     x.style.opacity = 0.5;
@@ -224,6 +269,7 @@
               ])
             ])
           );
+
         }
         else {
           if (document.querySelector('#_ydb_similarGallery strong') != undefined) document.querySelector('#_ydb_similarGallery strong').innerHTML = 'Nothing is found';
@@ -252,17 +298,18 @@
     build(req);
   }
 
-  function addTag(x, tag) {
-    const z = x.parentNode.parentNode;
+  function addTag(tag) {
+    const z = document.querySelector('.fancy-tag-upload').parentNode;
     if (z.querySelector(`._ydb_transparent a[data-tag-name="${tag}"]`)) return;
     if (document.querySelector(`.js-taginput-fancy .tag a[data-tag-name="${tag}"]`)) return;
     let y = z.querySelector('._ydb_tag_placeholder');
     if (!y) {
-      y = z.insertBefore(createElement('div._ydb_tag_placeholder.js-taginput.input.input--wide.tagsinput', {style:'min-height:0', dataset:{clickFocus:'.js-taginput-input', target:'[name="image[tag_input]"]'}}, [
-        createElement('span', 'Implied tags ')
+      y = z.insertBefore(
+        createElement('div._ydb_tag_placeholder.js-taginput.input.input--wide.tagsinput', {style:'min-height:0', dataset:{clickFocus:'.js-taginput-input', target:'[name="image[tag_input]"]'}}, [
+          createElement('span', 'Implied tags ')
       ]), z.querySelector('.js-taginput-show'));
     }
-    y.appendChild(createElement('span.tag._ydb_transparent',{style:{opacity:'0.75', cursor:'pointer'}, dataset:{clickAddtag: tag, tagName: tag}},[
+    y.appendChild(createElement('span.tag._ydb_transparent',{style:{opacity:'0.75', cursor:'pointer'}, dataset:{clickAddtag: tag, tagName: tag, tagCategory: (checkedTags[tag] || {}).category}},[
       tag+' ',
       createElement('a',{href:'javascript://', style:{display:'none'},dataset:{clickFocus:'.js-taginput-input',tagName:tag}}, 'x')
     ]));
@@ -300,10 +347,10 @@
       }
 
       if ((data.tag && data.tag.implied_tags) || settings.implicationDisallow) {
-        checkedTags[name] = {name, implied_tags: data.tag.implied_tags};
+        checkedTags[name] = {name, implied_tags: data.tag.implied_tags, category: data.tag.category};
       }
       else {
-        checkedTags[name] = {name, implied_tags: []};
+        checkedTags[name] = {name, implied_tags: [], category: data.tag.category};
       }
 
       if (data.tag) checkedTags[name].category = data.tag.category;
@@ -337,10 +384,10 @@
       }
 
       if ((data.implied_tags) || settings.implicationDisallow) {
-        checkedTags[name] = {name, implied_tags: data.implied_tags};
+        checkedTags[name] = {name, implied_tags: data.implied_tags, category: data.tag.category};
       }
       else {
-        checkedTags[name] = {name, implied_tags:[]};
+        checkedTags[name] = {name, implied_tags: [], category: data.tag.category};
       }
 
       checkedTags[name].notReady = false;
@@ -520,6 +567,60 @@
       return wx;
     };
 
+    const checkTagsByRules = function() {
+      if (!settings.smartSuggestions) return false;
+      let anythingChanged = false;
+      const handleNode = (node) => {
+        let nodeState = (node.op == 'or' || node.op == 'nor') ? false : true;
+        node.params.forEach(elem => {
+          let elemState = false;
+          if (typeof elem == 'object') elemState = handleNode(elem);
+          else {
+            if (elem.startsWith('%')) {
+              elemState = !!Object.values(checkedTags).find(tag => !tag.notReady && tag.category == elem.substr(1));
+            } else if (elem.endsWith('*')) {
+              elemState = !!Object.values(checkedTags).find(tag => !tag.notReady && tag.name.startsWith(elem.slice(0, -1)));
+            } else {
+              elemState = !(checkedTags[elem] || {notReady: true}).notReady;
+            }
+          }
+          if (node.op == 'or' || node.op == 'nor') nodeState |= elemState;
+          if (node.op == 'and' || node.op == 'nand') nodeState &= elemState;
+          if (node.op == 'not') nodeState = !elemState;
+        });
+        if (node.op == 'nand' || node.op == 'nor') nodeState = !nodeState;
+        return nodeState;
+      };
+
+      tagRules.forEach(rule => {
+        const state = handleNode(rule.checker);
+        if (rule.state != state) {
+          rule.state = state;
+          anythingChanged = true;
+        }
+      });
+
+      return anythingChanged;
+    };
+
+    const renderTagRules = function(container) {
+      const colors = {
+        'error': 'flash--warning',
+        'suggestion': 'flash--site-notice'
+      };
+      return tagRules.filter(rule => rule.state).forEach(rule => {
+        if (rule.suggestions) {
+          rule.suggestions.filter(tag => !document.querySelector(`.js-taginput-fancy .tag:not(._ydb_transparent) a[data-tag-name="${tag}"]`)).map(tag => addTag(tag));
+        }
+        container.appendChild(
+          createElement('div.alternating-color.block__content', [
+            createElement('div', {className: ' '+colors[rule.type]}, rule.message.replace(/%tag:([^%]*)%/g, `<span class="tag" data-tag-name="$1">$1 <a data-tag-name="$1" style="display: none;"></a></span>`)
+            )
+          ])
+        );
+      });
+    };
+
     const checker = function (target, method) {
       const container = document.getElementById('ydb_dnp_container');
 
@@ -535,23 +636,22 @@
         let tagsToCheck = [];
         let x = document.querySelectorAll(target)[i];
         for (let x in checkedTags) checkedTags[x].shouldDraw = false;
-        //for (let x in checkedTags) checkedTags[x].shouldDraw = false;
-        for (let i=0; i<x.getElementsByClassName('tag').length; i++) {
+        for (let i=0; i < x.getElementsByClassName('tag').length; i++) {
           if (processed > loadLimit) break;
           if (tagsToCheck.length > 50) break;
           let y = x.getElementsByClassName('tag')[i];
-          if (y.classList.contains('_ydb_transparent')) continue;
-          let z;
-          z = y.getElementsByTagName('a')[0].dataset.tagName;
+          const name = y.getElementsByTagName('a')[0].dataset.tagName;
 
-          let name = z;
+          if (y.dataset && !y.dataset.tagCategory && checkedTags[name] && checkedTags[name].category) y.dataset.tagCategory = checkedTags[name].category;
+
+          if (y.classList.contains('_ydb_transparent')) continue;
 
           if (ratingTags[name]) {
             ratings[ratingTags[name]]++;
           }
           ratings.detailed.push(name);
 
-          if (checkedTags[name] == undefined) {
+          if (!checkedTags[name]) {
             checkedTags[name] = {notReady:true};
             if (!settings.batchLoader) {
               checkTag(name, y);
@@ -565,7 +665,9 @@
           }
 
         }
-        if (settings.batchLoader && tagsToCheck.length>0) batchCheckTag(tagsToCheck, x);
+
+        if (settings.batchLoader && tagsToCheck.length > 0) batchCheckTag(tagsToCheck, x);
+
         for (let x in checkedTags) {
           if (checkedTags[x].notReady) continue;
           if (!checkedTags[x].shouldDraw) {
@@ -578,8 +680,11 @@
             break;
           }
         }
+
         let ratingCheck = checkRatingTags(ratings);
         if (ratingsReason != ratingCheck.dnp_type) gotten = true;
+
+        gotten != checkTagsByRules();
 
         if (gotten) {
           let drawn = false;
@@ -587,7 +692,7 @@
             if (checkedTags[x].notReady) continue;
             checkedTags[x].drawn = false;
           }
-          while (document.querySelector('._ydb_transparent') != null) document.querySelector('._ydb_transparent').parentNode.removeChild(document.querySelector('._ydb_transparent'));
+          while (document.querySelector('._ydb_transparent')) document.querySelector('._ydb_transparent').parentNode.removeChild(document.querySelector('._ydb_transparent'));
 
           let container = document.getElementById('ydb_dnp_container');
           container.innerHTML = '';
@@ -597,16 +702,18 @@
           }
           ratingsReason = ratingCheck.dnp_type;
 
+          renderTagRules(container);
+
           for (let i=0; i<x.getElementsByClassName('tag').length; i++) {
             let y = x.getElementsByClassName('tag')[i];
             let z;
             z = y.getElementsByTagName('a')[0].dataset.tagName;
 
             let name = z;
-            if (checkedTags[name] == undefined) continue;
+            if (!checkedTags[name]) continue;
             else if (checkedTags[name].notReady) continue;
             else if (!checkedTags[name].ok) {
-              if (checkedTags[name].dnp_type != undefined) {
+              if (checkedTags[name].dnp_type) {
                 container.appendChild(render(checkedTags[name]));
                 container.scrollTop = container.scrollHeight;
                 drawn = true;
@@ -622,7 +729,7 @@
                   drawn = true;
                 }
               }
-              checkedTags[name].implied_tags.forEach(tag => addTag(x, tag));
+              checkedTags[name].implied_tags.forEach(tag => addTag(tag));
             }
             checkedTags[name].drawn = true;
           }
