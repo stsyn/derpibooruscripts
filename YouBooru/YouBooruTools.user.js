@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.8.8
+// @version      0.8.9
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1770,9 +1770,9 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
 
     let getName = function(id, callback) {
       return;
-      
+
       /*  DISABLED UNTIL I FIND WORKAROUND ON PHILOMENA
-      
+
       fetch('/lists/user_comments/'+id,{method:'GET'})
         .then(function (response) {
         const errorMessage = {fail:true};
@@ -2277,7 +2277,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         return response.text();
       })
         .then(data => {
-        let cc = InfernoAddElem('div',{innerHTML:data},[]);
+        let cc = createElement('div', data);
         previewTab.innerHTML = cc.getElementsByClassName('communication__body__text')[0].innerHTML;
         DB_processImages(previewTab.parentNode);
         listRunInComms(previewTab.parentNode);
@@ -2306,12 +2306,10 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
                 }
               }
               userbase_local.scratchpad[id] = document.getElementById('_ydb_scratchpad').value;
-              updateCSRF(() => {
-                UACLwrite();
-                getPreview();
-                e.target.classList.add('button--state-success');
-                setTimeout(function() {e.target.classList.remove('button--state-success');}, 200);
-              });
+              UACLwrite();
+              getPreview();
+              e.target.classList.add('button--state-success');
+              setTimeout(() => {e.target.classList.remove('button--state-success');}, 200);
             }}]},[])
           ])
         ])
@@ -2545,7 +2543,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
 }`;
     GM_addStyle(style);
   }
-  
+
   function getUidOnPage() {
     return parseInt(document.querySelector('a[href*="comments?cq=user_id"]').href.split('%3A').pop());
   }
