@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          YDB:ADUp
-// @version       0.4.0
+// @version       0.4.1
 // @author        stsyn
 
 // @match         *://*/*
@@ -17,6 +17,7 @@
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0UW.lib.js
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
+// @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagDB0.js
 // @downloadURL   https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp.user.js
 
 // @grant         GM_setValue
@@ -36,6 +37,20 @@
       return 'www.derpibooru.org';
     }
   }
+
+  let tagDB = {};
+  function _getTagDB() {
+    try {
+      tagDB = getTagDB();
+      let newNormal = {};
+      for (let i in tagDB.normal) {
+        tagDB.normal[i].forEach(tag => newNormal[tag] = i);
+      }
+      tagDB.normal = newNormal;
+    }
+    catch(e) {setTimeout(_getTagDB,500);}
+  }
+  _getTagDB();
 
   let overRideSize = false;
   let onceLoaded = false;
@@ -81,6 +96,32 @@
         }, 'safe']
       }
     }, {
+      type: 'error',
+      message: '%tag:female%, %tag:futa%, %tag:male% with %tag:solo%.',
+      checker: {
+        op: 'and',
+        params: ['solo', {
+          op: 'gt',
+          params: [1, {
+            op: 'add',
+            params: ['male', 'female', 'futa']
+          }]
+        }]
+      }
+    }, {
+      type: 'error',
+      message: 'Multiple characters while %tag:solo% tagged.',
+      checker: {
+        op: 'and',
+        params: ['solo', {
+          op: 'gt',
+          params: [1, {
+            op: 'add',
+            params: ['%character', 'oc:*']
+          }]
+        }]
+      }
+    },{
       type: 'suggestion',
       message: 'Only original characters tagged, maybe %tag:oc only% should be used?',
       suggestions: ['oc only'],
@@ -347,10 +388,10 @@
       }
 
       if ((data.tag && data.tag.implied_tags) || settings.implicationDisallow) {
-        checkedTags[name] = {name, implied_tags: data.tag.implied_tags, category: data.tag.category};
+        checkedTags[name] = {name, implied_tags: data.tag.implied_tags};
       }
       else {
-        checkedTags[name] = {name, implied_tags: [], category: data.tag.category};
+        checkedTags[name] = {name, implied_tags: []};
       }
 
       if (data.tag) checkedTags[name].category = data.tag.category;
@@ -384,12 +425,13 @@
       }
 
       if ((data.implied_tags) || settings.implicationDisallow) {
-        checkedTags[name] = {name, implied_tags: data.implied_tags, category: data.tag.category};
+        checkedTags[name] = {name, implied_tags: data.implied_tags};
       }
       else {
-        checkedTags[name] = {name, implied_tags: [], category: data.tag.category};
+        checkedTags[name] = {name, implied_tags: []};
       }
 
+      if (data.tag) checkedTags[name].category = data.tag.category;
       checkedTags[name].notReady = false;
       checkedTags[name].drawn = false;
 
@@ -571,22 +613,54 @@
       if (!settings.smartSuggestions) return false;
       let anythingChanged = false;
       const handleNode = (node) => {
-        let nodeState = (node.op == 'or' || node.op == 'nor') ? false : true;
+        let first = true;
+        let nodeState = 0;
         node.params.forEach(elem => {
-          let elemState = false;
-          if (typeof elem == 'object') elemState = handleNode(elem);
-          else {
+          let elemState = 0;
+          if (typeof elem == 'object') {
+            elemState = handleNode(elem);
+          }
+          else if (typeof elem == 'string') {
             if (elem.startsWith('%')) {
-              elemState = !!Object.values(checkedTags).find(tag => !tag.notReady && tag.category == elem.substr(1));
+              elemState = Object.values(checkedTags).reduce((sum, tag) => {
+                const cat = elem.substr(1);
+                if (tag.notReady) return sum;
+                if (tag.category == cat) return sum + 1;
+                if (tag.implied_tags) return tag.implied_tags.filter(tn => {
+                  if (tagDB.regulars[cat] && tagDB.regulars[cat].test(tn)) return true;
+                  return tagDB.normal[tn] === cat;
+                }).length + sum;
+              }, 0);
             } else if (elem.endsWith('*')) {
-              elemState = !!Object.values(checkedTags).find(tag => !tag.notReady && tag.name.startsWith(elem.slice(0, -1)));
+              elemState = Object.values(checkedTags).reduce((sum, tag) => {
+                if (tag.notReady) return sum;
+                if (tag.name.startsWith(elem.slice(0, -1))) return sum + 1;
+                if (tag.implied_tags) return tag.implied_tags.filter(tn => tn.startsWith(elem.slice(0, -1))).length + sum;;
+              }, 0);
             } else {
-              elemState = !(checkedTags[elem] || {notReady: true}).notReady;
+              elemState = (!(checkedTags[elem] || {notReady: true}).notReady) ? 1 : 0;
+              if (!elemState) elemState = Object.values(checkedTags).filter(tag => !tag.notReady && tag.implied_tags && tag.implied_tags.indexOf(elem) > -1).length;
             }
           }
-          if (node.op == 'or' || node.op == 'nor') nodeState |= elemState;
-          if (node.op == 'and' || node.op == 'nand') nodeState &= elemState;
+          else if (typeof elem == 'number') {
+            elemState = elem;
+          }
+          if (node.op == 'or' || node.op == 'nor' || node.op == 'add') nodeState += elemState;
           if (node.op == 'not') nodeState = !elemState;
+          if (first) {
+            if (node.op == 'gt' || node.op == 'gte' || node.op == 'lt' || node.op == 'lte' || node.op == 'eq' || node.op == 'neq') nodeState = elemState;
+            if (node.op == 'and' || node.op == 'nand') nodeState = elemState;
+          } else {
+            if (node.op == 'and' || node.op == 'nand') nodeState &= elemState;
+            if (node.op == 'gt') nodeState = elemState > nodeState ? 1 : 0;
+            if (node.op == 'gte') nodeState = elemState >= nodeState ? 1 : 0;
+            if (node.op == 'lt') nodeState = elemState < nodeState ? 1 : 0;
+            if (node.op == 'lte') nodeState = elemState <= nodeState ? 1 : 0;
+            if (node.op == 'eq') nodeState = elemState === nodeState ? 1 : 0;
+            if (node.op == 'neq') nodeState = elemState !== nodeState ? 1 : 0;
+          }
+
+          first = false;
         });
         if (node.op == 'nand' || node.op == 'nor') nodeState = !nodeState;
         return nodeState;
