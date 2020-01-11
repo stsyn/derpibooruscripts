@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.8.10
+// @version      0.8.11
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -901,7 +901,6 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         for (let i=0; i<x.getElementsByClassName('tag').length; i++) {
           let gotten = false;
           let y = x.getElementsByClassName('tag')[i];
-          y.dataset.tagName = y.getElementsByTagName('a')[0].dataset.tagName;
           let z;
           if (method == 'standart') z = y.getElementsByTagName('a')[0].dataset.tagName;
           else if (method == 'suggested') {
