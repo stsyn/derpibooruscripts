@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          YDB:ADUp
-// @version       0.4.1
+// @version       0.4.2
 // @author        stsyn
 
 // @match         *://*/*
@@ -119,9 +119,20 @@
             op: 'add',
             params: ['%character', 'oc:*']
           }]
+        }, {
+          op: 'not',
+          params: ['fusion']
         }]
       }
-    },{
+    }, {
+      type: 'suggestion',
+      message: '%tag:oc% should be tagged',
+      suggestions: ['oc'],
+      checker: {
+        op: 'and',
+        params: ['oc:*']
+      }
+    }, {
       type: 'suggestion',
       message: 'Only original characters tagged, maybe %tag:oc only% should be used?',
       suggestions: ['oc only'],
@@ -622,24 +633,60 @@
           }
           else if (typeof elem == 'string') {
             if (elem.startsWith('%')) {
+              let cache = {};
               elemState = Object.values(checkedTags).reduce((sum, tag) => {
                 const cat = elem.substr(1);
+                if (cache[tag.name]) return sum;
                 if (tag.notReady) return sum;
-                if (tag.category == cat) return sum + 1;
-                if (tag.implied_tags) return tag.implied_tags.filter(tn => {
-                  if (tagDB.regulars[cat] && tagDB.regulars[cat].test(tn)) return true;
-                  return tagDB.normal[tn] === cat;
-                }).length + sum;
+                let x = 0;
+                if (tag.category == cat) {
+                  cache[tag.name] = true;
+                  x = 1;
+                }
+                if (tag.implied_tags) {
+                  x += tag.implied_tags.filter(tn => {
+                    if (cache[tn]) return false;
+                    cache[tn] = true;
+                    if (tagDB.regulars[cat] && tagDB.regulars[cat].test(tn)) return true;
+                    return tagDB.normal[tn] === cat;
+                  }).length;
+                }
+                return sum + x;
               }, 0);
             } else if (elem.endsWith('*')) {
+              let cache = {};
               elemState = Object.values(checkedTags).reduce((sum, tag) => {
+                if (cache[tag.name]) return sum;
                 if (tag.notReady) return sum;
-                if (tag.name.startsWith(elem.slice(0, -1))) return sum + 1;
-                if (tag.implied_tags) return tag.implied_tags.filter(tn => tn.startsWith(elem.slice(0, -1))).length + sum;;
+                let x = 0;
+                if (tag.name.startsWith(elem.slice(0, -1))) {
+                  cache[tag.name] = true;
+                  x = 1;
+                }
+                if (tag.implied_tags) {
+                  x += tag.implied_tags.filter(tn => {
+                    if (cache[tn]) return false;
+                    if (tn.startsWith(elem.slice(0, -1))) {
+                      cache[tn] = true;
+                      return true;
+                    };
+                  }).length;
+                }
+                return sum + x;
               }, 0);
             } else {
-              elemState = (!(checkedTags[elem] || {notReady: true}).notReady) ? 1 : 0;
-              if (!elemState) elemState = Object.values(checkedTags).filter(tag => !tag.notReady && tag.implied_tags && tag.implied_tags.indexOf(elem) > -1).length;
+              let cache = {};
+              if (!(checkedTags[elem] || {notReady: true}).notReady) {
+                elemState = 1;
+                cache[elem] = true;
+              }
+              elemState += Object.values(checkedTags).filter(tag => {
+                if (!tag.notReady && tag.implied_tags && tag.implied_tags.indexOf(elem) > -1) {
+                  if (cache[elem]) return false;
+                  cache[elem] = true;
+                  return true;
+                }
+              }).length;
             }
           }
           else if (typeof elem == 'number') {
