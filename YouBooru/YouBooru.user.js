@@ -12,7 +12,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.30
+// @version      0.5.31
 // @description  Feedz
 // @author       stsyn
 
@@ -216,15 +216,29 @@
   }
 
   function resizeEverything() {
-    while (sizingCSSNode.cssRules.length > 0) sizingCSSNode.deleteRule(0);
     const ccont = document.getElementsByClassName('column-layout__main')[0];
     const mwidth = parseInt(ccont.clientWidth) - 14;
     const twidth = parseInt(mwidth/parseInt(config.imagesInFeeds*(privated?1.2:1))-8);
     const s = twidth+22+7;
-    sizingCSSNode.addRule('._ydb_row_resizable', `height: ${s}px`);
-    sizingCSSNode.addRule('._ydb_row_resizable._ydb_row_double', `height: ${s * 2}px`);
-    sizingCSSNode.addRule('._ydb_row_resizable .media-box__header', `width: ${twidth}px`);
-    sizingCSSNode.addRule('._ydb_row_resizable .media-box__content', `width: ${twidth}px; height: ${twidth}px;`);
+    try {
+      while (sizingCSSNode.cssRules.length > 0) sizingCSSNode.deleteRule(0);
+      sizingCSSNode.addRule('._ydb_row_resizable', `height: ${s}px`);
+      sizingCSSNode.addRule('._ydb_row_resizable._ydb_row_double', `height: ${s * 2}px`);
+      sizingCSSNode.addRule('._ydb_row_resizable .media-box__header', `width: ${twidth}px`);
+      sizingCSSNode.addRule('._ydb_row_resizable .media-box__content', `width: ${twidth}px; height: ${twidth}px;`);
+    } catch (e) {
+      if (sizingCSSNode) {
+        try {
+          document.head.removeChild(sizingCSSNode);
+        } catch(e) {}
+      }
+      sizingCSSNode = GM_addStyle(`
+        ._ydb_row_resizable {height: ${s}px}
+        ._ydb_row_resizable._ydb_row_double {height: ${s * 2}px}
+        ._ydb_row_resizable .media-box__header {width: ${twidth}px}
+        ._ydb_row_resizable .media-box__content {width: ${twidth}px; height: ${twidth}px}
+      `);
+    }
   }
 
   function preRun() {
