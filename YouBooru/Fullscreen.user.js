@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.28
+// @version      0.7.29
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -985,8 +985,8 @@ color: #777;
     if (pub.scaled != 'false' && !settings.singleMode) {
       return;
     }
-    if (document.querySelector('#image-target.hidden') != null) return;
-    if (objects.image == undefined) return;
+    if (document.querySelector('#image-target.hidden')) return;
+    if (!objects.image) return;
     let de = document.documentElement;
     if (pub.zoom >   20) pub.zoom =   20;
     if (pub.zoom < 0.02) pub.zoom = 0.02;
@@ -1019,7 +1019,7 @@ color: #777;
         if ((bufferWidth > 1280 && objects.icontainer.dataset.width > 1024) || (bufferHeight > 4096 && objects.icontainer.dataset.height > 4096)) newsrc = JSON.parse(objects.icontainer.dataset.uris).full;
         else newsrc = JSON.parse(objects.icontainer.dataset.uris).tall;
       }
-      if (objects.image.src.replace(/http(s|):/, '') != newsrc) {
+      if (objects.image.src.replace(/http(s|):/, '') != newsrc.replace(/http(s|):/, '')) {
         objects.image.src = newsrc;
       }
     }
@@ -1218,13 +1218,13 @@ color: #777;
 
   function dropExecution(event) {
     if (!state.enabled || !settings.singleMode) return;
-    if (event != undefined) event.stopImmediatePropagation();
+    if (event) event.stopImmediatePropagation();
   }
 
   function singleEvent(event) {
     if (!state.enabled || !settings.singleMode) return;
-    if (document.querySelector('#image_target.hidden') != null) return;
-    if (event != undefined) event.stopPropagation();
+    if (document.querySelector('#image_target.hidden')) return;
+    if (event) event.stopPropagation();
     //dropExecution(event);
 
     singleDefSize = !singleDefSize;
@@ -1268,7 +1268,7 @@ color: #777;
 
   function isDarkF() {
     try {
-      let c2 = document.head.querySelector('link[rel=stylesheet][media=all]').href;
+      const c2 = document.head.querySelector('link[rel=stylesheet][media=all]').href;
       return (c2.split('/')[5].startsWith('dark') || c2.split('/')[5].startsWith('red'));
     }
     catch(e) {
@@ -1277,7 +1277,7 @@ color: #777;
   }
 
   function prePreColor() {
-    if (state.colors != undefined) {
+    if (state.colors) {
       colors = JSON.parse(state.colors);
       pub.isDark = isDarkF();
       applyColor();
@@ -1289,7 +1289,7 @@ color: #777;
       objects.colorAccent = addElem('div', {id:'_fs_colorAccent', className:'tag hidden', dataset:{tagCategory:settings.style}}, document.body);
       pub.isDark = isDarkF();
 
-      if (settings.style != colors.value || pub.isDark != colors.isDark || state.colorApi == undefined || state.colorApi < currentColorApi) {
+      if (settings.style != colors.value || pub.isDark != colors.isDark || !state.colorApi || state.colorApi < currentColorApi) {
         state.colorApi = currentColorApi;
         write();
         remove('colorAccent');
@@ -1308,10 +1308,10 @@ color: #777;
 
   function applyColor() {
     if (document.getElementById('container') != undefined) cm_bg();
-    let r = function(x) {
+    const r = x => {
       styles.colorAccent = styles.colorAccent.replace(new RegExp(x,'g'), 'rgb('+colors[x][0]+','+colors[x][1]+','+colors[x][2]+')');
     };
-    let rx = function(x) {
+    const rx = x => {
       styles.colorAccent = styles.colorAccent.replace(new RegExp(x,'g'), colors[x]);
     };
     styles.colorAccent = styles.colorAccentTemplate;
@@ -1325,9 +1325,9 @@ color: #777;
     r('_fs_ccomponent');
     append('colorAccent', true);
 
-    let kek = function() {
-      let xx = document.getElementsByClassName('theme-preview-trixie')[0];
-      if (xx != undefined) {
+    const kek = function() {
+      const xx = document.getElementsByClassName('theme-preview-trixie')[0];
+      if (xx) {
         let c2 = document.head.querySelector('link[rel=stylesheet][media=all]').href;
         if (c2.split('/')[5].startsWith('red')) {
           xx.href = '/1085390';
@@ -1353,12 +1353,12 @@ color: #777;
 
     let c = colors.isDark?colors._fs_background:colors._fs_color;
     colors.value = settings.style;
-    colors._fs_component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 3, 35, colors.isDark);});
-    colors._fs_2component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.5, 5, colors.isDark);});
-    colors._fs_icomponent = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1, 0.9, !colors.isDark);});
-    colors._fs_3component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 2, 3, colors.isDark);});
-    colors._fs_4component = c.substring(4, c.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.85, 10, colors.isDark);});
-    colors._fs_ccomponent = colors._fs_color.substring(4, colors._fs_color.length - 1).split(',').map(function (v,i,a) {return transformColor(v, 1.4, 1.3, colors.isDark);});
+    colors._fs_component = c.substring(4, c.length - 1).split(',').map(v => transformColor(v, 3, 35, colors.isDark));
+    colors._fs_2component = c.substring(4, c.length - 1).split(',').map(v => transformColor(v, 1.5, 5, colors.isDark));
+    colors._fs_icomponent = c.substring(4, c.length - 1).split(',').map(v => transformColor(v, 1, 0.9, !colors.isDark));
+    colors._fs_3component = c.substring(4, c.length - 1).split(',').map(v => transformColor(v, 2, 3, colors.isDark));
+    colors._fs_4component = c.substring(4, c.length - 1).split(',').map(v => transformColor(v, 1.85, 10, colors.isDark));
+    colors._fs_ccomponent = colors._fs_color.substring(4, colors._fs_color.length - 1).split(',').map(v => transformColor(v, 1.4, 1.3, colors.isDark));
 
     state.colors = JSON.stringify(colors);
     if (!nrw) {
@@ -1605,15 +1605,15 @@ color: #777;
   register();
   append('noneTag');
   if (document.title == "Update Deployment - Derpibooru - My Little Pony: Friendship is Magic Imageboard") return;
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', () => {
     cm_bg();
-    if (document.getElementById('user_theme') != undefined) document.getElementById('user_theme').addEventListener('change',function() {
+    if (document.getElementById('user_theme')) document.getElementById('user_theme').addEventListener('change',() => {
       remove('colorAccent');
-      setTimeout(function() {
+      setTimeout(() => {
         if (isDarkF()) objects.colorAccent.classList.add('explicit_dark');
         else objects.colorAccent.classList.remove('explicit_dark');
       }, 200);
-      setTimeout(function() {enableColor(true);},777);
+      setTimeout(() => enableColor(true),777);
     });
     setTimeout(() => {
       if (document.getElementById('_fs_color_setting')) {
@@ -1631,15 +1631,21 @@ color: #777;
    },1000);
   });
 
+  if (state.colorApi == 3) {
+    state.enabled = false;
+    state.colorApi = 4;
+    write();
+  }
+
   if (settings.colorAccent) prePreColor();
-  if ((parseInt(location.pathname.slice(1))>=0 && location.pathname.split('/')[2] == undefined) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && location.pathname.split('/')[3] == undefined)) {
+  if ((parseInt(location.pathname.slice(1))>=0 && !location.pathname.split('/')[2]) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && !location.pathname.split('/')[3])) {
     if (state.enabled) {
       preenable();
       if (document.readyState !== 'loading') {
         enable();
         preEnableColor();
       }
-      else document.addEventListener('DOMContentLoaded', function() {
+      else document.addEventListener('DOMContentLoaded', () => {
         enable();
         preEnableColor();
       });
