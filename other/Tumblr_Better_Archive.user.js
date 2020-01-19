@@ -226,6 +226,7 @@ How to:
         return;
       }
       window.history.pushState('page2', 'Better than archive', ('/dashboard/blog/'+prefs.blogName+'/'+searchData.value));
+      searchData.isGoing = false;
       fetch(preparePostUrl(searchData.value), {
         method:'GET',
         headers: {
@@ -240,7 +241,6 @@ How to:
           const post = rdata.response.timeline.elements[0];
           indexDB[''+post.id] = post;
           showPreview(post.id);
-          searchData.isGoing = false;
         }
         catch (e) {
           alert('Failed: ' + e);
