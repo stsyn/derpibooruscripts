@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         It's much better, than Tumblr's archive!
-// @version      0.7
+// @version      0.8
 // @description  try to take over the world!
 // @author       stsyn
 // @match        https://*/archive2
+// @match        https://www.tumblr.com/dashboard2/*
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/other/Tumblr_Better_Archive.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/other/Tumblr_Better_Archive.user.js
@@ -27,9 +28,11 @@ How to:
 (function() {
     'use strict';
     let root, container, header, prefs = {}, data, preview, search, searchData = {}, indexDB = {};
-    let linkSchema = 'https://api.tumblr.com/v2/blog/%BLOGNAME%/posts?fields%5Bblogs%5D=avatar%2Cname%2Ctitle%2Curl%2Cupdated%2Cfirst_post_timestamp%2Cposts%2Cdescription';
-    let style = `._3Lynt{width:60%; float:left;} .J9VCO {width:100%; height:50px} #preview {width:36%; right:1%; top:60px; position:fixed; overflow-y:auto; height:90vh; align-items:normal}
-    #preview .re{border-left:3px solid #999; width:95%; padding-left:2%} #preview img {max-width:99%} #preview video {width:99%} .post.selected{background-color:#9d9}`;
+    const linkSchema = 'https://www.tumblr.com/api/v2/blog/%BLOGNAME%/posts?fields%5Bblogs%5D=avatar%2Cname%2Ctitle%2Curl%2Cdescription_npf&reblog_info=true&npf=true&should_bypass_safemode_forpost=true&should_bypass_safemode_forblog=true&can_modify_safe_mode=true';
+    const postLinkSchema = 'https://www.tumblr.com/api/v2/blog/%BLOGNAME%/posts/%POST%/permalink?fields%5Bblogs%5D=avatar%2Cname%2Ctitle%2Curl%2Cdescription_npf%2Ctheme%2Cuuid%2Ccan_message%2Ccan_be_followed%2C%3Ffollowed%2C%3Fis_member%2Cshare_likes%2Cshare_following%2Ccan_subscribe%2Csubscribed%2Cask%2C%3Fcan_submit%2C%3Fis_blocked_from_primary%2C%3Ftweet&reblog_info=true'
+    let style = `._3Lynt{width:60%; float:left;} .J9VCO {width:100%; height:50px} #preview {width:36%; right:1%; top:60px; position:fixed; overflow-y:scroll; height:90vh; align-items:normal}
+    #preview .re{border-left:3px solid #999; width:95%; padding-left:2%} #preview img {max-width:99%} #preview video {width:99%} .post.selected{background-color:#9d9}
+    body {position:static; background: #f2f2f2 !important}`;
 
     function prepareURL(data) {
         let url = linkSchema.replace('%BLOGNAME%', prefs.blogName);
@@ -37,16 +40,21 @@ How to:
         return url;
     }
 
+    function preparePostUrl(id) {
+        let url = postLinkSchema.replace(/%BLOGNAME%/g, prefs.blogName).replace(/%POST%/g, id);
+        return url;
+    }
+
     function showPreview(postId) {
         if (document.querySelector('.post.selected')) document.querySelector('.post.selected').classList.remove('selected');
-        document.querySelector('.post[data-index="'+postId+'"]').classList.add('selected');
+        if (document.querySelector('.post[data-index="'+postId+'"]')) document.querySelector('.post[data-index="'+postId+'"]').classList.add('selected');
 
-        let post = data.response.posts[parseInt(postId)];
+        let post = indexDB[''+postId];
         preview.innerHTML = '';
 
         let renderHead = (data, preview2) => {
             preview2.appendChild(InfernoAddElem('div', {className:'_3LoFw'}, [
-                InfernoAddElem('img', {src:data.blog.avatar.mediaUrlTemplates[0].url.replace('{id}', '30')}, []),
+                InfernoAddElem('img', {src:data.blog.avatar[3].url, width: 32, height: 32}, []),
                 InfernoAddElem('a', {href:data.blog.url, target:'_blank', innerHTML:data.blog.title+' ('+data.blog.name+')'}, [])
             ]))
         };
@@ -74,8 +82,8 @@ How to:
                 preview2.appendChild(InfernoAddElem('div', {className:line.subtype=='heading1'?'_3LoFw':'', innerHTML:newText}, []));
             }
             else if (line.type == 'image') {
-                preview2.appendChild(InfernoAddElem('a', {href:line.slimMedia.mediaUrlTemplate.replace('{id}', '1280')}, [
-                    InfernoAddElem('img', {src:line.slimMedia.mediaUrlTemplate.replace('{id}', '540')}, [])
+                preview2.appendChild(InfernoAddElem('a', {href:line.media[0].url}, [
+                    InfernoAddElem('img', {src:line.media[1].url}, [])
                 ]));
             }
             else if (line.type == 'video') {
@@ -92,7 +100,6 @@ How to:
                 preview2.appendChild(InfernoAddElem('a', {href:line.media.url, target:'_blank', innerHTML:'[Direct link]'}, []));
             }
         };
-        console.log(post);
         renderHead(post, preview);
         post.content.forEach(v => {render(v, preview)});
         let cpr = preview;
@@ -101,6 +108,30 @@ How to:
             renderHead(v, cpr);
             v.content.forEach(vx => {render(vx, cpr)});
         });
+        preview.appendChild(InfernoAddElem('a', {target:'_blank', href:'https://www.tumblr.com/reblog/'+post.id+'/'+post.reblogKey, innerHTML:'[Reblog]'}, []));
+    }
+
+    function renderSinglePost(post, index) {
+      indexDB[''+post.id] = post;
+      let from = ((post.trail[0] && post.trail[0].blog)? post.trail[0].blog.name : '');
+      let orig = ((post.trail[0] && post.trail[0].blog)? post.trail[0].blog.url+post.trail[0].post.id : '');
+      container.appendChild(
+        InfernoAddElem('div', {className:'J9VCO post', dataset:{index}}, [
+          InfernoAddElem('div', {className:'SOOWB'}, [
+            InfernoAddElem('strong', {innerHTML:post.isNsfw?'[NSFW] ':''}, []),
+            InfernoAddElem('span', {innerHTML:' '}, []),
+            InfernoAddElem('a', {href:post.postUrl, target:'_blank',innerHTML:'[Link]'}, []),
+            InfernoAddElem('span', {innerHTML:' '}, []),
+            InfernoAddElem('a', {href:orig, target:'_blank',innerHTML:from}, []),
+            InfernoAddElem('span', {innerHTML:' '}, []),
+            InfernoAddElem('strong', {innerHTML:post.id}, []),
+            InfernoAddElem('span', {innerHTML:', '}, []),
+            InfernoAddElem('strong', {innerHTML:post.date}, []),
+            InfernoAddElem('span', {innerHTML:', '+post.summary}, []),
+            InfernoAddElem('a', {style:'float:right',innerHTML:'[Reblog]', target:'_blank', href:'https://www.tumblr.com/reblog/'+post.id+'/'+post.reblogKey}, [])
+          ])
+        ])
+      );
     }
 
     function mainRender() {
@@ -108,26 +139,9 @@ How to:
             document.getElementById('Oindex').value = parseInt(prefs.offset/20+1);
             container.innerHTML = '';
             data.response.posts.forEach((post, index) => {
-                indexDB[''+post.id] = post;
                 let from = ((post.trail[0] && post.trail[0].blog)? post.trail[0].blog.name : '');
                 let orig = ((post.trail[0] && post.trail[0].blog)? post.trail[0].blog.url+post.trail[0].post.id : '');
-                container.appendChild(
-                    InfernoAddElem('div', {className:'J9VCO post', dataset:{index}}, [
-                        InfernoAddElem('div', {className:'SOOWB'}, [
-                            InfernoAddElem('strong', {innerHTML:post.isNsfw?'[NSFW] ':''}, []),
-                            InfernoAddElem('span', {innerHTML:' '}, []),
-                            InfernoAddElem('a', {href:post.postUrl, target:'_blank',innerHTML:'[Link]'}, []),
-                            InfernoAddElem('span', {innerHTML:' '}, []),
-                            InfernoAddElem('a', {href:orig, target:'_blank',innerHTML:from}, []),
-                            InfernoAddElem('span', {innerHTML:' '}, []),
-                            InfernoAddElem('strong', {innerHTML:post.id}, []),
-                            InfernoAddElem('span', {innerHTML:', '}, []),
-                            InfernoAddElem('strong', {innerHTML:post.date}, []),
-                            InfernoAddElem('span', {innerHTML:', '+post.summary}, []),
-                            InfernoAddElem('a', {style:'float:right',innerHTML:'[Reblog]', target:'_blank', href:'https://www.tumblr.com/reblog/'+post.id+'/'+post.reblogKey}, [])
-                        ])
-                    ])
-                );
+                renderSinglePost(post, index);
 
                 let found = () => {
                     container.lastChild.click();
@@ -141,6 +155,7 @@ How to:
                         if (post.summary.indexOf(searchData.value) > -1) found();
                     }
                     else if (searchData.type == 'origPostId') {
+                        if (post.id == searchData.value) found();
                         post.trail.forEach(v => {
                             if (v.post && v.post.id == searchData.value) found();
                         });
@@ -157,25 +172,25 @@ How to:
                     }
                     else if (search.type == 'imageId') {
                         post.content.forEach(c => {
-                            if (c.type && c.type == 'image' && c.slimMedia && c.slimMedia.mediaUrlTemplate && c.slimMedia.mediaUrlTemplate.indexOf('_'+search.value) > -1) found();
+                            if (c.type && c.type == 'image' && c.media && c.media[0] && c.media[0].url.indexOf('_'+search.value) > -1) found();
                         });
                         post.trail.forEach(v => {
                             if (v.content) {
                                 v.content.forEach(c => {
-                                    if (c.type && c.type == 'image' && c.slimMedia && c.slimMedia.mediaUrlTemplate && c.slimMedia.mediaUrlTemplate.indexOf('_'+search.value) > -1) found();
+                                    if (c.type && c.type == 'image' && c.media && c.media[0] && c.media[0].url.indexOf('_'+search.value) > -1) found();
                                 });
                             }
                         });
                     }
                     else if (search.type == 'blogImageId') {
                         post.content.forEach(c => {
-                            if (c.type && c.type == 'image' && c.slimMedia && c.slimMedia.mediaUrlTemplate && c.slimMedia.mediaUrlTemplate.indexOf('_'+search.value) > -1) found();
+                            if (c.type && c.type == 'image' && c.media && c.media[0] && c.media[0].url.indexOf('_'+search.value) > -1) found();
                         });
                         post.trail.forEach(v => {
                             if (v.content) {
                                 v.content.forEach(c => {
-                                    if (c.type && c.type == 'image' && c.slimMedia && c.slimMedia.mediaUrlTemplate &&
-                                        c.slimMedia.mediaUrlTemplate.indexOf(new RegExp(search.value+'(o|)(\\d{1,2}|)_', '')) > -1) found();
+                                    if (c.type && c.type == 'image' && c.media && c.media[0] &&
+                                        c.media[0].url.indexOf(new RegExp(search.value+'(o|)(\\d{1,2}|)_', '')) > -1) found();
                                 });
                             }
                         });
@@ -188,12 +203,13 @@ How to:
         });
 
         let req = () => {
+            window.history.pushState('page2', 'Better than archive', ('/dashboard/blog/'+prefs.blogName));
             fetch(prepareURL({offset:prefs.offset, page:parseInt(prefs.offset/20)}), {
                 method:'GET',
                 headers: {
                     Accept:'application/json;format=camelcase',
                     Authorization: 'Bearer '+prefs.key,
-                    'X-Version': 'redpop/3'
+                    'X-Version': 'redpop/3/0//redpop/'
                 }
             })
             .then(r => {return r.json()})
@@ -203,25 +219,54 @@ How to:
         req();
     }
 
+    function fetchPost() {
+      if (indexDB[''+searchData.value]) {
+        showPreview(searchData.value);
+        return;
+      }
+      window.history.pushState('page2', 'Better than archive', ('/dashboard/blog/'+prefs.blogName+'/'+searchData.value));
+      fetch(preparePostUrl(searchData.value), {
+        method:'GET',
+        headers: {
+          Accept:'application/json;format=camelcase',
+          Authorization: 'Bearer '+prefs.key,
+          'X-Version': 'redpop/3/0//redpop/'
+        }
+      })
+        .then(r => r.json())
+        .then(rdata => {
+        try {
+          const post = rdata.response.timeline.elements[0];
+          indexDB[''+post.id] = post;
+          showPreview(post.id);
+        }
+        catch (e) {
+          alert('Failed: ' + e);
+        }
+      });
+    }
+
     function preRender() {
-        root = document.getElementById('root');
+        prefs.blogName = location.pathname.split('/')[3];
+        root = document.querySelector('.has-background-image.no-delay');
         root.innerHTML = '';
         //probably will be better to rewrite it, but I'm lazy
         //document.head.appendChild(InfernoAddElem('link', {rel:'stylesheet', type:'text/css', href:'https://assets.tumblr.com/pop/css/main-f3d780cf.css'}));
         document.head.appendChild(InfernoAddElem('link', {rel:'stylesheet', type:'text/css', href:'https://assets.tumblr.com/pop/css/archive-page-23d765c4.css'}));
         document.head.appendChild(InfernoAddElem('style', {media:'all', type:'text/css', innerHTML:style}));
         root.appendChild(
-            InfernoAddElem('div', {id:"base-container"}, [
+            InfernoAddElem('div', {id:"base-container", style:'color:#000'}, [
                 InfernoAddElem('div', {className:'_2B7lk'}, [
                     InfernoAddElem('div', {className:'_7g80D'}, [
                         InfernoAddElem('header', {className:'_3Is8U _7g80D _2-JOb'}, [
-                            InfernoAddElem('a', {innerHTML:'TBA', href:'/archive2', className:'_3cK_B _3s2qw _1kUcg'}, []),
+                            InfernoAddElem('a', {innerHTML:'TBA', href:'//'+prefs.blogName+'.tumblr.com/archive2', className:'_3cK_B _3s2qw _1kUcg'}, []),
                             InfernoAddElem('a', {innerHTML:'(export index)', id:'export', className:'_3cK_B _3s2qw _1kUcg'}, []),
                             search = InfernoAddElem('form', {className:'_3cK_B _3s2qw _1kUcg'}, [
                                 InfernoAddElem('span', {innerHTML:'Find', className:'_3cK_B _3s2qw _1kUcg'}, []),
                                 InfernoAddElem('input', {id:'Svalue', style:'width:10em'}, []),
                                 InfernoAddElem('span', {innerHTML:' as ', className:'_3cK_B _3s2qw _1kUcg'}, []),
                                 InfernoAddElem('select', {id:'Stype', style:'width:8em'}, [
+                                    InfernoAddElem('option', {value:'goto', innerHTML:'Just take me to the post'}, []),
                                     InfernoAddElem('option', {value:'origPostId', innerHTML:'Origin post id'}, []),
                                     InfernoAddElem('option', {value:'text', innerHTML:'Post text'}, []),
                                     InfernoAddElem('option', {value:'imageId', innerHTML:'Unique image id (w/o blog image id)'}, []),
@@ -272,13 +317,11 @@ How to:
         });
 
         document.getElementById('BConfirm').addEventListener('click', e => {
-            e.preventDefault();
-            document.getElementById('BAuth').style.display = 'none';
-            window.history.pushState('page2', 'Better than archive', ('/archive'));
-
             prefs.key = document.getElementById('BKey').value.trim();
             prefs.offset = 0;
-            prefs.blogName = location.hostname.split('.')[0];
+
+            e.preventDefault();
+            document.getElementById('BAuth').style.display = 'none';
 
             mainRender();
             return false;
@@ -303,12 +346,16 @@ How to:
         });
 
         document.getElementById('Scont').addEventListener('click', e => {
+            e.preventDefault();
             searchData.type = document.getElementById('Stype').value;
             searchData.value = document.getElementById('Svalue').value;
             searchData.isGoing = true;
+            if (searchData.type == 'goto') {
+                fetchPost();
+                return;
+            }
 
             if (!prefs.blogName) return;
-            e.preventDefault();
 
             mainRender();
             return false;
@@ -324,15 +371,25 @@ How to:
             a.click();
         });
 
-        document.getElementById('BKey').value = unsafeWindow.___INITIAL_STATE___.apiFetchStore.API_TOKEN;
+        document.getElementById('BKey').value = location.search.substring(1);
         document.getElementById('BConfirm').click();
     }
 
-    setTimeout(preRender, 1000);
+    if (location.host !== 'www.tumblr.com') {
+        prefs.blogName = location.hostname.split('.')[0];
+        location.href = '//www.tumblr.com/dashboard2/blog/' + prefs.blogName + '?' + unsafeWindow.___INITIAL_STATE___.apiFetchStore.API_TOKEN;
+    }
+
+    if (document.querySelector('[http-equiv="refresh"]')) {
+        document.head.removeChild(document.querySelector('[http-equiv="refresh"]'));
+    }
+
     window.onbeforeunload = function (evt) {
         let message = "You sure?";
         if (typeof evt == "undefined") evt = window.event;
         if (evt) evt.returnValue = message;
         return message;
     };
+
+    setTimeout(preRender, 1000);
 })();
