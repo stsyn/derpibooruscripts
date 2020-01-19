@@ -1,7 +1,6 @@
 // ==UserScript==
 // @name         It's much better, than Tumblr's archive!
-// @version      0.8
-// @description  try to take over the world!
+// @version      0.8.1
 // @author       stsyn
 // @match        https://*/archive2
 // @match        https://www.tumblr.com/dashboard2/*
@@ -55,7 +54,8 @@ How to:
         let renderHead = (data, preview2) => {
             preview2.appendChild(InfernoAddElem('div', {className:'_3LoFw'}, [
                 InfernoAddElem('img', {src:data.blog.avatar[3].url, width: 32, height: 32}, []),
-                InfernoAddElem('a', {href:data.blog.url, target:'_blank', innerHTML:data.blog.title+' ('+data.blog.name+')'}, [])
+                InfernoAddElem('a', {href:data.blog.url, target:'_blank', innerHTML:data.blog.title+' ('+data.blog.name+')'}, []),
+                InfernoAddElem('a', {href:data.blog.url + 'archive2', target:'_blank', innerHTML:' [TBA]'}, [])
             ]))
         };
 
@@ -82,7 +82,7 @@ How to:
                 preview2.appendChild(InfernoAddElem('div', {className:line.subtype=='heading1'?'_3LoFw':'', innerHTML:newText}, []));
             }
             else if (line.type == 'image') {
-                preview2.appendChild(InfernoAddElem('a', {href:line.media[0].url}, [
+                preview2.appendChild(InfernoAddElem('a', {target:'_blank', href:line.media[0].url}, [
                     InfernoAddElem('img', {src:line.media[1].url}, [])
                 ]));
             }
@@ -116,7 +116,7 @@ How to:
       let from = ((post.trail[0] && post.trail[0].blog)? post.trail[0].blog.name : '');
       let orig = ((post.trail[0] && post.trail[0].blog)? post.trail[0].blog.url+post.trail[0].post.id : '');
       container.appendChild(
-        InfernoAddElem('div', {className:'J9VCO post', dataset:{index}}, [
+        InfernoAddElem('div', {className:'J9VCO post', dataset:{index: post.id}}, [
           InfernoAddElem('div', {className:'SOOWB'}, [
             InfernoAddElem('strong', {innerHTML:post.isNsfw?'[NSFW] ':''}, []),
             InfernoAddElem('span', {innerHTML:' '}, []),
@@ -139,6 +139,7 @@ How to:
             document.getElementById('Oindex').value = parseInt(prefs.offset/20+1);
             container.innerHTML = '';
             data.response.posts.forEach((post, index) => {
+                if (post.objectType !== 'post') return;
                 let from = ((post.trail[0] && post.trail[0].blog)? post.trail[0].blog.name : '');
                 let orig = ((post.trail[0] && post.trail[0].blog)? post.trail[0].blog.url+post.trail[0].post.id : '');
                 renderSinglePost(post, index);
@@ -239,6 +240,7 @@ How to:
           const post = rdata.response.timeline.elements[0];
           indexDB[''+post.id] = post;
           showPreview(post.id);
+          searchData.isGoing = false;
         }
         catch (e) {
           alert('Failed: ' + e);
