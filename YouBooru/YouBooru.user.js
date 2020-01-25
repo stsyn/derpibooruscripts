@@ -12,7 +12,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.31
+// @version      0.5.32
 // @description  Feedz
 // @author       stsyn
 
@@ -438,8 +438,8 @@
       if (!localStorage['bor_tags_'+cur]) return '[Unknown]';
       return prev + JSON.parse(localStorage['bor_tags_'+cur]).name+(i+1 == a.length?'':' || ');
     }, '');
-    tags = '('+tags+')';
     if (document.getElementsByClassName('js-datastore')[0].dataset.hiddenFilter) tags += ' || '+document.getElementsByClassName('js-datastore')[0].dataset.hiddenFilter;
+    tags = '('+tags+')';
     return tags;
   }
 
@@ -451,8 +451,8 @@
       if (!localStorage['bor_tags_'+cur]) return '[Unknown]';
       return prev + JSON.parse(localStorage['bor_tags_'+cur]).name+(i+1 == a.length?'':' || ');
     }, '');
-    tags = '('+tags+')';
     if (document.getElementsByClassName('js-datastore')[0].dataset.spoileredFilter) tags += ' || '+document.getElementsByClassName('js-datastore')[0].dataset.spoileredFilter;
+    tags = '('+tags+')';
     return tags;
   }
 
@@ -556,6 +556,7 @@
     if (!event.target) iContainer = event;
     else iContainer = event.target;
     iContainer = iContainer.closest('.image-container');
+    const image = event.target || event;
     let video = !!iContainer.querySelector('video');
     let spx = JSON.parse(iContainer.getAttribute('data-image-tags'));
     let fls = data.spoilers;
@@ -565,7 +566,7 @@
     for (let i=0; i<spx.length; i++) {
       for (let j=0; j<fls.length; j++) {
         if (spx[i] == fls[j]) {
-          if (localStorage['bor_tags_'+spx[i]] != undefined) {
+          if (localStorage['bor_tags_'+spx[i]]) {
             let u = JSON.parse(localStorage['bor_tags_'+spx[i]]);
             let a = u.images;
             n += (n==''?'':', ')+u.name;
@@ -580,11 +581,10 @@
         }
       }
     }
-    if (!hasSpoiler) return;
+    if (!hasSpoiler && (!video && image.src)) return;
     let spoilerInfo = iContainer.querySelector('.media-box__overlay.js-spoiler-info-overlay');
     spoilerInfo.classList.remove('hidden');
-    spoilerInfo.innerHTML = n;
-    let image = event.target || event;
+    spoilerInfo.innerHTML = n || '<i>(Complex filter)</i>';
     let spoiler = image;
     if (video) {
       image = iContainer.getElementsByTagName('video')[0];
