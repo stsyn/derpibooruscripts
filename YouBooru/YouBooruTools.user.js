@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.8.11
+// @version      0.8.12
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -561,8 +561,8 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         let quotes = (/(\(|\))/.test(tname)?'"':'');
         return prev + quotes + tname + quotes + (i+1 == a.length?'':' || ');
       }, '');
-      tags = '('+tags+')';
       if (document.getElementsByClassName('js-datastore')[0].dataset.spoileredFilter != "") tags += ' || '+document.getElementsByClassName('js-datastore')[0].dataset.spoileredFilter;
+      tags = '('+tags+')';
       return tags;
     };
 
@@ -575,8 +575,8 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         let quotes = (/(\(|\))/.test(tname)?'"':'');
         return prev + quotes + tname + quotes + (i+1 == a.length?'':' || ');
       }, '');
-      tags = '('+tags+')';
       if (document.getElementsByClassName('js-datastore')[0].dataset.hiddenFilter != "") tags += ' || '+document.getElementsByClassName('js-datastore')[0].dataset.hiddenFilter;
+      tags = '('+tags+')';
       return tags;
     }
 
