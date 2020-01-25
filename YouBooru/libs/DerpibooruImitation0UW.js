@@ -220,7 +220,7 @@ function processor(f, a) {
     let spoileredComplexImageProto = function (a) {
         filterImage(a, unsafeWindow.booru.hiddenTag, "This image was spoilered by a complex tag expression in ")
     }
-	let filterHandler = function (a) {
+	let filterHandler = function (a, forcedOff) {
 		void 0 === a && (a = document);
 		var b = getHidddenTags()
 		  , c = getSpoileredTags()
@@ -228,33 +228,33 @@ function processor(f, a) {
 		  , e = d.hiddenFilter
 		  , f = d.spoileredFilter;
 		querySelectAll(".image-container", a).filter(function(a) {
-			return !isSpoilered(a, hasTags(a, b), hiddenImageProtoShort)
+			return forcedOff || !isSpoilered(a, hasTags(a, b), hiddenImageProtoShort)
 		}).filter(function(a) {
-			return !isSpoilered(a, e.hitsImage(a), hiddenComplexImageProtoShort)
+			return forcedOff || !isSpoilered(a, e.hitsImage(a), hiddenComplexImageProtoShort)
 		}).filter(function(a) {
-			return !isSpoilered(a, hasTags(a, c), spoileredImageProtoShort)
+			return forcedOff || !isSpoilered(a, hasTags(a, c), spoileredImageProtoShort)
 		}).filter(function(a) {
-			return !isSpoilered(a, f.hitsImage(a), spoileredComplexImageProtoShort)
+			return forcedOff || !isSpoilered(a, f.hitsImage(a), spoileredComplexImageProtoShort)
 		}).forEach(function(a) {
 			return ia(a)
 		});
 		querySelectAll(".image-show-container", a).filter(function(a) {
-			return !isSpoilered(a, hasTags(a, b), hiddenImageProto)
+			return forcedOff || !isSpoilered(a, hasTags(a, b), hiddenImageProto)
 		}).filter(function(a) {
-			return !isSpoilered(a, e.hitsImage(a), hiddenComplexImageProto)
+			return forcedOff || !isSpoilered(a, e.hitsImage(a), hiddenComplexImageProto)
 		}).filter(function(a) {
-			return !isSpoilered(a, hasTags(a, c), spoileredImageProto)
+			return forcedOff || !isSpoilered(a, hasTags(a, c), spoileredImageProto)
 		}).filter(function(a) {
-			return !isSpoilered(a, f.hitsImage(a), spoileredComplexImageProto)
+			return forcedOff || !isSpoilered(a, f.hitsImage(a), spoileredComplexImageProto)
 		}).forEach(function(a) {
 			return unspoilImage(a)
 		})
 	}
 
     //
-	if (f == 'processImages') filterHandler(a[0]);
+	if (f == 'processImages') filterHandler(a[0], a[1]);
 }
 
-function DB_processImages(target) {
-    processor('processImages', [target]);
+function DB_processImages(target, forcedOff) {
+    processor('processImages', [target, forcedOff]);
 }
