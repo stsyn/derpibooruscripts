@@ -8,11 +8,12 @@
 
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruImitation0UW.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0UW.lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.32
+// @version      0.5.33
 // @description  Feedz
 // @author       stsyn
 
@@ -115,12 +116,12 @@
 
   function resetCache(module, element) {
     let id = element.parentNode.dataset.id;
-    if (id == undefined) id = element.parentNode.parentNode.dataset.id;
+    if (!id) id = element.parentNode.parentNode.dataset.id;
     let svd = localStorage._ydb_caches;
     if (svd !== undefined) {
       try {
         let cache = JSON.parse(svd);
-        cache[id] = undefined;
+        delete cache[id];
         localStorage._ydb_caches = JSON.stringify(cache);
       }
       catch (e) {}
@@ -243,7 +244,7 @@
 
   function preRun() {
     f_s_c = localStorage._ydb_feeds;
-    if (f_s_c == undefined) {
+    if (!f_s_c) {
       legacyPreRun();
       debug('YDB:F','Data conversion to 0.4.5+ format done', 0);
       f_s_c = {};
@@ -295,15 +296,15 @@
         if (feedz[i].sort == "created_at" && feedz[i].query != '*') {
           feedz[i].sort = 'first_seen_at';
           updated = true;
-          feedzCache[i] = undefined;
+          delete feedzCache[i];
         }
       }
-      if (feedz[i] != null) feedz[i].loaded = false;
-      if (feedz[i].cachedResp != undefined) {
+      if (feedz[i]) feedz[i].loaded = false;
+      if (feedz[i].cachedResp) {
         feedzCache[i] = feedz[i].cachedResp;
         delete feedz[i].cachedResp;
       }
-      if (feedz[i].cachedQuery != undefined) {
+      if (feedz[i].cachedQuery) {
         feedzURLs[i] = feedz[i].cachedQuery;
         delete feedz[i].cachedQuery;
       }
@@ -315,7 +316,7 @@
         write();
       }, 3000);
     }
-    if (config.oneTimeLoad == undefined) config.oneTimeLoad = 3;
+    if (!config.oneTimeLoad) config.oneTimeLoad = 3;
   }
 
   function legacyPreRun() {
@@ -334,12 +335,12 @@
       }
     }
     for (let i=0; i<feedz.length; i++) {
-      if (feedz[i] != null) feedz[i].loaded = false;
-      if (feedz[i].cachedResp != undefined) {
+      if (feedz[i]) feedz[i].loaded = false;
+      if (feedz[i].cachedResp) {
         feedzCache[i] = feedz[i].cachedResp;
         delete feedz[i].cachedResp;
       }
-      if (feedz[i].cachedQuery != undefined) {
+      if (feedz[i].cachedQuery) {
         feedzURLs[i] = feedz[i].cachedQuery;
         delete feedz[i].cachedQuery;
       }
@@ -548,110 +549,6 @@
     sentRequests++;
   }
 
-  function spoiler(event, alwaysOff) {
-    if ((event.target || event).spoilerFired) return;
-
-    (event.target || event).spoilerFired = true;
-    let iContainer;
-    if (!event.target) iContainer = event;
-    else iContainer = event.target;
-    iContainer = iContainer.closest('.image-container');
-    const image = event.target || event;
-    let video = !!iContainer.querySelector('video');
-    let spx = JSON.parse(iContainer.getAttribute('data-image-tags'));
-    let fls = data.spoilers;
-    let mx = 999999999;
-    let hasSpoiler = false;
-    let n = '', s = null;
-    for (let i=0; i<spx.length; i++) {
-      for (let j=0; j<fls.length; j++) {
-        if (spx[i] == fls[j]) {
-          if (localStorage['bor_tags_'+spx[i]]) {
-            let u = JSON.parse(localStorage['bor_tags_'+spx[i]]);
-            let a = u.images;
-            n += (n==''?'':', ')+u.name;
-            hasSpoiler = true;
-            if (a < mx) {
-              if (u.spoiler_image_uri != null) {
-                mx = a;
-                s = u.spoiler_image_uri;
-              }
-            }
-          }
-        }
-      }
-    }
-    if (!hasSpoiler && (!video && image.src)) return;
-    let spoilerInfo = iContainer.querySelector('.media-box__overlay.js-spoiler-info-overlay');
-    spoilerInfo.classList.remove('hidden');
-    spoilerInfo.innerHTML = n || '<i>(Complex filter)</i>';
-    let spoiler = image;
-    if (video) {
-      image = iContainer.getElementsByTagName('video')[0];
-      spoiler = iContainer.getElementsByTagName('img')[0];
-    }
-    if (data.spoilerType == 'off' || alwaysOff) {
-      spoilerInfo.classList.add('hidden');
-      if (video) {
-        image.classList.remove('hidden');
-
-        image.appendChild(createElement('source', {type:'video/webm', src:iContainer.getAttribute('data-thumb').replace('.gif','.webm')}));
-        image.appendChild(createElement('source', {type:'video/mp4', src:iContainer.getAttribute('data-thumb').replace('.gif','.mp4')}));
-
-        spoiler.classList.add('hidden');
-      }
-      else image.src = iContainer.getAttribute('data-thumb');
-    }
-    else {
-      if (!s) s = '/images/tagblocked.svg';
-      spoiler.src = s;
-
-      // chrome bug
-      spoiler.style.position = 'static';
-      setTimeout(() => {spoiler.style.position = 'absolute'}, 100);
-
-      spoiler.style.left = '0';
-      spoiler.style.top = '0';
-      if (data.spoilerType != 'static') {
-        let ac = data.spoilerType;
-        if (ac == 'hover') ac = 'mouseenter';
-        iContainer.addEventListener(ac, function(e) {
-          if (!spoilerInfo.classList.contains('hidden')) {
-            if (!video) {
-              image.style.position = 'static';
-              image.spoiler = image.src;
-              image.src = iContainer.getAttribute('data-thumb');
-            }
-            else {
-              image.classList.remove('hidden');
-
-              image.appendChild(createElement('source', {type:'video/webm', src:iContainer.getAttribute('data-thumb').replace('.gif','.webm')}));
-              image.appendChild(createElement('source', {type:'video/mp4', src:iContainer.getAttribute('data-thumb').replace('.gif','.mp4')}));
-
-              spoiler.classList.add('hidden');
-            }
-            spoilerInfo.classList.add('hidden');
-            e.preventDefault();
-          }
-        });
-        iContainer.addEventListener('mouseleave', function(e) {
-          if (spoilerInfo.classList.contains('hidden')) {
-            if (!video) {
-              image.style.position = 'absolute';
-              image.src = image.spoiler;
-            }
-            else {
-              image.classList.add('hidden');
-              for (let i=image.childNodes.length-1; i>=0; i--) image.removeChild(image.childNodes[i]);
-              spoiler.classList.remove('hidden');
-            }
-            spoilerInfo.classList.remove('hidden');
-          }
-        });
-      }
-    }
-  }
-
   function feedAfterload(feed, cc, id, notcache) {
     feedzURLs[id] = compileURL(feed, true);
     feed.url.href = feedzURLs[id]+'&feedId='+id;
@@ -786,18 +683,12 @@
         const th = elem.querySelector('picture *[src], video *[src]');
         if (th) th.src = th.src.replace('/thumb_small.','/thumb.');
         elem.classList.add('_ydb_resizible');
-
-        if (image) {
-          image.onload = e => spoiler(e, aloff);
-          if (!image.src) {
-            spoiler(image, aloff);
-          }
-        }
         if (i >= parseInt(config.imagesInFeeds*(privated?1.2:1))*(feed.double?2:1)) elem.classList.add('hidden');
         c.appendChild(pc.childNodes[0]);
         updateEvents(elem, feed);
       }
     }
+    DB_processImages(c, aloff);
 
     setTimeout(() => {
       feed.observer = observer(feed);
@@ -836,18 +727,13 @@
       for (let i=0, l = parseInt(config.imagesInFeeds*(feed.double?2:1)*1.2); i < l; i++) {
         const elem = c.childNodes[i];
         if (!elem) break;
-        const image = elem.querySelector('.media-box__content .image-container a img');
-        if (image) {
-          image.onload = e => spoiler(e, aloff);
-          if (!image.src) {
-            spoiler(image, aloff);
-          }
-        }
         if (i >= parseInt(config.imagesInFeeds*(privated?1.2:1)*(feed.double?2:1))) elem.classList.add('hidden');
         else elem.classList.remove('hidden');
         applyEvents(elem, feed);
       }
     }
+    DB_processImages(c, aloff);
+
     setTimeout(() => {
       feed.observer = observer(feed)
       feed.observer.observe(feed.container, {attributes: true, childList: true, characterData: true, subtree:true });
@@ -905,7 +791,7 @@
               getFeed(f, f.internalId);
             }}
           }, [
-            createElement('i.fa', '\uF021'),
+            createElement('i.fa.fa-sync'),
             createElement('span.hide-mobile', ' Reload feed')
           ])
         ]),
@@ -921,32 +807,32 @@
       if (!feedzEvents[i]) feedzEvents[i] = {};
       if (!feedzCache[i]) {
         getFeed(f, i, true);
-        debug('YDB:F','Requested update to feed "'+f.name+'". Reason "No cache found"', 1);
+        debug('YDB:F','Requested update to feed "'+f.name+'". Reason "No cache found"', 2);
       }
       else if (feedzCache[i].startsWith('Server timeout.')) {
         getFeed(f, i, true);
-        debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Not finished loading"', 1);
+        debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Not finished loading"', 2);
       }
       else if (compileURL(f) != feedzURLs[i]) {
         getFeed(f, i, true);
-        debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Feed url changed"', 1);
+        debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Feed url changed"', 2);
       }
       else if (parseInt(config.imagesInFeeds*1.2) != feedz[i].responsed) {
         getFeed(f, i, true);
-        debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Changed setting imageInFeeds"', 1);
+        debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Changed setting imageInFeeds"', 2);
       }
       else if (ptime > (f.saved+f.cache))
       {
         if (f.ccache && (!isNaN(f.ccache))) {
           if (parseInt(ptime/f.ccache) > parseInt(f.saved/f.ccache)) {
             getFeed(f, i, true);
-            debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Scheduled update"', 1);
+            debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Scheduled update"', 2);
           }
           else fillParsed(f, i);
         }
         else {
           getFeed(f, i, true);
-          debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Cache lifetime expired"', 1);
+          debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Cache lifetime expired"', 2);
         }
       }
       else if (!feedzURLs[i]) getFeed(f, i, true);
@@ -958,32 +844,6 @@
   }
 
   /*********************************/
-
-  function YB_insertFeed(u) {
-    let f = {};
-    let i;
-    for (i=0; i<feedz.length; i++) {
-      if (feedz[i].name == decodeURIComponent(u[1])) {
-        f = feedz[i];
-        break;
-      }
-    }
-    f.loaded = false;
-    f.name = decodeURIComponent(u[1]);
-    f.query = decodeURIComponent(u[2]).replace(/\+/g,' ');
-    f.sort = u[3];
-    f.sd = u[4];
-    f.cache = u[5];
-    f.ccache = u[6];
-    feedz[i] = f;
-    write();
-
-    if (unsafeWindow._YDB_public.funcs.backgroundBackup) unsafeWindow._YDB_public.funcs.backgroundBackup(() => {
-      if (history.length == 1) close();
-      else history.back();
-    });
-  }
-
 
   function YB_insertFeed2(u) {
     let f = {};
@@ -1011,7 +871,7 @@
 
     if (unsafeWindow._YDB_public.funcs.backgroundBackup) unsafeWindow._YDB_public.funcs.backgroundBackup(() => {
       if (history.length == 1) close();
-      else if (u.params.feedId != undefined) location.href = '/search?q='+customQueries(f)+'&sf='+f.sort+'&sd='+f.sd+'&feedId='+i;
+      else if (u.params.feedId) location.href = '/search?q='+customQueries(f)+'&sf='+f.sort+'&sd='+f.sd+'&feedId='+i;
       else location.href = '/settings#YourBooru';
     });
   }
@@ -1027,53 +887,21 @@
   }
 
   function YB_addFeed(u) {
-    document.querySelector('#content h1').innerHTML = 'Add feed';
-    let c = document.querySelector('#content .walloftext');
-    if (u.length>6) {
-      c.innerHTML = 'Name: '+decodeURIComponent(u[1]);
-      c.innerHTML += '<br>Query: <a href="/search?q='+u[2]+'&sf='+u[3]+'&sd='+u[4]+'">'+decodeURIComponent(u[2]).replace(/\\+/g,' ')+'</a>';
-      c.innerHTML += '<br>Sorting type: '+u[3];
-      c.innerHTML += '<br>Sorting direction: '+u[4];
-      c.innerHTML += '<br>Update interval: '+(u[5]==0?'each'+u[6]:u[5])+' minutes';
-      let x = true;
-      for (let i=0; i<feedz.length; i++) {
-        if (feedz[i].name == decodeURIComponent(u[1])) {
-          c.innerHTML += '<br><br><b>There is saved feed with that name!</b>';
-          c.innerHTML += '<br><br><span id="yy_add" class="button">Replace</span> <span id="yy_include" class="button">Rename automatically</span> <span id="yy_cancel" class="button">Cancel</span>';
-          x = false;
-          break;
-        }
-      }
-      if (x) c.innerHTML += '<br><br><span id="yy_add" class="button">Add feed</span> <span id="yy_cancel" class="button">Cancel</span> <span id="yy_include"></span>';
-
-
-      document.getElementById('yy_cancel').addEventListener('click', () => {
-        if (history.length == 1) close();
-        else history.back();
-      });
-
-      document.getElementById('yy_add').addEventListener('click', () => YB_insertFeed(u));
-
-      document.getElementById('yy_include').addEventListener('click', () => {
-        u[1] = decodeURIComponent(u[1])+'_'+parseInt(65536*Math.random());
-        YB_insertFeed(u);
-      });
-    }
-    else c.innerHTML = 'Not enough parameters, impossible to add!';
+    location.href = `/search?q=${u[2]}&sf=${u[3]}&sd=${u[4]}&name=${u[1]}&cache=${u[5]}&ccache=${u[6]}`;
   }
 
   function YB_feedButton(id) {
     let e;
-    if (id != undefined) {
+    if (id) {
       e = createElement('a', {href: location.href+'&name='+feedz[id].name+'&cache='+feedz[id].cache+'&ccache='+feedz[id].ccache, title: 'Edit feed'}, [
         createElement('i.fa', '\uF09E'),
-        createElement('span', ' Edit feed')
+        ' Edit feed'
       ]);
     }
     else {
       e = createElement('a', {href: location.href+'&name=New+feed&cache=30&ccache=0', title: 'Create feed'}, [
         createElement('i.fa', '\uF09E'),
-        createElement('span', ' Create feed')
+        ' Create feed'
       ]);
     }
     document.querySelector('.block__header.flex .flex__right').insertBefore(e, document.querySelector('.block__header.flex .flex__right').firstChild);
@@ -1096,7 +924,7 @@
       createElement('h1', 'Add feed '),
       createElement('div.block.js-imagelist-info', [
         createElement('div.block__content',[
-          createElement('span', 'Name: '),
+          'Name: ',
           createElement('input.input', {value:decodeURIComponent(u.params.name).replace(/\+/g,' '), name: 'name', events: {input:(e) => {
             alreadyHas = uniqueCheck(e.target.value);
             if (!alreadyHas) {
@@ -1111,9 +939,9 @@
           createElement('span#yy_warn.flash--warning', {className: (alreadyHas ? '' : 'hidden')}, ' That feed already exists!'),
           createElement('br'),
           createElement('br'),
-          createElement('span', 'Update: '),
+          'Update: ',
           createElement('span#yy_cache', [
-            createElement('span', 'after '),
+            'after ',
             createElement('input.input', {value: decodeURIComponent(u.params.cache), name: 'cache', events: {input:e => {
               if (e.target.value == '0' || !e.target.value) {
                 document.getElementById('yy_ccache').style.opacity = '1';
@@ -1127,7 +955,7 @@
             }}})
           ]),
           createElement('span#yy_ccache',[
-            createElement('span', ' each '),
+            ' each ',
             createElement('input.input', {value: decodeURIComponent(u.params.ccache), name:'ccache', events:{input:e => {
               if (e.target.value == '0' || !e.target.value) {
                 document.getElementById('yy_cache').style.opacity = '1';
@@ -1140,7 +968,7 @@
               }
             }}},[])
           ]),
-          createElement('span', ' minutes'),
+          ' minutes',
           createElement('br'),
           createElement('label', 'Double size ',[
             createElement('input',{checked: (u.params.feedId ? feedz[u.params.feedId].double : false), name: 'double', type: 'checkbox'})
@@ -1152,7 +980,7 @@
           createElement('br'),
           createElement('span', [
             createElement('input#yy_add.button', {type:'button', value: (alreadyHas ? 'Update' : 'Add feed')}),
-            createElement('span', ' '),
+            ' ',
             createElement('span#yy_cancel.button', 'Cancel'),
             createElement('span#yy_include.button', {style:'display:none'}, 'Rename automatically')
           ])
