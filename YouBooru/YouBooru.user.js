@@ -13,7 +13,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.33
+// @version      0.5.34
 // @description  Feedz
 // @author       stsyn
 
@@ -31,7 +31,8 @@
   let privated = false;
   const feedCSS = '._ydb_feedloading {display:none} ._ydb_feedshadow .block__content {opacity:0.5} ._ydb_feedshadow ._ydb_feedloading{display:block !important; position:absolute; width:100%; top:48%; pointer-events:none; text-align:center}';
   let sizingCSSNode;
-  let data={};
+  let data = {};
+  let cont;
 
   let config = {
     imagesInFeeds:6,
@@ -267,7 +268,7 @@
         feedzCache = JSON.parse(svd);
       }
       catch (e) {
-        debug('YDB:F','Cannot get feeds cache', 1);
+        debug('YDB:F','Cannot get feeds cache', 2);
       }
     }
     svd = localStorage._ydb_cachesUrls;
@@ -276,7 +277,7 @@
         feedzURLs = JSON.parse(svd);
       }
       catch (e) {
-        debug('YDB:F','Cannot get feeds URLCache', 1);
+        debug('YDB:F','Cannot get feeds URLCache', 2);
       }
     }
     svd = localStorage._ydb_cachesEvents;
@@ -285,7 +286,7 @@
         feedzEvents = JSON.parse(svd);
       }
       catch (e) {
-        debug('YDB:F','Cannot get feeds EventCache', 1);
+        debug('YDB:F','Cannot get feeds EventCache', 2);
       }
     }
 
@@ -327,11 +328,11 @@
           feedz = JSON.parse(svd);
         }
         catch (e) {
-          debug('YDB:F','Cannot get feeds. Should be loaded default', 1);
+          debug('YDB:F','Cannot get feeds. Should be loaded default', 2);
         }
       }
       else {
-        debug('YDB:F','Cannot get feeds. Should be loaded default', 1);
+        debug('YDB:F','Cannot get feeds. Should be loaded default', 2);
       }
     }
     for (let i=0; i<feedz.length; i++) {
@@ -340,7 +341,7 @@
         feedzCache[i] = feedz[i].cachedResp;
         delete feedz[i].cachedResp;
       }
-      if (feedz[i].cachedQuery) {
+      if (feedz[i].cachedQueryd) {
         feedzURLs[i] = feedz[i].cachedQuery;
         delete feedz[i].cachedQuery;
       }
@@ -807,32 +808,32 @@
       if (!feedzEvents[i]) feedzEvents[i] = {};
       if (!feedzCache[i]) {
         getFeed(f, i, true);
-        debug('YDB:F','Requested update to feed "'+f.name+'". Reason "No cache found"', 2);
+        debug('YDB:F','Requested update to feed "'+f.name+'". Reason "No cache found"', 0);
       }
       else if (feedzCache[i].startsWith('Server timeout.')) {
         getFeed(f, i, true);
-        debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Not finished loading"', 2);
+        debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Not finished loading"', 0);
       }
       else if (compileURL(f) != feedzURLs[i]) {
         getFeed(f, i, true);
-        debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Feed url changed"', 2);
+        debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Feed url changed"', 0);
       }
       else if (parseInt(config.imagesInFeeds*1.2) != feedz[i].responsed) {
         getFeed(f, i, true);
-        debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Changed setting imageInFeeds"', 2);
+        debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Changed setting imageInFeeds"', 0);
       }
       else if (ptime > (f.saved+f.cache))
       {
         if (f.ccache && (!isNaN(f.ccache))) {
           if (parseInt(ptime/f.ccache) > parseInt(f.saved/f.ccache)) {
             getFeed(f, i, true);
-            debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Scheduled update"', 2);
+            debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Scheduled update"', 0);
           }
           else fillParsed(f, i);
         }
         else {
           getFeed(f, i, true);
-          debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Cache lifetime expired"', 2);
+          debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Cache lifetime expired"', 0);
         }
       }
       else if (!feedzURLs[i]) getFeed(f, i, true);
@@ -1031,7 +1032,7 @@
 
   document.querySelector('.header--secondary .header__dropdown .dropdown__content').appendChild(
     createElement('a.header__link', {href: '/pages/api?feeds'}, 'Feeds'));
-  const cont = document.getElementsByClassName('column-layout__main')[0];
+  cont = document.getElementsByClassName('column-layout__main')[0];
 
   if (location.pathname == '/' || location.pathname == '') setTimeout(init, 250);
   else {
