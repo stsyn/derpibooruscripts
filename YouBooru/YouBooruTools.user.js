@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.8.12
+// @version      0.8.13
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -534,21 +534,31 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       return c+')';
     };
 
-    let getYearsQuery = function(param) {
-      let date = new Date(Date.now()-param*24*60*60*1000);
+    let getYearsQuery = (param) => {
+      const date = new Date(Date.now()-param*24*60*60*1000);
       let c = '(';
-      let cc = 'created_at:';
-      for (let i = date.getFullYear() - 1; i>2011; i--)
-        c += (c == '(' ? '' : ' || ') + cc + i + '-' + (date.getMonth()+1).toString().padStart(2, '0') + '-' + date.getDate().toString().padStart(2, '0');
+      const cc = 'created_at:';
+      const dateString = '-' + (date.getMonth() + 1).toString().padStart(2, '0') + '-' + date.getDate().toString().padStart(2, '0');
+
+      for (let i = date.getFullYear() - 1; i>2011; i--) {
+        if (date.getMonth() == 1 && date.getDate() == 29 && i % 4 != 0) continue;
+        c += (c === '(' ? '' : ' || ') + cc + i + dateString;
+      }
+
       return c+')';
     };
 
-    let getYearsAltQuery = function(param) {
-      let date = new Date(Date.now()-param*24*60*60*1000);
+    let getYearsAltQuery = (param) => {
+      const date = new Date(Date.now()-param*24*60*60*1000);
       let c = '(';
-      let cc = 'first_seen_at:';
-      for (let i = date.getFullYear() - 1; i>2011; i--)
-        c += (c == '(' ? '' : ' || ') + cc + i + '-' + (date.getMonth()+1).toString().padStart(2, '0') + '-' + date.getDate().toString().padStart(2, '0');
+      const cc = 'first_seen_at:';
+      const dateString = '-' + (date.getMonth() + 1).toString().padStart(2, '0') + '-' + date.getDate().toString().padStart(2, '0');
+
+      for (let i = date.getFullYear() - 1; i>2011; i--) {
+        if (date.getMonth() == 1 && date.getDate() == 29 && i % 4 != 0) continue;
+        c += (c === '(' ? '' : ' || ') + cc + i + dateString;
+      }
+
       return c+')';
     };
 
