@@ -13,7 +13,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.34
+// @version      0.5.35
 // @description  Feedz
 // @author       stsyn
 
@@ -395,8 +395,10 @@
     const cc = 'created_at:';
     const dateString = '-' + (date.getMonth() + 1).toString().padStart(2, '0') + '-' + date.getDate().toString().padStart(2, '0');
 
-    for (let i = date.getFullYear() - 1; i>2011; i--)
+    for (let i = date.getFullYear() - 1; i>2011; i--) {
+      if (date.getMonth() == 1 && date.getDate() == 29 && i % 4 != 0) continue;
       c += (c === '(' ? '' : ' || ') + cc + i + dateString;
+    }
 
     return c+')';
   }
@@ -407,8 +409,10 @@
     const cc = 'first_seen_at:';
     const dateString = '-' + (date.getMonth() + 1).toString().padStart(2, '0') + '-' + date.getDate().toString().padStart(2, '0');
 
-    for (let i = date.getFullYear() - 1; i>2011; i--)
+    for (let i = date.getFullYear() - 1; i>2011; i--) {
+      if (date.getMonth() == 1 && date.getDate() == 29 && i % 4 != 0) continue;
       c += (c === '(' ? '' : ' || ') + cc + i + dateString;
+    }
 
     return c+')';
   }
