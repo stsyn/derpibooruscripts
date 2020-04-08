@@ -19,17 +19,22 @@ function getBadgesImplications() {
 			'Platinum Patron':['Happy Derpy']
 		},
 		extreme:{
-			'Friendship, Art, and Magic (6 Years)':['Friendship, Art, and Magic (5 Years)'],
-			'Friendship, Art, and Magic (7 Years)':['Friendship, Art, and Magic (5 Years)','Friendship, Art, and Magic (6 Years)'],
+			'Friendship, Art, and Magic (2018)':['Friendship, Art, and Magic (2017)'],
+			'Friendship, Art, and Magic (2019)':['Friendship, Art, and Magic (2017)','Friendship, Art, and Magic (2018)'],
+			'Friendship, Art, and Magic (2020)':['Friendship, Art, and Magic (2017)','Friendship, Art, and Magic (2018)','Friendship, Art, and Magic (2019)'],
 			'Helpful Owl':['Friendly Griffon'],
 			'Toola Roola':['Friendly Griffon', 'Helpful Owl'],
+			'Dream Come True!':['Friendly Griffon', 'Helpful Owl', 'Toola Roola'],
 
 			'Equality':['Not a Llama'],
 			'Condensed Milk':['Not a Llama'],
 			'Wallet After Summer Sale':['Not a Llama', 'Equality', 'Condensed Milk'],
 			'Economist':['Not a Llama', 'Equality', 'Condensed Milk'],
+			'My Little Pony':['Not a Llama', 'Equality', 'Condensed Milk', 'Economist', 'Wallet After Summer Sale'],
+			'Best Art Program Ever':['Not a Llama', 'Equality', 'Condensed Milk', 'Economist', 'Wallet After Summer Sale', 'My Little Pony'],
 
-			'A Tale For The Ages':['Birthday Cake']
+			'A Tale For The Ages':['Birthday Cake'],
+			'Dream Come True!':['Birthday Cake', 'A Tale For The Ages'],
 		},
 		donations:{
 			'Platinum Patron':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity','Gold Bit','Silver Bit','Bronze Bit'],
