@@ -12,29 +12,37 @@
 // /require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruCSRFPatch.lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.33
+// @version      0.9.34
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        unsafeWindow
 // @grant        GM_addStyle
+// @grant        GM_getValue
+// @grant        GM_setValue
 // @run-at       document-end
 // ==/UserScript==
 
 (function() {
   'use strict';
 
-  let scriptId = 'settings';
-  let internalVersion = '0.9.30';
-  try {if (unsafeWindow._YDB_public.settings[scriptId] != undefined) return;}
+  const scriptId = 'settings';
+  const internalVersion = '0.9.34';
+  try {if (unsafeWindow._YDB_public.settings[scriptId]) return;}
   catch(e){}
-  let version = GM_info.script.version;
+  const version = GM_info.script.version;
+  const features = {
+    styles: typeof GM_addStyle !== 'undefined',
+    storage: typeof GM_getValue !== 'undefined' && typeof GM_setValue !== 'undefined'
+  };
 
   let config;
   let modules = [];
   let settings;
   let resaved = false;
   let errorCode = 0;
-  let windows = '._ydb_window {position:fixed;z-index:999;width:80vw;height:80vh;top:10vh;left:10vw;overflow-y:auto} ._ydb_warn{background:#f00 !important}';
+  const windows = '._ydb_window {position:fixed;z-index:999;width:80vw;height:80vh;top:10vh;left:10vw;overflow-y:auto} ._ydb_warn{background:#f00 !important}';
+  let apiKeyAlert = false;
+  let apiKey = features.storage ? GM_getValue('apiKey', '') : '';
   const warningText = 'These two lines are used by YourBooru to save data in your account. Do not split or edit them.';
   const warningTextShort = 'Lines below are used by YourBooru. Do not edit.';
   const backupVersion = 2;
@@ -67,6 +75,24 @@
 
   function callWindow(inside) {
     return ChildsAddElem('div',{className:'_ydb_window block__content'},document.body,inside);
+  }
+
+  function setApiKey(key) {
+    if (!features.storage) return;
+    apiKey = key;
+    GM_setValue('apiKey', key);
+  }
+
+  function getApiKey() {
+    if (!features.storage && !apiKeyAlert) {
+      apiKeyAlert = true;
+      alert('YDB:Settings running in limited functionality mode, apiKey is unavailable');
+    }
+    if (!apiKey && !apiKeyAlert) {
+      apiKeyAlert = true;
+      alert('YDB:Settings: One of your userscript asking for API key. Please open settings page to read it, or disable userscript, which requested it.');
+    }
+    return apiKey;
   }
 
   function debugLogger(id, val, level) {
@@ -131,11 +157,14 @@
         {type:'input', name:'Filter (,)', parameter:'debugFilter'}
       ]
     };
-    if (unsafeWindow._YDB_public.funcs == undefined) unsafeWindow._YDB_public.funcs = {};
+    if (!unsafeWindow._YDB_public.funcs) unsafeWindow._YDB_public.funcs = {};
     unsafeWindow._YDB_public.funcs.callWindow = callWindow;
     unsafeWindow._YDB_public.funcs.backgroundBackup = backgroundBackup;
     unsafeWindow._YDB_public.funcs.log = debugLogger;
     unsafeWindow._YDB_public.funcs.getNonce = () => settings.nonce;
+    unsafeWindow._YDB_public.funcs.getApiKey = () => {
+      return getApiKey();
+    }
   }
 
   function hideBlock(e) {
@@ -313,6 +342,7 @@
         t.innerHTML = request.responseText;
         let x = t.querySelector('#user_watched_images_exclude_str').value.split('\n');
         let y = t.querySelector('#user_watched_images_query_str').value.split('\n');
+        setApiKey(t.querySelector('#user_subscribe_url').value.split('=').pop());
         t.innerHTML = '';
         let bc = '';
         for (let i=0; i<x.length; i++) {
@@ -831,16 +861,24 @@
   function settingPage() {
     //localStorage._ydb_watchListFilterString = document.getElementById('user_watched_images_exclude_str').innerHTML;
     let cont;
+    setApiKey(document.getElementById('user_subscribe_url').value.split('=').pop());
     //preparing
     document.getElementById('js-setting-table').insertBefore(cont = InfernoAddElem('div',{className:'block__tab hidden',dataset:{tab:'YourBooru'},style:{position:'relative'}}), document.querySelector('[data-tab="local"]').nextSibling);
 
-    let style = '._ydb_s_bigtextarea {resize:none;overflow:hidden;line-height:1.25em;white-space:pre;height:2.25em;vertical-align:top;}'+
+    if (!features.styles) {
+      addElem('div', {className:'flash flash--warning', innerHTML:'Limited functionality mode: style operations unavailable'}, cont);
+    }
+    if (!features.storage) {
+      addElem('div', {className:'flash flash--warning', innerHTML:'Limited functionality mode: storage operations unavailable'}, cont);
+    }
+
+    const style = '._ydb_s_bigtextarea {resize:none;overflow:hidden;line-height:1.25em;white-space:pre;height:2.25em;vertical-align:top;}'+
         '._ydb_s_bigtextarea:focus {overflow:auto;position:absolute;width:900px !important;height:10em;z-index:5;white-space:pre-wrap}';
-    GM_addStyle(style);
+    if (features.styles) GM_addStyle(style);
     addElem('a',{href:'#',innerHTML:'YourBooru',dataset:{clickTab:'YourBooru'}},document.getElementsByClassName('block__header')[0]);
 
-    let editCont = addElem('div',{className:'block'},cont);
-    let listCont = addElem('div',{className:'block'},cont);
+    let editCont = addElem('div', {className:'block'}, cont);
+    let listCont = addElem('div', {className:'block'}, cont);
     ChildsAddElem('div', {className:'block__header'}, listCont, [
       InfernoAddElem('span', {innerHTML:'Installed plugins', style:{marginLeft:'12px'}})
     ]);
@@ -880,9 +918,9 @@
     //postloading
     ChildsAddElem('div', {className:'block__header'}, cont, [
 
-      InfernoAddElem('a', {target:'_blank', href:'javscript://', events:[{t:'click',f:function() {
-        unsafeWindow.open(getDonateLink()!=undefined?getDonateLink():'https://ko-fi.com/C0C8BVXS');
-      }}]}, [
+      InfernoAddElem('a', {target:'_blank', href:'javscript://', events:{click: () => {
+        unsafeWindow.open(getDonateLink() ? getDonateLink() : 'https://ko-fi.com/C0C8BVXS');
+      }}}, [
         InfernoAddElem('i', {className:'fa fa-heart', style:{color:'red'}}, []),
         InfernoAddElem('span', {innerHTML:' Support'}, [])
       ]),
@@ -910,7 +948,7 @@
 
     for (let i=0; i<document.getElementsByClassName('block__header')[0].childNodes.length; i++) {
       document.getElementsByClassName('block__header')[0].childNodes[i].href = '#'+document.getElementsByClassName('block__header')[0].childNodes[i].getAttribute('data-click-tab');
-      document.getElementsByClassName('block__header')[0].childNodes[i].addEventListener('click', function(e) {location.hash = e.target.href.split('#')[1];});
+      document.getElementsByClassName('block__header')[0].childNodes[i].addEventListener('click', (e) => location.hash = e.target.href.split('#')[1]);
     }
 
     document.querySelector('button.button[type=submit]').addEventListener('click', save);
@@ -1084,10 +1122,9 @@
     }
   };
 
-  GM_addStyle(windows);
+  if (features.styles) GM_addStyle(windows);
   if (settings.timestamp+(settings.syncInterval*60) < parseInt(Date.now()/1000) && location.pathname != "/settings/edit") {
     settings.nonce = parseInt(Math.random()*Number.MAX_SAFE_INTEGER);
-    try { telemetry();} catch(e) {}
     getData();
   }
   if (location.pathname == "/settings/edit") setTimeout(settingPage, 50);
