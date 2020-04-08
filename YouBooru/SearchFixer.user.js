@@ -13,8 +13,8 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.4.17
-// @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
+// @version      0.5.0
+// @description  I hoped that this script could be deleted after moving to Philomena...
 // @author       stsyn
 
 // @grant        unsafeWindow
@@ -28,51 +28,42 @@
 (function() {
   'use strict';
 
+  const whyTheFuckRelevanceSortingIsDefinedAs_score = '_score';
   const scriptId = 'ssf';
-  const philomena = true;
   const sversion = GM_info.script.version;
-  try {if (unsafeWindow._YDB_public.settings[scriptId] != undefined) return;}
+  try {if (unsafeWindow._YDB_public.settings[scriptId]) return;}
   catch(e) {}
 
-  // These settings also may be edited via YourBooru:Settings
-  // And it's strongly recomended to install it, you won't lose settings if you update script!
+  // YDB:Settings required to function (separated prefered)
   // https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
 
   let settings = {
-    //!!!Change to true if you want to use these settings
-    override:false,
-
-    //Which sortings type should be fixed
+    // Which sortings type should be fixed
     score:true,
     random:true,
-    sizes:false,
-    comments:false,
+    randomSeedKeep:false,
     gallery:true,
     first_seen_at:true,
-    tag_count:false,
 
-    //Fix random button
+    // Fix random button
     randomButton:true,
 
-    //Blink on completion
+    // Blink on completion
     blink:true,
 
-    //If true, navigation will be fixed while page loading
+    // If true, navigation will be fixed while page loading
     preloading:false,
 
-    //With which sortings type find button should be fixed
-    scoreUp:true,
-    sizesUp:true,
-    commentsUp:true,
-    everyUp:true,
-
-    //Pregaining image data
-    pregain:true
+    // With which sortings type find button should be fixed
+    scoreUp: true,
+    everyUp: true,
+    slowFallback: false
   };
 
   let findTemp = 0, findIter = 1, TTL = 5;
+  const perpage = 50;
   let preparam;
-  let first_seen;
+  let first_seen, wilson_score;
   const debug = function(id, value, level) {
     try {
       unsafeWindow._YDB_public.funcs.log(id, value, level);
@@ -85,7 +76,11 @@
 
   const sfToFunction = {
     comments: 'comments_count',
+    wilson_score: 'wilson_score',
     score: 'score',
+    faves: 'faves',
+    upvotes: 'upvotes',
+    downvotes: 'downvotes',
     width: 'width',
     height: 'height',
     tag_count: 'tag_count',
@@ -105,24 +100,71 @@
       container:'_ssf',
       link:'/meta/userscript-search-sorting-fixer-003',
       s:[
-        {type:'checkbox', name:'Fix score sorting', parameter:'score'},
-        {type:'checkbox', name:'Fix random sorting', parameter:'random'},
-        {type:'checkbox', name:'Fix size sorting', parameter:'sizes'},
-        {type:'checkbox', name:'Fix comments sorting', parameter:'comments'},
-        {type:'checkbox', name:'Fix gallery sorting', parameter:'gallery'},
-        {type:'checkbox', name:'Fix first_seen_at', parameter:'first_seen_at'},
-        {type:'checkbox', name:'Fix tag_count', parameter:'tag_count'},
+        {type:'header', name:'Navigation'},
+        {type:'checkbox', name:'Alter score-like navigation', parameter:'score'},
+        {type:'breakline'},
+        {type:'checkbox', name:'Fix gallery sorting (slow)', parameter:'gallery'},
+        {type:'breakline'},
+        {type:'checkbox', name:'Fix random navigation', parameter:'random'},
+        {type:'breakline'},
+        {type:'checkbox', name:'Keep random seed (slow)', parameter:'randomSeedKeep'},
         {type:'breakline'},
         {type:'checkbox', name:'Fix random button', parameter:'randomButton'},
-        {type:'checkbox', name:'Flash on completion', parameter:'blink'},
-        {type:'checkbox', name:'Fix buttons on start (except "Find" button)', parameter:'preloading'},
         {type:'breakline'},
-        {type:'checkbox', name:'Smart Find button at: score sorting', parameter:'scoreUp'},
-        {type:'checkbox', name:'; sizes sorting', parameter:'sizesUp'},
-        {type:'checkbox', name:'; comments sorting', parameter:'commentsUp'},
-        {type:'checkbox', name:'; other sortings', parameter:'everyUp'}
+        {type:'header', name:'Find'},
+        {type:'checkbox', name:'Smart Find button with score-like and other strict sortings', parameter:'scoreUp'},
+        {type:'breakline'},
+        {type:'checkbox', name:'Interpretate Find button as working with id sorting with other sortings', parameter:'everyUp'},
+        {type:'breakline'},
+        {type:'checkbox', name:'Don\'t fallback to id sorting for relative search (slow)', parameter:'slowFallback'},
+        {type:'breakline'},
+        {type:'header', name:'UX'},
+        {type:'checkbox', name:'Flash on completion', parameter:'blink'},
+        {type:'breakline'},
+        {type:'checkbox', name:'Fix buttons on start (except "Find" button)', parameter:'preloading'},
       ]
     };
+  }
+
+  function isNavigationSupported() {
+    const sf = myURL.params.sf;
+    return sf && (
+    (sf == 'created_at' && myURL.params.del) ||
+    ((sf == 'score' || sf == 'faves' || sf == 'upvotes' || sf == 'downvotes') && settings.score) ||
+    (sf == 'comments' && settings.comments) ||
+    (sf == 'first_seen_at' && settings.first_seen_at) ||
+    (sf == 'tag_count' && settings.tag_count) ||
+    (sf.startsWith('random') && settings.random) ||
+    (sf.startsWith('gallery_id') && settings.gallery) ||
+    ((sf == 'width' || sf == 'height') && settings.sizes)
+    )
+  }
+
+  function navigationFallbackLikeGalery() {
+    const sf = myURL.params.sf;
+    return sf && ((sf.startsWith('random%') && settings.randomSeedKeep) ||
+      (sf.startsWith('gallery_id') && settings.gallery));
+  }
+
+  function isSupportedForFind() {
+    const sf = myURL.params.sf;
+    return ((sf == 'score' || sf == 'wilson_score' || sf == 'faves' || sf == 'upvotes' || sf == 'downvotes') && settings.scoreUp) ||
+    (sf == 'comments' && settings.comments) ||
+    (sf == 'first_seen_at' && settings.first_seen_at) ||
+    ((sf == 'width' || sf == 'height') && settings.sizesUp)
+  }
+
+  function isSupportedForFindWithFallbackToCreatedAt() {
+    const sf = myURL.params.sf;
+    return (( (!sf && myURL.params.q && myURL.params.q != '%2A')
+      || sf == 'created_at' || sf == 'updated_at' || sf == 'tag_count' || (sf && sf.startsWith('random')) /*|| sf == whyTheFuckRelevanceSortingIsDefinedAs_score*/) && settings.everyUp)
+  }
+
+  function isSupportedForFindWithFallbackToGalleryLike() {
+    const sf = myURL.params.sf;
+    return sf && ((sf.startsWith('gallery_id') && settings.gallery) ||
+      (sf.startsWith('random%') && settings.randomSeedKeep)/* ||
+      (sf == whyTheFuckRelevanceSortingIsDefinedAs_score && settings.slowFallback)*/)
   }
 
   //////////////////////////////////////////////
@@ -148,34 +190,26 @@
     setTimeout(() => unblink(e), 200);
   }
 
-  function complete (target, link) {
+  function complete(target, link) {
     link = link.split('#')[0];
-    blink(document.querySelectorAll(target)[0]);
-    if (settings.preloading && target != '.js-up') document.querySelectorAll(target)[0].href = link;
+    blink(target);
+    if (settings.preloading && !target.classList.contains('js-up')) target.href = link;
     else location.href = link;
   }
 
-  function fail (target) {
-    failBlink(document.querySelectorAll(target)[0]);
-    if (settings.preloading && target != '.js-up') document.querySelectorAll(target)[0].href = '#';
+  function fail(target) {
+    failBlink(target);
+    if (settings.preloading && !target.classList.contains('js-up')) target.href = '#';
   }
 
-  function request(link, elem, target, level) {
-    if (!link.startsWith('https://' + location.hostname)) link = 'https://'+location.hostname + link;
-
-    debug('SSF','Request: link '+link+', level '+level,1);
-    fetchJson('GET', link)
-    .then(response => response.json())
-    .then(response => parse({
-      link,
-      sel: elem,
-      level,
-      response
-    }, target))
-    .catch(exception => {
-      debug('SSF', 'Request failed: '+exception, 2);
-      fail(elem);
-    });
+  function workerRequest(link) {
+    return fetchJson('GET', link)
+      .then(response => response.json())
+      .catch(exception => {
+        debug('SSF', 'Request failed: '+exception, 2);
+        fail(elem);
+        throw exception;
+      });
   }
 
   function getSearchPrefix(src) {
@@ -196,180 +230,186 @@
   }
 
   function gainParams(arr) {
+    const container = document.getElementsByClassName('image-show-container')[0];
     if (arr) return {
-      score: parseInt(document.getElementsByClassName('score')[0].innerHTML),
-      width: document.querySelector('.image-show-container').dataset.width,
-      height: document.querySelector('.image-show-container').dataset.height,
+      score: container.dataset.score,
+      upvotes: container.dataset.upvotes,
+      downvotes: container.dataset.downvotes,
+      width: container.dataset.width,
+      height: container.dataset.height,
       comments: document.querySelectorAll('.comments_count')[0].innerHTML,
       tag_count: document.querySelectorAll('.tag-list .tag').length,
-      first_seen_at: first_seen
+      first_seen_at: first_seen,
+      wilson_score
     };
-    if (myURL.params.sf == 'score') return parseInt(document.getElementsByClassName('score')[0].innerHTML);
-    if (myURL.params.sf == 'width') return document.querySelector('.image-show-container').dataset.width;
-    if (myURL.params.sf == 'height') return document.querySelector('.image-show-container').dataset.height;
+    if (myURL.params.sf == 'score') return container.dataset.score;
+    if (myURL.params.sf == 'upvotes') return container.dataset.upvotes;
+    if (myURL.params.sf == 'downvotes') return container.dataset.downvotes;
+    if (myURL.params.sf == 'width') return container.dataset.width;
+    if (myURL.params.sf == 'height') return container.dataset.height;
     if (myURL.params.sf == 'comments') return document.querySelectorAll('.comments_count')[0].innerHTML;
     if (myURL.params.sf == 'tag_count') return document.querySelectorAll('.tag-list .tag').length;
     if (myURL.params.sf == 'first_seen_at') return first_seen;
+    if (myURL.params.sf == 'wilson_score') return wilson_score;
   }
 
-  function parse(r, type) {
-    const u = r.response;
-    const images = u.images;
-    let i;
-    if (type == 'find') {
-      let param = settings.pregain ? preparam[myURL.params.sf] : gainParams();
+  async function findWorker(element) {
+    // getting rough offset
+    let offset, page = 1;
+    if (!isSupportedForFindWithFallbackToGalleryLike()) {
+      offset = (await workerRequest(compileLtQuery(1))).total;
+      page = parseInt(offset / perpage)+1;
+    };
 
-      if (r.level == 'act' && param == '') {
-        findTemp = u.total;
-        request(getSearchPrefix('%2A'), r.sel, 'find', 'pre');
-        return;
+    // getting exact offset (using the same query as resulting, so results will be sorted as needed)
+    let foundIndex = null;
+    for (foundIndex; foundIndex === null; page++) {
+      let result = await workerRequest(compileXQuery(page));
+      if (result.images.length === 0) {
+        fail(element);
+        debug('SSF', 'Lost images in detailing step', 2);
       }
-      if (r.level == 'act' && param != '') {
-        findTemp = u.total;
-        findIter = parseInt(findTemp/50)+1;
-        request(compileXQuery(findIter, true), r.sel, 'find', 'post');
-        return;
-      }
-      if (r.level == 'post') {
-        if (images.length > 0) {
-          const x = images.findIndex(item => item.id == id);
-          if (x) {
-            findTemp = ((findIter-1)*50)+x;
-            request(getSearchPrefix('%2A'), r.sel, 'find', 'pre');
-            return;
-          }
-        } else return;
-        findIter++;
-        request(compileXQuery(findIter, true), r.sel, 'find', 'post');
-        return;
-      } else {
-        complete(r.sel, compileXQuery(parseInt(findTemp/images.length+1), false));
-        return;
+      const temp = result.images.findIndex(item => item.id === id);
+      if (temp !== -1) {
+        foundIndex = temp + (page - 1) * perpage;
       }
     }
-    if (type == 'nextGalleryLast') {
-      //для галерей
-      if (images.length > 0) complete(r.sel, location.href.replace(id, images[0].id));
-      else fail(r.sel);
-      return;
+
+    // getting perpage
+    let visible = (await workerRequest(getSearchPrefix('%2A'))).images.length;
+
+    complete(element, compileFinalQuery(Math.floor(foundIndex  / visible) + 1));
+  }
+
+  async function navigationWorker(element, direction) {
+    if (navigationFallbackLikeGalery()) {
+      return galleryNavigationWorker(element, direction);
     }
-    if (myURL.params.sf.startsWith('gallery_id')) {
-      //для галерей
-      if (images.length > 0) {
-        const i = images.findIndex(item => item.id == id);
-        if (i) {
-          if (type == 'prev') {
-            if (i == 0 && galleryLastImageId) complete(r.sel, location.href.replace(id, galleryLastImageId));
-            else if (i == 0) fail(r.sel);
-            else complete(r.sel, location.href.replace(id, images[i-1].id));
-            return;
-          } else {
-            if (i == images.length-1) {
-              findIter++;
-              request(compileXQuery(findIter, true), r.sel, 'nextGalleryLast', 'post');
-            } else complete(r.sel, location.href.replace(id, images[i+1].id));
-            return;
-          }
-        }
-      } else return;
-      //не нашли
-      findIter++;
-      galleryLastImageId = images[u.images.length-1].id;
-      request(compileXQuery(findIter, true), r.sel, type, 'post');
-      return;
+    // getting images with the same main attribute, but different id
+    let result = await workerRequest(compileStep1Query(direction));
+    if (result.total > 0) {
+      return complete(element, location.href.replace(id, result.images[0].id));
     }
-    if (!myURL.params.sf.startsWith('random')) {
-      if (r.level == 'pre') {
-        if (u.total == 0) {
-          //не удалось найти следующую пикчу по номеру, пробуем теперь реально следующую
-          request(compileQuery(type), r.sel, type, 'act');
-          return;
-        } else {
-          //нашли с тем же критерием, но другим очком
-          complete(r.sel, location.href.replace(id, images[0].id));
-          return;
-        }
 
+    // getting images by main attribute
+    result = await workerRequest(compileQuery(direction));
+    let images = result.images.filter(item => item.id !== id);
+    if (result.total === 0) {
+      return fail(element);
+    }
+
+    // we managed to hit only the same image
+    let delta = 1;
+    while (results.total === 1 && images.length === 0) {
+      result = await workerRequest(compileQuery(direction, delta++));
+      images = result.images.filter(item => item.id !== id);
+      if (result.total === 0) {
+        return fail(element);
       }
-      else if (r.level == 'act') {
-        if (u.total == 0) {
-          //чот нихуя не нашли опять. Видимо, на сей раз реально ничего нет
-          fail(r.sel);
-        }
-        else {
-          if (u.total > 1) {
-            let param;
-            let s = 0;
-            if (images[s].id == id) s++;
+    }
 
-            const possibleParams = ['score', 'width', 'height', 'comments', 'first_seen_at'];
-            param = possibleParams.includes(myURL.params.sf) ? sfToFunction[myURL.params.sf] : '';
+    if (images.length === 1) {
+      complete(element, location.href.replace(id, images[0].id));
+    }
 
-            if ((myURL.params.sf == 'tag_count' && images[s+1].tag_ids.length == images[s].tag_ids.length) ||
-              (myURL.params.sf != 'tag_count' && images[s+1][param] == images[s][param])) {
-              //мы чот нашли, но у соседней по тому же критерию то же самое, нужно уточнить, что ставить
-              request(compilePostQuery(type, (myURL.params.sf == 'tag_count'?images[s+1].tag_ids.length:images[s+1][param])), r.sel, type, 'post');
-              return;
-            } else {
-              //а все норм, она одна такая
-              complete(r.sel, location.href.replace(id, images[s].id));
-              return;
-            }
-          } else {
-            //в запросе ваще одна пихча
-            if (u.images[0].id == id) {
-              request(compileQuery(type, 1), r.sel, type, 'act');
-            } else {
-              complete(r.sel, location.href.replace(id, images[0].id));
-            }
-            return;
-          }
-        }
-      } else if (r.level == 'post') {
-        if (r.sel == '.js-rand' && images[0].id == id && u.total == 1) {
-          //рандом высрал только эту пикчу
-          fail(r.sel);
-        }
-        //вот это точно должна идти
-        complete(r.sel, location.href.replace(id, images[0].id));
-        return;
-      }
+    // more than 1 possible images, need to check
+    const possibleParams = ['score', 'faves', 'upvotes', 'downvotes', 'width', 'height', 'comments', 'first_seen_at'];
+    const param = possibleParams.includes(myURL.params.sf) ? sfToFunction[myURL.params.sf] : '';
+    let isEqualParam = false;
+
+    if (myURL.params.sf === 'tag_count') {
+      isEqualParam = (images[0].tag_ids.length == images[1].tag_ids.length);
     } else {
-      if (settings.preload) {
-        if (u.total > 1) {
-          const x = (u.images[0].id == id) ? 1 : 0;
-          document.querySelectorAll('.js-next')[0].href=location.href.replace(id, images[x].id);
-          if (u.total > 2) {
-            if (images[x+1].id == id) document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, images[x+2].id);
-            else document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, images[x+1].id);
-          }
-          else document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, images[x].id);
-          if (settings.randomButton) {
-            if (u.total > 3) {
-              if (images[x+2].id == id) document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, images[x+3].id);
-              else document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, images[x+2].id);
-            }
-            else document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, images[x].id);
-          }
+      isEqualParam = (images[0][param] == images[1][param]);
+    }
+
+    if (!isEqualParam) {
+      complete(element, location.href.replace(id, images[0].id));
+    }
+
+    // yep, we need to choose one
+    result = (await workerRequest(compilePostQuery(
+      type,
+      (myURL.params.sf == 'tag_count' ? images[0].tag_ids.length : images[0][param])
+    ))).images;
+    complete(element, location.href.replace(id, result[0].id));
+  }
+
+  async function galleryNavigationWorker(element, direction) {
+    // similar as find, but we also getting next image id
+    let foundIndex = null, page = 1, previousImageId = null;
+    for (foundIndex; foundIndex === null; page++) {
+      let result = await workerRequest(compileXQuery(page));
+      if (result.images.length === 0) {
+        fail(element);
+        debug('SSF', 'Lost images in detailing step', 2);
+      }
+      const temp = result.images.findIndex(item => item.id === id);
+      if (temp === -1) {
+        previousImageId = result.images.pop().id;
+        continue;
+      }
+
+      foundIndex = temp + (page - 1) * perpage;
+
+      // bound cases
+      if (temp === result.images.length - 1 && direction === 'next') {
+        const tempResult = (await workerRequest(compileXQuery(page + 1))).images[0];
+        if (!tempResult) {
+          fail(element);
         } else {
-          if (settings.randomButton) fail('.js-rand');
-          fail('.js-prev');
-          fail('.js-next');
+          complete(element, location.href.replace(id, tempResult.id));
         }
-        if (settings.randomButton) blink(document.querySelectorAll('.js-rand')[0]);
-        blink(document.querySelectorAll('.js-prev')[0]);
-        blink(document.querySelectorAll('.js-next')[0]);
+      } else if (temp === 0 && direction === 'prev') {
+        if (previousImageId) {
+          complete(element, location.href.replace(id, previousImageId));
+        } else {
+          fail(element);
+        }
       } else {
-        if (u.total>1) complete(r.sel, location.href.replace(id, images[0].id));
-        else fail(r.sel);
+        complete(element, location.href.replace(id, result.images[temp + (direction === 'next'? 1 : -1)].id));
       }
     }
   }
 
-  // looking for the first pic in the possible
+  async function randomWorker(element) {
+    // just get me anything
+    let result = (await workerRequest(compileQuery('rand'))).images.filter(item => item.id !== id);
+    if (settings.preloading) {
+      let n, p, r, pid = 0, rid = 0;
+      n = document.getElementsByClassName('js-rand')[0];
+      p = document.getElementsByClassName('js-prev')[0];
+      r = document.getElementsByClassName('js-next')[0];
+      if (results.length > 0) {
+        complete(n, location.href.replace(id, result[0].id));
+        if (myURL.params.sf && myURL.params.sf.startsWith('random')) {
+          if (results.length > 1) {
+            pid = 1;
+            if (settings.randomButton) {
+              rid = results.length > 2 ? 2 : 1;
+            }
+          }
+        }
+        complete(p, location.href.replace(id, result[pid].id));
+        complete(r, location.href.replace(id, result[rid].id));
+      } else {
+        if (settings.randomButton) fail(n);
+        if (myURL.params.sf && myURL.params.sf.startsWith('random')) {
+          fail(p);
+          fail(r);
+        }
+      }
+    } else if (result.length > 0) {
+      complete(element, location.href.replace(id, result[0].id));
+    } else {
+      fail(element);
+    }
+  }
+
+  // looking for the first pic in the possible results
   function compilePostQuery(type, v, page) {
     const dir = ((myURL.params.sd == 'asc' ^ type == 'prev') ? 'asc' : 'desc');
-    const pagePart = type!='find' ? '&perpage=1' : '&perpage=50&page='+page;
+    const pagePart = type!='find' ? '&per_page=1' : '&per_page=50&page='+page;
 
     const link = `${getSearchPrefix()},(${sfToFunction[myURL.params.sf]}:${v})${pagePart}&sf=created_at&sd=${dir}`;
 
@@ -378,30 +418,24 @@
   }
 
   // looking for pics with the same score but different id
-  function compilePreQuery(type) {
-    findIter = 1;
-    findTemp = 9;
-    if (type == 'find') return compileLtQuery(1);
-    if (myURL.params.sf.startsWith('gallery_id')) return compileXQuery(1, true);
-    if (type == 'random' || myURL.params.sf.startsWith("random")) return compileQuery(type);
-
-    let prevUrl = getSearchPrefix() + ',';
-    const dir = (myURL.params.sd == 'asc' ^ type == 'prev') ? 'gt' : 'lt';
-    const sd = (myURL.params.sd == 'asc' ^ type == 'prev') ? 'asc' : 'desc';
-    const cscore = settings.pregain ? preparam[myURL.params.sf] : gainParams();
+  function compileStep1Query(direction) {
+    let prevUrl = getSearchPrefix();
+    const dir = (myURL.params.sd == 'asc' ^ direction == 'prev') ? 'gt' : 'lt';
+    const sd = (myURL.params.sd == 'asc' ^ direction == 'prev') ? 'asc' : 'desc';
+    const cscore = preparam[myURL.params.sf];
     const idPart = `id.${dir}:${id}`;
     const sf = myURL.params.sf == 'first_seen_at' ? 'first_seen_at' : 'created_at';
-    const common = ['score', 'width', 'height', 'comments', 'tag_count'];
+    const common = ['score', 'faves', 'upvotes', 'downvotes', 'width', 'height', 'comments', 'tag_count'];
 
     if (common.includes(myURL.params.sf)) {
-      prevUrl += `(${sfToFunction[myURL.params.sf]}:${cscore},${idPart})`;
-    } else if (myURL.params.sf == "created_at" && type != "find") {
-      prevUrl += `(${idPart})`;
+      prevUrl += `,(${sfToFunction[myURL.params.sf]}:${cscore},${idPart})`;
+    } else if (myURL.params.sf == "created_at") {
+      prevUrl += `,(${idPart})`;
     } else if (myURL.params.sf == "first_seen_at") {
-      prevUrl += `(first_seen_at.${dir}:${cscore})`;
+      prevUrl += `,(first_seen_at.${dir}:${cscore})`;
     }
 
-    prevUrl += `&perpage=1&sf=${sf}&sd=${sd}`;
+    prevUrl += `&per_page=1&sf=${sf}&sd=${sd}`;
 
     if (myURL.params.del) prevUrl += `&del=${myURL.params.del}`;
     debug('SSF','Pre query: query '+prevUrl,0);
@@ -412,29 +446,30 @@
   function compileQuery(type, delta) {
     let d = 0;
     if (delta != undefined) d = delta * (myURL.params.sd=='asc' ^ type=='prev') ? -1 : 1;
-    let prevUrl = getSearchPrefix() + ',';
+    let prevUrl = getSearchPrefix();
     if (type !='random' && !myURL.params.sf.startsWith('random')) {
-      const cscore = (settings.pregain ? preparam[myURL.params.sf] : gainParams()) + d;
+      const cscore = preparam[myURL.params.sf] + d;
       const dir = (myURL.params.sd == 'asc' ^ type == 'prev') ? 'gt' : 'lt';
       const sd = (myURL.params.sd == 'asc' ^ type == 'prev') ? 'asc' : 'desc';
       const idPart = `id.${dir}:${id}`;
       const sf = sfToFunction[myURL.params.sf];
-      prevUrl += `((${sf}:${cscore},${idPart})+||+(${sf}.${dir}:${cscore}))`;
+      prevUrl += `,((${sf}:${cscore},${idPart})+||+(${sf}.${dir}:${cscore}))`;
 
-      prevUrl += `&perpage=3&sf=${myURL.params.sf}&sd=${sd}`;
+      prevUrl += `&per_page=3&sf=${myURL.params.sf}&sd=${sd}`;
     }
-    else prevUrl+='&perpage='+(myURL.params.sf.startsWith('random')?4:3)+'&sf=random';
+    else prevUrl+='&per_page=4&sf=' + (settings.randomSeedKeep ? myURL.params.sf : 'random');
     debug('SSF','Query: query '+prevUrl,0);
     return prevUrl;
   }
 
+  // taking offset
   function compileLtQuery(page) {
     let prevUrl = getSearchPrefix() + ',';
     const dir = ((myURL.params.sd!='asc')?'gt':'lt');
     const sd = ((myURL.params.sd!='asc')?'asc':'desc');
     const sff = sfToFunction[myURL.params.sf];
     const sf = sff ? myURL.params.sf : 'created_at';
-    const cscore = settings.pregain ? preparam[myURL.params.sf] : gainParams();
+    const cscore = preparam[myURL.params.sf];
 
     if (sff) {
       prevUrl += `(${sff}.${dir}:${cscore})`;
@@ -442,29 +477,48 @@
       prevUrl += `(id.${dir}:${id})`;
     }
 
-    prevUrl += `&page=${page}&perpage=50&sf=${myURL.params.sf}&sd=${sd}`;
+    prevUrl += `&page=${page}&per_page=50&sf=${myURL.params.sf}&sd=${sd}`;
     if (myURL.params.del) prevUrl += `&del=${myURL.params.del}`;
     debug('SSF','Gaining offset pagination query: page '+page+', query '+myURL.params.q,0);
     return prevUrl;
   }
 
   // find
-  function compileXQuery(page, pp) {
-    const sff = sfToFunction[myURL.params.sf] || (myURL.params.sf && myURL.params.sf.startsWith('gallery_id'));
+  function compileXQuery(page) {
+    const sff = sfToFunction[myURL.params.sf] || isSupportedForFindWithFallbackToGalleryLike();
     const sf = sff ? myURL.params.sf : 'created_at';
 
     debug('SSF','Pagination query: page '+page+', query '+myURL.params.q+', sort '+sf,0);
-    const prefix = pp ? getSearchPrefix() : ('/search?q=' + myURL.params.q);
-    return prefix + (pp?'&perpage=50':'') + '&sf=' + sf + '&sd='+
+    return getSearchPrefix() + '&per_page=50&sf=' + sf + '&sd='+
             (myURL.params.sd || '') + '&page=' + page + (myURL.params.del ? '&del='+myURL.params.del : '');
   }
 
-  function crLink(sel, level, type) {
-    if (myURL.params.sf == 'first_seen_at' && !first_seen) setTimeout(crLink, 10, sel, level, type);
-    else {
-      if (myURL.params.sf == 'first_seen_at' && type != 'find') request(compilePreQuery(type, first_seen), sel, type, 'post');
-      else request(compilePreQuery(type), sel, type, (myURL.params.sf == 'created_at' && type != "find"?'post':level));
+  // final
+  function compileFinalQuery(page) {
+    const sff = sfToFunction[myURL.params.sf] || isSupportedForFindWithFallbackToGalleryLike();
+    const sf = sff ? myURL.params.sf : 'created_at';
+
+    return '/search?q=' + myURL.params.q + '&sf=' + sf + '&sd='+
+            (myURL.params.sd || '') + '&page=' + page + (myURL.params.del ? '&del='+myURL.params.del : '');
+  }
+
+  function crLink(sel, type) {
+    if (myURL.params.sf == 'first_seen_at' && !first_seen || myURL.params.sf == 'wilson_score' && !wilson_score) {
+      setTimeout(crLink, 10, sel, type);
+      return;
     }
+
+    if (type == 'find') {
+      findWorker(sel);
+      return;
+    }
+
+    if (type === 'random' && !navigationFallbackLikeGalery()) {
+      randomWorker(sel, type);
+      return;
+    }
+
+    navigationWorker(sel, type);
   };
 
   function fetchFirstSeen(id) {
@@ -472,7 +526,9 @@
     .then(response => response.json())
     .then(response => {
       first_seen = response.image.first_seen_at;
+      wilson_score = response.image.wilson_score;
       preparam.first_seen_at = first_seen;
+      preparam.wilson_score = wilson_score;
     });
   };
 
@@ -540,10 +596,13 @@
         }, [
           createElement('option',{value:'created_at'},'created_at'),
           createElement('option',{value:'updated_at'},'updated_at'),
+          createElement('option',{value:whyTheFuckRelevanceSortingIsDefinedAs_score},'relevance'),
           createElement('option',{value:'first_seen_at'},'first_seen_at'),
           createElement('option',{value:'score'},'score'),
-          createElement('option',{value:'wilson'},'wilson'),
-          createElement('option',{value:'relevance'},'relevance'),
+          createElement('option',{value:'faves'},'faves'),
+          createElement('option',{value:'upvotes'},'upvotes'),
+          createElement('option',{value:'downvotes'},'downvotes'),
+          createElement('option',{value:'wilson_score'},'wilson'),
           createElement('option',{value:'width'},'width'),
           createElement('option',{value:'height'},'height'),
           createElement('option',{value:'comments'},'comments'),
@@ -560,14 +619,15 @@
         ])
       ]));
     if (withup) {
+      let item;
       document.querySelector('form.header__search').insertBefore(
-        createElement('a#_ydb_s_finder.header__link.header__search__button', {
+        item = createElement('a#_ydb_s_finder.header__link.header__search__button', {
           title: 'Find this image position in entered query',
           style: { height: '28px', padding: 0},
           events: { click: e => {
             commonClickAction(e);
             myURL = parseURL(qpusher.href);
-            crLink('#_ydb_s_finder', 'act', 'find');
+            crLink(item, 'find');
           }}
         }, [
           createElement('i.fa', '\uF03C')
@@ -606,15 +666,16 @@
     }
 
     //fetching tags
-    const searchElem = document.querySelector('form.header__search .input');
     Array.from(document.querySelectorAll('.tag.dropdown')).forEach(elem => {
       elem.getElementsByClassName('dropdown__content')[0].appendChild(
         createElement('span.tag__dropdown__link', {dataset: {tag: elem.dataset.tagName}},[
           createElement('a', {style: {cursor:'pointer'}, events: {click: e => {
+            const searchElem = document.querySelector('form.header__search .input');
             searchElem.value = e.target.parentNode.dataset.tag;
             chall();
           }}}, 'Set query '),
           createElement('a', {style: {cursor:'pointer'}, events: {click: e => {
+            const searchElem = document.querySelector('form.header__search .input');
             searchElem.value += (searchElem.value.trim? ',' : '') + e.target.parentNode.dataset.tag;
             chall();
           }}},'[+]')
@@ -628,11 +689,11 @@
 
   function execute() {
     if (!myURL.params.sf.startsWith('random')) {
-      crLink('.js-prev', 'pre', 'prev');
-      crLink('.js-next', 'pre', 'next');
+      crLink(document.getElementsByClassName('js-prev')[0], 'prev');
+      crLink(document.getElementsByClassName('js-next')[0], 'next');
     }
     if (settings.randomButton || myURL.params.sf.startsWith('random')) {
-      crLink('.js-rand', 'post', 'random');
+      crLink(document.getElementsByClassName('js-rand')[0], 'random');
     }
   }
 
@@ -654,17 +715,12 @@
   } else {
     try {
       let settings2 = JSON.parse(localStorage._ssf);
-      if (!settings2.pregain) {
-        settings2.pregain = true;
-        localStorage._ssf = JSON.stringify(settings2);
-      }
       settings = settings2;
     } catch(e) {
       localStorage._ssf = JSON.stringify(settings);
     }
   }
 
-  if (settings.first_seen_at === undefined) settings.first_seen_at = true;
   register();
   let myURL = parseURL(location.href);
   let id = parseInt(myURL.path.slice(1));
@@ -673,58 +729,47 @@
     id = myURL.path.split('/');
     if (id[1] == 'images') id = parseInt(id[2]);
   }
-
   pushQuery(!isNaN(id));
-  if (!isNaN(id) && settings.pregain) preparam = gainParams(true);
+  if (!isNaN(id)) {
+    preparam = gainParams(true);
+    fetchFirstSeen(id);
+  }
 
-  if (
-    !isNaN(id) &&
-    myURL.params.sf &&
-    !(myURL.params.sf == 'created_at' && !myURL.params.del) &&
-    myURL.params.sf != 'wilson' &&
-    myURL.params.sf != 'updated_at' &&
-    myURL.params.sf != 'relevance' &&
-    !(myURL.params.sf == 'score' && !settings.score) &&
-    !(myURL.params.sf == 'comments' && !settings.comments) &&
-    !(myURL.params.sf == 'first_seen_at' && !settings.first_seen_at) &&
-    !(myURL.params.sf == 'tag_count' && !settings.tag_count) &&
-    !(myURL.params.sf.startsWith('random') && !settings.random) &&
-    !(myURL.params.sf.startsWith('gallery_id') && !settings.gallery) &&
-    !((myURL.params.sf == 'width' || myURL.params.sf == 'height') && !settings.sizes)
-  ) {
-    if (!(myURL.params.sf.startsWith('gallery_id'))) myURL.params.sf = myURL.params.sf.split('%')[0];
-    if (myURL.params.sf == 'first_seen_at') fetchFirstSeen(id);
+  // navigation section
+  if (!isNaN(id) && isNavigationSupported()) {
+    if (!navigationFallbackLikeGalery()) myURL.params.sf = myURL.params.sf.split('%')[0];
     if (settings.preloading) execute();
     else {
-      const random = myURL.params.sf.startsWith('random');
+      const random = myURL.params.sf.startsWith('random') && !navigationFallbackLikeGalery();
+      console.warn(random);
 
-      document.querySelectorAll('.js-next')[0].addEventListener('click',(e) => {
+      const n = document.getElementsByClassName('js-next')[0];
+      const p = document.getElementsByClassName('js-prev')[0];
+      const r = document.getElementsByClassName('js-rand')[0];
+      n.addEventListener('click',(e) => {
         commonClickAction(e);
-        crLink('.js-next', random?'post':'pre', random?'random':'next');
+        crLink(n, random ? 'random' : 'next');
       });
-      document.querySelectorAll('.js-prev')[0].addEventListener('click',(e) => {
+      p.addEventListener('click',(e) => {
         commonClickAction(e);
-        crLink('.js-prev', random?'post':'pre', random?'random':'prev');
+        crLink(p, random ? 'random' : 'prev');
       });
-      document.querySelectorAll('.js-rand')[0].addEventListener('click',(e) => {
+      r.addEventListener('click',(e) => {
         commonClickAction(e);
-        crLink('.js-rand', 'post', 'random');
+        crLink(r, 'random');
       });
     }
   }
 
   if (!isNaN(id) && (
-    (myURL.params.sf == 'score' && settings.scoreUp) ||
-    (myURL.params.sf == 'comments' && settings.comments) ||
-    (myURL.params.sf == 'first_seen_at' && settings.first_seen_at) ||
-    (myURL.params.sf && myURL.params.sf.startsWith('gallery_id') && settings.gallery) ||
-    ((myURL.params.sf == 'width' || myURL.params.sf == 'height') && settings.sizesUp) ||
-    (( (!myURL.params.sf && myURL.params.q && myURL.params.q != '%2A')
-      || myURL.params.sf == 'wilson' || myURL.params.sf == 'created_at' || myURL.params.sf == 'updated_at' || myURL.params.sf == 'tag_count' || (myURL.params.sf && myURL.params.sf.startsWith('random')) || myURL.params.sf == 'relevance') && settings.everyUp)
+    isSupportedForFind() ||
+    isSupportedForFindWithFallbackToCreatedAt() ||
+    isSupportedForFindWithFallbackToGalleryLike()
   )) {
-    document.querySelectorAll('.js-up')[0].addEventListener('click',(e) => {
+    const x = document.getElementsByClassName('js-up')[0];
+    x.addEventListener('click',(e) => {
       commonClickAction(e);
-      crLink('.js-up', 'act', 'find');
+      crLink(x, 'find');
     });
   }
 })();
