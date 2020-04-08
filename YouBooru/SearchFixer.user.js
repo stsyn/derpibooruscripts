@@ -131,12 +131,12 @@
     return sf && (
     (sf == 'created_at' && myURL.params.del) ||
     ((sf == 'score' || sf == 'faves' || sf == 'upvotes' || sf == 'downvotes') && settings.score) ||
-    (sf == 'comments' && settings.comments) ||
-    (sf == 'first_seen_at' && settings.first_seen_at) ||
-    (sf == 'tag_count' && settings.tag_count) ||
+    //(sf == 'comments' && settings.comments) ||
+    //(sf == 'first_seen_at' && settings.first_seen_at) ||
+    //(sf == 'tag_count' && settings.tag_count) ||
     (sf.startsWith('random') && settings.random) ||
-    (sf.startsWith('gallery_id') && settings.gallery) ||
-    ((sf == 'width' || sf == 'height') && settings.sizes)
+    (sf.startsWith('gallery_id') && settings.gallery)/* ||
+    ((sf == 'width' || sf == 'height') && settings.sizes)*/
     )
   }
 
