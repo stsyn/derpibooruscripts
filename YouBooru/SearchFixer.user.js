@@ -13,12 +13,14 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.4.16
+// @version      0.4.17
 // @description  Allows Next/Prev/Random navigation with not id sorting and more stuff
 // @author       stsyn
 
 // @grant        unsafeWindow
 // @grant        GM_addStyle
+// @grant        GM_getValue
+// @grant        GM_setValue
 
 // @run-at       document-end
 // ==/UserScript==
@@ -80,7 +82,7 @@
     };
   };
   let galleryLastImageId;
-  
+
   const sfToFunction = {
     comments: 'comments_count',
     score: 'score',
@@ -160,42 +162,37 @@
 
   function request(link, elem, target, level) {
     if (!link.startsWith('https://' + location.hostname)) link = 'https://'+location.hostname + link;
-    let req = new XMLHttpRequest();
+
     debug('SSF','Request: link '+link+', level '+level,1);
-    TTL = 5;
-    req.link = link;
-    req.sel = elem;
-    req.level = level;
-    req.onreadystatechange = readyHandler(req, target);
-    req.open('GET', link);
-    req.send();
-    return;
+    fetchJson('GET', link)
+    .then(response => response.json())
+    .then(response => parse({
+      link,
+      sel: elem,
+      level,
+      response
+    }, target))
+    .catch(exception => {
+      debug('SSF', 'Request failed: '+exception, 2);
+      fail(elem);
+    });
   }
 
-  function readyHandler(request, type) {
-    return function () {
-      if (request.readyState === 4) {
-        if (request.status === 200) return parse(request, type);
-        else if (request.status === 0) {
-          debug('SSF', 'Server refused to answer. Trying again in '+100*(6-TTL)+'ms', 2);
-          setTimeout(function() {
-            TTL--;
-            let req = new XMLHttpRequest();
-            req.sel = request.sel;
-            req.link = request.link;
-            req.level = request.level;
-            req.onreadystatechange = readyHandler(req, type);
-            req.open('GET', request.link);
-            req.send();
-          }, 100*(6-TTL));
-          return false;
-        } else {
-          debug('SSF', 'Request failed: '+request.status, 2);
-          fail(request.sel);
-          return false;
-        }
+  function getSearchPrefix(src) {
+    let apiKey;
+    if (_YDB_S_OuterScope && _YDB_S_OuterScope.getApiKey) {
+      try {
+        apiKey = _YDB_S_OuterScope.getApiKey();
+      } catch(e) {}
+    }
+    if (!apiKey) {
+      if (!unsafeWindow._YDB_public || !unsafeWindow._YDB_public.funcs || !unsafeWindow._YDB_public.funcs.getApiKey) {
+        alert('YDB:Settings 0.9.34 or higher required. Use standalone Settings version if you see this error even if Settings version is actual.');
+        throw '_YDB_public.funcs.getApiKey not found';
       }
-    };
+      apiKey = unsafeWindow._YDB_public.funcs.getApiKey();
+    }
+    return `/api/v1/json/search/images?key=${apiKey}&q=(${src || myURL.params.q})`;
   }
 
   function gainParams(arr) {
@@ -216,20 +213,15 @@
   }
 
   function parse(r, type) {
-    let u;
-    try {
-      u = JSON.parse(r.responseText);
-    } catch (e) {
-      debug ('SSF', e, 2);
-      return;
-    }
+    const u = r.response;
+    const images = u.images;
     let i;
     if (type == 'find') {
       let param = settings.pregain ? preparam[myURL.params.sf] : gainParams();
 
       if (r.level == 'act' && param == '') {
         findTemp = u.total;
-        request('/search.json?q=%2A', r.sel, 'find', 'pre');
+        request(getSearchPrefix('%2A'), r.sel, 'find', 'pre');
         return;
       }
       if (r.level == 'act' && param != '') {
@@ -239,10 +231,11 @@
         return;
       }
       if (r.level == 'post') {
-        if (u.search.length > 0) for (let i=0; i<u.search.length; i++) {
-          if (u.search[i].id == id) {
-            findTemp = ((findIter-1)*50)+i;
-            request('/search.json?q=%2A', r.sel, 'find', 'pre');
+        if (images.length > 0) {
+          const x = images.findIndex(item => item.id == id);
+          if (x) {
+            findTemp = ((findIter-1)*50)+x;
+            request(getSearchPrefix('%2A'), r.sel, 'find', 'pre');
             return;
           }
         } else return;
@@ -250,38 +243,38 @@
         request(compileXQuery(findIter, true), r.sel, 'find', 'post');
         return;
       } else {
-        complete(r.sel, compileXQuery(parseInt(findTemp/u.search.length+1), false));
+        complete(r.sel, compileXQuery(parseInt(findTemp/images.length+1), false));
         return;
       }
     }
     if (type == 'nextGalleryLast') {
       //для галерей
-      if (u.search.length > 0) complete(r.sel, location.href.replace(id, u.search[0].id));
+      if (images.length > 0) complete(r.sel, location.href.replace(id, images[0].id));
       else fail(r.sel);
       return;
     }
     if (myURL.params.sf.startsWith('gallery_id')) {
       //для галерей
-      if (u.search.length > 0) for (let i=0; i<u.search.length; i++) {
-        if (u.search[i].id == id) {
-          //нашли якорь
+      if (images.length > 0) {
+        const i = images.findIndex(item => item.id == id);
+        if (i) {
           if (type == 'prev') {
             if (i == 0 && galleryLastImageId) complete(r.sel, location.href.replace(id, galleryLastImageId));
             else if (i == 0) fail(r.sel);
-            else complete(r.sel, location.href.replace(id, u.search[i-1].id));
+            else complete(r.sel, location.href.replace(id, images[i-1].id));
             return;
           } else {
-            if (i == u.search.length-1) {
+            if (i == images.length-1) {
               findIter++;
               request(compileXQuery(findIter, true), r.sel, 'nextGalleryLast', 'post');
-            } else complete(r.sel, location.href.replace(id, u.search[i+1].id));
+            } else complete(r.sel, location.href.replace(id, images[i+1].id));
             return;
           }
         }
       } else return;
       //не нашли
       findIter++;
-      galleryLastImageId = u.search[u.search.length-1].id;
+      galleryLastImageId = images[u.images.length-1].id;
       request(compileXQuery(findIter, true), r.sel, type, 'post');
       return;
     }
@@ -293,7 +286,7 @@
           return;
         } else {
           //нашли с тем же критерием, но другим очком
-          complete(r.sel, location.href.replace(id, u.search[0].id));
+          complete(r.sel, location.href.replace(id, images[0].id));
           return;
         }
 
@@ -307,56 +300,56 @@
           if (u.total > 1) {
             let param;
             let s = 0;
-            if (u.search[s].id == id) s++;
+            if (images[s].id == id) s++;
 
             const possibleParams = ['score', 'width', 'height', 'comments', 'first_seen_at'];
             param = possibleParams.includes(myURL.params.sf) ? sfToFunction[myURL.params.sf] : '';
 
-            if ((myURL.params.sf == 'tag_count' && u.search[s+1].tag_ids.length == u.search[s].tag_ids.length) ||
-              (myURL.params.sf != 'tag_count' && u.search[s+1][param] == u.search[s][param])) {
+            if ((myURL.params.sf == 'tag_count' && images[s+1].tag_ids.length == images[s].tag_ids.length) ||
+              (myURL.params.sf != 'tag_count' && images[s+1][param] == images[s][param])) {
               //мы чот нашли, но у соседней по тому же критерию то же самое, нужно уточнить, что ставить
-              request(compilePostQuery(type, (myURL.params.sf == 'tag_count'?u.search[s+1].tag_ids.length:u.search[s+1][param])), r.sel, type, 'post');
+              request(compilePostQuery(type, (myURL.params.sf == 'tag_count'?images[s+1].tag_ids.length:images[s+1][param])), r.sel, type, 'post');
               return;
             } else {
               //а все норм, она одна такая
-              complete(r.sel, location.href.replace(id, u.search[s].id));
+              complete(r.sel, location.href.replace(id, images[s].id));
               return;
             }
           } else {
             //в запросе ваще одна пихча
-            if (u.search[0].id == id) {
+            if (u.images[0].id == id) {
               request(compileQuery(type, 1), r.sel, type, 'act');
             } else {
-              complete(r.sel, location.href.replace(id, u.search[0].id));
+              complete(r.sel, location.href.replace(id, images[0].id));
             }
             return;
           }
         }
       } else if (r.level == 'post') {
-        if (r.sel == '.js-rand' && u.search[0].id == id && u.total == 1) {
+        if (r.sel == '.js-rand' && images[0].id == id && u.total == 1) {
           //рандом высрал только эту пикчу
           fail(r.sel);
         }
         //вот это точно должна идти
-        complete(r.sel, location.href.replace(id, u.search[0].id));
+        complete(r.sel, location.href.replace(id, images[0].id));
         return;
       }
     } else {
       if (settings.preload) {
         if (u.total > 1) {
-          const x = (u.search[0].id == id) ? 1 : 0;
-          document.querySelectorAll('.js-next')[0].href=location.href.replace(id, u.search[x].id);
+          const x = (u.images[0].id == id) ? 1 : 0;
+          document.querySelectorAll('.js-next')[0].href=location.href.replace(id, images[x].id);
           if (u.total > 2) {
-            if (u.search[x+1].id == id) document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, u.search[x+2].id);
-            else document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, u.search[x+1].id);
+            if (images[x+1].id == id) document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, images[x+2].id);
+            else document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, images[x+1].id);
           }
-          else document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, u.search[x].id);
+          else document.querySelectorAll('.js-prev')[0].href=location.href.replace(id, images[x].id);
           if (settings.randomButton) {
             if (u.total > 3) {
-              if (u.search[x+2].id == id) document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x+3].id);
-              else document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x+2].id);
+              if (images[x+2].id == id) document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, images[x+3].id);
+              else document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, images[x+2].id);
             }
-            else document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, u.search[x].id);
+            else document.querySelectorAll('.js-rand')[0].href=location.href.replace(id, images[x].id);
           }
         } else {
           if (settings.randomButton) fail('.js-rand');
@@ -367,14 +360,10 @@
         blink(document.querySelectorAll('.js-prev')[0]);
         blink(document.querySelectorAll('.js-next')[0]);
       } else {
-        if (u.total>1) complete(r.sel, location.href.replace(id, u.search[0].id));
+        if (u.total>1) complete(r.sel, location.href.replace(id, images[0].id));
         else fail(r.sel);
       }
     }
-  }
-
-  function getSearchPrefix() {
-    return `/search.json?q=(${myURL.params.q}),`;
   }
 
   // looking for the first pic in the possible
@@ -382,7 +371,7 @@
     const dir = ((myURL.params.sd == 'asc' ^ type == 'prev') ? 'asc' : 'desc');
     const pagePart = type!='find' ? '&perpage=1' : '&perpage=50&page='+page;
 
-    const link = `${getSearchPrefix()}(${sfToFunction[myURL.params.sf]}:${v})${pagePart}&sf=created_at&sd=${dir}`;
+    const link = `${getSearchPrefix()},(${sfToFunction[myURL.params.sf]}:${v})${pagePart}&sf=created_at&sd=${dir}`;
 
     debug('SSF', 'Post query: query '+link, 0);
     return link;
@@ -396,7 +385,7 @@
     if (myURL.params.sf.startsWith('gallery_id')) return compileXQuery(1, true);
     if (type == 'random' || myURL.params.sf.startsWith("random")) return compileQuery(type);
 
-    let prevUrl = getSearchPrefix();
+    let prevUrl = getSearchPrefix() + ',';
     const dir = (myURL.params.sd == 'asc' ^ type == 'prev') ? 'gt' : 'lt';
     const sd = (myURL.params.sd == 'asc' ^ type == 'prev') ? 'asc' : 'desc';
     const cscore = settings.pregain ? preparam[myURL.params.sf] : gainParams();
@@ -423,7 +412,7 @@
   function compileQuery(type, delta) {
     let d = 0;
     if (delta != undefined) d = delta * (myURL.params.sd=='asc' ^ type=='prev') ? -1 : 1;
-    let prevUrl = getSearchPrefix();
+    let prevUrl = getSearchPrefix() + ',';
     if (type !='random' && !myURL.params.sf.startsWith('random')) {
       const cscore = (settings.pregain ? preparam[myURL.params.sf] : gainParams()) + d;
       const dir = (myURL.params.sd == 'asc' ^ type == 'prev') ? 'gt' : 'lt';
@@ -440,7 +429,7 @@
   }
 
   function compileLtQuery(page) {
-    let prevUrl = getSearchPrefix();
+    let prevUrl = getSearchPrefix() + ',';
     const dir = ((myURL.params.sd!='asc')?'gt':'lt');
     const sd = ((myURL.params.sd!='asc')?'asc':'desc');
     const sff = sfToFunction[myURL.params.sf];
@@ -465,7 +454,8 @@
     const sf = sff ? myURL.params.sf : 'created_at';
 
     debug('SSF','Pagination query: page '+page+', query '+myURL.params.q+', sort '+sf,0);
-    return '/search' + (pp?'.json':'') + '?q=' + myURL.params.q + (pp?'&perpage=50':'') + '&sf=' + sf + '&sd='+
+    const prefix = pp ? getSearchPrefix() : ('/search?q=' + myURL.params.q);
+    return prefix + (pp?'&perpage=50':'') + '&sf=' + sf + '&sd='+
             (myURL.params.sd || '') + '&page=' + page + (myURL.params.del ? '&del='+myURL.params.del : '');
   }
 
@@ -478,10 +468,10 @@
   };
 
   function fetchFirstSeen(id) {
-    fetchJson('GET', '/'+id+'.json')
+    fetchJson('GET', '/api/v1/json/images/'+id)
     .then(response => response.json())
     .then(response => {
-      first_seen = response.first_seen_at;
+      first_seen = response.image.first_seen_at;
       preparam.first_seen_at = first_seen;
     });
   };
@@ -515,54 +505,9 @@
   }
 }
 `);
-    document.querySelector('form.header__search').classList.add('dropdown');
-    document.querySelector('form.header__search').appendChild(
-      createElement('span.dropdown__content',{style:{position:'static',minWidth:0,zIndex:1}},[
-        createElement('select#_ydb_s_qpusher_sf.input.header__input',{name:'sf', size:1},[
-          createElement('option',{value:'created_at'},'created_at'),
-          createElement('option',{value:'updated_at'},'updated_at'),
-          createElement('option',{value:'first_seen_at'},'first_seen_at'),
-          createElement('option',{value:'score'},'score'),
-          createElement('option',{value:'wilson'},'wilson'),
-          createElement('option',{value:'relevance'},'relevance'),
-          createElement('option',{value:'width'},'width'),
-          createElement('option',{value:'height'},'height'),
-          createElement('option',{value:'comments'},'comments'),
-          createElement('option',{value:'tag_count'},'tag_count'),
-          createElement('option',{value:'random'},'random'),
-        ]),
-        createElement('select#_ydb_s_qpusher_sd.input.header__input',{name:'sd', size:1},[
-          createElement('option',{value:'desc'},'desc'),
-          createElement('option',{value:'asc'},'asc')
-        ])
-      ]));
-    if (withup) {
-      document.querySelector('form.header__search').insertBefore(
-        createElement('a#_ydb_s_finder.header__link.header__search__button',{title:'Find this image position in entered query', style:{height:'28px',padding:0}}, [
-          createElement('i.fa', '\uF03C')
-        ]), document.querySelector('form.header__search>a.header__search__button'));
 
-      document.querySelector('form.header__search').insertBefore(
-        createElement('a#_ydb_s_qpusher.header__link.header__search__button',{title:'Push search query to url bar', style:{height:'28px',padding:0}, href:location.href}, [
-          createElement('i.fa.fa-arrow-up')
-        ]),document.querySelector('form.header__search>a.header__search__button'));
-
-      document.getElementById('_ydb_s_qpusher').hash = '';
-    }
-
-    if (myURL.params.sf && myURL.params.sf.startsWith('gallery_id'))
-      addElem('option',{value:myURL.params.sf, innerHTML:'gallery'},document.getElementById('_ydb_s_qpusher_sf'));
-    if (!myURL.params.sf) myURL.params.sf = 'created_at';
-    if (!myURL.params.sd) myURL.params.sd = 'desc';
-    let x = myURL.params.sf;
-    if (myURL.params.sf && myURL.params.sf.startsWith('gallery_id')) x = 'gallery_id';
-    if (myURL.params.sf && myURL.params.sf.startsWith('random')) x = 'random';
-    if (myURL.params.sf && document.querySelector('#_ydb_s_qpusher_sf *[value*='+x+']'))
-      document.querySelector('#_ydb_s_qpusher_sf *[value*='+x+']').selected = 'selected';
-    if (myURL.params.sd && document.querySelector('#_ydb_s_qpusher_sd *[value='+myURL.params.sd+']'))
-      document.querySelector('#_ydb_s_qpusher_sd *[value='+myURL.params.sd+']').selected = 'selected';
-
-    let chall = () => {
+    let qpusher;
+    const chall = () => {
       let s = location.search;
       let es = ['form.header__search .input','#_ydb_s_qpusher_sf','#_ydb_s_qpusher_sd', '#del'];
       let args = ['q','sf','sd','del'];
@@ -582,39 +527,99 @@
           s += (s != '?' ? '&' : '') + x + '=' + myURL.params[x];
         }
       }
-      document.getElementById('_ydb_s_qpusher').search = s.replace(/%2B/g, '+');
+      qpusher.search = s.replace(/%2B/g, '+');
     };
 
-    if (document.getElementById('_ydb_s_qpusher'))
-      setTimeout(() => {
-        document.querySelector('form.header__search .input').addEventListener('input', chall);
-        document.querySelector('#_ydb_s_qpusher_sf').addEventListener('input', chall);
-        document.querySelector('#_ydb_s_qpusher_sd').addEventListener('input', chall);
-        if (document.querySelector('#del')) document.querySelector('#del').addEventListener('input', chall);
-      }, 200);
+    document.querySelector('form.header__search').classList.add('dropdown');
+    document.querySelector('form.header__search').appendChild(
+      createElement('span.dropdown__content',{style:{position:'static',minWidth:0,zIndex:1}},[
+        createElement('select#_ydb_s_qpusher_sf.input.header__input',{
+          name: 'sf',
+          size: 1,
+          events: { input: chall }
+        }, [
+          createElement('option',{value:'created_at'},'created_at'),
+          createElement('option',{value:'updated_at'},'updated_at'),
+          createElement('option',{value:'first_seen_at'},'first_seen_at'),
+          createElement('option',{value:'score'},'score'),
+          createElement('option',{value:'wilson'},'wilson'),
+          createElement('option',{value:'relevance'},'relevance'),
+          createElement('option',{value:'width'},'width'),
+          createElement('option',{value:'height'},'height'),
+          createElement('option',{value:'comments'},'comments'),
+          createElement('option',{value:'tag_count'},'tag_count'),
+          createElement('option',{value:'random'},'random'),
+        ]),
+        createElement('select#_ydb_s_qpusher_sd.input.header__input', {
+          name: 'sd',
+          size: 1,
+          events: { input: chall }
+        }, [
+          createElement('option',{value:'desc'},'desc'),
+          createElement('option',{value:'asc'},'asc')
+        ])
+      ]));
+    if (withup) {
+      document.querySelector('form.header__search').insertBefore(
+        createElement('a#_ydb_s_finder.header__link.header__search__button', {
+          title: 'Find this image position in entered query',
+          style: { height: '28px', padding: 0},
+          events: { click: e => {
+            commonClickAction(e);
+            myURL = parseURL(qpusher.href);
+            crLink('#_ydb_s_finder', 'act', 'find');
+          }}
+        }, [
+          createElement('i.fa', '\uF03C')
+        ]), document.querySelector('form.header__search>a.header__search__button'));
+
+      document.querySelector('form.header__search').insertBefore(
+        qpusher = createElement('a#_ydb_s_qpusher.header__link.header__search__button',{
+          title: 'Push search query to url bar',
+          style: { height: '28px', padding: 0},
+          href: location.href
+        }, [
+          createElement('i.fa.fa-arrow-up')
+        ]), document.querySelector('form.header__search>a.header__search__button'));
+
+      qpusher.hash = '';
+    }
+
+    if (myURL.params.sf && myURL.params.sf.startsWith('gallery_id')) {
+      addElem('option', {value: myURL.params.sf, innerHTML: 'gallery'}, document.getElementById('_ydb_s_qpusher_sf'));
+    }
+    if (!myURL.params.sf) myURL.params.sf = 'created_at';
+    if (!myURL.params.sd) myURL.params.sd = 'desc';
+    let x = myURL.params.sf;
+    if (myURL.params.sf.startsWith('gallery_id')) x = 'gallery_id';
+    if (myURL.params.sf.startsWith('random')) x = 'random';
+    if (document.querySelector('#_ydb_s_qpusher_sf *[value*='+x+']')) {
+      document.querySelector('#_ydb_s_qpusher_sf *[value*='+x+']').selected = 'selected';
+    }
+    if (document.querySelector('#_ydb_s_qpusher_sd *[value='+myURL.params.sd+']')) {
+      document.querySelector('#_ydb_s_qpusher_sd *[value='+myURL.params.sd+']').selected = 'selected';
+    }
+
+    if (document.getElementById('_ydb_s_qpusher')) {
+      document.querySelector('form.header__search .input').addEventListener('input', chall);
+      if (document.querySelector('#del')) document.querySelector('#del').addEventListener('input', chall);
+    }
 
     //fetching tags
-    let t = document.querySelectorAll('.tag.dropdown');
-    for (let j=0; j<t.length; j++) {
-      t[j].getElementsByClassName('dropdown__content')[0].appendChild(
-        createElement('span.tag__dropdown__link', {dataset: {tag: t[j].dataset.tagName}},[
-          createElement('a', {style:{cursor:'pointer'}, events:{click: (e) => {
-            document.querySelector('form.header__search .input').value = e.target.parentNode.dataset.tag;
+    const searchElem = document.querySelector('form.header__search .input');
+    Array.from(document.querySelectorAll('.tag.dropdown')).forEach(elem => {
+      elem.getElementsByClassName('dropdown__content')[0].appendChild(
+        createElement('span.tag__dropdown__link', {dataset: {tag: elem.dataset.tagName}},[
+          createElement('a', {style: {cursor:'pointer'}, events: {click: e => {
+            searchElem.value = e.target.parentNode.dataset.tag;
             chall();
           }}}, 'Set query '),
-          createElement('a', {style:{cursor:'pointer'}, events:{click: (e) => {
-            const elem = document.querySelector('form.header__search .input');
-            elem.value += (elem.value.trim? ',' : '') + e.target.parentNode.dataset.tag;
+          createElement('a', {style: {cursor:'pointer'}, events: {click: e => {
+            searchElem.value += (searchElem.value.trim? ',' : '') + e.target.parentNode.dataset.tag;
             chall();
           }}},'[+]')
         ])
       );
-    }
-
-    if (document.getElementById('_ydb_s_finder')) document.getElementById('_ydb_s_finder').addEventListener('click', (e) => {
-      commonClickAction(e);
-      myURL = parseURL(document.getElementById('_ydb_s_qpusher').href);
-      crLink('#_ydb_s_finder', 'act', 'find');
     });
   }
 
@@ -646,8 +651,7 @@
 
   if (!localStorage._ssf || settings.override) {
     localStorage._ssf = JSON.stringify(settings);
-  }
-  else {
+  } else {
     try {
       let settings2 = JSON.parse(localStorage._ssf);
       if (!settings2.pregain) {
@@ -655,11 +659,11 @@
         localStorage._ssf = JSON.stringify(settings2);
       }
       settings = settings2;
-    }
-    catch(e) {
+    } catch(e) {
       localStorage._ssf = JSON.stringify(settings);
     }
   }
+
   if (settings.first_seen_at === undefined) settings.first_seen_at = true;
   register();
   let myURL = parseURL(location.href);
@@ -672,9 +676,8 @@
 
   pushQuery(!isNaN(id));
   if (!isNaN(id) && settings.pregain) preparam = gainParams(true);
-  
+
   if (
-    !philomena &&
     !isNaN(id) &&
     myURL.params.sf &&
     !(myURL.params.sf == 'created_at' && !myURL.params.del) &&
