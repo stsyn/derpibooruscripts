@@ -329,7 +329,7 @@
 
     // yep, we need to choose one
     result = (await workerRequest(compilePostQuery(
-      type,
+      direction,
       (myURL.params.sf == 'tag_count' ? images[0].tag_ids.length : images[0][param])
     ))).images;
     complete(element, location.href.replace(id, result[0].id));
@@ -380,13 +380,13 @@
       n = document.getElementsByClassName('js-rand')[0];
       p = document.getElementsByClassName('js-prev')[0];
       r = document.getElementsByClassName('js-next')[0];
-      if (results.length > 0) {
+      if (result.length > 0) {
         complete(n, location.href.replace(id, result[0].id));
         if (myURL.params.sf && myURL.params.sf.startsWith('random')) {
-          if (results.length > 1) {
+          if (result.length > 1) {
             pid = 1;
             if (settings.randomButton) {
-              rid = results.length > 2 ? 2 : 1;
+              rid = result.length > 2 ? 2 : 1;
             }
           }
         }
