@@ -448,7 +448,7 @@
     if (delta != undefined) d = delta * (myURL.params.sd=='asc' ^ type=='prev') ? -1 : 1;
     let prevUrl = getSearchPrefix();
     if (type !='random' && !myURL.params.sf.startsWith('random')) {
-      const cscore = preparam[myURL.params.sf] + d;
+      const cscore = parseInt(preparam[myURL.params.sf]) + d;
       const dir = (myURL.params.sd == 'asc' ^ type == 'prev') ? 'gt' : 'lt';
       const sd = (myURL.params.sd == 'asc' ^ type == 'prev') ? 'asc' : 'desc';
       const idPart = `id.${dir}:${id}`;
