@@ -13,7 +13,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.5.0
+// @version      0.5.1
 // @description  I hoped that this script could be deleted after moving to Philomena...
 // @author       stsyn
 
@@ -300,7 +300,7 @@
 
     // we managed to hit only the same image
     let delta = 1;
-    while (results.total === 1 && images.length === 0) {
+    while (result.total === 1 && images.length === 0) {
       result = await workerRequest(compileQuery(direction, delta++));
       images = result.images.filter(item => item.id !== id);
       if (result.total === 0) {
