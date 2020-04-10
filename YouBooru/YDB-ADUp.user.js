@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          YDB:ADUp
-// @version       0.4.2
+// @version       0.4.3
 // @author        stsyn
 
 // @match         *://*/*
@@ -177,11 +177,19 @@
     }
   }
 
+  function tagToSlug(tag) {
+    return tag.replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/ /g,'+').replace(/\:/g,'-colon-').replace(/\//g,'-fwslash-');
+  }
+
+  function slugToTag(tag) {
+    return tag.replace(/\-dash\-/g,'-').replace(/\-dot\-/g,'.').replace(/\+/g,' ').replace(/\-colon\-/g,':').replace(/\-fwslash\-/g,'/').replace(/\%25/g,'%');
+  }
+
   function fetchExtData(url) {
     let req = new XMLHttpRequest();
-    req.open('GET', '/images/'+url.params.origin+'.json', false);
+    req.open('GET', '/api/v1/json/images/'+url.params.origin, false);
     req.send();
-    let x = JSON.parse(req.responseText);
+    let x = JSON.parse(req.responseText).image;
     url.params.tags = encodeURIComponent(x.tags);
     url.params.originWidth = x.width;
     url.params.originHeight = x.height;
@@ -393,19 +401,19 @@
     };
 
     const handleTagData = function (name, data) {
-      if (data.fail) {
+      if (!data || data.fail) {
         delete checkedTags[name];
         return;
       }
 
-      if ((data.tag && data.tag.implied_tags) || settings.implicationDisallow) {
-        checkedTags[name] = {name, implied_tags: data.tag.implied_tags};
+      if (data.implied_tags || settings.implicationDisallow) {
+        checkedTags[name] = {name, implied_tags: data.implied_tags};
       }
       else {
         checkedTags[name] = {name, implied_tags: []};
       }
 
-      if (data.tag) checkedTags[name].category = data.tag.category;
+      checkedTags[name].category = data.category;
       checkedTags[name].notReady = false;
       checkedTags[name].drawn = false;
 
@@ -413,7 +421,7 @@
       if (!dnp) {
         checkedTags[name].dnp_type = 'Tag does not exist';
       }
-      else if (data.tag.images == 0) {
+      else if (data.images == 0) {
         checkedTags[name].dnp_type = 'Tag has no images';
       }
       else if (dnp.length > 0) {
@@ -429,59 +437,21 @@
       }
     };
 
-    const handleBatchTagData = function (name, data) {
-      if (data.fail) {
-        delete checkedTags[name];
-        return;
-      }
-
-      if ((data.implied_tags) || settings.implicationDisallow) {
-        checkedTags[name] = {name, implied_tags: data.implied_tags};
-      }
-      else {
-        checkedTags[name] = {name, implied_tags: []};
-      }
-
-      if (data.tag) checkedTags[name].category = data.tag.category;
-      checkedTags[name].notReady = false;
-      checkedTags[name].drawn = false;
-
-      let dnp = data.dnp_entries;
-      if (data.images == 0) {
-        checkedTags[name].dnp_type = 'Tag has no images';
-        return;
-      }
-      else if (dnp && dnp.length>0) {
-        dnp.forEach(d => {
-          d.name = name;
-          d.implied_tags = checkedTags[name].implied_tags;
-          checkedTags[name] = d;
-          gotten = true;
-        });
-      }
-      else if (checkedTags[name].implied_tags.length == 0) {
-        checkedTags[name].ok = true;
-      }
-    };
-
     const checkTag = function (name, y) {
-      fetch('/tags/'+encodeURIComponent((name).replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/ /g,'+').replace(/\:/g,'-colon-').replace(/\//g,'-fwslash-'))+'.json',{method:'GET'})
+      fetch('/api/v1/json/tags/'+encodeURIComponent(tagToSlug(name)),{method:'GET'})
       .then(response => {
-        const errorMessage = {fail:true};
-        if (!response.ok)
-          return errorMessage;
-        if (response.redirected) {
-          let newTag = response.url.split('/').pop().replace(/.json$/,'');
-          if (newTag == '') return {};
-          newTag = decodeURIComponent(newTag.replace(/\-dash\-/g,'-').replace(/\-dot\-/g,'.').replace(/\+/g,' ').replace(/\-colon\-/g,':').replace(/\%25/g,'%'));
-          y.getElementsByTagName('a')[0].dataset.tagName = newTag;
-          y.firstChild.textContent = newTag+' ';
-          return errorMessage;
-        }
+        const errorMessage = {tag: {fail:true}};
+        if (!response.ok) return errorMessage;
         return response.json();
       })
       .then(data => {
-        handleTagData(name, data);
+        if (data.tag.aliased_tag) {
+          const newTag = slugToTag(data.tag.aliased_tag);
+          y.getElementsByTagName('a')[0].dataset.tagName = newTag;
+          y.firstChild.textContent = newTag+' ';
+          return {fail:true};
+        }
+        handleTagData(name, data.tag);
       });
     };
 
@@ -490,30 +460,29 @@
         checkTag(names[0], target.querySelector('.tag a[data-tag-name="'+names[0]+'"]').parentNode);
         return;
       }
-      let uri = unsafeWindow.booru.apiEndpoint+"tags/fetch_many.json?name[]="+names.join("&name[]=");
-      fetch(uri,{method:'GET'})
+      let uri = '/api/v1/json/search/tags?q=slug:'+names.map(tag => tagToSlug(tag)).join("+OR+slug:");
+      fetch(uri, {method:'GET'})
       .then(function (response) {
         const errorMessage = {fail:true};
-        if (!response.ok)
-          return errorMessage;
+        if (!response.ok) return errorMessage;
         return response.json();
       })
       .then(data => {
         if (data.fail) {
-          names.forEach(function (name) {delete checkedTags[name]})
+          names.forEach(name => delete checkedTags[name])
           return;
         }
 
         if (data.tags) {
           data.tags.forEach(x => {
-            if (x.aliased_to) {
-              const newTag = x.aliased_to;
+            if (x.aliased_tag) {
+              const newTag = slugToTag(x.aliased_tag);
               const y = target.querySelector('.tag a[data-tag-name="'+names[0]+'"]').parentNode;
               y.getElementsByTagName('a')[0].dataset.tagName = newTag;
               y.firstChild.textContent = newTag+' ';
               x = {fail:true};
             }
-            handleBatchTagData(x.name, x);
+            handleTagData(x.name, x);
             names.splice(names.indexOf(x.name));
           });
           names.forEach(name => checkedTags[name].dnp_type = 'Tag does not exist');
