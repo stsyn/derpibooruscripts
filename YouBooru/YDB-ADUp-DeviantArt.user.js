@@ -1,18 +1,21 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.2.6
+// @version      0.2.7
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp-DeviantArt.user.js
 // @grant        unsafeWindow
 // @grant        GM_xmlhttpRequest
+// @grant        GM_download
 // ==/UserScript==
 
 (function() {
   'use strict';
   let mainDomain = 'www.derpibooru.org';
   const leak = true;
+  const derpImage = "url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgdmlld0JveD0iMCAwIDE2IDE2Ij48cGF0aCBkPSJtMTMuMiwuNmM1LDkuMi0uMiwxNS41LTIuOSwxNS4zcy0zLjYsLTQuNy05LjIsLTQuNWMyLjYsLTMuNCA4LjMsLS4zIDkuOCwtMS42czMuNywtNS40IDIuMywtOS4yIiBmaWxsPSIjNzNkNmVkIj48L3BhdGg+PHBhdGggZD0ibTExLDAuNi0xLjcsMS40LTEuNywtMS4yLjgsMi0xLjcsMWgxLjhsLTUuNSw5LjcuNCwuMiA1LjUsLTkuNy42LDEuOCAuNSwtMiAyLjIsLS4xLTEuOCwtMS4xLjYsLTIiIGZpbGw9IiM5NGMxZGQiPjwvcGF0aD48Y2lyY2xlIGN4PSIxMy41IiBjeT0iOC41IiBmaWxsPSIjZmZmIiBpZD0iZSIgcj0iMC41Ij48L2NpcmNsZT48dXNlIHg9Ii0yIiB5PSIzIiB4bGluazpocmVmPSIjZSI+PC91c2U+PHVzZSB4PSItNiIgeT0iNCIgeGxpbms6aHJlZj0iI2UiPjwvdXNlPjx1c2UgeD0iLTIuOCIgeT0iNiIgeGxpbms6aHJlZj0iI2UiPjwvdXNlPjwvc3ZnPgo=')";
 
   let l, width, height, i=0, dunno, hasFull, eclipse = false, artist;
   var req = false;
@@ -30,29 +33,25 @@
     } else {
       target = Array.from(document.getElementsByClassName('dev-meta-actions')).pop();
     }
-    let ds = document.createElement('a');
-    ds.className = eclipse?'V7yJQ':'dev-page-button dev-page-button-with-text dev-page-download';
-    ds.target = '_blank';
-    if (!hasFull) ds.style = 'width:calc(50% - 18px);display:inline-block;margin-right:4px';
-
-    ds.innerHTML = '<i></i><span class="label"> Upload on DB</span><span class="text"></span>';
-
-
-    ds.href = '//'+mainDomain+'/images/new?newImg='+encodeURIComponent(link)+
+    let href = '//'+mainDomain+'/images/new?newImg='+encodeURIComponent(link)+
       '&src='+encodeURIComponent(location.href)+
       '&tags='+encodeURIComponent('artist:'+artist)+
       '&description='+(encodeURIComponent(text))+
       '&newWidth='+width+
       '&newHeight='+height;
 
-    ds.getElementsByTagName('i')[0].style.width = '20px';
-    ds.getElementsByTagName('i')[0].style.background = "url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgdmlld0JveD0iMCAwIDE2IDE2Ij48cGF0aCBkPSJtMTMuMiwuNmM1LDkuMi0uMiwxNS41LTIuOSwxNS4zcy0zLjYsLTQuNy05LjIsLTQuNWMyLjYsLTMuNCA4LjMsLS4zIDkuOCwtMS42czMuNywtNS40IDIuMywtOS4yIiBmaWxsPSIjNzNkNmVkIj48L3BhdGg+PHBhdGggZD0ibTExLDAuNi0xLjcsMS40LTEuNywtMS4yLjgsMi0xLjcsMWgxLjhsLTUuNSw5LjcuNCwuMiA1LjUsLTkuNy42LDEuOCAuNSwtMiAyLjIsLS4xLTEuOCwtMS4xLjYsLTIiIGZpbGw9IiM5NGMxZGQiPjwvcGF0aD48Y2lyY2xlIGN4PSIxMy41IiBjeT0iOC41IiBmaWxsPSIjZmZmIiBpZD0iZSIgcj0iMC41Ij48L2NpcmNsZT48dXNlIHg9Ii0yIiB5PSIzIiB4bGluazpocmVmPSIjZSI+PC91c2U+PHVzZSB4PSItNiIgeT0iNCIgeGxpbms6aHJlZj0iI2UiPjwvdXNlPjx1c2UgeD0iLTIuOCIgeT0iNiIgeGxpbms6aHJlZj0iI2UiPjwvdXNlPjwvc3ZnPgo=')";
+    let ds = createElement('a', {
+      className: eclipse ? 'V7yJQ' : 'dev-page-button dev-page-button-with-text dev-page-download',
+      target: '_blank',
+      href,
+      style: hasFull ? '' : 'width:calc(50% - 18px);display:inline-block;margin-right:4px'
+    }, [
+      createElement('i', {style: {width: '20px', background: derpImage}}),
+      createElement('span.label', ' Upload on DB'),
+      createElement('span.text', (eclipse ? ' ' : '') + text),
+    ]);
+
     i = 1;
-    if (eclipse) {
-      ds.querySelector('span.text').innerHTML = ' '+text;
-    } else {
-      ds.querySelector('span.text').innerHTML = text;
-    }
     if (eclipse) {
       target3.appendChild(ds);
     } else {
@@ -65,6 +64,10 @@
       ls.getElementsByTagName('i')[0].style.background = "url(https://st.deviantart.net/minish/deviation/action-sprites.png?)";
       ls.getElementsByTagName('i')[0].style.backgroundPosition = '-1px -78px';
       ls.querySelector('span.label').innerHTML = " Direct link";
+      ls.addEventListener('click', (e) => {
+        e.preventDefault();
+        GM_download(link, link.split('/').pop().split('?')[0])
+      });
       if (eclipse) {
         ls.querySelector('span.text').innerHTML = ' '+text;
       } else {
@@ -79,7 +82,7 @@
 
     target.classList.add('patched');
   }
-  
+
   function DA404() {
     let code = parseInt(location.href.split('-').pop()).toString(36);
     if (code == 'NaN') {
