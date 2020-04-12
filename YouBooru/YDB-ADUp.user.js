@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          YDB:ADUp
-// @version       0.4.3
+// @version       0.4.4
 // @author        stsyn
 
 // @match         *://*/*
@@ -407,7 +407,7 @@
       }
 
       if (data.implied_tags || settings.implicationDisallow) {
-        checkedTags[name] = {name, implied_tags: data.implied_tags};
+        checkedTags[name] = {name, implied_tags: data.implied_tags.map(tag => slugToTag(tag))};
       }
       else {
         checkedTags[name] = {name, implied_tags: []};
