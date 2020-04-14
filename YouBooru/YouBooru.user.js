@@ -13,7 +13,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.35
+// @version      0.5.36
 // @description  Feedz
 // @author       stsyn
 
@@ -311,10 +311,12 @@
       }
     }
     f_s_c.firstSeenAtImplemented = true;
-    if (unsafeWindow._YDB_public.funcs.backgroundBackup && updated) {
+    if (updated) {
       setTimeout(() => {
-        unsafeWindow._YDB_public.funcs.backgroundBackup(() => {});
-        write();
+        if (unsafeWindow._YDB_public && unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.backgroundBackup) {
+          unsafeWindow._YDB_public.funcs.backgroundBackup(() => {});
+          write();
+        }
       }, 3000);
     }
     if (!config.oneTimeLoad) config.oneTimeLoad = 3;
@@ -413,6 +415,7 @@
       if (date.getMonth() == 1 && date.getDate() == 29 && i % 4 != 0) continue;
       c += (c === '(' ? '' : ' || ') + cc + i + dateString;
     }
+
 
     return c+')';
   }
