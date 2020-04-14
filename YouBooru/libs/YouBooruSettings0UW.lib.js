@@ -1,6 +1,6 @@
 // ==UserScriptLib==
 // @name         YourBooru:Settings
-// @version      0.9.34L
+// @version      0.9.35L
 // @description  Global library script for YourBooru script family
 // @grant        unsafeWindow
 // @grant        GM_addStyle
@@ -22,7 +22,7 @@ const _YDB_S_OuterScope = {};
 
   const getDonateLink = () => '';
   const scriptId = 'settings';
-  const internalVersion = '0.9.34LUW';
+  const internalVersion = '0.9.35LUW';
   const version = GM_info.script.version;
   let settings;
   const features = {
@@ -37,7 +37,7 @@ const _YDB_S_OuterScope = {};
       register(true, (typeof unsafeWindow == 'undefined' ? window : unsafeWindow));
       return;
     }
-    if (unsafeWindow._YDB_public.settings[scriptId]) return;
+    if (unsafeWindow._YDB_public && win._YDB_public.settings[scriptId]) return;
   }
   catch(e){}
 
@@ -47,7 +47,7 @@ const _YDB_S_OuterScope = {};
 
   if (!features.styles || !features.storage) {
     setTimeout(() => {
-      if (!unsafeWindow._YDB_public.settings[scriptId]) start();
+      if (!win._YDB_public || !win._YDB_public.settings[scriptId]) start();
     }, 3000);
   } else start();
 
