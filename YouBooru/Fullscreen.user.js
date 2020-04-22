@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.29
+// @version      0.7.30
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -16,6 +16,7 @@
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/Fullscreen.user.js
 
 // @grant        GM_addStyle
+// @grant        unsafeWindow
 
 // @run-at       document-start
 // ==/UserScript==
@@ -23,7 +24,7 @@
 
 (function() {
   'use strict';
-  let currentColorApi = 4;
+  const currentColorApi = 4;
   let styles = {};
   styles.general = `
 #_ydb_fs_enable {
@@ -717,7 +718,9 @@ color: #777;
   let singleFirstChange = false;
 
   function register() {
-    let fsData = {
+    if (!unsafeWindow._YDB_public) unsafeWindow._YDB_public = {};
+    if (!unsafeWindow._YDB_public.settings) unsafeWindow._YDB_public.settings = {};
+    unsafeWindow._YDB_public.settings.fullscreen = {
       name:'Fullscreen',
       container:'_ydb_fs',
       version:GM_info.script.version,
@@ -777,7 +780,6 @@ color: #777;
         ]}
       ]
     };
-    document.addEventListener('DOMContentLoaded', function() {addElem('span', {style:{display:'none'}, type:'text', dataset:{value:JSON.stringify(fsData),origin:'script'}, className:'_YDB_reserved_register'}, document.body);});
   }
 
   function append(id, accentFix) {
@@ -807,7 +809,10 @@ color: #777;
   }
 
   function rescale(doNotSwitch) {
-    if (objects.icontainer.dataset.aspectRatio > window.innerWidth/window.innerHeight) pub.wide = false;
+    const winWidth = unsafeWindow.innerWidth;
+    const winHeight = unsafeWindow.innerHeight;
+    const aspectRatio = winWidth / winHeight;
+    if (objects.icontainer.dataset.aspectRatio > aspectRatio) pub.wide = false;
     else pub.wide = true;
 
     let forced = settings.singleMode && singleDefSize;
@@ -834,8 +839,8 @@ color: #777;
       }
     }
 
-    if (!pub.wide) pub.defzoom = window.innerWidth/objects.icontainer.dataset.width;
-    else pub.defzoom = window.innerHeight/objects.icontainer.dataset.height;
+    if (!pub.wide) pub.defzoom = winWidth/objects.icontainer.dataset.width;
+    else pub.defzoom = winHeight/objects.icontainer.dataset.height;
 
     if (settings.singleMode && pub.zoom<pub.defzoom && !doNotSwitch) {
       singleEvent();
@@ -846,29 +851,27 @@ color: #777;
       let bufferWidth = objects.image.style.width, bufferHeight = objects.image.style.height,
           bufferTop = objects.image.style.marginTop, bufferLeft = objects.image.style.marginLeft;
       if (!pub.wide) {
-        bufferWidth = forced?window.innerWidth+'px':'100vw';
-        pub.zoom = window.innerWidth/objects.icontainer.dataset.width;
-        bufferHeight = forced?(window.innerWidth/objects.icontainer.dataset.aspectRatio)+'px':'auto';
-        let aspectRatio = window.innerWidth / window.innerHeight;
-        let zoomRatio = objects.icontainer.dataset.width / window.innerWidth;
+        bufferWidth = forced ? winWidth+'px':'100vw';
+        pub.zoom = winWidth/objects.icontainer.dataset.width;
+        bufferHeight = forced ? (winWidth/objects.icontainer.dataset.aspectRatio)+'px' : 'auto';
+        const zoomRatio = objects.icontainer.dataset.width / winWidth;
 
         bufferLeft = '0';
-        bufferTop = (window.innerHeight - (objects.icontainer.dataset.height / zoomRatio)) / 2+'px';
+        bufferTop = (winHeight - (objects.icontainer.dataset.height / zoomRatio)) / 2+'px';
 
         if (pub.isVideo && pub.scaled == 'true') {
           bufferTop = '0';
         }
       }
       else {
-        let aspectRatio = window.innerWidth / window.innerHeight;
-        let zoomRatio = objects.icontainer.dataset.height / window.innerHeight;
+        const zoomRatio = objects.icontainer.dataset.height / winHeight;
 
         bufferTop = '0';
-        bufferHeight = forced?window.innerHeight+'px':'100vh';
-        pub.zoom = window.innerHeight/objects.icontainer.dataset.height;
-        bufferWidth = forced?(window.innerHeight*objects.icontainer.dataset.aspectRatio)+'px':'auto';
+        bufferHeight = forced ? winHeight+'px' : '100vh';
+        pub.zoom = winHeight / objects.icontainer.dataset.height;
+        bufferWidth = forced ? (winHeight*objects.icontainer.dataset.aspectRatio)+'px' : 'auto';
 
-        bufferLeft = (window.innerWidth - (objects.icontainer.dataset.width / zoomRatio)) / 2+'px';
+        bufferLeft = (winWidth - (objects.icontainer.dataset.width / zoomRatio)) / 2+'px';
       }
       if (bufferWidth != objects.image.style.width || bufferHeight != objects.image.style.height ||
           bufferTop != objects.image.style.marginTop || bufferLeft != objects.image.style.marginLeft) {
@@ -967,7 +970,7 @@ color: #777;
     let de = document.documentElement;
     if (!width || width === undefined) {
       if (adc.comic) {
-        if (pub.wide) pub.zoom = window.innerWidth*(de.clientHeight>de.clientWidth?10:8)/10/objects.icontainer.dataset.width;
+        if (pub.wide) pub.zoom = unsafeWindow.innerWidth*(de.clientHeight>de.clientWidth?10:8)/10/objects.icontainer.dataset.width;
         objects.image.style.marginTop = '0';
       }
       else objects.image.style.marginTop = -(objects.icontainer.dataset.height - de.clientHeight)/2 + 'px';
@@ -975,7 +978,7 @@ color: #777;
     if (width || width === undefined) {
       if (adc.comic) {
         objects.image.style.marginLeft = '0';
-        if (!pub.wide) pub.zoom = window.innerHeight*(de.clientHeight<de.clientWidth?10:8)/10/objects.icontainer.dataset.height;
+        if (!pub.wide) pub.zoom = unsafeWindow.innerHeight*(de.clientHeight<de.clientWidth?10:8)/10/objects.icontainer.dataset.height;
       }
       else objects.image.style.marginLeft = -(objects.icontainer.dataset.width - de.clientWidth)/2 + 'px';
     }
@@ -1140,7 +1143,7 @@ color: #777;
     if (pub.scaled == 'false' || settings.singleMode) setMargin();
 
     if (objects.dcontainer) {
-      if ((pub.scaled == 'true' || (settings.singleMode && pub.defzoom >= pub.zoom)) && pub.mouseY/window.innerHeight >= (popUps.down.classList.contains('active')?0.3:0.85) && !popUps.back.classList.contains('active')) popUps.down.classList.add('active');
+      if ((pub.scaled == 'true' || (settings.singleMode && pub.defzoom >= pub.zoom)) && pub.mouseY/unsafeWindow.innerHeight >= (popUps.down.classList.contains('active')?0.3:0.85) && !popUps.back.classList.contains('active')) popUps.down.classList.add('active');
       else popUps.down.classList.remove('active');
     }
 
@@ -1158,7 +1161,7 @@ color: #777;
     }
 
     if (pub.scaled == 'true' || (settings.singleMode && pub.defzoom >= pub.zoom)) {
-      if ((pub.mouseY/window.innerHeight > 0.15 && pub.mouseY/window.innerHeight < 0.85) &&
+      if ((pub.mouseY/unsafeWindow.innerHeight > 0.15 && pub.mouseY/unsafeWindow.innerHeight < 0.85) &&
         !(popUps.down.classList.contains('active') || popUps.back.classList.contains('active')))  {
         pub.static++;
       }
@@ -1412,7 +1415,7 @@ color: #777;
   }
 
   function preenable() {
-    if (document.title.indexOf('This image has been deleted.') == 0) return;
+    if (document.title.indexOf('This image has been deleted.') == 0 || document.querySelector('#content>.walloftext>.block--warning')) return;
     append('general');
     if (settings.extended) {
       append('base');
@@ -1424,12 +1427,12 @@ color: #777;
   }
 
   function enable(notInital) {
-    if (document.title.indexOf('This image has been deleted.') == 0) return;
+    if (document.title.indexOf('This image has been deleted.') == 0 || document.querySelector('#content>.walloftext>.block--warning')) return;
     if (notInital) preenable();
     if (!started) init();
 
-    pub.mouseX = window.innerWidth/2;
-    pub.mouseY = window.innerHeight/2;
+    pub.mouseX = unsafeWindow.innerWidth/2;
+    pub.mouseY = unsafeWindow.innerHeight/2;
     if (state.hidden) pub.static = 100000;
     else pub.static = 0;
 
@@ -1523,15 +1526,19 @@ color: #777;
       const extension = JSON.parse(objects.icontainer.dataset.uris).full.split('.').pop();
       pub.isVideo = extension == 'webm';
       pub.gif = extension == 'gif';
-      pub.isSvg = document.querySelector('.image-size').innerText.split(' ')[1] == 'SVG';
+      pub.jpg = extension == 'jpg' || extension == 'jpeg';
+      pub.isSvg = !pub.gif && !pub.isVideo && !pub.jpg && document.querySelector('.image-size').innerText.split(' ')[1] == 'SVG';
       if ((pub.gif || pub.isVideo) && settings.singleMode) {
         let x = JSON.parse(objects.icontainer.dataset.uris);
         for (let i in x) {
           x[i] = x.full;
         }
-        objects.icontainer.dataset.uris = JSON.stringify(x);
-        objects.dcontainer.dataset.uris = JSON.stringify(x);
-        // я устал с этим скриптом бороться :(
+        const oldContent = objects.icontainer.dataset.uris;
+        const newContent = JSON.stringify(x);
+        objects.icontainer.dataset.uris = newContent;
+        objects.dcontainer.dataset.uris = oldContent;
+        objects.icontainer.dataset.uris = newContent;
+        // ебал я этот хром :(
       }
 
       if (pub.isSvg) {
@@ -1541,7 +1548,6 @@ color: #777;
           x[i] = full;
         }
         objects.icontainer.dataset.uris = JSON.stringify(x);
-        objects.dcontainer.dataset.uris = JSON.stringify(x);
         objects.image.src = full;
       }
     }
@@ -1549,7 +1555,7 @@ color: #777;
       popUps.down.classList.add('active');
     }
 
-    window.addEventListener('resize', resize);
+    unsafeWindow.addEventListener('resize', resize);
 
     if (location.hash.indexOf('#comment') == 0) showComms();
   }
@@ -1597,7 +1603,7 @@ color: #777;
     document.body.classList.remove('_fs');
     document.body.removeChild(popUps.back);
     document.body.removeChild(popUps.down);
-    window.removeEventListener('resize', resize);
+    unsafeWindow.removeEventListener('resize', resize);
 
     write();
   }
@@ -1631,12 +1637,11 @@ color: #777;
    },1000);
   });
 
-  if (state.colorApi == 3) {
+  if (state.colorApi < currentColorApi) {
     state.enabled = false;
-    state.colorApi = 4;
+    state.colorApi = currentColorApi;
     write();
   }
-
   if (settings.colorAccent) prePreColor();
   if ((parseInt(location.pathname.slice(1))>=0 && !location.pathname.split('/')[2]) || (location.pathname.split('/')[1] == 'images' && parseInt(location.pathname.split('/')[2])>=0 && !location.pathname.split('/')[3])) {
     if (state.enabled) {
