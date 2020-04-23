@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.30
+// @version      0.7.31
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -586,6 +586,7 @@ color: #777;
 }
 `;
 
+  const de = document.documentElement;
   let popUps = {};
   let objects = {};
   let pub = {};
@@ -593,7 +594,7 @@ color: #777;
   let settings, state;
   let colors = {};
   let started = false;
-    let dictionary = {};
+  let dictionary = {};
 
   let ponymarks = {
     bgs:{
@@ -958,7 +959,6 @@ color: #777;
   }
 
   function zeroZoom() {
-    let de = document.documentElement;
     pub.zoom = pub.defzoom;
     objects.image.style.height=objects.icontainer.dataset.height*pub.zoom+'px';
     objects.image.style.width=objects.icontainer.dataset.width*pub.zoom+'px';
@@ -967,8 +967,7 @@ color: #777;
   }
 
   function initalZoom(width) {
-    let de = document.documentElement;
-    if (!width || width === undefined) {
+    if (!width) {
       if (adc.comic) {
         if (pub.wide) pub.zoom = unsafeWindow.innerWidth*(de.clientHeight>de.clientWidth?10:8)/10/objects.icontainer.dataset.width;
         objects.image.style.marginTop = '0';
@@ -990,12 +989,12 @@ color: #777;
     }
     if (document.querySelector('#image-target.hidden')) return;
     if (!objects.image) return;
-    let de = document.documentElement;
     if (pub.zoom >   20) pub.zoom =   20;
     if (pub.zoom < 0.02) pub.zoom = 0.02;
     addScrolls();
-    let xScale = de.clientWidth/(objects.icontainer.dataset.width*pub.zoom), yScale = de.clientHeight/(objects.icontainer.dataset.height*pub.zoom);
 
+    let scrWidth = de.clientWidth, scrHeight = de.clientHeight;
+    let xScale = scrWidth/(objects.icontainer.dataset.width*pub.zoom), yScale = scrHeight/(objects.icontainer.dataset.height*pub.zoom);
 
     if (!settings.singleMode) {
       if (isNaN(parseInt(objects.image.style.marginTop))) {
@@ -1028,7 +1027,6 @@ color: #777;
     }
 
     if (pub.dta !== 0) {
-      let scrWidth = de.clientWidth,scrHeight = de.clientHeight;
       if (!isNaN(parseInt(bufferTop))) {
         if (bufferTop <= 0) {
           bufferTop = -(pub.zoom*objects.icontainer.dataset.height*(scrHeight/2-bufferTop)/(objects.icontainer.dataset.height*(pub.zoom-pub.dta))-scrHeight/2);
@@ -1042,44 +1040,44 @@ color: #777;
       pub.dta=0;
     }
 
-    if (objects.icontainer.dataset.height*pub.zoom < de.clientHeight) {
-      bufferTop = (de.clientHeight - objects.icontainer.dataset.height*pub.zoom) / 2;
+    if (objects.icontainer.dataset.height*pub.zoom < scrHeight) {
+      bufferTop = (scrHeight - objects.icontainer.dataset.height*pub.zoom) / 2;
       objects.scroll_rgt.style.display = 'none';
     }
     else {
       objects.scroll_rgt.style.display = 'block';
-      let vx = de.clientHeight*4/10;
+      let vx = scrHeight*4/10;
       if (pub.mouseY < vx) {
         let v = 1-pub.mouseY/vx;
         bufferTop = (isNaN(bufferTop)? 0 :bufferTop) + settings.scrollSpeed*v*6;
       }
-      if (pub.mouseY > de.clientHeight*6/10) {
-        let v = (pub.mouseY-de.clientHeight*6/10)/vx;
+      if (pub.mouseY > scrHeight*6/10) {
+        let v = (pub.mouseY-scrHeight*6/10)/vx;
         bufferTop = (isNaN(bufferTop)? 0 :bufferTop)-settings.scrollSpeed*v*6;
       }
 
       if (bufferTop>0) bufferTop = 0;
-      if (-bufferTop>=(objects.icontainer.dataset.height*pub.zoom-de.clientHeight)) bufferTop = -(objects.icontainer.dataset.height*pub.zoom-de.clientHeight)+1;
+      if (-bufferTop>=(objects.icontainer.dataset.height*pub.zoom-scrHeight)) bufferTop = -(objects.icontainer.dataset.height*pub.zoom-scrHeight)+1;
       if (singleDefSize) {
         bufferTop = 0;
         objects.scroll_rgt.style.display = 'none';
       }
     }
 
-    if (objects.icontainer.dataset.width*pub.zoom > de.clientWidth) {
+    if (objects.icontainer.dataset.width*pub.zoom > scrWidth) {
       objects.scroll_bot.style.display = 'block';
-      let vx = de.clientWidth*4/10;
+      let vx = scrWidth*4/10;
       if (pub.mouseX < vx) {
         let v = 1-pub.mouseX/vx;
         bufferLeft = (isNaN(bufferLeft)?0:bufferLeft)+settings.scrollSpeed*v*6;
       }
-      if (pub.mouseX > de.clientWidth*6/10) {
-        let v = (pub.mouseX-de.clientWidth*6/10)/vx;
+      if (pub.mouseX > scrWidth*6/10) {
+        let v = (pub.mouseX-scrWidth*6/10)/vx;
         bufferLeft = (isNaN(bufferLeft)?0:bufferLeft)-settings.scrollSpeed*v*6;
       }
 
       if (bufferLeft>0) bufferLeft = 0;
-      if (-bufferLeft>=(objects.icontainer.dataset.width*pub.zoom-de.clientWidth)) bufferLeft = -(objects.icontainer.dataset.width*pub.zoom-de.clientWidth)+1;
+      if (-bufferLeft>=(objects.icontainer.dataset.width*pub.zoom-scrWidth)) bufferLeft = -(objects.icontainer.dataset.width*pub.zoom-scrWidth)+1;
       if (singleDefSize) {
         bufferLeft = 0;
         objects.scroll_bot.style.display = 'none';
@@ -1087,11 +1085,13 @@ color: #777;
     }
     else
     {
-      bufferLeft = (de.clientWidth - objects.icontainer.dataset.width*pub.zoom) / 2;
+      bufferLeft = (scrWidth - objects.icontainer.dataset.width*pub.zoom) / 2;
       objects.scroll_bot.style.display = 'none';
     }
     objects.scroll_bot.style.left = -(isNaN(parseInt(bufferLeft))?0:parseInt(bufferLeft))*xScale+'px';
     objects.scroll_rgt.style.top = -(isNaN(parseInt(bufferTop))?0:parseInt(bufferTop))*yScale+'px';
+    objects.scroll_rgt.style.height = scrHeight*yScale+'px';
+    objects.scroll_bot.style.width = scrWidth*xScale+'px';
 
     bufferWidth = parseInt(bufferWidth) + 'px';
     bufferHeight = parseInt(bufferHeight) + 'px';
@@ -1110,9 +1110,8 @@ color: #777;
   function addScrolls() {
     if (pub.scaled != 'false' && !settings.singleMode) return;
     if (document.getElementById('_fs_scroll_bot')) return;
-    let de = document.documentElement;
-    let scrWidth = de.clientWidth, xScale = de.clientWidth/(objects.icontainer.dataset.width*pub.zoom);
-    let scrHeight = de.clientHeight, yScale = de.clientHeight/(objects.icontainer.dataset.height*pub.zoom);
+    let scrWidth = de.clientWidth, xScale = scrWidth/(objects.icontainer.dataset.width*pub.zoom);
+    let scrHeight = de.clientHeight, yScale = scrHeight/(objects.icontainer.dataset.height*pub.zoom);
 
     objects.scroll_bot = addElem('div', {id:'_fs_scroll_bot'}, document.body);
     objects.scroll_bot.style.width = scrWidth*xScale+'px';
