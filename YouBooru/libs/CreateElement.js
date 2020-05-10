@@ -1,4 +1,15 @@
 function createElement(tag, values, children) {
+    function isElement(obj) {
+        try {
+            return obj instanceof HTMLElement;
+        }
+        catch(e){
+            return (typeof obj==="object") &&
+                (obj.nodeType===1) && (typeof obj.style === "object") &&
+                (typeof obj.ownerDocument ==="object");
+        }
+    }
+
     var element;
     var i;
 
@@ -8,10 +19,15 @@ function createElement(tag, values, children) {
     if (typeof values == 'string') {
         values = {innerHTML:values};
     }
+    if (isElement(values)) {
+        children = [values];
+        values = {};
+    }
     if (typeof children == 'undefined' && Array.isArray(values)) {
         children = values;
         values = {};
     }
+    if (!Array.isArray(children)) children = [children];
 
     var classes = tag.split('.');
     tag = classes.shift();
@@ -65,7 +81,7 @@ function createElement(tag, values, children) {
         for (i = 0; i < children.length; i++) {
             var c = children[i];
             if (c === undefined || c === null) continue;
-            if (typeof c !== 'object' || c.nodeType !== Node.ELEMENT_NODE) {
+            if (typeof c !== 'object' || !isElement(c)) {
                 if (textCollection === null) {
                     textCollection = c.toString();
                 } else {
