@@ -16,8 +16,8 @@ function createElement(tag, values, children) {
     if (typeof values == 'undefined') {
         values = {};
     }
-    if (typeof values == 'string') {
-        values = {innerHTML:values};
+    if (typeof values == 'string' || typeof values == 'number' || typeof values == 'boolean') {
+        values = {innerHTML:values.toString()};
     }
     if (isElement(values)) {
         children = [values];
