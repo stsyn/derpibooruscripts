@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.8.13
+// @version      0.8.14
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -135,6 +135,8 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         {type:'checkbox', name:'Reset', parameter:'reset'},
         {type:'checkbox', name:'Force hiding (Ignorantia non est argumentum!)', parameter:'force'},
         {type:'header', name:'UI'},
+        {type:'checkbox', name:'Open tag dropdown only by RMB', parameter:'rmbTags'},
+        {type:'breakline'},
         {type:'checkbox', name:'Bigger search fields', parameter:'patchSearch'},
         {type:'breakline'},
         {type:'checkbox', name:'Deactive downvote if upvoted (and reverse)', parameter:'deactivateButtons'},
@@ -2600,17 +2602,17 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       location.reload();
     };
 
-    let generateLine = function(user, group) {
-      if (user == undefined) return InfernoAddElem('tr',{},[
-        InfernoAddElem('td',{style:{width:'48px'}}),
-        InfernoAddElem('td','[USER NOT FOUND]'),
-        InfernoAddElem('td'),
-        InfernoAddElem('td'),
-        InfernoAddElem('td'),
-        InfernoAddElem('td',[
-          InfernoAddElem('a',{className:'interaction--downvote', href:'javascript://', events:{'click':() => removeUser(user)}},[
-            InfernoAddElem('i',{className:'fa fa-trash-alt'}),
-            InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Remove'})
+    function generateLine(user, group) {
+      if (user == undefined) return createElement('tr', [
+        createElement('td', {style:{width:'48px'}}),
+        createElement('td', '[USER NOT FOUND]'),
+        createElement('td'),
+        createElement('td'),
+        createElement('td'),
+        createElement('td',[
+          createElement('a.interaction--downvote',{href:'javascript://', events:{'click':() => removeUser(user)}},[
+            createElement('i.fa.fa-trash-alt'),
+            createElement('span.hide-mobile', ' Remove')
           ])
         ])
       ]);
@@ -2618,58 +2620,55 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         addUserPending(user);
         getUserName(user.id, function(e) {user.name = e; UAwrite();});
       }
-      let groups = [];
-      for (let i in userbase_local.groups) {
-        if (i != 'All') groups.push(InfernoAddElem('option', {value:i, innerHTML:i}));
-      }
-      return InfernoAddElem('tr',{dataset:{username:user.name}},[
-        InfernoAddElem('td',{style:{width:'48px'}},[
-          InfernoAddElem('img',{width:48,height:48, src:user.avatar})
+      const groups = Object.keys(userbase_local.groups).filter(i => i !== 'All').map(i => createElement('option', {value:i, innerHTML:i}));
+      return createElement('tr',{dataset:{username:user.name}},[
+        createElement('td',{style:{width:'48px'}},[
+          createElement('img',{width:48,height:48, src:user.avatar})
         ]),
-        InfernoAddElem('td',[
-          InfernoAddElem('a',{href:'/profiles/'+nameEncode(user.name)},[
-            InfernoAddElem('span',user.name)
+        createElement('td',[
+          createElement('a',{href:'/profiles/'+nameEncode(user.name)},[
+            createElement('span',user.name)
           ])
         ]),
-        InfernoAddElem('td',userbase_local.scratchpad[user.id]==undefined?'':userbase_local.scratchpad[user.id].split('\n')[0].substring(0, 100)),
-        InfernoAddElem('td', {style:{width:'9em'}}, [
-          InfernoAddElem('a',{href:'/conversations/new?recipient='+nameEncode(user.name)},[
-            InfernoAddElem('i',{className:'fa fa-envelope'}),
-            InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Send message'})
+        createElement('td',userbase_local.scratchpad[user.id]==undefined?'':userbase_local.scratchpad[user.id].split('\n')[0].substring(0, 100)),
+        createElement('td', {style:{width:'9em'}}, [
+          createElement('a',{href:'/conversations/new?recipient='+nameEncode(user.name)},[
+            createElement('i.fa.fa-envelope'),
+            createElement('span.hide-mobile', ' Send message')
           ])
         ]),
-        InfernoAddElem('td', {style:{width:'8em'}}, [
-          InfernoAddElem('a',{href:'/conversations?with='+user.id},[
-            InfernoAddElem('i',{className:'fa fa-clock'}),
-            InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Chat history'})
+        createElement('td', {style:{width:'8em'}}, [
+          createElement('a',{href:'/conversations?with='+user.id},[
+            createElement('i.fa.fa-clock'),
+            createElement('span.hide-mobile', ' Chat history')
           ])
         ]),
         (group!='All'?
-          InfernoAddElem('td', {style:{width:'6em'}}, [
-            InfernoAddElem('a',{className:'interaction--downvote', href:'javascript://', events:{'click':() => {removeUserFromGroup(group, user.id);prepare(group)}}},[
-              InfernoAddElem('i',{className:'fa fa-times'}),
-              InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Remove from group'},[])
+          createElement('td', {style:{width:'6em'}}, [
+            createElement('a.interaction--downvote',{href:'javascript://', events:{'click':() => {removeUserFromGroup(group, user.id);prepare(group)}}},[
+              createElement('i.fa.fa-times'),
+              createElement('span.hide-mobile', ' Remove from group')
             ])
           ]):
-          InfernoAddElem('td', {style:{width:'6em'}}, [
-            InfernoAddElem('a',{href:'javascript://', events:{'click':function () {let gr = this.nextSibling.value; addUserInGroup(gr, user.id); prepare(gr)}}},[
-              InfernoAddElem('span',{innerHTML:'Add in '},[])
+          createElement('td', {style:{width:'6em'}}, [
+            createElement('a',{href:'javascript://', events:{'click':() => {let gr = this.nextSibling.value; addUserInGroup(gr, user.id); prepare(gr)}}},[
+              createElement('span', 'Add in ')
             ]),
-            InfernoAddElem('select', {className:'input'},groups)
+            createElement('select.input', groups)
           ])),
-        InfernoAddElem('td', {style:{width:'6em'}}, [
-          InfernoAddElem('a',{className:'interaction--downvote', href:'javascript://', events:{'click':() => {removeUser(user);YDB_contacts();}}},[
-            InfernoAddElem('i',{className:'fa fa-trash-alt'}),
-            InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Remove'},[])
+        createElement('td', {style:{width:'6em'}}, [
+          createElement('a.interaction--downvote',{href:'javascript://', events:{'click':() => {removeUser(user);YDB_contacts();}}},[
+            createElement('i.fa.fa-trash-alt'),
+            createElement('span.hide-mobile', ' Remove')
           ])
         ])
       ]);
     };
 
-    let render = function (users, group) {
+    function render(users, group) {
       let x = [];
       let xcontainer = document.getElementById('group_container_'+group);
-      if (!xcontainer) cont.appendChild(xcontainer = InfernoAddElem('div', {id:'group_container_'+group}));
+      if (!xcontainer) cont.appendChild(xcontainer = createElement('div', {id:'group_container_'+group}));
       xcontainer.innerHTML = '';
 
       for (let i=0; i<users.length; i++) {
@@ -2682,17 +2681,17 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       }
 
       if (userbase_local.friendlist.length == 0) {
-        x.push(InfernoAddElem('tr',[InfernoAddElem('td','Your contact list is empty.')]));
-        x.push(InfernoAddElem('tr',[InfernoAddElem('img',{src:'https://derpicdn.net/img/2013/4/2/285856/medium.png'})]));
+        x.push(createElement('tr',[createElement('td','Your contact list is empty.')]));
+        x.push(createElement('tr',[createElement('img',{src:'https://derpicdn.net/img/2013/4/2/285856/medium.png'})]));
       }
-      xcontainer.appendChild(InfernoAddElem('div', [
-        (group != 'All' && group != 'Artists' && group != 'Friends'?InfernoAddElem('a',{className:'interaction--downvote', style:{float:'right'}, href:'javascript://', events:{'click':() => {removeGroup(group); YDB_contacts()}}},[
-          InfernoAddElem('i',{className:'fa fa-times'}),
-          InfernoAddElem('span',{className:'hide-mobile',innerHTML:' Remove group'},[])
-        ]):InfernoAddElem('span')),
-        (group != 'All' && group != 'Artists' && group != 'Friends'?InfernoAddElem('form', {style:{display:'inline', float:'right', marginRight:'2em'}}, [
-          InfernoAddElem('input',{className:'input',type:'text'}),
-          InfernoAddElem('input',{className:'button',type:'submit', value:'Rename', events:{'click':function(e) {
+      xcontainer.appendChild(createElement('div', [
+        (group != 'All' && group != 'Artists' && group != 'Friends'?createElement('a.interaction--downvote',{style:{float:'right'}, href:'javascript://', events:{'click':() => {removeGroup(group); YDB_contacts()}}},[
+          createElement('i.fa.fa-times'),
+          createElement('span.hide-mobile', ' Remove group')
+        ]) : createElement('span')),
+        (group != 'All' && group != 'Artists' && group != 'Friends'?createElement('form', {style:{display:'inline', float:'right', marginRight:'2em'}}, [
+          createElement('input.input',{type:'text'}),
+          createElement('input.button',{type:'submit', value:'Rename', events:{'click':e => {
             e.preventDefault();
             let gr = this.previousSibling.value;
             let err = renameGroup(group, gr);
@@ -2702,50 +2701,45 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
               prepare(gr);
             }
           }}})
-        ]):InfernoAddElem('span')),
-        InfernoAddElem('input', {className:'toggle-box', id:'group_'+group, type:'checkbox', checked:group != 'All'}),
-        InfernoAddElem('label', {for:'group_'+group, style:{marginBottom:'0.5em'},  innerHTML:group}),
-        InfernoAddElem('div', {className:'toggle-box-container'}, [
-          InfernoAddElem('table', {className:'table'},[
-            InfernoAddElem('tbody',x)
+        ]):createElement('span')),
+        createElement('input.toggle-box', {id:'group_'+group, type:'checkbox', checked:group != 'All'}),
+        createElement('label', {for:'group_'+group, style:{marginBottom:'0.5em'}}, group),
+        createElement('div.toggle-box-container', [
+          createElement('table.table', [
+            createElement('tbody', x)
           ])
         ]),
-        InfernoAddElem('hr')
+        createElement('hr')
       ]));
     };
 
-    let cont = addElem('div',{}, c);
-    cont.innerHTML = '';
-    cont.appendChild(InfernoAddElem('form', [
-      InfernoAddElem('input',{className:'input',type:'text'}),
-      InfernoAddElem('input',{className:'button',type:'submit', value:'Create new group', events:{'click':function(e) {
-        e.preventDefault();
-        let gr = this.previousSibling.value;
-        let err = addGroup(gr);
-        if (!err) alert('This group already exists!');
-        else YDB_contacts();
-      }}}),
-      InfernoAddElem('hr')
-    ]));
+    let cont = createElement('div', [
+      createElement('form', [
+        createElement('input.input',{type:'text'}),
+        createElement('input.button',{type:'submit', value:'Create new group', events:{'click': e => {
+          e.preventDefault();
+          const gr = this.previousSibling.value;
+          const err = addGroup(gr);
+          if (!err) alert('This group already exists!');
+          else YDB_contacts();
+        }}}),
+        createElement('hr')
+      ])
+    ]);
 
-    let prepare = group => {
-      let u = userbase_local.groups[group] || userbase_local.friendlist;
-      let users = [];
+    c.appendChild(cont);
 
-      for (let i=0; i<u.length; i++) {
-        let user = userbase.users[u[i]];
-        users.push(user);
-      }
+    function prepare(group) {
+      const u = userbase_local.groups[group] || userbase_local.friendlist;
+      const users = u.map(i => userbase.users[i]);
 
-      users.sort(function(a,b) {return a.name.toLowerCase()<b.name.toLowerCase()?-1:(a.name.toLowerCase()>b.name.toLowerCase()?1:0);});
+      users.sort((a,b) => a.name.toLowerCase()<b.name.toLowerCase()?-1:(a.name.toLowerCase()>b.name.toLowerCase()?1:0));
 
       render(users, group)
     };
 
-    let grs = [];
-    for (let gr in userbase_local.groups) grs.push(gr);
-
-    grs.sort((a, b) => {
+    Object.keys(userbase_local.groups)
+    .sort((a, b) => {
       if (a.startsWith('!')) return -1;
       if (b.startsWith('!')) return 1;
       if (a == 'Friends') return -1;
@@ -2755,10 +2749,9 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       if (a<b) return -1;
       if (b<a) return 1;
       return 0;
-    });
-
-    grs.forEach(gr => {
-      userbase_local.groups[gr] = userbase_local.groups[gr].map(v => {return parseInt(v)});
+    })
+    .forEach(gr => {
+      userbase_local.groups[gr] = userbase_local.groups[gr].map(v => parseInt(v));
       prepare(gr);
     });
 
@@ -2771,78 +2764,77 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     let c = document.querySelector('#content .walloftext');
     c.innerHTML = '';
 
-    let generateLine = function(user) {
+    function generateLine(user) {
       let date;
       if (user && user.updated) {
         date = new Date(parseInt(user.updated)*1000);
       }
       if (user == undefined)
-        return InfernoAddElem('tr',[
-          InfernoAddElem('td',[
-            InfernoAddElem('a',{innerHTML:'Name', events:{'click':() => {sortby='name';render();} }},[])
+        return createElement('tr',[
+          createElement('td',[
+            createElement('a',{events:{'click':() => {sortby='name';render();} }}, 'Name')
           ]),
-          InfernoAddElem('td',[
-            InfernoAddElem('a',{innerHTML:'ID', events:{'click':() => {sortby='id';render();} }},[])
+          createElement('td',[
+            createElement('a',{events:{'click':() => {sortby='id';render();} }}, 'ID')
           ]),
-          InfernoAddElem('td',[
-            InfernoAddElem('a',{innerHTML:'Updated', events:{'click':() => {sortby='updated';render();} }},[])
+          createElement('td',[
+            createElement('a',{events:{'click':() => {sortby='updated';render();} }}, 'Updated')
           ]),
-          InfernoAddElem('td',[
-            InfernoAddElem('a',{innerHTML:'[Auto]', events:{'click':() => {sortby='auto';render();} }},[])
+          createElement('td',[
+            createElement('a',{events:{'click':() => {sortby='auto';render();} }}, '[Auto]')
           ]),
-          InfernoAddElem('td'),
-          InfernoAddElem('td'),
-          InfernoAddElem('td'),
-          InfernoAddElem('td')
+          createElement('td'),
+          createElement('td'),
+          createElement('td'),
+          createElement('td')
         ]);
       if (typeof user.id == 'string') user.id = parseInt(user.id);
-      return InfernoAddElem('tr', [
-        InfernoAddElem('td',[
-          InfernoAddElem('a',{href:'/profiles/'+nameEncode(user.name), innerHTML:user.name})
+      return createElement('tr', [
+        createElement('td',[
+          createElement('a',{href: '/profiles/'+nameEncode(user.name)}, user.name)
         ]),
-        InfernoAddElem('td',[
-          InfernoAddElem('span',user.id)
+        createElement('td',[
+          createElement('span', user.id)
         ]),
-        InfernoAddElem('td',[
-          date?InfernoAddElem('time',{style:{whiteSpace:'nowrap'},datetime:date, innerHTML:writeDate(date)}):InfernoAddElem('span')
+        createElement('td',[
+          date?createElement('time',{style: {whiteSpace:'nowrap'}, datetime:date}, writeDate(date)) : createElement('span')
         ]),
-        InfernoAddElem('td',[
-          InfernoAddElem('span',user.aliases.join(', '))
+        createElement('td',[
+          createElement('span', user.aliases.join(', '))
         ]),
-        InfernoAddElem('td',[
-          InfernoAddElem('span',user.tags.join(', '))
+        createElement('td',[
+          createElement('span', user.tags.join(', '))
         ]),
-        InfernoAddElem('td',[
-          InfernoAddElem('span',user.awards?'Badges: '+user.awards.length:'')
+        createElement('td',[
+          createElement('span', user.awards ? 'Badges: '+user.awards.length : '')
         ]),
-        InfernoAddElem('td',[
-          InfernoAddElem('span',{style:{whiteSpace:'nowrap'}, innerHTML:(user.commState?user.commState:' ')})
+        createElement('td',[
+          createElement('span',{style:{whiteSpace:'nowrap'}}, (user.commState?user.commState:' '))
         ]),
-        InfernoAddElem('td',[
-          InfernoAddElem('a',{innerHTML:'Update', events:{'click':() => updateUser(user, () => render())}})
+        createElement('td',[
+          createElement('a',{events:{'click':() => updateUser(user, () => render())}}, 'Update')
         ])
       ]);
     };
 
-    let render = function() {
+    function render() {
       let reverse = {updated:true}
-      if (sortby != 'auto') tusers.sort(function (a,b) {
+      if (sortby != 'auto') tusers.sort((a,b) => {
         if (a[sortby] == undefined && b[sortby] == undefined) return 0;
         if (a[sortby] == undefined) return 1;
         if (b[sortby] == undefined) return -1;
         if (a[sortby] > b[sortby]) {
-          if (reverse[sortby]) return -1; else return 1;
+          if (reverse[sortby]) return -1;
+          return 1;
         }
         if (a[sortby] < b[sortby]) {
-          if (reverse[sortby]) return 1; else return -1;
+          if (reverse[sortby]) return 1;
+          return -1;
         }
         return 0;
       });
       else {
-        tusers = [];
-        for (let i in userbase.users) {
-          tusers.push(userbase.users[i]);
-        }
+        tusers = Object.values(userbase.users);
       }
 
       container.innerHTML = '';
@@ -2854,43 +2846,79 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       temp.date = new Date(userbaseTS.ttu + Date.now());
       temp.lastDate = new Date(userbaseTS.lastRun);
 
-      if (userbaseTS.ttu<0) temp.dateDiv = InfernoAddElem('span', 'Just now');
-      else temp.dateDiv = InfernoAddElem('time', {datetime:temp.date, innerHTML:writeDate(temp.date)});
-      temp.lastDateDiv = InfernoAddElem('time', {datetime:temp.lastDate, innerHTML:writeDate(temp.lastDate)});
+      if (userbaseTS.ttu < 0) temp.dateDiv = createElement('span', 'Just now');
+      else temp.dateDiv = createElement('time', {datetime:temp.date}, writeDate(temp.date));
+      temp.lastDateDiv = createElement('time', {datetime:temp.lastDate}, writeDate(temp.lastDate));
 
       container.appendChild(
-        InfernoAddElem('table', {className:'table'}, [
-          InfernoAddElem('tbody', [
-            InfernoAddElem('tr', [
-              InfernoAddElem('td', 'Last update'),
-              InfernoAddElem('td', [temp.lastDateDiv])
+        createElement('table.table', [
+          createElement('tbody', [
+            createElement('tr', [
+              createElement('td', 'Last update'),
+              createElement('td', temp.lastDateDiv)
             ]),
-            InfernoAddElem('tr', [
-              InfernoAddElem('td', 'Next update'),
-              InfernoAddElem('td', [temp.dateDiv])
+            createElement('tr', [
+              createElement('td', 'Next update'),
+              createElement('td', temp.dateDiv)
             ]),
-            InfernoAddElem('tr', [
-              InfernoAddElem('td', 'Pending'),
-              InfernoAddElem('td', temp.userNames.join(', '))
+            createElement('tr', [
+              createElement('td', 'Pending'),
+              createElement('td', temp.userNames.join(', '))
             ])
           ])
         ])
       );
-      container.appendChild(InfernoAddElem('br'));
-      container.appendChild(InfernoAddElem('table', {className:'table'}, [
-        InfernoAddElem('thead', [generateLine()]),
-        container2 = InfernoAddElem('tbody')
+      container.appendChild(createElement('br'));
+      container.appendChild(createElement('table.table', [
+        createElement('thead', generateLine()),
+        createElement('tbody', tusers.map(user => generateLine(user)))
         ])
       );
-      for (let i=0; i<tusers.length; i++)
-        container2.appendChild(generateLine(tusers[i]));
     };
 
     let tusers = [];
     let sortby = 'auto';
-    let container = ChildsAddElem('div',{id:'_ydb_userlist',className:'block',style:{width:'100%'}}, c, []);
+    const container = createElement('div#_ydb_userlist.block', {style: {width:'100%'}});
+    c.appendChild(container);
     render();
+  }
 
+  /*
+    Removes tag hover dropdown, use right mouse button instead
+  */
+  function rmbTags() {
+    let activeMenu;
+    function hide() {
+      if (activeMenu) {
+        activeMenu.style.display = 'none';
+        activeMenu = null;
+      }
+    }
+
+    function show(item, x, y) {
+      hide();
+      activeMenu = item;
+      activeMenu.style.display = 'block';
+    }
+
+    window.oncontextmenu = (event) => {
+      let target = event.target;
+      while (target.tagName !== 'BODY') {
+        target = target.parentNode;
+        if (target.classList.contains('tag') && target.classList.contains('tag')) {
+          const dropdown = target.querySelector('.dropdown__content');
+          if (dropdown !== activeMenu) {
+            show(dropdown);
+            event.preventDefault();
+          }
+          return false;
+        }
+      }
+      return false;
+    }
+
+    window.onclick = hide;
+    GM_addStyle('.tag.dropdown>.dropdown__content {display: none; min-width: 100%; z-index: 999}');
   }
 
   function YDB_TestSpoiler() {
@@ -2961,7 +2989,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     for (let i=0; i<y.length; i++) y[i] = y[i].trim();
     c.appendChild(InfernoAddElem('span',{innerHTML:y.length+' tags detected.<br>'},[]));
 
-    let parse = function (request) {
+    const parse = function (request) {
       try {
         t.innerHTML = request.responseText;
         y[request.id] = t.getElementsByClassName('tag')[0].dataset.tagName;
@@ -3079,6 +3107,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   try {appendCustomNav();} catch(e) {error('appendCustomNav', e)};
   try {highlightFaves();} catch(e) {error('highlightFaves', e)};
   try {smallSpoilers();} catch(e) {error('smallerSpoilers', e)};
+  if (ls.rmbTags) rmbTags();
   if (location.pathname == "/pages/api") {
     YDB();
   }
