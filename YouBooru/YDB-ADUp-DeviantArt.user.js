@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.2.7
+// @version      0.2.8
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
@@ -23,7 +23,7 @@
   function spawn(link, text) {
     let target, target2, target3;
     if (eclipse) {
-      target = document.querySelector('._3fcE7._15yPL.fXGZA.WikyH');
+      target = document.querySelector('._3fcE7._15yPL.fXGZA');
       target2 = target.querySelector('._ydb_adup') || document.createElement('div');
       target2.className = 'JQhXs _ydb_adup';
       target.insertBefore(target2, target.children[0]);
@@ -142,7 +142,7 @@
       spawn(dlink, "leak");
     }
 
-    if (document.querySelector('.dev-description .text.block') != undefined) text = '[bq]'+document.querySelector('.dev-description .text.block').innerText+'[/bq]';
+    if (document.querySelector('.dev-description .text.block')) text = '[bq]'+document.querySelector('.dev-description .text.block').innerText+'[/bq]';
 
   }
 
@@ -161,7 +161,7 @@
     else if (document.querySelector('.dev-meta-actions:not(.patched)')) {
       l = window.location.pathname;
       DA(i);
-    } else if (document.querySelector('._3fcE7._15yPL.fXGZA.WikyH:not(.patched)')) {
+    } else if (document.querySelector('._3fcE7._15yPL.fXGZA:not(.patched)')) {
       eclipse = true;
       l = window.location.pathname;
       DA(i);
