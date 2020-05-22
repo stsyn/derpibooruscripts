@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          YDB:ADUp
-// @version       0.4.4
+// @version       0.4.5
 // @author        stsyn
 
 // @match         *://*/*
@@ -382,7 +382,7 @@
     }
     if (tagData.name == '') return createElement('span');
     return createElement('span.tag', {dataset:{tagCategory:category}},[
-      tagData.name+' ',
+      createElement('span', tagData.name+' '),
       createElement('a', {style:{display:'none'}, dataset:{tagName: tagData.name, clickAddtag: addable ? tagData.name : null}})
     ]);
   }
