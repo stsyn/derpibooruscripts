@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.8.14
+// @version      0.8.15
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1121,21 +1121,18 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     let checked=0;
 
     if (!isThisImage()) return;
-    let initHighlight = function() {
+    function initHighlight() {
       editArtistMetainfo();
       artists.forEach(artist => {
-        for (let i=0; i<document.querySelectorAll('.image_uploader a').length; i++) {
-          let a = document.querySelectorAll('.image_uploader a')[i];
-          if (a.classList.contains('_ydb_dontCheck')) continue;
-          if (a.innerText == artist.name)
-          a.classList.add(artist.editor?'_ydb_orange':'_ydb_green');
-        }
+        Array.from(document.querySelectorAll('.image_uploader a'))
+          .filter(item => !item.classList.contains('_ydb_dontCheck') && item.innerText == artist.name)
+          .forEach(item => item.classList.add(artist.editor?'_ydb_orange':'_ydb_green'));
       });
     }
 
-    let get = function(el) {
+    function get(el) {
       let dt = parseInt(Date.now()/1000);
-      if (userbase.artists[el.innerHTML] != undefined && (userbase.users[userbase.artists[el.innerHTML]].updated > parseInt(Date.now()/1000)-60*60*24*28)) {
+      if (userbase.artists[el.innerHTML] && (userbase.users[userbase.artists[el.innerHTML]].updated > parseInt(Date.now()/1000)-60*60*24*28)) {
         let n = userbase.users[userbase.artists[el.innerHTML]].name;
         let ax = {
           name:n,
@@ -1143,7 +1140,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
           tag:el.innerHTML,
           commState:userbase.users[userbase.artists[el.innerHTML]].commState,
           awards:userbase.users[userbase.artists[el.innerHTML]].awards,
-          count:parseInt(el.parentNode.querySelector('.tag__count').innerHTML.replace('(', ''))
+          count:parseInt(el.closest('.tag').querySelector('.tag__count').innerHTML.replace('(', ''))
         };
         artists.push(ax);
         initHighlight(ax);
@@ -1154,8 +1151,8 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         checked++;
 
         fetchJson('GET', el.href)
-        .then(resp => resp.text())
-        .then(rtxt => {
+          .then(resp => resp.text())
+          .then(rtxt => {
           const r = {
             el,
             u: (userbase.artists[el.innerHTML] != undefined),
@@ -1163,87 +1160,82 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
           };
           const x = createElement('div', r.text);
           const exit = (() => { });
-          for (let i=0; i<x.querySelectorAll('.tag-info__more strong').length; i++) {
-            const acx = x.querySelectorAll('.tag-info__more strong')[i];
-            if (acx.innerHTML == 'Associated users:') {
-              let n = acx.nextSibling.nextSibling;
-              // added already
-              if (artists.indexOf(n.innerHTML) > -1) {
-                exit();
-                return;
-              }
+          Array.from(x.querySelectorAll('.tag-info__more strong'))
+            .filter(item => item.innerHTML == 'Associated users:')
+            .forEach(item => {
+            let n = item.nextSibling.nextSibling;
+            // added already
+            if (artists.indexOf(n.innerHTML) > -1) {
+              exit();
+              return;
+            }
 
-              let ax = {
-                name: n.innerHTML,
+            let ax = {
+              name: n.innerHTML,
+              isEditor: r.el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'),
+              tag: r.el.innerHTML,
+              count: parseInt(r.el.closest('.tag').querySelector('.tag__count').innerHTML)
+            };
+            artists.push(ax);
+            initHighlight(ax);
+            highlightArtist(document, ax);
+            if (getUser(n.innerHTML).id == 0) {
+              addUserInBase(n.innerHTML, undefined, {tags:[r.el.innerHTML]})
+            }
+            else {
+              let user = getUser(n.innerHTML);
+              addUserInBase(user.name, user.id, {tags:[r.el.innerHTML]})
+            }
+
+            //more than one user
+            while (n.nextSibling && n.nextSibling.nextSibling && n.nextSibling.nextSibling.tagName == 'A') {
+              n = n.nextSibling.nextSibling;
+              artists.push(ax = {
+                name :n.innerHTML,
                 isEditor: r.el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'),
                 tag: r.el.innerHTML,
-                count: parseInt(r.el.parentNode.querySelector('.tag__count').innerHTML.substring(1))
-              };
-              artists.push(ax);
+                count: parseInt(r.el.parentNode.querySelector('.tag__count').innerHTML)
+              });
               initHighlight(ax);
               highlightArtist(document, ax);
               if (getUser(n.innerHTML).id == 0) {
                 addUserInBase(n.innerHTML, undefined, {tags:[r.el.innerHTML]})
               }
               else {
-                let user = getUser(n.innerHTML);
+                const user = getUser(n.innerHTML);
                 addUserInBase(user.name, user.id, {tags:[r.el.innerHTML]})
               }
-
-              //more than one user
-              while (n.nextSibling != undefined && n.nextSibling.nextSibling != undefined && n.nextSibling.nextSibling.tagName == 'A') {
-                n = n.nextSibling.nextSibling;
-                artists.push(ax = {
-                  name :n.innerHTML,
-                  isEditor: r.el.innerHTML.startsWith('editor:') || r.el.innerHTML.startsWith('colorist:'),
-                  tag: r.el.innerHTML,
-                  count: parseInt(r.el.parentNode.querySelector('.tag__count').innerHTML.substring(1))
-                });
-                initHighlight(ax);
-                highlightArtist(document, ax);
-                if (getUser(n.innerHTML).id == 0) {
-                  addUserInBase(n.innerHTML, undefined, {tags:[r.el.innerHTML]})
-                }
-                else {
-                  const user = getUser(n.innerHTML);
-                  addUserInBase(user.name, user.id, {tags:[r.el.innerHTML]})
-                }
-              };
-              break;
-            }
-          }
+            };
+          })
           exit();
         });
       }
     };
 
-    for (let i=0; i<document.querySelectorAll('.tag.dropdown[data-tag-category="origin"] .tag__name').length; i++) {
-      let el = document.querySelectorAll('.tag.dropdown[data-tag-category="origin"] .tag__name')[i];
-      if (!(el.innerHTML.startsWith('artist:') || el.innerHTML.startsWith('editor:') || el.innerHTML.startsWith('photographer:') || el.innerHTML.startsWith('colorist:'))) continue;
-      get(el);
-    }
+    Array.from(document.querySelectorAll('.tag.dropdown[data-tag-category="origin"] .tag__name'))
+      .filter(el => el.innerHTML.startsWith('artist:') || el.innerHTML.startsWith('editor:') || el.innerHTML.startsWith('photographer:') || el.innerHTML.startsWith('colorist:'))
+      .forEach(get);
   }
 
   function highlightArtist(e, artist) {
-    let highlight = function(e,n, editor) {
-      for (let i=0; i<e.getElementsByClassName('communication__body').length; i++) {
-        let el = e.getElementsByClassName('communication__body')[i];
-        if (el.querySelector('.communication__body__sender-name a') != undefined && el.querySelector('.communication__body__sender-name a').innerHTML == n) {
-          el.querySelector('.communication__body__sender-name a').classList.add(editor?'flash--warning':'flash--success');
-        }
-      }
+    function highlight(e,n, editor) {
+      Array.from(e.getElementsByClassName('communication__body'))
+        .map(el => el.querySelector('.communication__body__sender-name a'))
+        .filter(el => el && el.innerHTML == n)
+        .forEach(el => el.classList.add(editor?'flash--warning':'flash--success'));
     };
-    if (artist) highlight(e, artist.name, artist.editor);
-    else {
-      for (let i=0; i<artists.length; i++) highlight(e, artists[i].name, artists[i].isEditor);
+    if (artist) {
+      highlight(e, artist.name, artist.editor);
+    } else {
+      artists.forEach(artist => highlight(e, artist.name, artist.isEditor))
     }
   }
 
   function editArtistMetainfo() {
     let commLink = (r) => {
-      if (r.commState == 'none' || r.commState == undefined) return InfernoAddElem('span', {}, []);
-      return InfernoAddElem('span', {className:'commissions'}, [
-        InfernoAddElem('a', {href:'/commissions/'+nameEncode(r.name), style:{color:(r.commState=='open'?'green':'')}, innerHTML:(r.commState=='open'?'(commissions open)':'(commissions list)')}, [])
+      if (r.commState == 'none' || r.commState) return createElement('span');
+      return createElement('span.commissions', [
+        createElement('a', {href:'/commissions/'+nameEncode(r.name), style:{color:(r.commState=='open'?'green':'')}}, (r.commState=='open'?'(commissions open)':'(commissions list)'))
       ])
     }
 
@@ -1258,10 +1250,10 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         v.firstChild.nodeValue = 'Created and uploaded ';
       } else {
         v.firstChild.nodeValue = 'Uploaded ';
-        artists.sort((a,b) => {return b.count - a.count;});
+        artists.sort((a,b) => b.count - a.count);
         let container = v.querySelector('._ydb_who_did_this');
         if (!container) {
-          v.insertBefore(container = InfernoAddElem('div', {className:'_ydb_who_did_this'}), v.firstChild);
+          v.insertBefore(container = createElement('div._ydb_who_did_this'), v.firstChild);
         }
         container.innerHTML = 'Created by ';
 
@@ -1273,29 +1265,29 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
               let bx = badges;
               if (j>=7) bx = bd;
               let aw = artist.awards[j];
-              bx.push(InfernoAddElem('div', {className:'badge'}, [
-                InfernoAddElem('img', {src:aw.image_url, alt:aw.title+' — '+aw.label, width:18, height:18}, [])
+              bx.push(createElement('div.badge', [
+                createElement('img', {src:aw.image_url, alt:aw.title+' — '+aw.label, width:18, height:18})
               ]));
             }
             if (artist.awards.length>7) {
-              badges.push(InfernoAddElem('div',{className:'dropdown'},[
-                InfernoAddElem('i',{className:'fa fa-caret-down'},[]),
-                InfernoAddElem('div',{className:'dropdown__content block__header'},[
-                  InfernoAddElem('div',{className:'badges flex--column'},bd)
+              badges.push(createElement('div.dropdown',[
+                createElement('i.fa.fa-caret-down'),
+                createElement('div.dropdown__content.block__header', [
+                  createElement('div.badges.flex--column', bd)
                 ])
               ]))
             };
           }
-          container.appendChild(InfernoAddElem('span',{className:'image_uploader'},[
-            InfernoAddElem('a',{className:'_ydb_dontCheck', href:'/profiles/'+nameEncode(artist.name)}, [
-              InfernoAddElem('strong', artist.name)
+          container.appendChild(createElement('span.image_uploader',[
+            createElement('a._ydb_dontCheck',{href:'/profiles/'+nameEncode(artist.name)}, [
+              createElement('strong', artist.name)
             ]),
-            InfernoAddElem('div',{className:'badges'},badges),
+            createElement('div.badges', badges),
             commLink(artist)
           ]));
 
-          if (i == artists.length-2) container.appendChild(InfernoAddElem('span',' and '));
-          else if (i<artists.length-1) container.appendChild(InfernoAddElem('span',','));
+          if (i == artists.length-2) container.appendChild(createElement('span', ' and '));
+          else if (i<artists.length-1) container.appendChild(createElement('span', ','));
         });
       }
     });
@@ -1318,85 +1310,78 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   function highlightFaves() {
     if (document.querySelector('[data-tab="favoriters"]>p')) setTimeout(highlightFaves, 200);
     else {
-      let preload = userbase_local.groups.Friends.map(v => {return userbase.users[v].name});
-      let favesLinks = [];
-      let els = document.querySelectorAll('[data-tab="favoriters"]>a.interaction-user-list-item');
-      for (let i=0; i<els.length; i++) {
-        let user = els[i].innerHTML;
-        if (preload.indexOf(user) > -1) {
-          favesLinks.push(InfernoAddElem('a', {innerHTML:user, href:els[i].href}));
-          els[i].classList.add('_ydb_green');
-        }
-      }
+      const preload = userbase_local.groups.Friends.map(v => userbase.users[v].name);
+      const favesLinks = Array.from(document.querySelectorAll('[data-tab="favoriters"]>a.interaction-user-list-item'))
+      .filter(item => preload.includes(item.innerHTML))
+      .map(item => {
+        item.classList.add('_ydb_green');
+        return createElement('a', {href: item.href}, item.innerHTML);
+      });
+
       if (favesLinks.length == 0) return;
-      favesLinks.sort((a, b) => {return Math.random() < 0.5?1:-1});
+      favesLinks.sort((a, b) => Math.random() < 0.5?1:-1);
       let cont = [];
       let appx = [];
       for (let i=0; i<favesLinks.length; i++) {
-        if (!favesLinks[i]) break;
         if (i < 5) {
-          if (i != 0 && i == favesLinks.length-1) cont.push(InfernoAddElem('span', ' and '));
-          else if (i != 0) cont.push(InfernoAddElem('span', ', '));
+          if (i != 0 && i == favesLinks.length-1) cont.push(' and ');
+          else if (i != 0) cont.push(', ');
           cont.push(favesLinks[i]);
         } else {
           appx.push(favesLinks[i].innerHTML);
         }
       }
       if (favesLinks.length > 5) {
-        cont.push(InfernoAddElem('span', ' and '));
-        cont.push(InfernoAddElem('span', {title:appx.join(', '),innerHTML:(favesLinks.length-5)}));
-        cont.push(InfernoAddElem('span', ' more'));
+        cont.push(' and ');
+        cont.push(createElement('span', {title:appx.join(', ')}, favesLinks.length-5));
+        cont.push(' more');
       }
-      document.querySelector('[data-tab="favoriters"]').insertBefore(InfernoAddElem('h4', [
-        InfernoAddElem('span', ''),
-        InfernoAddElem('span', cont),
-        InfernoAddElem('span', ' favorited it.')
-      ]), document.querySelector('[data-tab="favoriters"] h5'));
+      cont.push(' favorited it.');
+      document.querySelector('[data-tab="favoriters"]').insertBefore(createElement('h4', cont), document.querySelector('[data-tab="favoriters"] h5'));
     }
   }
 
   //compress comments
   function shrinkComms(e) {
-    for (let i=0; i<e.querySelectorAll('.block.communication, .profile-about').length; i++) {
-      let baseSize = parseInt(ls.shrinkComms);
-      let el = e.querySelectorAll('.block.communication, .profile-about')[i];
+    let baseSize = parseInt(ls.shrinkComms);
+    Array.from(e.querySelectorAll('.block.communication, .profile-about'))
+    .forEach(el => {
       if (el.classList.contains('profile-about')) {
         el = el.parentNode;
-        //baseSize *= 4;
       }
       if (el.clientHeight == 0) {
-        setTimeout(function() {shrinkComms(e)}, 200);
+        setTimeout(() => shrinkComms(e), 200);
         return;
       }
       if (el.clientHeight > baseSize*1.2+13) {
         let t = el.querySelector('.communication__body__text, .profile-about');
-        if (t.classList.contains('_ydb_t_comm_shrink')) continue;
+        if (t.classList.contains('_ydb_t_comm_shrink')) return;
         t.classList.add('_ydb_t_comm_shrink');
         t.style.maxHeight = baseSize*0.8+'px';
         el.style.position = 'relative';
         let x;
-        let y = InfernoAddElem('div',{className:'block__content communication__options _ydb_tools_compress', style:{display:'none',textAlign:'center',fontSize:'150%',marginBottom:'2px'}},[
-          InfernoAddElem('a',{href:'javascript://', style:{width:'100%',display:'inline-block'}, events:[{t:'click',f:function() {
+        let y = createElement('div.block__content.communication__options._ydb_tools_compress',{style:{display:'none',textAlign:'center',fontSize:'150%',marginBottom:'2px'}},[
+          createElement('a',{href:'javascript://', style:{width:'100%',display:'inline-block'}, events:{'click':() => {
             t.classList.add('_ydb_t_comm_shrink');
             t.style.maxHeight = baseSize*0.8+'px';
             x.style.display = 'block';
             y.style.display = 'none';
-          }}]}, [
-            InfernoAddElem('i',{innerHTML:'\uF062',className:'fa'},[]),
-            InfernoAddElem('span',{innerHTML:' Shrink '},[]),
-            InfernoAddElem('i',{innerHTML:'\uF062',className:'fa'},[])
+          }}}, [
+            createElement('i.fa', '\uF062'),
+            ' Shrink ',
+            createElement('i.fa', '\uF062')
           ])
         ]);
-        x = InfernoAddElem('div',{className:'block__content communication__options _ydb_tools_expand', style:{position:'absolute',textAlign:'center',fontSize:'150%',bottom:(t.classList.contains('profile-about')?0:(el.querySelector('.communication__options').clientHeight+4))+'px',width:'calc(100% - 14px)'}},[
-          InfernoAddElem('a',{href:'javascript://', style:{width:'100%',display:'inline-block'},events:[{t:'click',f:function() {
+        x = createElement('div.block__content.communication__options._ydb_tools_expand',{style:{position:'absolute',textAlign:'center',fontSize:'150%',bottom:(t.classList.contains('profile-about')?0:(el.querySelector('.communication__options').clientHeight+4))+'px',width:'calc(100% - 14px)'}},[
+          createElement('a',{href:'javascript://', style:{width:'100%',display:'inline-block'},events:{'click':() => {
             t.classList.remove('_ydb_t_comm_shrink');
             t.style.maxHeight = 'none';
             x.style.display = 'none';
             y.style.display = 'block';
-          }}]}, [
-            InfernoAddElem('i',{innerHTML:'\uF063',className:'fa'},[]),
-            InfernoAddElem('span',{innerHTML:' Expand '},[]),
-            InfernoAddElem('i',{innerHTML:'\uF063',className:'fa'},[])
+          }}}, [
+            createElement('i.fa', '\uF063'),
+            ' Expand ',
+            createElement('i.fa', '\uF063')
           ])
         ]);
         if (t.classList.contains('profile-about')) {
@@ -1411,12 +1396,12 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       else if (el.clientHeight < baseSize*0.8+13) {
         let t = el.querySelector('.communication__body__text, .profile-about');
         if (t.classList.contains('_ydb_t_comm_shrink') && parseInt(t.style.maxHeight)<t.clientHeight) {
-          if (el.getElementsByClassName('_ydb_tools_compress')[0] != undefined) el.removeChild(el.getElementsByClassName('_ydb_tools_compress')[0]);
+          if (el.getElementsByClassName('_ydb_tools_compress')[0]) el.removeChild(el.getElementsByClassName('_ydb_tools_compress')[0]);
           el.removeChild(el.getElementsByClassName('_ydb_tools_expand')[0]);
           t.classList.remove('_ydb_t_comm_shrink');
         }
       }
-    }
+    });
   }
 
   //compress badges
@@ -1428,22 +1413,22 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       for (let j=0; j<x[i].getElementsByClassName('badge').length; j++) {
         let y = x[i].getElementsByClassName('badge')[j];
         let bname = y.getElementsByTagName('img')[0].title.split('-')[0].trim();
-        if (bd.normal[bname] != undefined) {
+        if (bd.normal[bname]) {
           for (let k=0; k<bd.normal[bname].length; k++) {
             let ax = x[i].querySelector('img[alt^="'+bd.normal[bname][k]+'"]');
-            if (ax != undefined) ax.parentNode.classList.add('hidden');
+            if (ax) ax.parentNode.classList.add('hidden');
           }
         }
-        if (bd.extreme[bname] != undefined && ls.hideBadgesX) {
+        if (bd.extreme[bname] && ls.hideBadgesX) {
           for (let k=0; k<bd.extreme[bname].length; k++) {
             let ax = x[i].querySelector('img[alt^="'+bd.extreme[bname][k]+'"]');
-            if (ax != undefined) ax.parentNode.classList.add('hidden');
+            if (ax) ax.parentNode.classList.add('hidden');
           }
         }
-        if (bd.donations[bname] != undefined && ls.hideBadgesP) {
+        if (bd.donations[bname] && ls.hideBadgesP) {
           for (let k=0; k<bd.donations[bname].length; k++) {
             let ax = x[i].querySelector('img[alt^="'+bd.donations[bname][k]+'"]');
-            if (ax != undefined) ax.parentNode.classList.add('hidden');
+            if (ax) ax.parentNode.classList.add('hidden');
           }
         }
       }
@@ -2898,7 +2883,8 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     function show(item, x, y) {
       hide();
       activeMenu = item;
-      activeMenu.style.display = 'block';
+      activeMenu.style.setProperty('display', 'block', 'important');
+      activeMenu.style.opacity = 1;
     }
 
     window.oncontextmenu = (event) => {
@@ -2918,7 +2904,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     }
 
     window.onclick = hide;
-    GM_addStyle('.tag.dropdown>.dropdown__content {display: none; min-width: 100%; z-index: 999}');
+    GM_addStyle('.tag.dropdown>span.dropdown__content {display: none !important; min-width: 100%; z-index: 999}');
   }
 
   function YDB_TestSpoiler() {
