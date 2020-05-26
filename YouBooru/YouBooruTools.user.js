@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YourBooru:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.8.15
+// @version      0.8.16
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -1343,45 +1343,46 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
 
   //compress comments
   function shrinkComms(e) {
-    let baseSize = parseInt(ls.shrinkComms);
-    Array.from(e.querySelectorAll('.block.communication, .profile-about'))
-    .forEach(el => {
+    for (let i=0; i<e.querySelectorAll('.block.communication, .profile-about').length; i++) {
+      let baseSize = parseInt(ls.shrinkComms);
+      let el = e.querySelectorAll('.block.communication, .profile-about')[i];
       if (el.classList.contains('profile-about')) {
         el = el.parentNode;
+        //baseSize *= 4;
       }
       if (el.clientHeight == 0) {
-        setTimeout(() => shrinkComms(e), 200);
+        setTimeout(function() {shrinkComms(e)}, 200);
         return;
       }
       if (el.clientHeight > baseSize*1.2+13) {
         let t = el.querySelector('.communication__body__text, .profile-about');
-        if (t.classList.contains('_ydb_t_comm_shrink')) return;
+        if (t.classList.contains('_ydb_t_comm_shrink')) continue;
         t.classList.add('_ydb_t_comm_shrink');
         t.style.maxHeight = baseSize*0.8+'px';
         el.style.position = 'relative';
         let x;
-        let y = createElement('div.block__content.communication__options._ydb_tools_compress',{style:{display:'none',textAlign:'center',fontSize:'150%',marginBottom:'2px'}},[
-          createElement('a',{href:'javascript://', style:{width:'100%',display:'inline-block'}, events:{'click':() => {
+        let y = InfernoAddElem('div',{className:'block__content communication__options _ydb_tools_compress', style:{display:'none',textAlign:'center',fontSize:'150%',marginBottom:'2px'}},[
+          InfernoAddElem('a',{href:'javascript://', style:{width:'100%',display:'inline-block'}, events:[{t:'click',f:function() {
             t.classList.add('_ydb_t_comm_shrink');
             t.style.maxHeight = baseSize*0.8+'px';
             x.style.display = 'block';
             y.style.display = 'none';
-          }}}, [
-            createElement('i.fa', '\uF062'),
-            ' Shrink ',
-            createElement('i.fa', '\uF062')
+          }}]}, [
+            InfernoAddElem('i',{innerHTML:'\uF062',className:'fa'},[]),
+            InfernoAddElem('span',{innerHTML:' Shrink '},[]),
+            InfernoAddElem('i',{innerHTML:'\uF062',className:'fa'},[])
           ])
         ]);
-        x = createElement('div.block__content.communication__options._ydb_tools_expand',{style:{position:'absolute',textAlign:'center',fontSize:'150%',bottom:(t.classList.contains('profile-about')?0:(el.querySelector('.communication__options').clientHeight+4))+'px',width:'calc(100% - 14px)'}},[
-          createElement('a',{href:'javascript://', style:{width:'100%',display:'inline-block'},events:{'click':() => {
+        x = InfernoAddElem('div',{className:'block__content communication__options _ydb_tools_expand', style:{position:'absolute',textAlign:'center',fontSize:'150%',bottom:(t.classList.contains('profile-about')?0:(el.querySelector('.communication__options').clientHeight+4))+'px',width:'calc(100% - 14px)'}},[
+          InfernoAddElem('a',{href:'javascript://', style:{width:'100%',display:'inline-block'},events:[{t:'click',f:function() {
             t.classList.remove('_ydb_t_comm_shrink');
             t.style.maxHeight = 'none';
             x.style.display = 'none';
             y.style.display = 'block';
-          }}}, [
-            createElement('i.fa', '\uF063'),
-            ' Expand ',
-            createElement('i.fa', '\uF063')
+          }}]}, [
+            InfernoAddElem('i',{innerHTML:'\uF063',className:'fa'},[]),
+            InfernoAddElem('span',{innerHTML:' Expand '},[]),
+            InfernoAddElem('i',{innerHTML:'\uF063',className:'fa'},[])
           ])
         ]);
         if (t.classList.contains('profile-about')) {
@@ -1396,12 +1397,12 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       else if (el.clientHeight < baseSize*0.8+13) {
         let t = el.querySelector('.communication__body__text, .profile-about');
         if (t.classList.contains('_ydb_t_comm_shrink') && parseInt(t.style.maxHeight)<t.clientHeight) {
-          if (el.getElementsByClassName('_ydb_tools_compress')[0]) el.removeChild(el.getElementsByClassName('_ydb_tools_compress')[0]);
+          if (el.getElementsByClassName('_ydb_tools_compress')[0] != undefined) el.removeChild(el.getElementsByClassName('_ydb_tools_compress')[0]);
           el.removeChild(el.getElementsByClassName('_ydb_tools_expand')[0]);
           t.classList.remove('_ydb_t_comm_shrink');
         }
       }
-    });
+    }
   }
 
   //compress badges
