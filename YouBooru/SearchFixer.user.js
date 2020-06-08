@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Derpibooru Search Fixer
+// @name         YDB:Search Ex
 // @namespace    http://tampermonkey.net/
 
 // @include      /http[s]*:\/\/(www\.|philomena\.|)(trixie|derpi)booru.org\/.*/
@@ -13,7 +13,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.5.1
+// @version      0.5.2
 // @description  I hoped that this script could be deleted after moving to Philomena...
 // @author       stsyn
 
@@ -596,9 +596,9 @@
         }, [
           createElement('option',{value:'created_at'},'created_at'),
           createElement('option',{value:'updated_at'},'updated_at'),
-          createElement('option',{value:whyTheFuckRelevanceSortingIsDefinedAs_score},'relevance'),
           createElement('option',{value:'first_seen_at'},'first_seen_at'),
           createElement('option',{value:'score'},'score'),
+          createElement('option',{value:whyTheFuckRelevanceSortingIsDefinedAs_score},'relevance'),
           createElement('option',{value:'faves'},'faves'),
           createElement('option',{value:'upvotes'},'upvotes'),
           createElement('option',{value:'downvotes'},'downvotes'),
