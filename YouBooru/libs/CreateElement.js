@@ -44,8 +44,8 @@ function createElement(tag, values, children) {
 
     element = document.createElement(tag);
 
-    var applyNotAsAttribute = ['events', 'dataset', 'innerHTML', 'checked', 'disabled', 'value', 'selected', 'className', 'style'];
-    var applyAsJsField = ['innerHTML', 'checked', 'disabled', 'value', 'selected', 'className'];
+    var applyAsJsField = ['innerHTML', 'checked', 'disabled', 'value', 'selected', 'className', 'crossOrigin'];
+    var applyNotAsAttribute = applyAsJsField.concat(['events', 'dataset', 'style']);
 
     for (i in values) {
         if (applyNotAsAttribute.indexOf(i) === -1) {
@@ -119,11 +119,14 @@ function createElement(tag, values, children) {
     return element;
 }
 
+function wrapElement(element, target) {
+    var parent = target.parentNode;
+    parent.insertBefore(element, target);
+    element.appendChild(target);
+}
+
 function clearElement(element) {
-    /*if (!element.parentNode) {
-        return;
+    while (element.hasChildNodes()) {
+        element.removeChild(element.lastChild);
     }
-    var cNode = element.cloneNode(false);
-    element.parentNode.replaceChild(cNode, element);*/
-    element.innerHTML = '';
 }
