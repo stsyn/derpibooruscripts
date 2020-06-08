@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         YourBooru:Feeds
+// @name         YDB:Feeds
 // @namespace    http://tampermonkey.net/
 
 // @include      /http[s]*:\/\/(www\.|philomena\.|)(trixie|derpi)booru.org\/.*/
@@ -13,7 +13,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.36
+// @version      0.5.37
 // @description  Feedz
 // @author       stsyn
 
@@ -159,8 +159,8 @@
               {name:'Score', value:'score'},
               {name:'Upvotes', value:'upvotes'},
               {name:'Downvotes', value:'downvotes'},
-              {name:'Wilson score', value:'wilson'},
-              {name:'Relevance', value:'relevance'},
+              {name:'Wilson score', value:'wilson_score'},
+              {name:'Relevance', value:'_score'},
               {name:'Width', value:'width'},
               {name:'Height', value:'height'},
               {name:'Comments', value:'comment_count'},
