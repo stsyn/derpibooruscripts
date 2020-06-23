@@ -81,7 +81,9 @@ function createElement(tag, values, children) {
         for (i = 0; i < children.length; i++) {
             var c = children[i];
             if (c === undefined || c === null) continue;
-            if (typeof c !== 'object' || !isElement(c)) {
+            if (typeof c === 'object' && Array.isArray(c)) {
+               element.appendChild(createElement(c[0], c[1], c[2]));
+            } else if (typeof c !== 'object' || !isElement(c)) {
                 if (textCollection === null) {
                     textCollection = c.toString();
                 } else {
