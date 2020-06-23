@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:MT
-// @version      0.1.12a
+// @version      0.1.12b
 // @author       stsyn
 
 // @include      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*/
@@ -292,7 +292,7 @@
           Array.from(item.querySelectorAll('ul>li')).forEach(line => {
             const userUri = line.querySelector('a').href.split('/').pop();
             if (userUri === profileUrl) return;
-            if (userUrlCache.get(userUri)[field].split('/').pop() < originCollision) {
+            if (userUrlCache.get(userUri)[field] == 'loading...' || userUrlCache.get(userUri)[field].split('/').pop() < originCollision) {
               userUrlCache.get(userUri)[field] = originCollision + '/' + line.querySelector('time').dateTime.split('T')[0];
             }
           });
