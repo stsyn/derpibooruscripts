@@ -1,15 +1,15 @@
-function createElement(tag, values, children) {
-    function isElement(obj) {
-        try {
-            return obj instanceof HTMLElement;
-        }
-        catch(e){
-            return (typeof obj==="object") &&
-                (obj.nodeType===1) && (typeof obj.style === "object") &&
-                (typeof obj.ownerDocument ==="object");
-        }
-    }
+function isElement(obj) {
+  try {
+    return obj instanceof HTMLElement;
+  }
+  catch(e){
+    return (typeof obj==="object") &&
+      (obj.nodeType===1) && (typeof obj.style === "object") &&
+      (typeof obj.ownerDocument ==="object");
+  }
+}
 
+function createElement(tag, values, children) {
     var element;
     var i;
 
@@ -77,48 +77,52 @@ function createElement(tag, values, children) {
     }
 
     if (children && children.length) {
-        var textCollection = null;
-        for (i = 0; i < children.length; i++) {
-            var c = children[i];
-            if (c === undefined || c === null) continue;
-            if (typeof c === 'object' && Array.isArray(c)) {
-               element.appendChild(createElement(c[0], c[1], c[2]));
-            } else if (typeof c !== 'object' || !isElement(c)) {
-                if (textCollection === null) {
-                    textCollection = c.toString();
-                } else {
-                    textCollection += c.toString();
-                }
-            } else {
-                if (textCollection) {
-                    if (textCollection.indexOf('<') === -1) {
-                        element.appendChild(document.createTextNode(textCollection));
-                    } else {
-                        var temp = document.createElement('span');
-                        temp.innerHTML = textCollection;
-                        while (temp.firstChild) {
-                            element.appendChild(temp.firstChild);
-                        }
-                    }
-                    textCollection = null;
-                }
-                element.appendChild(c.parentNode == null ? c : c.cloneNode(true));
-            }
-        }
-        if (textCollection) {
-            if (textCollection.indexOf('<') === -1) {
-                element.appendChild(document.createTextNode(textCollection));
-            } else {
-                var temp = document.createElement('span');
-                temp.innerHTML = textCollection;
-                while (temp.firstChild) {
-                    element.appendChild(temp.firstChild);
-                }
-            }
-            textCollection = null;
-        }
+        fillElement(element, children);
     }
     return element;
+}
+
+function fillElement(element, items) {
+    var textCollection = null;
+    for (var i = 0; i < items.length; i++) {
+        var c = items[i];
+        if (c === undefined || c === null) continue;
+        if (typeof c === 'object' && Array.isArray(c)) {
+           element.appendChild(createElement(c[0], c[1], c[2]));
+        } else if (typeof c !== 'object' || !isElement(c)) {
+            if (textCollection === null) {
+                textCollection = c.toString();
+            } else {
+                textCollection += c.toString();
+            }
+        } else {
+            if (textCollection) {
+                if (textCollection.indexOf('<') === -1) {
+                    element.appendChild(document.createTextNode(textCollection));
+                } else {
+                    var temp = document.createElement('span');
+                    temp.innerHTML = textCollection;
+                    while (temp.firstChild) {
+                        element.appendChild(temp.firstChild);
+                    }
+                }
+                textCollection = null;
+            }
+            element.appendChild(c.parentNode == null ? c : c.cloneNode(true));
+        }
+    }
+    if (textCollection) {
+        if (textCollection.indexOf('<') === -1) {
+            element.appendChild(document.createTextNode(textCollection));
+        } else {
+            var temp = document.createElement('span');
+            temp.innerHTML = textCollection;
+            while (temp.firstChild) {
+                element.appendChild(temp.firstChild);
+            }
+        }
+        textCollection = null;
+    }
 }
 
 function wrapElement(element, target) {
