@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.33
+// @version      0.7.34
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -1113,7 +1113,7 @@ color: #777;
     const scrHeight = de.clientHeight, yScale = scrHeight/(objects.icontainer.dataset.height*pub.zoom);
 
     document.body.appendChild(objects.scroll_bot = createElement('div#_fs_scroll_bot', {style: {width: scrWidth * xScale + 'px'}}));
-    document.body.appendChild(objects.scroll_rgt = createElement('div#_fs_scroll_rgt', {style: {width: scrHeight * yScale + 'px'}}));
+    document.body.appendChild(objects.scroll_rgt = createElement('div#_fs_scroll_rgt', {style: {height: scrHeight * yScale + 'px'}}));
   }
 
   function listener() {
