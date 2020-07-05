@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.31
+// @version      0.7.33
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -568,6 +568,7 @@ opacity:0.25;
 
   styles.adc_pixel = `
 #image_target {
+image-rendering: crisp-edges;
 image-rendering: pixelated;
 }
 `;
@@ -892,8 +893,8 @@ color: #777;
   }
 
   function init() {
-    objects.disable = addElem('a', {id:'_ydb_fs_disable', className:'', style:{display:'none'}, innerHTML:'Disable', events:[{t:'click',f:disable}]},  document.querySelector('#content>.block:first-child'));
-    objects.enable = addElem('a', {id:'_ydb_fs_enable', className:'header__link', innerHTML:'Fullscreen', events:[{t:'click',f:function() {enable(true);}}]}, document.body);
+    document.querySelector('#content>.block:first-child').appendChild(objects.disable = createElement('a#_ydb_fs_disable', {style: {display:'none'}, events: { click: disable } }, 'Disable'));
+    document.body.appendChild(objects.enable = createElement('a#_ydb_fs_enable.header__link', {events: { click: () => enable(true) } }, 'Fullscreen'));
     document.getElementsByClassName('header__force-right')[0].insertBefore(objects.enable, document.getElementsByClassName('header__force-right')[0].childNodes[0]);
     started = true;
   }
@@ -1007,6 +1008,8 @@ color: #777;
 
     let bufferWidth = parseInt(objects.image.style.width), bufferHeight = parseInt(objects.image.style.height),
         bufferTop = parseInt(objects.image.style.marginTop), bufferLeft = parseInt(objects.image.style.marginLeft);
+    if (isNaN(bufferTop)) bufferTop = 0;
+    if (isNaN(bufferLeft)) bufferLeft = 0;
 
     bufferHeight = objects.icontainer.dataset.height*pub.zoom;
     bufferWidth = objects.icontainer.dataset.width*pub.zoom;
@@ -1027,15 +1030,11 @@ color: #777;
     }
 
     if (pub.dta !== 0) {
-      if (!isNaN(parseInt(bufferTop))) {
-        if (bufferTop <= 0) {
-          bufferTop = -(pub.zoom*objects.icontainer.dataset.height*(scrHeight/2-bufferTop)/(objects.icontainer.dataset.height*(pub.zoom-pub.dta))-scrHeight/2);
-        }
+      if (bufferTop <= 0) {
+        bufferTop = -(pub.zoom*objects.icontainer.dataset.height*(scrHeight/2-bufferTop)/(objects.icontainer.dataset.height*(pub.zoom-pub.dta))-scrHeight/2);
       }
-      if (!isNaN(parseInt(bufferLeft))) {
-        if (bufferLeft <= 0) {
-          bufferLeft = -(pub.zoom*objects.icontainer.dataset.width*(scrWidth/2-bufferLeft)/(objects.icontainer.dataset.width*(pub.zoom-pub.dta))-scrWidth/2);
-        }
+      if (bufferLeft <= 0) {
+        bufferLeft = -(pub.zoom*objects.icontainer.dataset.width*(scrWidth/2-bufferLeft)/(objects.icontainer.dataset.width*(pub.zoom-pub.dta))-scrWidth/2);
       }
       pub.dta=0;
     }
@@ -1049,11 +1048,11 @@ color: #777;
       let vx = scrHeight*4/10;
       if (pub.mouseY < vx) {
         let v = 1-pub.mouseY/vx;
-        bufferTop = (isNaN(bufferTop)? 0 :bufferTop) + settings.scrollSpeed*v*6;
+        bufferTop = bufferTop + settings.scrollSpeed*v*6;
       }
       if (pub.mouseY > scrHeight*6/10) {
         let v = (pub.mouseY-scrHeight*6/10)/vx;
-        bufferTop = (isNaN(bufferTop)? 0 :bufferTop)-settings.scrollSpeed*v*6;
+        bufferTop = bufferTop - settings.scrollSpeed*v*6;
       }
 
       if (bufferTop>0) bufferTop = 0;
@@ -1066,14 +1065,14 @@ color: #777;
 
     if (objects.icontainer.dataset.width*pub.zoom > scrWidth) {
       objects.scroll_bot.style.display = 'block';
-      let vx = scrWidth*4/10;
+      const vx = scrWidth*4/10;
       if (pub.mouseX < vx) {
-        let v = 1-pub.mouseX/vx;
-        bufferLeft = (isNaN(bufferLeft)?0:bufferLeft)+settings.scrollSpeed*v*6;
+        const v = 1-pub.mouseX/vx;
+        bufferLeft = bufferLeft + settings.scrollSpeed*v*6;
       }
       if (pub.mouseX > scrWidth*6/10) {
-        let v = (pub.mouseX-scrWidth*6/10)/vx;
-        bufferLeft = (isNaN(bufferLeft)?0:bufferLeft)-settings.scrollSpeed*v*6;
+        const v = (pub.mouseX-scrWidth*6/10)/vx;
+        bufferLeft = bufferLeft - settings.scrollSpeed*v*6;
       }
 
       if (bufferLeft>0) bufferLeft = 0;
@@ -1088,15 +1087,15 @@ color: #777;
       bufferLeft = (scrWidth - objects.icontainer.dataset.width*pub.zoom) / 2;
       objects.scroll_bot.style.display = 'none';
     }
-    objects.scroll_bot.style.left = -(isNaN(parseInt(bufferLeft))?0:parseInt(bufferLeft))*xScale+'px';
-    objects.scroll_rgt.style.top = -(isNaN(parseInt(bufferTop))?0:parseInt(bufferTop))*yScale+'px';
-    objects.scroll_rgt.style.height = scrHeight*yScale+'px';
-    objects.scroll_bot.style.width = scrWidth*xScale+'px';
+    objects.scroll_bot.style.left = -bufferLeft * xScale + 'px';
+    objects.scroll_rgt.style.top = -bufferTop * yScale+'px';
+    objects.scroll_rgt.style.height = scrHeight * yScale+'px';
+    objects.scroll_bot.style.width = scrWidth * xScale+'px';
 
-    bufferWidth = parseInt(bufferWidth) + 'px';
-    bufferHeight = parseInt(bufferHeight) + 'px';
-    bufferTop = parseInt(bufferTop) + 'px';
-    bufferLeft = parseInt(bufferLeft) + 'px';
+    bufferWidth = bufferWidth + 'px';
+    bufferHeight = bufferHeight + 'px';
+    bufferTop = bufferTop + 'px';
+    bufferLeft = bufferLeft + 'px';
 
     if (bufferWidth != objects.image.style.width || bufferHeight != objects.image.style.height ||
           bufferTop != objects.image.style.marginTop || bufferLeft != objects.image.style.marginLeft) {
@@ -1110,14 +1109,11 @@ color: #777;
   function addScrolls() {
     if (pub.scaled != 'false' && !settings.singleMode) return;
     if (document.getElementById('_fs_scroll_bot')) return;
-    let scrWidth = de.clientWidth, xScale = scrWidth/(objects.icontainer.dataset.width*pub.zoom);
-    let scrHeight = de.clientHeight, yScale = scrHeight/(objects.icontainer.dataset.height*pub.zoom);
+    const scrWidth = de.clientWidth, xScale = scrWidth/(objects.icontainer.dataset.width*pub.zoom);
+    const scrHeight = de.clientHeight, yScale = scrHeight/(objects.icontainer.dataset.height*pub.zoom);
 
-    objects.scroll_bot = addElem('div', {id:'_fs_scroll_bot'}, document.body);
-    objects.scroll_bot.style.width = scrWidth*xScale+'px';
-
-    objects.scroll_rgt = addElem('div', {id:'_fs_scroll_rgt'}, document.body);
-    objects.scroll_rgt.style.height = scrHeight*yScale+'px';
+    document.body.appendChild(objects.scroll_bot = createElement('div#_fs_scroll_bot', {style: {width: scrWidth * xScale + 'px'}}));
+    document.body.appendChild(objects.scroll_rgt = createElement('div#_fs_scroll_rgt', {style: {width: scrHeight * yScale + 'px'}}));
   }
 
   function listener() {
@@ -1301,7 +1297,7 @@ color: #777;
   }
 
   function putDark() {
-    if (document.body != undefined) {
+    if (document.body) {
       if (colors.isDark) document.body.classList.add('_fs_dark');
       else document.body.classList.remove('_fs_dark');
     }
@@ -1309,7 +1305,7 @@ color: #777;
   }
 
   function applyColor() {
-    if (document.getElementById('container') != undefined) cm_bg();
+    if (document.getElementById('container')) cm_bg();
     const r = x => {
       styles.colorAccent = styles.colorAccent.replace(new RegExp(x,'g'), 'rgb('+colors[x][0]+','+colors[x][1]+','+colors[x][2]+')');
     };
@@ -1327,7 +1323,7 @@ color: #777;
     r('_fs_ccomponent');
     append('colorAccent', true);
 
-    const kek = function() {
+    const kek = () => {
       const xx = document.getElementsByClassName('theme-preview-trixie')[0];
       if (xx) {
         let c2 = document.head.querySelector('link[rel=stylesheet][media=all]').href;
@@ -1374,7 +1370,7 @@ color: #777;
     if (settings.pony_mark != 'off') {
       let theme = 'light'
       let mark = settings.pony_mark;
-      if (document.getElementById('_fs_pony_mark_setting') != undefined) mark = document.getElementById('_fs_pony_mark_setting').value;
+      if (document.getElementById('_fs_pony_mark_setting')) mark = document.getElementById('_fs_pony_mark_setting').value;
       try {
         let c2 = document.head.querySelector('link[rel=stylesheet][media=all]').href;
         if (c2.split('/')[5].startsWith('dark')) theme = 'dark';
@@ -1385,7 +1381,7 @@ color: #777;
         else if (Boolean(document.querySelector('body[data-theme="red"]'))) theme = 'red';
       }
       let ccolor = settings.style;
-      if (document.getElementById('_fs_color_setting') != undefined) ccolor = document.getElementById('_fs_color_setting').value;
+      if (document.getElementById('_fs_color_setting')) ccolor = document.getElementById('_fs_color_setting').value;
 
       if (mark == 'auto') mark = ponymarks.defaults[ccolor];
       if (mark == 'random') {
@@ -1404,11 +1400,11 @@ color: #777;
             ccolor=="none"?'grayscale(1) '+(theme=='light'?'brightness(300%)':'brightness(150%)'):
             'hue-rotate('+ponymarks.filter[theme][ccolor]+'deg)'+
             (theme=='light'?' invert(1) saturate(250%) brightness(95%)':'')+
-            (ponymarks.fix_brightness[theme][ccolor]==undefined?'':' brightness('+ponymarks.fix_brightness[theme][ccolor]+'%)')
+            (!ponymarks.fix_brightness[theme][ccolor]?'':' brightness('+ponymarks.fix_brightness[theme][ccolor]+'%)')
         )
       }}), document.getElementById('container').firstChild);
     }
-    else if (document.getElementById('_fs_pony_mark_setting') != undefined) {
+    else if (document.getElementById('_fs_pony_mark_setting')) {
       document.getElementById('container').removeChild(document.getElementById('_fs_pony_mark_setting'));
     }
   }
