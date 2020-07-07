@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         YourBooru:Tools
+// @name         YDB:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.8.16
+// @version      0.8.18
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -278,7 +278,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   }
 
   function writeDate(date) {
-    let m = ['January','February','March','April','May','June','July','August','September','October','Novermber','December'];
+    const m = ['January','February','March','April','May','June','July','August','September','October','Novermber','December'];
     return (''+date.getHours()).padStart(2, '0')+':'+
            (''+date.getMinutes()).padStart(2, '0')+', '+
            m[date.getMonth()]+' '+
@@ -677,7 +677,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       let tags = goodParse(orig);
       tags.tags.forEach(tag => {
         if (tag.v.startsWith('artist:')) {
-          tag.v = tag.v.replace('artist:','ar*:');
+          tag.v = tag.v.replace('artist:','a*t:');
         }
       });
       let q2 = goodCombine(tags);
@@ -1591,6 +1591,10 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     }
   }
 
+  function makeSlug(name) {
+    return name.replace(/\-/g,'-dash-').replace(/\+/g,'-plus-').replace(/\:/g,'-colon-').replace(/\./g,'-dot-').replace(/\//g,'-fwslash-').replace(/\\/g,'-bwslash-').replace(/ /g,'+');
+  }
+
   /////////////////////////////////////////////
   //user aliases
   let UBinterval = 1209600000;  //two weeks
@@ -1619,7 +1623,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   function UA(e) {
     let nameIndex = {};
     let _nameEncode = function(name) {
-      return encodeURI(name.replace(/\-/g,'-dash-').replace(/\+/g,'-plus-').replace(/\:/g,'-colon-').replace(/\./g,'-dot-').replace(/\//g,'-fwslash-').replace(/\\/g,'-bwslash-').replace(/ /g,'+')).replace(/\&lt;/g,'%3C').replace(/\#/,'%2523');
+      return encodeURI(makeSlug(name)).replace(/\&lt;/g,'%3C').replace(/\#/,'%2523');
     };
 
     let getUserByName = function (name) {
@@ -2576,7 +2580,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     c.innerHTML = '';
 
     let nameEncode = function(name) {
-      return encodeURI(name.replace(/\+/g,'-plus-').replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/\//g,'-fwslash-').replace(/\\/g,'-bwslash-').replace(/ /g,'+'));
+      return encodeURI(makeSlug(name));
     };
 
     let removeUser = function(user) {
@@ -2905,7 +2909,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     }
 
     window.onclick = hide;
-    GM_addStyle('.tag.dropdown>span.dropdown__content {display: none !important; min-width: 100%; z-index: 999}');
+    GM_addStyle('.tag.dropdown>div.dropdown__content {display: none !important; min-width: 100%; z-index: 999}');
   }
 
   function YDB_TestSpoiler() {
@@ -2913,41 +2917,31 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     let c = document.querySelector('#content .walloftext');
     c.innerHTML = '';
 
-    if (ls.spoilers == undefined) ls.spoilers = [];
+    ls.spoilers = ls.spoilers || [];
 
-    let generateLine = (spoiler, state) => {
-      return InfernoAddElem('div',{className:'alternating-color block__content flex flex--center-distributed flex--centered'},[
-        InfernoAddElem('span',{className:'flex__grow',style:{paddingLeft:'1em'}},[
-          InfernoAddElem('span',{innerHTML:spoiler},[])
-        ]),
-        InfernoAddElem('span',{className:'flex__grow',style:{paddingLeft:'1em'}},[
-          InfernoAddElem('span',{innerHTML:state},[])
-        ])
+    function generateLine(spoiler, state) {
+      return createElement('div.alternating-color.block__content.flex.flex--center-distributed.flex--centered', [
+        createElement('span.flex__grow', {style:{paddingLeft:'1em'}}, spoiler),
+        createElement('span.flex__grow', {style:{paddingLeft:'1em'}}, state)
       ]);
     };
     let x = [];
-
-    for (let i=0; i<sps.length; i++) {
-      let triggered = false;
-      if (ls.spoilers != undefined) for (let j=0; j<ls.spoilers.length; j++) {
-        if (ls.spoilers[j].name == sps[i].name) {
-          c.appendChild(generateLine(sps[i].name, 'Exists already'));
-          triggered = true;
-          break;
-        }
+    sps.forEach(item => {
+      const triggered = ls.spoilers.find(spoiler => spoiler.name === item.name);
+      if (triggered) {
+        c.appendChild(generateLine(item.name, 'Exists already'));
+      } else {
+        ls.spoilers.push(item);
+        customSpoilerApply(item);
+        c.appendChild(generateLine(item.name, 'Added'));
       }
-      if (!triggered) {
-        ls.spoilers.push(sps[i]);
-        customSpoilerApply(sps[i]);
-        c.appendChild(generateLine(sps[i].name, 'Added'));
-      }
-    }
+    });
 
     c.appendChild(generateLine(' ', ' '));
     c.appendChild(generateLine('Saving...', ' '));
     write(ls);
-    if (unsafeWindow._YDB_public.funcs.backgroundBackup!=undefined) {
-      unsafeWindow._YDB_public.funcs.backgroundBackup(function(state) {
+    if (unsafeWindow._YDB_public.funcs.backgroundBackup) {
+      unsafeWindow._YDB_public.funcs.backgroundBackup(state => {
         if (state) c.appendChild(generateLine('Backupped succesfully, returning...', ' '));
         else c.appendChild(generateLine('Failed to backup, returning anyway...', ' '));
         setTimeout(function() {
@@ -2967,14 +2961,15 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     let c = elems.querySelector('.wallcontainer');
     let t = addElem('div',{id:'_ydb_temp', style:{display:'none'}}, document.getElementById('content'));
     c.innerHTML = 'This may take few seconds. Do not close this page until finished<br><br>';
-    c.appendChild(InfernoAddElem('a',{innerHTML:'Abort', events:[{t:'click',f:function(e) {stop = true;}}]},[]));
-    c.appendChild(InfernoAddElem('br',{},[]));
-    c.appendChild(InfernoAddElem('br',{},[]));
+    c.appendChild(createElement('a',{events:{click:e => stop = true}}, 'Abort'));
+    c.appendChild(createElement('br'));
+    c.appendChild(createElement('br'));
     c = elems.querySelector('.walloftext');
 
     let y = simpleParse(o.b);
     for (let i=0; i<y.length; i++) y[i] = y[i].trim();
-    c.appendChild(InfernoAddElem('span',{innerHTML:y.length+' tags detected.<br>'},[]));
+    c.appendChild(createElement('span', y.length+' tags detected.'));
+    c.appendChild(createElement('br'));
 
     const parse = function (request) {
       try {
@@ -3018,7 +3013,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       let req = new XMLHttpRequest();
       req.id = i;
       req.onreadystatechange = readyHandler(req);
-      req.open('GET', '/tags/'+encodeURIComponent(y[i].replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/ /g,'+').replace(/\:/g,'-colon-')));
+      req.open('GET', '/tags/'+encodeURIComponent(makeSlug(y[i])));
       req.send();
     };
 
