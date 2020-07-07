@@ -2893,16 +2893,12 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     }
 
     window.oncontextmenu = (event) => {
-      let target = event.target;
-      while (target.tagName !== 'BODY') {
-        target = target.parentNode;
-        if (target.classList.contains('tag') && target.classList.contains('tag')) {
-          const dropdown = target.querySelector('.dropdown__content');
-          if (dropdown !== activeMenu) {
-            show(dropdown);
-            event.preventDefault();
-          }
-          return false;
+      const tag = event.target.closest('.tag');
+      if (tag) {
+        const dropdown = tag.querySelector('.dropdown__content');
+        if (dropdown !== activeMenu) {
+          show(dropdown);
+          event.preventDefault();
         }
       }
       return false;
