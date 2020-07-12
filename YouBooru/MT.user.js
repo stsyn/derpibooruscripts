@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:MT
-// @version      0.1.12b
+// @version      0.1.13
 // @author       stsyn
 
 // @include      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*/
@@ -180,6 +180,30 @@
     //more to come
   }
 
+  function fixPollCount() {
+    let voteTab, adminTab;
+    if ((voteTab = document.querySelector('[data-tab="voting"]')) && (adminTab = document.querySelector('[data-tab="voters"]'))) {
+      fetch(location.pathname + '/poll/votes')
+      .then(resp => resp.text())
+      .then(resp => {
+        const voters = new Set();
+        const container = createElement('div', {innerHTML: resp});
+        Array.from(container.getElementsByClassName('interaction-user-list-item')).forEach(item => voters.add(item.innerText));
+        const totalCount = Array.from(voters).length;
+
+        Array.from(voteTab.getElementsByClassName('poll-option-list')[0].childNodes).forEach(voteItem => {
+          const countContainer = voteItem.getElementsByClassName('poll-option__counts')[0];
+          if (countContainer) {
+            const count = parseInt(countContainer.innerText.match(/[\d.%]+ (\d+)/)[1]);
+            const percentage = count / totalCount * 100;
+            countContainer.innerHTML = `${percentage.toFixed(2)}% ${count} vote(s)`;
+            voteItem.getElementsByClassName('poll-bar__image')[0].style.width = percentage + '%';
+          }
+        });
+      })
+    }
+  }
+
   function handleAliases() {
     const href = location.pathname.split('/');
     if (!(href.pop() === 'aliases')) return;
@@ -326,4 +350,5 @@
   try {hideTools();} catch(e) {error("hideTools", e)};
   try {isThingReported();} catch(e) {error("isThingReported", e)};
   try {handleAliases();} catch(e) {error("handleAliases", e)};
+  try {fixPollCount();} catch(e) {error("fixPollCount", e)};
 })();
