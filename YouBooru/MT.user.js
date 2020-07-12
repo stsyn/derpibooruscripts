@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:MT
-// @version      0.1.13
+// @version      0.1.13a
 // @author       stsyn
 
 // @include      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*/
@@ -196,8 +196,19 @@
           if (countContainer) {
             const count = parseInt(countContainer.innerText.match(/[\d.%]+ (\d+)/)[1]);
             const percentage = count / totalCount * 100;
-            countContainer.innerHTML = `${percentage.toFixed(2)}% ${count} vote(s)`;
+            clearElement(countContainer);
+            fillElement(countContainer, [
+              ['span', [
+                ['b', percentage.toFixed(2)],
+                '% ',
+                ['strong', `${count}/${totalCount}`],
+                ` vote${count === 1 ? '' : 's'}`
+              ]
+            ]]);
             voteItem.getElementsByClassName('poll-bar__image')[0].style.width = percentage + '%';
+          } else {
+            const totalVotes = voteItem.lastChild.nodeValue.match(/with (\d+)/)[1]
+            voteItem.lastChild.nodeValue = ` with ${totalVotes} votes (${totalCount} voters).`;
           }
         });
       })
