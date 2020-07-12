@@ -84,35 +84,11 @@ function createElement(tag, values, children) {
 
 function fillElement(element, items) {
     var textCollection = null;
-    for (var i = 0; i < items.length; i++) {
-        var c = items[i];
-        if (c === undefined || c === null) continue;
-        if (typeof c === 'object' && Array.isArray(c)) {
-           element.appendChild(createElement(c[0], c[1], c[2]));
-        } else if (typeof c !== 'object' || !isElement(c)) {
-            if (textCollection === null) {
-                textCollection = c.toString();
-            } else {
-                textCollection += c.toString();
-            }
-        } else {
-            if (textCollection) {
-                if (textCollection.indexOf('<') === -1) {
-                    element.appendChild(document.createTextNode(textCollection));
-                } else {
-                    var temp = document.createElement('span');
-                    temp.innerHTML = textCollection;
-                    while (temp.firstChild) {
-                        element.appendChild(temp.firstChild);
-                    }
-                }
-                textCollection = null;
-            }
-            element.appendChild(c.parentNode == null ? c : c.cloneNode(true));
-        }
-    }
-    if (textCollection) {
-        if (textCollection.indexOf('<') === -1) {
+    var isPreviousElementWasTextNode = false;
+
+    function makeTextNode() {
+      if (!textCollection) return;
+      if (textCollection.indexOf('<') === -1) {
             element.appendChild(document.createTextNode(textCollection));
         } else {
             var temp = document.createElement('span');
@@ -122,6 +98,33 @@ function fillElement(element, items) {
             }
         }
         textCollection = null;
+        isPreviousElementWasTextNode = false;
+    }
+
+    for (var i = 0; i < items.length; i++) {
+        var c = items[i];
+        if (c === undefined || c === null) continue;
+        if (typeof c === 'object' && Array.isArray(c)) {
+           if (isPreviousElementWasTextNode) {
+             makeTextNode();
+           }
+           element.appendChild(createElement(c[0], c[1], c[2]));
+        } else if (typeof c !== 'object' || !isElement(c)) {
+            if (textCollection === null) {
+                textCollection = c.toString();
+            } else {
+                textCollection += c.toString();
+            }
+            isPreviousElementWasTextNode = true;
+        } else {
+            if (isPreviousElementWasTextNode) {
+              makeTextNode();
+            }
+            element.appendChild(c.parentNode == null ? c : c.cloneNode(true));
+        }
+    }
+    if (textCollection) {
+        makeTextNode();
     }
 }
 
