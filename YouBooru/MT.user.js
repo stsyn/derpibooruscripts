@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:MT
-// @version      0.1.13a
+// @version      0.1.14
 // @author       stsyn
 
 // @include      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*/
@@ -181,36 +181,114 @@
   }
 
   function fixPollCount() {
-    let voteTab, adminTab;
+    let voteTab, adminTab, loadButton, container, recalcButton, recalcFromField, recalcFrom;
+    let voters = new Set();
+
+    async function filterByJoinDate() {
+      let progressBar;
+
+      function nameEncode(name) {
+        function makeSlug(name) {
+          return name.replace(/\-/g,'-dash-').replace(/\+/g,'-plus-').replace(/\:/g,'-colon-').replace(/\./g,'-dot-').replace(/\//g,'-fwslash-').replace(/\\/g,'-bwslash-').replace(/ /g,'+');
+        }
+        return encodeURI(makeSlug(name)).replace(/\&lt;/g,'%3C').replace(/\#/,'%2523');
+      }
+
+      function getData(name) {
+        return fetch('/profiles/' + nameEncode(name))
+        .then(resp => resp.text())
+        .then(resp => {
+          const container = createElement('div', {innerHTML: resp});
+          return {
+            name,
+            joinDate: new Date(container.getElementsByTagName('time')[0].dateTime)
+          }
+        })
+      }
+
+      function recalc() {
+        recalcFrom = new Date(recalcFromField.value);
+        Array.from(container.querySelectorAll('.interaction-user-list-item')).forEach(item => {
+          const userData = castedData2.find(i => item.innerText.trim() === i.name);
+          if (!userData || userData.joinDate > recalcFrom) item.classList.add('discarded');
+          else item.classList.remove('discarded');
+        });
+        voters = new Set();
+        countVotes();
+      }
+
+      voteTab.appendChild(progressBar = createElement('div'))
+
+      loadButton.style.display = 'none';
+      const castedData1 = Array.from(voters);
+      const castedData2 = [];
+
+      for (let i = 0; i < castedData1.length; i++) {
+        const name = castedData1[i];
+        castedData2.push(await getData(name))
+        progressBar.innerHTML = ((i + 1) * 100 / castedData1.length).toFixed(2) + '%';
+      }
+      progressBar.style.display = 'none';
+
+      voteTab.appendChild(createElement('div', [
+        recalcButton = createElement('button.button.button--state-warning.js-staff-action', {events: {click: recalc}}, 'Consider only votes from accounts older than '),
+        ' ',
+        recalcFromField = createElement('input.input', { type: 'date' })
+      ]));
+      console.warn();
+    }
+
+    function countVotes() {
+      Array.from(container.querySelectorAll('.interaction-user-list-item:not(.discarded)')).forEach(item => voters.add(item.innerText.trim()));
+      const totalCount = Array.from(voters).length;
+
+      Array.from(voteTab.getElementsByClassName('poll-option-list')[0].childNodes).forEach(voteItem => {
+        const countContainer = voteItem.getElementsByClassName('poll-option__counts')[0];
+        if (countContainer) {
+          const optionName = voteItem.getElementsByClassName('poll-option__label')[0].innerText.trim();
+
+          const anchor = Array.from(container.getElementsByTagName('h5')).find(item => item.innerText.trim() === optionName);
+          let nextVoter = anchor.nextSibling;
+          let count = 0;
+          while (nextVoter && nextVoter.classList.contains('interaction-user-list-item')) {
+            if (!nextVoter.classList.contains('discarded')) count++;
+            nextVoter = nextVoter.nextSibling;
+          }
+
+          const percentage = count / totalCount * 100;
+          clearElement(countContainer);
+          fillElement(countContainer, [
+            ['span', [
+              ['b', percentage.toFixed(2)],
+              '% ',
+              ['strong', `${count}/${totalCount}`],
+              ` vote${count === 1 ? '' : 's'}`
+            ]
+            ]]);
+          voteItem.getElementsByClassName('poll-bar__image')[0].style.width = percentage + '%';
+        } else {
+          // ended
+          if (voteItem.lastChild.nodeValue.match(/with (\d+)/)) {
+            const totalVotes = voteItem.lastChild.nodeValue.match(/with (\d+)/)[1];
+            voteItem.lastChild.nodeValue = ` with ${totalVotes} votes (${totalCount} voters).`;
+          }
+          // in process
+          else if (voteItem.lastChild.nodeValue.match(/\. (\d+)/)) {
+            const totalVotes = voteItem.lastChild.nodeValue.match(/\. (\d+) votes/)[1];
+            voteItem.lastChild.nodeValue = `. ${totalVotes} votes (${totalCount} voters) cast .`;
+          }
+        }
+      });
+    }
+
     if ((voteTab = document.querySelector('[data-tab="voting"]')) && (adminTab = document.querySelector('[data-tab="voters"]'))) {
       fetch(location.pathname + '/poll/votes')
       .then(resp => resp.text())
       .then(resp => {
-        const voters = new Set();
-        const container = createElement('div', {innerHTML: resp});
-        Array.from(container.getElementsByClassName('interaction-user-list-item')).forEach(item => voters.add(item.innerText));
-        const totalCount = Array.from(voters).length;
+        container = createElement('div', {innerHTML: resp});
+        countVotes();
 
-        Array.from(voteTab.getElementsByClassName('poll-option-list')[0].childNodes).forEach(voteItem => {
-          const countContainer = voteItem.getElementsByClassName('poll-option__counts')[0];
-          if (countContainer) {
-            const count = parseInt(countContainer.innerText.match(/[\d.%]+ (\d+)/)[1]);
-            const percentage = count / totalCount * 100;
-            clearElement(countContainer);
-            fillElement(countContainer, [
-              ['span', [
-                ['b', percentage.toFixed(2)],
-                '% ',
-                ['strong', `${count}/${totalCount}`],
-                ` vote${count === 1 ? '' : 's'}`
-              ]
-            ]]);
-            voteItem.getElementsByClassName('poll-bar__image')[0].style.width = percentage + '%';
-          } else {
-            const totalVotes = voteItem.lastChild.nodeValue.match(/with (\d+)/)[1]
-            voteItem.lastChild.nodeValue = ` with ${totalVotes} votes (${totalCount} voters).`;
-          }
-        });
+        voteTab.appendChild(loadButton = createElement('button.button.button--state-warning.js-staff-action', {events: {click: filterByJoinDate}}, 'Gain data for join date split'));
       })
     }
   }
