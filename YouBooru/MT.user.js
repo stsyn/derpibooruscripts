@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:MT
-// @version      0.1.14
+// @version      0.1.15
 // @author       stsyn
 
 // @include      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*/
@@ -181,7 +181,7 @@
   }
 
   function fixPollCount() {
-    let voteTab, adminTab, loadButton, container, recalcButton, recalcFromField, recalcFrom;
+    let voteTab, adminTab, loadButton, container, recalcButton, recalcFromField, recalcFrom, onlyArtists, onlyActive;
     let voters = new Set();
 
     async function filterByJoinDate() {
@@ -191,7 +191,7 @@
         function makeSlug(name) {
           return name.replace(/\-/g,'-dash-').replace(/\+/g,'-plus-').replace(/\:/g,'-colon-').replace(/\./g,'-dot-').replace(/\//g,'-fwslash-').replace(/\\/g,'-bwslash-').replace(/ /g,'+');
         }
-        return encodeURI(makeSlug(name)).replace(/\&lt;/g,'%3C').replace(/\#/,'%2523');
+        return encodeURI(makeSlug(name)).replace(/\&lt;/g,'%3C').replace(/\#/,'%23').replace(/%/g, '%25');
       }
 
       function getData(name) {
@@ -201,6 +201,8 @@
           const container = createElement('div', {innerHTML: resp});
           return {
             name,
+            active: !!container.querySelector('.table--stats__sparkline svg rect:nth-child(-n+60):not([height="0"])'),
+            artist: !!container.querySelector('.tag_list .tag[data-tag-category="origin"]'),
             joinDate: new Date(container.getElementsByTagName('time')[0].dateTime)
           }
         })
@@ -211,6 +213,8 @@
         Array.from(container.querySelectorAll('.interaction-user-list-item')).forEach(item => {
           const userData = castedData2.find(i => item.innerText.trim() === i.name);
           if (!userData || userData.joinDate > recalcFrom) item.classList.add('discarded');
+          else if (userData && onlyActive.checked && !userData.active) item.classList.add('discarded');
+          else if (userData && onlyArtists.checked && !userData.artist) item.classList.add('discarded');
           else item.classList.remove('discarded');
         });
         voters = new Set();
@@ -220,7 +224,8 @@
       voteTab.appendChild(progressBar = createElement('div'))
 
       loadButton.style.display = 'none';
-      const castedData1 = Array.from(voters);
+      const castedData1 = Array.from(voters)
+      //.filter((_, i) => i < 20);
       const castedData2 = [];
 
       for (let i = 0; i < castedData1.length; i++) {
@@ -233,9 +238,13 @@
       voteTab.appendChild(createElement('div', [
         recalcButton = createElement('button.button.button--state-warning.js-staff-action', {events: {click: recalc}}, 'Consider only votes from accounts older than '),
         ' ',
-        recalcFromField = createElement('input.input', { type: 'date' })
+        recalcFromField = createElement('input.input', { type: 'date' }),
+        ' Count only active between 90-30 days ago: ',
+        onlyActive = createElement('input', { type: 'checkbox' }),
+        ' Count only artists: ',
+        onlyArtists = createElement('input', { type: 'checkbox' })
       ]));
-      console.warn();
+      console.warn(castedData2);
     }
 
     function countVotes() {
@@ -245,13 +254,17 @@
       Array.from(voteTab.getElementsByClassName('poll-option-list')[0].childNodes).forEach(voteItem => {
         const countContainer = voteItem.getElementsByClassName('poll-option__counts')[0];
         if (countContainer) {
+          let hasYourSelf = false;
           const optionName = voteItem.getElementsByClassName('poll-option__label')[0].innerText.trim();
 
           const anchor = Array.from(container.getElementsByTagName('h5')).find(item => item.innerText.trim() === optionName);
           let nextVoter = anchor.nextSibling;
           let count = 0;
           while (nextVoter && nextVoter.classList.contains('interaction-user-list-item')) {
-            if (!nextVoter.classList.contains('discarded')) count++;
+            if (!nextVoter.classList.contains('discarded')) {
+              if (nextVoter.innerText.trim() === unsafeWindow.booru.userName) hasYourSelf = true;
+              count++;
+            }
             nextVoter = nextVoter.nextSibling;
           }
 
@@ -266,6 +279,7 @@
             ]
             ]]);
           voteItem.getElementsByClassName('poll-bar__image')[0].style.width = percentage + '%';
+          voteItem.getElementsByClassName('poll-bar__image')[0].style.opacity = hasYourSelf ? '1' : '0.6';
         } else {
           // ended
           if (voteItem.lastChild.nodeValue.match(/with (\d+)/)) {
@@ -275,7 +289,7 @@
           // in process
           else if (voteItem.lastChild.nodeValue.match(/\. (\d+)/)) {
             const totalVotes = voteItem.lastChild.nodeValue.match(/\. (\d+) votes/)[1];
-            voteItem.lastChild.nodeValue = `. ${totalVotes} votes (${totalCount} voters) cast .`;
+            voteItem.lastChild.nodeValue = `. ${totalVotes} votes (${totalCount} voters) cast.`;
           }
         }
       });
