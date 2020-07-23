@@ -1,7 +1,8 @@
 // ==UserScript==
 // @name         YDB:MT
-// @version      0.1.15
+// @version      0.1.16
 // @author       stsyn
+// @namespace    http://derpibooru.org
 
 // @include      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*/
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/adverts\/.*/
@@ -18,7 +19,7 @@
 
 // if you can't find any info about this, then you don't need it.
 
-(function() {
+(async function() {
   'use strict';
 
   let debug = function(id, value, level) {
@@ -36,6 +37,19 @@
     id = location.pathname.split('/');
     if (id[1] == 'images');
     id = parseInt(id[2]);
+  }
+
+  function awaitToken() {
+    return new Promise((resolve) => {
+      function wait() {
+        if (unsafeWindow.booru) {
+          resolve();
+          return;
+        }
+        setTimeout(wait, 100);
+      }
+      wait();
+    })
   }
 
   function fetchJson(verb, endpoint, body) {
@@ -244,7 +258,6 @@
         ' Count only artists: ',
         onlyArtists = createElement('input', { type: 'checkbox' })
       ]));
-      console.warn(castedData2);
     }
 
     function countVotes() {
@@ -447,6 +460,7 @@
     renderData(lines);
   }
 
+  await awaitToken();
   try {ajaxDupes();} catch(e) {error("ajaxDupes", e)};
   setTimeout(() => {try {fixDupes();} catch(e) {error("fixDupes", e)};}, 300);
   setTimeout(() => {try {syncDupesDespoil();} catch(e) {error("syncDupesDespoil", e)};}, 300);
