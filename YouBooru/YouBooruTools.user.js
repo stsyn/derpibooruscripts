@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YDB:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.8.19
+// @version      0.8.20
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -527,7 +527,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     writeTagTools(data);
   }
 
-  function legacyTagAliases(original) {
+  async function legacyTagAliases(original) {
     let getYesterdayQuery = function(param) {
       let date = new Date(Date.now()-param*24*60*60*1000);
       let c = '(';
@@ -592,15 +592,19 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       return tags;
     }
 
-    function onlyArtist(name) {
+    async function onlyArtist(name) {
       const depth = Math.min(name.length, 8);
+      const targets = (await fetchJson('GET', `/api/v1/json/tags/${makeSlug('artist:'+name)}`)
+      .then(resp => resp.json()).then(resp => resp.tag.aliases.map(unslug).concat(resp.tag.name)))
+      .filter(name => name.startsWith('artist:')).map(name => name.substring(7));
       let tags = [];
       for (let i = 0; i < depth; i++) {
-        const prefix = name.substring(0, i);
-        tags = tags.concat(Array(26).fill(0).map((_, i) => String.fromCharCode(i+97)).filter(letter => letter != name[i]).map(v => `artist:${prefix}${v}*`));
+        const prefixes = targets.map(item => item.substring(0, i)).filter((a, b, c) => c.indexOf(a) === b);
+        tags = tags.concat(Array(26).fill(0).map((_, i) => String.fromCharCode(i+97)).filter(letter => !targets.find(name => letter == name[i]))
+            .map(v => prefixes.map(prefix => `artist:${prefix}${v}*`)).flat());
         if (name.charCodeAt(i) < 97 && name.charCodeAt(i) > 122) break;
       }
-      return `(${tags.join(' OR ')} OR artist:${name}?*)`;
+      return `(${tags.join(' OR ')})`;
     }
 
     if (original.startsWith('__ydb')) {
@@ -612,7 +616,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       else if (original.startsWith('__ydb_hidden')) original = hiddenQuery();
       else if (original.startsWith('__ydb_yesterday')) original = getYesterdayQuery(1);
       else if (original.startsWith('__ydb_daysago')) original = getYesterdayQuery(parseInt(param));
-      else if (original.startsWith('__ydb_onlyartist')) original = onlyArtist(param);
+      else if (original.startsWith('__ydb_onlyartist')) original = await onlyArtist(param);
     }
     return original;
   }
@@ -621,7 +625,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     return encodeURIComponent(link.replace(/ /g, '+')).replace(/%2B/g,'+').replace(/%2A/g, '*').replace(/%2C/g, ',').replace(/%3A/g, ':');
   }
 
-  function tagAliases(original, opt) {
+  async function tagAliases(original, opt) {
     let limit = 8192;
     checkAliases();
     let udata = readTagTools();
@@ -719,10 +723,10 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       return q2;
     };
 
-    let smartLegacy = function (orig) {
+    async function smartLegacy (orig) {
       let tags = goodParse(orig);
       for (let i=0; i<tags.tags.length; i++) {
-        tags.tags[i].v = legacyTagAliases(tags.tags[i].v);
+        tags.tags[i].v = await legacyTagAliases(tags.tags[i].v);
       }
       let q2 = goodCombine(tags);
       return q2;
@@ -732,7 +736,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
 
     let q2 = toLowerCase(original);
     let q = cycledParse(q2);
-    if (opt.legacy) q = smartLegacy(q);
+    if (opt.legacy) q = await smartLegacy(q);
     q = artists(q);
     if (compactURL(q).length > limit) q = compressSyntax(q);
     //if (compactURL(q).length > limit) q = compressAliases(q);
@@ -859,13 +863,15 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
 
       data[s].t = getTimestamp();
     }
-    let aliaseParse = function(el) {
-      el.value = tagAliases(el.value, {legacy:true});
+    async function aliaseParse(el, e) {
+      e.preventDefault();
+      el.value = await tagAliases(el.value, {legacy:true});
+      el.closest('form').submit();
     };
 
-    document.getElementsByClassName('header__search__button')[0].addEventListener('click',() => aliaseParse(document.getElementsByClassName('header__input--search')[0]));
+    document.getElementsByClassName('header__search__button')[0].addEventListener('click', async e => await aliaseParse(document.getElementsByClassName('header__input--search')[0], e));
     if (document.querySelector('form#searchform[action*="/search"] button[type="submit"]'))
-      document.querySelector('form#searchform[action*="/search"] button[type="submit"]').addEventListener('click',() => aliaseParse(document.querySelector('.js-search-form .input')));
+      document.querySelector('form#searchform[action*="/search"] button[type="submit"]').addEventListener('click', async e => await aliaseParse(document.querySelector('.js-search-form .input'), e));
   }
 
   function asWatchlist() {
@@ -1605,6 +1611,10 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
 
   function makeSlug(name) {
     return name.replace(/\-/g,'-dash-').replace(/\+/g,'-plus-').replace(/\:/g,'-colon-').replace(/\./g,'-dot-').replace(/\//g,'-fwslash-').replace(/\\/g,'-bwslash-').replace(/ /g,'+');
+  }
+
+  function unslug(name) {
+    return name.replace(/\+/g,' ').replace(/-bwslash-/g,'\\').replace(/-fwslash-/g,'/').replace(/-dot-/g,'.').replace(/-colon-/g,':').replace(/-plus-/g,'+').replace(/-dash-/g,'-');
   }
 
   /////////////////////////////////////////////
