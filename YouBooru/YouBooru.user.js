@@ -13,7 +13,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.38
+// @version      0.5.39
 // @description  Feedz
 // @author       stsyn
 
@@ -515,9 +515,9 @@
       }
       return response.text();
     })
-    .then(text => {
+    .then(async text => {
       feed.temp.innerHTML = text;
-      parse(feed, id);
+      await parse(feed, id);
     });
   }
 
@@ -548,8 +548,8 @@
     sentRequests++;
   }
 
-  function feedAfterload(feed, cc, id, notcache) {
-    feedzURLs[id] = compileURL(feed, true);
+  async function feedAfterload(feed, cc, id, notcache) {
+    feedzURLs[id] = await compileURL(feed, true);
     feed.url.href = feedzURLs[id]+'&feedId='+id;
     feed.temp.innerHTML = '';
     feed.loaded = true;
@@ -611,7 +611,7 @@
     catch (e) {}
   }
 
-  function parse(feed, id) {
+  async function parse(feed, id) {
     let votes = feed.temp.querySelector('.js-datastore').getAttribute('data-interactions');
     if (votes) votes = JSON.parse(votes);
 
@@ -695,7 +695,7 @@
     },1000);
 
 
-    feedAfterload(feed, c.innerHTML, id);
+    await feedAfterload(feed, c.innerHTML, id);
     if (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.upvoteDownvoteDisabler)
       unsafeWindow._YDB_public.funcs.upvoteDownvoteDisabler(c, true);
   }
@@ -748,7 +748,7 @@
     postRun();
   }
 
-  function init() {
+  async function init() {
     register();
     let i;
     data.spoilerType = document.getElementsByClassName('js-datastore')[0].getAttribute('data-spoiler-type');
@@ -812,7 +812,7 @@
         getFeed(f, i, true);
         debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Not finished loading"', 0);
       }
-      else if (compileURL(f) != feedzURLs[i]) {
+      else if (await compileURL(f) != feedzURLs[i]) {
         getFeed(f, i, true);
         debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Feed url changed"', 0);
       }
@@ -844,7 +844,7 @@
 
   /*********************************/
 
-  function YB_insertFeed2(u) {
+  async function YB_insertFeed2(u) {
     let f = {};
     let i;
     for (i=0; i<feedz.length; i++) {
@@ -868,9 +868,9 @@
     feedz[i] = f;
     write();
 
-    if (unsafeWindow._YDB_public.funcs.backgroundBackup) unsafeWindow._YDB_public.funcs.backgroundBackup(() => {
+    if (unsafeWindow._YDB_public.funcs.backgroundBackup) unsafeWindow._YDB_public.funcs.backgroundBackup(async () => {
       if (history.length == 1) close();
-      else if (u.params.feedId) location.href = '/search?q='+customQueries(f)+'&sf='+f.sort+'&sd='+f.sd+'&feedId='+i;
+      else if (u.params.feedId) location.href = '/search?q='+(await customQueries(f))+'&sf='+f.sort+'&sd='+f.sd+'&feedId='+i;
       else location.href = '/settings#YourBooru';
     });
   }
