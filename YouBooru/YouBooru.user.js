@@ -13,7 +13,7 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.37
+// @version      0.5.38
 // @description  Feedz
 // @author       stsyn
 
@@ -188,7 +188,7 @@
             {type:'input', name:'...or caching interval', parameter:'ccache',styleI:{width:'3.2em', marginRight:'.4em'}, validation:{type:'int',min:0,max:99999}},
             {type:'checkbox', name:'Double size', parameter:'double',styleI:{marginRight:'.4em'}},
             {type:'checkbox', name:'Show on home page', parameter:'mainPage',styleI:{marginRight:'.4em'}},
-            {type:'buttonLink', attrI:{title:'Copy-paste this link somewhere to share this feed!',target:'_blank'},styleI:{marginRight:'.5em'}, name:'Share', i:(module,elem) => {
+            {type:'buttonLink', attrI:{title:'Copy-paste this link somewhere to share this feed!',target:'_blank'},styleI:{marginRight:'.5em'}, name:'Share', i:async (module,elem) => {
               const f = module.saved.feedz[elem.parentNode.dataset.id];
               if (!f) {
                 elem.innerHTML = '------';
@@ -196,7 +196,7 @@
               }
               let q = f.query;
               if (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.tagAliases) {
-                q = encodeURIComponent(unsafeWindow._YDB_public.funcs.tagAliases(f.query, {legacy:false}));
+                q = encodeURIComponent(await unsafeWindow._YDB_public.funcs.tagAliases(f.query, {legacy:false}));
               }
               elem.href = '/search?name='+encodeURIComponent(f.name)+'&q='+q.replace(/\%20/g,'+')+'&sf='+f.sort+'&sd='+f.sd+'&cache='+f.cache+'&ccache='+f.ccache;
             }},
@@ -465,7 +465,7 @@
     return tags;
   }
 
-  function customQueries(f) {
+  async function customQueries(f) {
     let tx = f.query;
     if (!unsafeWindow._YDB_public.funcs || !unsafeWindow._YDB_public.funcs.tagAliases) {
       tx = tx.replace('__ydb_Yesterday', getYesterdayQuery());
@@ -477,7 +477,7 @@
     }
     else {
       tx = tx.replace('__ydb_tryUnspoil', '__ydb_Unspoil');
-      tx = unsafeWindow._YDB_public.funcs.tagAliases(tx, {legacy:true});
+      tx = await unsafeWindow._YDB_public.funcs.tagAliases(tx, {legacy:true});
     }
 
     tx = tx.replace('__ydb_SinceLeavedNoNew', getNotSeenYetQueryNoNew(f));
@@ -496,8 +496,8 @@
     }
   }
 
-  function compileURL(f, act) {
-    let tx = customQueries(f);
+  async function compileURL(f, act) {
+    let tx = await customQueries(f);
     let s = `/search?q=${encode(tx)}&sf=${f.sort}&sd=${f.sd}`;
     if (act && (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.feedURLs)) {
       for (let i in unsafeWindow._YDB_public.funcs.feedURLs) s += unsafeWindow._YDB_public.funcs.feedURLs[i](f);
@@ -505,17 +505,8 @@
     return s;
   }
 
-  function compileJSONURL(f, act) {
-    let tx = customQueries(f);
-    let s = `/search.json?q=${encode(tx)}&sf=${f.sort}&sd=${f.sd}`;
-    if (act && (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.feedURLs)) {
-      for (let i in unsafeWindow._YDB_public.funcs.feedURLs) s += unsafeWindow._YDB_public.funcs.feedURLs[i](f);
-    }
-    return s;
-  }
-
-  function fetchFeed(feed, id) {
-    fetchJson('GET', compileURL(feed, true))
+  async function fetchFeed(feed, id) {
+    return fetchJson('GET', await compileURL(feed, true))
     .then(response => {
       if (!response.ok) {
         debug('YDB:FS','Request failed. Response '+response.status,2);
