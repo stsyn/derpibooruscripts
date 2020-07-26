@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YDB:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.8.18
+// @version      0.8.19
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -564,43 +564,55 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       return c+')';
     };
 
-    let spoileredQuery = function() {
-      if (document.getElementsByClassName('js-datastore')[0].dataset.spoileredTagList == undefined) return;
-      let tl = JSON.parse(document.getElementsByClassName('js-datastore')[0].dataset.spoileredTagList);
-      let tags = tl.reduce(function(prev, cur, i, a) {
-        if (localStorage['bor_tags_'+cur] == undefined) return prev;
-        let tname = JSON.parse(localStorage['bor_tags_'+cur]).name;
-        let quotes = (/(\(|\))/.test(tname)?'"':'');
-        return prev + quotes + tname + quotes + (i+1 == a.length?'':' || ');
+    function spoileredQuery() {
+      if (!document.getElementsByClassName('js-datastore')[0].dataset.spoileredTagList) return;
+      const tl = JSON.parse(document.getElementsByClassName('js-datastore')[0].dataset.spoileredTagList);
+      const tags = tl.reduce((prev, cur, i, a) => {
+        if (!localStorage['bor_tags_'+cur]) return prev;
+        const tname = JSON.parse(localStorage['bor_tags_'+cur]).name;
+        const quotes = (/(\(|\))/.test(tname)?'"':'');
+        return prev + quotes + tname + quotes + (i+1 == a.length?'':' OR ');
       }, '');
-      if (document.getElementsByClassName('js-datastore')[0].dataset.spoileredFilter != "") tags += ' || '+document.getElementsByClassName('js-datastore')[0].dataset.spoileredFilter;
+      if (document.getElementsByClassName('js-datastore')[0].dataset.spoileredFilter) tags += ' OR '+document.getElementsByClassName('js-datastore')[0].dataset.spoileredFilter;
       tags = '('+tags+')';
       return tags;
     };
 
     function hiddenQuery() {
-      if (document.getElementsByClassName('js-datastore')[0].dataset.hiddenTagList == undefined) return;
-      let tl = JSON.parse(document.getElementsByClassName('js-datastore')[0].dataset.hiddenTagList);
-      let tags = tl.reduce(function(prev, cur, i, a) {
-        if (localStorage['bor_tags_'+cur] == undefined) return prev;
-        let tname = JSON.parse(localStorage['bor_tags_'+cur]).name;
-        let quotes = (/(\(|\))/.test(tname)?'"':'');
-        return prev + quotes + tname + quotes + (i+1 == a.length?'':' || ');
+      if (!document.getElementsByClassName('js-datastore')[0].dataset.hiddenTagList) return;
+      const tl = JSON.parse(document.getElementsByClassName('js-datastore')[0].dataset.hiddenTagList);
+      const tags = tl.reduce((prev, cur, i, a) => {
+        if (!localStorage['bor_tags_'+cur]) return prev;
+        const tname = JSON.parse(localStorage['bor_tags_'+cur]).name;
+        const quotes = (/(\(|\))/.test(tname)?'"':'');
+        return prev + quotes + tname + quotes + (i+1 == a.length?'':' OR ');
       }, '');
-      if (document.getElementsByClassName('js-datastore')[0].dataset.hiddenFilter != "") tags += ' || '+document.getElementsByClassName('js-datastore')[0].dataset.hiddenFilter;
+      if (document.getElementsByClassName('js-datastore')[0].dataset.hiddenFilter) tags += ' OR '+document.getElementsByClassName('js-datastore')[0].dataset.hiddenFilter;
       tags = '('+tags+')';
       return tags;
     }
 
+    function onlyArtist(name) {
+      const depth = Math.min(name.length, 8);
+      let tags = [];
+      for (let i = 0; i < depth; i++) {
+        const prefix = name.substring(0, i);
+        tags = tags.concat(Array(26).fill(0).map((_, i) => String.fromCharCode(i+97)).filter(letter => letter != name[i]).map(v => `artist:${prefix}${v}*`));
+        if (name.charCodeAt(i) < 97 && name.charCodeAt(i) > 122) break;
+      }
+      return `(${tags.join(' OR ')} OR artist:${name}?*)`;
+    }
+
     if (original.startsWith('__ydb')) {
       let param = 0;
-      if (!isNaN(parseInt(original.split(':')[1]))) param = parseInt(original.split(':')[1]);
-      if (original.startsWith('__ydb_lastyearsalt')) original = getYearsAltQuery(param);
-      else if (original.startsWith('__ydb_lastyears')) original = getYearsQuery(param);
+      if (original.split(':')[1]) param = original.split(':')[1];
+      if (original.startsWith('__ydb_lastyearsalt')) original = getYearsAltQuery(parseInt(param));
+      else if (original.startsWith('__ydb_lastyears')) original = getYearsQuery(parseInt(param));
       else if (original.startsWith('__ydb_spoilered')) original = spoileredQuery();
       else if (original.startsWith('__ydb_hidden')) original = hiddenQuery();
       else if (original.startsWith('__ydb_yesterday')) original = getYesterdayQuery(1);
-      else if (original.startsWith('__ydb_daysago')) original = getYesterdayQuery(param);
+      else if (original.startsWith('__ydb_daysago')) original = getYesterdayQuery(parseInt(param));
+      else if (original.startsWith('__ydb_onlyartist')) original = onlyArtist(param);
     }
     return original;
   }
