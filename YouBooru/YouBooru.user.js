@@ -1,8 +1,11 @@
 // ==UserScript==
 // @name         YDB:Feeds
-// @namespace    http://tampermonkey.net/
+// @version      0.5.40
+// @description  Feedz
+// @author       stsyn
+// @namespace    http://derpibooru.org
 
-// @include      /http[s]*:\/\/(www\.|philomena\.|)(trixie|derpi)booru.org\/.*/
+// @include      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*/
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/adverts\/.*/
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*\.json.*/
 
@@ -13,9 +16,6 @@
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js
-// @version      0.5.39
-// @description  Feedz
-// @author       stsyn
 
 // @grant        unsafeWindow
 // @grant        GM_addStyle
@@ -465,23 +465,23 @@
     return tags;
   }
 
-  async function customQueries(f) {
+  async function customQueries(f, thumb) {
     let tx = f.query;
     if (!unsafeWindow._YDB_public.funcs || !unsafeWindow._YDB_public.funcs.tagAliases) {
-      tx = tx.replace('__ydb_Yesterday', getYesterdayQuery());
-      tx = tx.replace('__ydb_LastYearsAlt', getYearsAltQuery());
-      tx = tx.replace('__ydb_LastYears', getYearsQuery());
-      tx = tx.replace('__ydb_Spoilered', spoileredQuery());
-      tx = tx.replace('__ydb_Hidden', hiddenQuery());
-      tx = tx.replace('__ydb_tryUnspoil', '');
+      tx = tx.replace(/__ydb_Yesterday/gi, getYesterdayQuery());
+      tx = tx.replace(/__ydb_LastYearsAlt/gi, getYearsAltQuery());
+      tx = tx.replace(/__ydb_LastYears/gi, getYearsQuery());
+      tx = tx.replace(/__ydb_Spoilered/gi, spoileredQuery());
+      tx = tx.replace(/__ydb_Hidden/gi, hiddenQuery());
     }
     else {
-      tx = tx.replace('__ydb_tryUnspoil', '__ydb_Unspoil');
       tx = await unsafeWindow._YDB_public.funcs.tagAliases(tx, {legacy:true});
     }
 
-    tx = tx.replace('__ydb_SinceLeavedNoNew', getNotSeenYetQueryNoNew(f));
-    tx = tx.replace('__ydb_SinceLeaved', getNotSeenYetQuery(f));
+    tx = tx.replace(/__ydb_SinceLeftNoNew/gi, getNotSeenYetQueryNoNew(f));
+    tx = tx.replace(/__ydb_SinceLeft/gi, getNotSeenYetQuery(f));
+    if (!thumb) tx = tx.replace(/__ydb_OnlyFull:/gi, '');
+    if (thumb) tx = tx.replace(/__ydb_OnlyThumb:/gi, '');
     return tx;
   }
 
@@ -496,8 +496,8 @@
     }
   }
 
-  async function compileURL(f, act) {
-    let tx = await customQueries(f);
+  async function compileURL(f, act, thumb) {
+    let tx = await customQueries(f, thumb);
     let s = `/search?q=${encode(tx)}&sf=${f.sort}&sd=${f.sd}`;
     if (act && (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.feedURLs)) {
       for (let i in unsafeWindow._YDB_public.funcs.feedURLs) s += unsafeWindow._YDB_public.funcs.feedURLs[i](f);
@@ -506,7 +506,7 @@
   }
 
   async function fetchFeed(feed, id) {
-    return fetchJson('GET', await compileURL(feed, true))
+    return fetchJson('GET', await compileURL(feed, true, true))
     .then(response => {
       if (!response.ok) {
         debug('YDB:FS','Request failed. Response '+response.status,2);
@@ -549,8 +549,8 @@
   }
 
   async function feedAfterload(feed, cc, id, notcache) {
-    feedzURLs[id] = await compileURL(feed, true);
-    feed.url.href = feedzURLs[id]+'&feedId='+id;
+    feedzURLs[id] = await compileURL(feed, true, true);
+    feed.url.href = (await compileURL(feed, true, false))+'&feedId='+id;
     feed.temp.innerHTML = '';
     feed.loaded = true;
     feed.responsed = parseInt(config.imagesInFeeds*1.2);
@@ -812,7 +812,7 @@
         getFeed(f, i, true);
         debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Not finished loading"', 0);
       }
-      else if (await compileURL(f) != feedzURLs[i]) {
+      else if (await compileURL(f, false, true) != feedzURLs[i]) {
         getFeed(f, i, true);
         debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Feed url changed"', 0);
       }
@@ -870,7 +870,7 @@
 
     if (unsafeWindow._YDB_public.funcs.backgroundBackup) unsafeWindow._YDB_public.funcs.backgroundBackup(async () => {
       if (history.length == 1) close();
-      else if (u.params.feedId) location.href = '/search?q='+(await customQueries(f))+'&sf='+f.sort+'&sd='+f.sd+'&feedId='+i;
+      else if (u.params.feedId) location.href = '/search?q='+(await customQueries(f, false))+'&sf='+f.sort+'&sd='+f.sd+'&feedId='+i;
       else location.href = '/settings#YourBooru';
     });
   }
