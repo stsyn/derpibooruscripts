@@ -1,21 +1,20 @@
 // ==UserScript==
 // @name         YDB:Search Ex
-// @namespace    http://tampermonkey.net/
+// @version      0.5.3
+// @description  I hoped that this script could be deleted after moving to Philomena...
+// @author       stsyn
+// @namespace    http://derpibooru.org
 
-// @include      /http[s]*:\/\/(www\.|philomena\.|)(trixie|derpi)booru.org\/.*/
+// @include      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*/
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/adverts\/.*/
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*\.json.*/
 
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0UW.lib.js
-// /require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruCSRFPatch.lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js
-// @version      0.5.2
-// @description  I hoped that this script could be deleted after moving to Philomena...
-// @author       stsyn
 
 // @grant        unsafeWindow
 // @grant        GM_addStyle
@@ -563,20 +562,20 @@
 `);
 
     let qpusher;
-    const chall = () => {
+    async function chall() {
       let s = location.search;
-      let es = ['form.header__search .input','#_ydb_s_qpusher_sf','#_ydb_s_qpusher_sd', '#del'];
-      let args = ['q','sf','sd','del'];
+      const es = ['form.header__search .input','#_ydb_s_qpusher_sf','#_ydb_s_qpusher_sd', '#del'];
+      const args = ['q','sf','sd','del'];
       for (let i=0; i<es.length; i++) {
         const e = document.querySelector(es[i]);
         if (!e) continue;
         let val = e.value;
-        let arg = args[i];
+        const arg = args[i];
         if (i == 0) {
           if (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.tagAliases)
-            val = unsafeWindow._YDB_public.funcs.tagAliases(e.value,{});
+            val = await unsafeWindow._YDB_public.funcs.tagAliases(e.value, {});
         }
-        let t = compileQueryComponent(val);
+        const t = compileQueryComponent(val);
         myURL.params[arg] = t;
         s = '?';
         for (let x in myURL.params) {
@@ -646,7 +645,7 @@
     }
 
     if (myURL.params.sf && myURL.params.sf.startsWith('gallery_id')) {
-      addElem('option', {value: myURL.params.sf, innerHTML: 'gallery'}, document.getElementById('_ydb_s_qpusher_sf'));
+      document.getElementById('_ydb_s_qpusher_sf').appendChild(createElement('option', { value: myURL.params.sf }, 'gallery'));
     }
     if (!myURL.params.sf) myURL.params.sf = 'created_at';
     if (!myURL.params.sd) myURL.params.sd = 'desc';
