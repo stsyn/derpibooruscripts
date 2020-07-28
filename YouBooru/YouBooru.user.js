@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:Feeds
-// @version      0.5.41
+// @version      0.5.42
 // @description  Feedz
 // @author       stsyn
 // @namespace    http://derpibooru.org
@@ -527,8 +527,8 @@
     });
   }
 
-  function getFeed(feed, id, inital) {
-    fillParsed(feed, id);
+  async function getFeed(feed, id, inital) {
+    await fillParsed(feed, id);
     feed.container.parentNode.classList.add('_ydb_feedshadow');
 
     if (inital) {
@@ -716,7 +716,7 @@
     }
   }
 
-  function fillParsed(feed, id, pre) {
+  async function fillParsed(feed, id, pre) {
     const c = feed.container;
     let aloff = false;
     if (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.tagSimpleParser) {
@@ -747,7 +747,7 @@
     if (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.upvoteDownvoteDisabler)
       unsafeWindow._YDB_public.funcs.upvoteDownvoteDisabler(c, true);
     feed.temp.innerHTML = '';
-    feed.url.href = feedzURLs[id] + '&feedId=' + id;
+    feed.url.href = (await compileURL(feed, false, false)) + '&feedId=' + id;
     if (pre) return;
     feed.loaded = true;
     if (feedz.find(feed => feed && (privated || feed.mainPage) && !feed.loaded)) return;
@@ -789,11 +789,11 @@
           createElement('span._ydb_feedloading', ' Updating feed...'),
           f.reload = createElement('a', {
             style: {float: config.watchFeedLinkOnRightSide ? 'right' : ''},
-            events: {click: () => {
+            events: {click: async () => {
               feedzCache[f.internalId] = undefined;
               f.saved = 0;
               clearElement(f.container);
-              getFeed(f, f.internalId);
+              await getFeed(f, f.internalId);
             }}
           }, [
             createElement('i.fa.fa-sync'),
@@ -811,37 +811,37 @@
       f.ccache = parseInt(f.ccache);
       if (!feedzEvents[i]) feedzEvents[i] = {};
       if (!feedzCache[i]) {
-        getFeed(f, i, true);
+        await getFeed(f, i, true);
         debug('YDB:F','Requested update to feed "'+f.name+'". Reason "No cache found"', 0);
       }
       else if (feedzCache[i].startsWith('Server timeout.')) {
-        getFeed(f, i, true);
+        await getFeed(f, i, true);
         debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Not finished loading"', 0);
       }
       else if (await compileURL(f, false, true) != feedzURLs[i]) {
-        getFeed(f, i, true);
+        await getFeed(f, i, true);
         debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Feed url changed"', 0);
       }
       else if (parseInt(config.imagesInFeeds*1.2) != feedz[i].responsed) {
-        getFeed(f, i, true);
+        await getFeed(f, i, true);
         debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Changed setting imageInFeeds"', 0);
       }
       else if (ptime > (f.saved+f.cache))
       {
         if (f.ccache && (!isNaN(f.ccache))) {
           if (parseInt(ptime/f.ccache) > parseInt(f.saved/f.ccache)) {
-            getFeed(f, i, true);
+            await getFeed(f, i, true);
             debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Scheduled update"', 0);
           }
-          else fillParsed(f, i);
+          else await fillParsed(f, i);
         }
         else {
-          getFeed(f, i, true);
+          await getFeed(f, i, true);
           debug('YDB:F','Requested update to feed "'+f.name+'". Reason "Cache lifetime expired"', 0);
         }
       }
-      else if (!feedzURLs[i]) getFeed(f, i, true);
-      else fillParsed(f, i);
+      else if (!feedzURLs[i]) await getFeed(f, i, true);
+      else await fillParsed(f, i);
     }
 
     unsafeWindow.addEventListener("resize", resizeEverything);
