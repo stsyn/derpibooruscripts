@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:Feeds
-// @version      0.5.40
+// @version      0.5.41
 // @description  Feedz
 // @author       stsyn
 // @namespace    http://derpibooru.org
@@ -480,8 +480,14 @@
 
     tx = tx.replace(/__ydb_SinceLeftNoNew/gi, getNotSeenYetQueryNoNew(f));
     tx = tx.replace(/__ydb_SinceLeft/gi, getNotSeenYetQuery(f));
-    if (!thumb) tx = tx.replace(/__ydb_OnlyFull:/gi, '');
-    if (thumb) tx = tx.replace(/__ydb_OnlyThumb:/gi, '');
+    if (!thumb) {
+      tx = tx.replace(/__ydb_OnlyFull:/gi, '');
+      tx = tx.replace(/__ydb_OnlyThumb:\([^\)]+\)/gi, '__ydb_placeholder');
+    }
+    if (thumb) {
+      tx = tx.replace(/__ydb_OnlyThumb:/gi, '');
+      tx = tx.replace(/__ydb_OnlyFull:\([^\)]+\)/gi, '__ydb_placeholder');
+    }
     return tx;
   }
 
