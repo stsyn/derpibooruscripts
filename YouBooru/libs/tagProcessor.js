@@ -53,7 +53,7 @@ const tokenList = [
 
 function SearchTermWithExtension(termStr, extTags, extPrefixes) {
     const extTag = extTags[termStr];
-    const extPrefix = extPrefixes.find();
+    // const extPrefix = extPrefixes.find();
     if (extTag) {
         if (extTag.cache) {
             return extTag.cache;
