@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YDB:Tools
 // @namespace    http://tampermonkey.net/
-// @version      0.8.20
+// @version      0.8.21
 // @description  Some UI tweaks and more
 // @author       stsyn
 
@@ -567,7 +567,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     function spoileredQuery() {
       if (!document.getElementsByClassName('js-datastore')[0].dataset.spoileredTagList) return;
       const tl = JSON.parse(document.getElementsByClassName('js-datastore')[0].dataset.spoileredTagList);
-      const tags = tl.reduce((prev, cur, i, a) => {
+      let tags = tl.reduce((prev, cur, i, a) => {
         if (!localStorage['bor_tags_'+cur]) return prev;
         const tname = JSON.parse(localStorage['bor_tags_'+cur]).name;
         const quotes = (/(\(|\))/.test(tname)?'"':'');
@@ -581,7 +581,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     function hiddenQuery() {
       if (!document.getElementsByClassName('js-datastore')[0].dataset.hiddenTagList) return;
       const tl = JSON.parse(document.getElementsByClassName('js-datastore')[0].dataset.hiddenTagList);
-      const tags = tl.reduce((prev, cur, i, a) => {
+      let tags = tl.reduce((prev, cur, i, a) => {
         if (!localStorage['bor_tags_'+cur]) return prev;
         const tname = JSON.parse(localStorage['bor_tags_'+cur]).name;
         const quotes = (/(\(|\))/.test(tname)?'"':'');
@@ -607,16 +607,23 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       return `(${tags.join(' OR ')})`;
     }
 
-    if (original.startsWith('__ydb')) {
+    let metaNamespace = original.match(/^(__ydb_[a-z]+:)(__ydb_[a-z]+)/) || '';
+    let tagName = original;
+    if (metaNamespace) {
+      tagName = metaNamespace[2];
+      metaNamespace = metaNamespace[1];
+    }
+    if (tagName.startsWith('__ydb')) {
       let param = 0;
-      if (original.split(':')[1]) param = original.split(':')[1];
-      if (original.startsWith('__ydb_lastyearsalt')) original = getYearsAltQuery(parseInt(param));
-      else if (original.startsWith('__ydb_lastyears')) original = getYearsQuery(parseInt(param));
-      else if (original.startsWith('__ydb_spoilered')) original = spoileredQuery();
-      else if (original.startsWith('__ydb_hidden')) original = hiddenQuery();
-      else if (original.startsWith('__ydb_yesterday')) original = getYesterdayQuery(1);
-      else if (original.startsWith('__ydb_daysago')) original = getYesterdayQuery(parseInt(param));
-      else if (original.startsWith('__ydb_onlyartist')) original = await onlyArtist(param);
+      if (tagName.split(':')[1]) param = original.split(':')[1];
+      if (tagName.startsWith('__ydb_lastyearsalt')) tagName = getYearsAltQuery(parseInt(param));
+      else if (tagName.startsWith('__ydb_lastyears')) tagName = getYearsQuery(parseInt(param));
+      else if (tagName.startsWith('__ydb_spoilered')) tagName = spoileredQuery();
+      else if (tagName.startsWith('__ydb_hidden')) tagName = hiddenQuery();
+      else if (tagName.startsWith('__ydb_yesterday')) tagName = getYesterdayQuery(1);
+      else if (tagName.startsWith('__ydb_daysago')) tagName = getYesterdayQuery(parseInt(param));
+      else if (tagName.startsWith('__ydb_onlyartist')) tagName = await onlyArtist(param);
+      original = metaNamespace + tagName;
     }
     return original;
   }
