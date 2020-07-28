@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         YDB:Tools
-// @namespace    http://tampermonkey.net/
 // @version      0.8.21
 // @description  Some UI tweaks and more
 // @author       stsyn
+// @namespace    http://derpibooru.org
 
 // @include      /http[s]*:\/\/(www\.|philomena\.|)(trixie|derpi)booru.org\/.*/
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/adverts\/.*/
