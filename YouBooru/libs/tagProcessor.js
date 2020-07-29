@@ -57,18 +57,18 @@ async function SearchTermWithExtension(termStr, extTags, extPrefixes) {
     const extTag = extTags[termStr];
     const extPrefix = extPrefixes.find(prefix => termStr.startsWith(prefix.origin));
     if (extPrefix) {
-        return parseSearch(await extPrefix.result(termStr.replace(extPrefix.origin), ''));
+        return parseSearch(await extPrefix.result(termStr.replace(extPrefix.origin), ''), {tags: extTags, prefixes: extPrefixes});
     } else if (extTag) {
         if (extTag.cache) {
             return extTag.cache;
         }
         if (typeof extTag.result === 'string') {
-            extTag.cache = parseSearch(extTag.result, extTags);
+            extTag.cache = parseSearch(extTag.result, {tags: extTags, prefixes: extPrefixes});
             return extTag.cache;
         } else {
             const result = await extTag.result(termStr);
             if (typeof result === 'string') {
-                return parseSearch(extTag.result, extTags);
+                return parseSearch(extTag.result, {tags: extTags, prefixes: extPrefixes});
             }
             if (result instanceof SearchTerm || result instanceof SearchAST) {
                 return result;
@@ -755,8 +755,8 @@ function parseTokens(lexicalArray) {
     return op1;
 }
 
-async function parseSearch(searchStr, extensions = [], prefixes = []) {
-    return parseTokens(await generateLexArray(searchStr, extensions, prefixes));
+async function parseSearch(searchStr, extensions = {}) {
+    return parseTokens(await generateLexArray(searchStr, extensions.tags || [], extensions.prefixes || []));
 }
 
 function isTerminal(operand) {
