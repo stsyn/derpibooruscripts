@@ -3,7 +3,8 @@
  * - have .toString() methods;
  * - omit quotes from searchTerms;
  * - allow custom tags;
- * - allow custom namespaces (prefixes).
+ * - allow custom namespaces (prefixes);
+ * - partially async.
  */
 
 const tokenList = [
