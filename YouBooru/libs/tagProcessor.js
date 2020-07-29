@@ -52,11 +52,11 @@ const tokenList = [
     };
 
 
-function SearchTermWithExtension(termStr, extTags, extPrefixes) {
+async function SearchTermWithExtension(termStr, extTags, extPrefixes) {
     const extTag = extTags[termStr];
     const extPrefix = extPrefixes.find(prefix => termStr.startsWith(prefix.origin));
     if (extPrefix) {
-        return parseSearch(extPrefix.result(termStr.replace(extPrefix.origin), ''));
+        return parseSearch(await extPrefix.result(termStr.replace(extPrefix.origin), ''));
     } else if (extTag) {
         if (extTag.cache) {
             return extTag.cache;
@@ -65,7 +65,7 @@ function SearchTermWithExtension(termStr, extTags, extPrefixes) {
             extTag.cache = parseSearch(extTag.result, extTags);
             return extTag.cache;
         } else {
-            const result = extTag.result(termStr);
+            const result = await extTag.result(termStr);
             if (typeof result === 'string') {
                 return parseSearch(extTag.result, extTags);
             }
@@ -515,7 +515,7 @@ SearchTerm.prototype.match = function(target) {
     return ret;
 };
 
-function generateLexArray(searchStr, extensions, prefixes) {
+async function generateLexArray(searchStr, extensions, prefixes) {
     if (Array.isArray(extensions)) {
         extensions = Object.fromEntries(extensions.map(item => {
             return [
@@ -539,7 +539,7 @@ function generateLexArray(searchStr, extensions, prefixes) {
         boostFuzzStr = '';
 
     while (searchStr.length > 0) {
-        tokenList.every(tokenArr => {
+        for (const tokenArr of tokenList) {
             let tokenName = tokenArr[0],
                 tokenRE = tokenArr[1],
                 match = tokenRE.exec(searchStr),
@@ -549,7 +549,7 @@ function generateLexArray(searchStr, extensions, prefixes) {
             if (match) {
                 match = match[0];
 
-                if (Boolean(searchTerm) && (
+                if (searchTerm && (
                     ['and_op', 'or_op'].indexOf(tokenName) !== -1 ||
                     tokenName === 'rparen' && lparenCtr === 0)) {
                     // Set options.
@@ -607,6 +607,7 @@ function generateLexArray(searchStr, extensions, prefixes) {
                         break;
                     case 'rparen':
                         if (lparenCtr > 0) {
+                            // noinspection JSObjectNullOrUndefined
                             searchTerm.append(match);
                             lparenCtr -= 1;
                         }
@@ -635,7 +636,7 @@ function generateLexArray(searchStr, extensions, prefixes) {
                             boostFuzzStr += match;
                         }
                         else {
-                            searchTerm = SearchTermWithExtension(match, extensions, prefixes);
+                            searchTerm = await SearchTermWithExtension(match, extensions, prefixes);
                         }
                         break;
                     case 'boost':
@@ -644,7 +645,7 @@ function generateLexArray(searchStr, extensions, prefixes) {
                             boostFuzzStr += match;
                         }
                         else {
-                            searchTerm = SearchTermWithExtension(match, extensions, prefixes);
+                            searchTerm = await SearchTermWithExtension(match, extensions, prefixes);
                         }
                         break;
                     case 'quoted_lit':
@@ -652,7 +653,7 @@ function generateLexArray(searchStr, extensions, prefixes) {
                             searchTerm.append(match);
                         }
                         else {
-                            searchTerm = SearchTermWithExtension(initialMatch[1], extensions, prefixes);
+                            searchTerm = await SearchTermWithExtension(initialMatch[1], extensions, prefixes);
                         }
                         break;
                     case 'word':
@@ -665,7 +666,7 @@ function generateLexArray(searchStr, extensions, prefixes) {
                             searchTerm.append(match);
                         }
                         else {
-                            searchTerm = SearchTermWithExtension(match, extensions, prefixes);
+                            searchTerm = await SearchTermWithExtension(match, extensions, prefixes);
                         }
                         break;
                     default:
@@ -681,11 +682,9 @@ function generateLexArray(searchStr, extensions, prefixes) {
                 );
 
                 // Break since we have found a match.
-                return false;
+                break;
             }
-
-            return true;
-        });
+        }
     }
 
     // Append final tokens to the stack, starting with the search term.
@@ -755,8 +754,8 @@ function parseTokens(lexicalArray) {
     return op1;
 }
 
-function parseSearch(searchStr, extensions = [], prefixes = []) {
-    return parseTokens(generateLexArray(searchStr, extensions, prefixes));
+async function parseSearch(searchStr, extensions = [], prefixes = []) {
+    return parseTokens(await generateLexArray(searchStr, extensions, prefixes));
 }
 
 function isTerminal(operand) {
