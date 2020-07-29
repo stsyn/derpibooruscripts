@@ -54,6 +54,7 @@ const tokenList = [
 
 
 async function SearchTermWithExtension(termStr, extTags, extPrefixes) {
+    termStr = termStr.toLowerCase();
     const extTag = extTags[termStr];
     const extPrefix = extPrefixes.find(prefix => termStr.startsWith(prefix.origin));
     if (extPrefix) {
