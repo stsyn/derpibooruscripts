@@ -3,6 +3,7 @@
  * - have .toString() methods;
  * - omit quotes from searchTerms;
  * - allow custom tags;
+ * - allow custom namespaces (prefixes).
  */
 
 const tokenList = [
@@ -53,8 +54,10 @@ const tokenList = [
 
 function SearchTermWithExtension(termStr, extTags, extPrefixes) {
     const extTag = extTags[termStr];
-    // const extPrefix = extPrefixes.find();
-    if (extTag) {
+    const extPrefix = extPrefixes.find(prefix => termStr.startsWith(prefix.origin));
+    if (extPrefix) {
+        return parseSearch(extPrefix.result(termStr.replace(extPrefix.origin), ''));
+    } else if (extTag) {
         if (extTag.cache) {
             return extTag.cache;
         }
@@ -512,7 +515,7 @@ SearchTerm.prototype.match = function(target) {
     return ret;
 };
 
-function generateLexArray(searchStr, extensions) {
+function generateLexArray(searchStr, extensions, prefixes) {
     if (Array.isArray(extensions)) {
         extensions = Object.fromEntries(extensions.map(item => {
             return [
@@ -632,7 +635,7 @@ function generateLexArray(searchStr, extensions) {
                             boostFuzzStr += match;
                         }
                         else {
-                            searchTerm = SearchTermWithExtension(match, extensions);
+                            searchTerm = SearchTermWithExtension(match, extensions, prefixes);
                         }
                         break;
                     case 'boost':
@@ -641,7 +644,7 @@ function generateLexArray(searchStr, extensions) {
                             boostFuzzStr += match;
                         }
                         else {
-                            searchTerm = SearchTermWithExtension(match, extensions);
+                            searchTerm = SearchTermWithExtension(match, extensions, prefixes);
                         }
                         break;
                     case 'quoted_lit':
@@ -649,7 +652,7 @@ function generateLexArray(searchStr, extensions) {
                             searchTerm.append(match);
                         }
                         else {
-                            searchTerm = SearchTermWithExtension(initialMatch[1], extensions);
+                            searchTerm = SearchTermWithExtension(initialMatch[1], extensions, prefixes);
                         }
                         break;
                     case 'word':
@@ -662,7 +665,7 @@ function generateLexArray(searchStr, extensions) {
                             searchTerm.append(match);
                         }
                         else {
-                            searchTerm = SearchTermWithExtension(match, extensions);
+                            searchTerm = SearchTermWithExtension(match, extensions, prefixes);
                         }
                         break;
                     default:
@@ -752,8 +755,8 @@ function parseTokens(lexicalArray) {
     return op1;
 }
 
-function parseSearch(searchStr, extensions = []) {
-    return parseTokens(generateLexArray(searchStr, extensions));
+function parseSearch(searchStr, extensions = [], prefixes = []) {
+    return parseTokens(generateLexArray(searchStr, extensions, prefixes));
 }
 
 function isTerminal(operand) {
