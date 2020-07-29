@@ -29,7 +29,7 @@ const tokenList = [
     numberFields = ['id', 'width', 'height', 'aspect_ratio',
         'comment_count', 'score', 'upvotes', 'downvotes',
         'faves'],
-    dateFields = ['created_at'],
+    dateFields = ['created_at', 'first_seen_at'],
     literalFields = ['tags', 'orig_sha512_hash', 'sha512_hash',
         'score', 'uploader', 'source_url', 'description'],
     termSpaceToImageField = {
@@ -58,18 +58,18 @@ async function SearchTermWithExtension(termStr, extTags, extPrefixes) {
     const extTag = extTags[termStr];
     const extPrefix = extPrefixes.find(prefix => termStr.startsWith(prefix.origin));
     if (extPrefix) {
-        return parseSearch(await extPrefix.result(termStr.replace(extPrefix.origin), ''), {tags: extTags, prefixes: extPrefixes});
+        return await parseSearch(await extPrefix.result(termStr.replace(extPrefix.origin), ''), {tags: extTags, prefixes: extPrefixes});
     } else if (extTag) {
         if (extTag.cache) {
             return extTag.cache;
         }
         if (typeof extTag.result === 'string') {
-            extTag.cache = parseSearch(extTag.result, {tags: extTags, prefixes: extPrefixes});
+            extTag.cache = await parseSearch(extTag.result, {tags: extTags, prefixes: extPrefixes});
             return extTag.cache;
         } else {
             const result = await extTag.result(termStr);
             if (typeof result === 'string') {
-                return parseSearch(extTag.result, {tags: extTags, prefixes: extPrefixes});
+                return await parseSearch(result, {tags: extTags, prefixes: extPrefixes});
             }
             if (result instanceof SearchTerm || result instanceof SearchAST) {
                 return result;
