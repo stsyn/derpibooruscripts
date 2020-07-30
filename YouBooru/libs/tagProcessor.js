@@ -7,7 +7,7 @@
  * - partially async.
  */
 
-let _ = (() => {
+var _ = (() => {
     const tokenList = [
             ['fuzz', /^~(?:\d+(\.\d+)?|\.\d+)/],
             ['boost', /^\^[\-+]?\d+(\.\d+)?/],
