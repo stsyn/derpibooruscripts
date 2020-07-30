@@ -59,7 +59,7 @@ var _ = (() => {
         const extTag = extTags[termStr];
         const extPrefix = extPrefixes.find(prefix => termStr.startsWith(prefix.origin));
         if (extPrefix) {
-            return await parseSearch(await extPrefix.result(termStr.replace(extPrefix.origin), ''), {
+            return await parseSearch(await extPrefix.result(termStr.replace(extPrefix.origin, '')), {
                 tags: extTags,
                 prefixes: extPrefixes
             });
