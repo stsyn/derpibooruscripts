@@ -556,7 +556,6 @@ var _ = (() => {
                             negate = false;
                         }
                     }
-                    console.warn(match[0], tokenStack, groupNegate, negate);
 
                     switch (tokenName) {
                         case 'and_op':
