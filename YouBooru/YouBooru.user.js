@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:Feeds
-// @version      0.5.42
+// @version      0.5.43
 // @description  Feedz
 // @author       stsyn
 // @namespace    http://derpibooru.org
@@ -10,6 +10,7 @@
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*\.json.*/
 
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagProcessor.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruImitation0UW.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0UW.lib.js
@@ -195,8 +196,8 @@
                 return;
               }
               let q = f.query;
-              if (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.tagAliases) {
-                q = encodeURIComponent(await unsafeWindow._YDB_public.funcs.tagAliases(f.query, {legacy:false}));
+              if (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.getTagProcessors) {
+                q = encodeURIComponent((await parseSearch(f.query, unsafeWindow._YDB_public.funcs.getTagProcessors({legacy:false}))).toString());
               }
               elem.href = '/search?name='+encodeURIComponent(f.name)+'&q='+q.replace(/\%20/g,'+')+'&sf='+f.sort+'&sd='+f.sd+'&cache='+f.cache+'&ccache='+f.ccache;
             }},
@@ -385,10 +386,13 @@
   }
 
   /*********************************/
+  function getDateString(date) {
+    return `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+  }
 
   function getYesterdayQuery() {
     const date = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    return '(created_at:' + date.getFullYear() + '-' + (date.getMonth() + 1).toString().padStart(2, '0') + '-' +date.getDate().toString().padStart(2, '0') + ')';
+    return `created_at:${getDateString(date)}`;
   }
 
   function getYearsQuery() {
@@ -466,29 +470,25 @@
   }
 
   async function customQueries(f, thumb) {
-    let tx = f.query;
-    if (!unsafeWindow._YDB_public.funcs || !unsafeWindow._YDB_public.funcs.tagAliases) {
-      tx = tx.replace(/__ydb_Yesterday/gi, getYesterdayQuery());
-      tx = tx.replace(/__ydb_LastYearsAlt/gi, getYearsAltQuery());
-      tx = tx.replace(/__ydb_LastYears/gi, getYearsQuery());
-      tx = tx.replace(/__ydb_Spoilered/gi, spoileredQuery());
-      tx = tx.replace(/__ydb_Hidden/gi, hiddenQuery());
+    const processors = {tags: [], prefixes: []};
+    if (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.getTagProcessors) {
+      const data = unsafeWindow._YDB_public.funcs.getTagProcessors({legacy: true});
+      processors.tags = processors.tags.concat(data.tags);
+      processors.prefixes = processors.prefixes.concat(data.prefixes);
+    } else {
+      processors.tags.push({origin: '__ydb_yesterday', result: getYesterdayQuery()});
+      processors.tags.push({origin: '__ydb_lastyearsalt', result: getYearsAltQuery()});
+      processors.tags.push({origin: '__ydb_lastyears', result: getYearsQuery()});
+      processors.tags.push({origin: '__ydb_spoilered', result: spoileredQuery()});
+      processors.tags.push({origin: '__ydb_hidden', result: hiddenQuery()});
     }
-    else {
-      tx = await unsafeWindow._YDB_public.funcs.tagAliases(tx, {legacy:true});
-    }
+    processors.tags.push({origin: '__ydb_sinceleftnonew', result: getNotSeenYetQueryNoNew(f)});
+    processors.tags.push({origin: '__ydb_sinceleft', result: getNotSeenYetQuery(f)});
 
-    tx = tx.replace(/__ydb_SinceLeftNoNew/gi, getNotSeenYetQueryNoNew(f));
-    tx = tx.replace(/__ydb_SinceLeft/gi, getNotSeenYetQuery(f));
-    if (!thumb) {
-      tx = tx.replace(/__ydb_OnlyFull:/gi, '');
-      tx = tx.replace(/__ydb_OnlyThumb:\([^\)]+\)/gi, '__ydb_placeholder');
-    }
-    if (thumb) {
-      tx = tx.replace(/__ydb_OnlyThumb:/gi, '');
-      tx = tx.replace(/__ydb_OnlyFull:\([^\)]+\)/gi, '__ydb_placeholder');
-    }
-    return tx;
+    processors.prefixes.push({origin: '__ydb_onlyfull:', result: f => !thumb ? f : '__ydb_placeholder'});
+    processors.prefixes.push({origin: '__ydb_onlythumb:', result: f => thumb ? f : '__ydb_placeholder'});
+
+    return (await parseSearch(f.query, processors)).toString();
   }
 
   /*********************************/
