@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:Search Ex
-// @version      0.5.3
+// @version      0.5.4
 // @description  I hoped that this script could be deleted after moving to Philomena...
 // @author       stsyn
 // @namespace    http://derpibooru.org
@@ -10,6 +10,7 @@
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*\.json.*/
 
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagProcessor.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0UW.lib.js
 
@@ -572,8 +573,9 @@
         let val = e.value;
         const arg = args[i];
         if (i == 0) {
-          if (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.tagAliases)
-            val = await unsafeWindow._YDB_public.funcs.tagAliases(e.value, {});
+          if (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.getTagProcessors) {
+            val = (await parseSearch(e.value, unsafeWindow._YDB_public.funcs.getTagProcessors())).toString();
+          }
         }
         const t = compileQueryComponent(val);
         myURL.params[arg] = t;
@@ -740,7 +742,6 @@
     if (settings.preloading) execute();
     else {
       const random = myURL.params.sf.startsWith('random') && !navigationFallbackLikeGalery();
-      console.warn(random);
 
       const n = document.getElementsByClassName('js-next')[0];
       const p = document.getElementsByClassName('js-prev')[0];
