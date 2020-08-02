@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:Tools
-// @version      0.8.21
+// @version      0.9.0
 // @description  Some UI tweaks and more
 // @author       stsyn
 // @namespace    http://derpibooru.org
@@ -12,6 +12,7 @@
 // @require      https://raw.githubusercontent.com/blueimp/JavaScript-MD5/master/js/md5.min.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagProcessor.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagDB0.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/badgesDB0.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0UW.lib.js
@@ -258,11 +259,21 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       link:'/pages/api?usersDebug'
     };
     if (unsafeWindow._YDB_public.funcs == undefined) unsafeWindow._YDB_public.funcs = {};
-    unsafeWindow._YDB_public.funcs.tagAliases = tagAliases;
-    unsafeWindow._YDB_public.funcs.tagComplexParser = goodParse;
+
+    function notSupported(module) {
+      return () => {
+        console.trace();
+        console.error(`Function ${module} is not supported anymore. Use libs/tagProcessor.js with _YDB_public.funcs.getTagProcessors().`);
+      }
+    }
+    unsafeWindow._YDB_public.funcs.tagAliases = notSupported('tagAliases');
+    unsafeWindow._YDB_public.funcs.tagComplexParser = notSupported('tagComplexParser');
+    unsafeWindow._YDB_public.funcs.tagComplexCombine = notSupported('tagComplexCombine');
+
     unsafeWindow._YDB_public.funcs.tagSimpleParser = simpleParse;
-    unsafeWindow._YDB_public.funcs.tagComplexCombine = goodCombine;
     unsafeWindow._YDB_public.funcs.tagSimpleCombine = simpleCombine;
+    unsafeWindow._YDB_public.funcs.getTagProcessors = getTagProcessors;
+
     unsafeWindow._YDB_public.funcs.searchForDuplicates = searchForDuplicates;
     unsafeWindow._YDB_public.funcs.compactURL = compactURL;
     unsafeWindow._YDB_public.funcs.upvoteDownvoteDisabler = (elem, inital) => {
@@ -432,66 +443,11 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
 
   //tag tools
   function simpleParse(x) {
-    return x.replace(/(\|\|| OR | AND | \&\&)/g, ',').split(',').map(y => y.trim());
+    return x.replace(/(\|\|| OR | AND | \&\&)/g, ',').split(',').map(y => y.trim().replace(/(^\(|\)$)/, ''));
   }
 
-  function goodParse(x) {
-    let yx = {};
-    yx.orig = x;
-    x = x.replace(/\|\|/g, ', ');
-    x = x.replace(/\&\&/g, ', ');
-    x = x.replace(/^\(/g, ' ');
-    x = x.replace(/^(\s*)(\()/g, '$1 ');
-    x = x.replace(/(\))(\s*)$/g, ' $2');
-    while (/(,\s*)(\()/g.test(x)) x = x.replace(/(,\s*)(\()/g, '$1 ');
-    while (/(\))(\s*,)/g.test(x)) x = x.replace(/(\))(\s*,)/g, ' $2');
-    x = x.replace(/^\-/g, ' ');
-    x = x.replace(/^\!/g, ' ');
-    x = x.replace(/([ ,])\-/g, '$1 ');
-    x = x.replace(/([ ,])!/g, '$1 ');
-    x = x.replace(/\"/g, ' ');
-    x = x.replace(/\~/g, ',');
-    x = x.replace(/\^/g, ',');
-    x = x.replace(/ OR /g, ',   ');
-    x = x.replace(/ AND /g, ',    ');
-    x = x.replace(/ NOT /g, ',    ');
-    x = x.replace(/^NOT /g, '    ');
-    let y = x.split(',');
-    let afix = 0;
-    for (let i=0; i<y.length; i++) {
-      let tag = {};
-      tag.offset = afix;
-      tag.length = y[i].length;
-      afix+=1+y[i].length;
-      let s1 = y[i].replace(/^ +/g,'');
-      tag.offset += y[i].length-s1.length;
-      tag.length -= y[i].length-s1.length;
-      let s2 = s1.replace(/ +$/g,'');
-      tag.length -= s1.length-s2.length;
-      tag.v = s2;
-      y[i] = tag;
-    }
-    yx.temp = x;
-    yx.tags = y;
-    return yx;
-  }
-
-  function goodCombine(yx) {
-    let pos = 0, ns = '';
-    for (let i=0; i<yx.tags.length; i++) {
-      ns += yx.orig.substring(pos,yx.tags[i].offset);
-      pos += (yx.tags[i].offset - pos) + yx.tags[i].length;
-      ns += yx.tags[i].v;
-    }
-    ns += yx.orig.substring(pos);
-    return ns;
-  }
-
-  function simpleCombine(y, separator) {
-    if (!separator) separator = ' OR ';
-    let s = '';
-    for (let i=0; i<y.length; i++) s += y[i] + (i<y.length-1?separator:'');
-    return s;
+  function simpleCombine(y, separator = ' OR ') {
+    return y.join(separator);
   }
 
   function searchForDuplicates(a) {
@@ -527,38 +483,61 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     writeTagTools(data);
   }
 
-  async function legacyTagAliases(original) {
-    let getYesterdayQuery = function(param) {
-      let date = new Date(Date.now()-param*24*60*60*1000);
-      let c = '(';
-      let cc = 'created_at:';
-      c += cc + date.getFullYear() + '-' + (date.getMonth()+1).toString().padStart(2, '0') + '-' + date.getDate().toString().padStart(2, '0');
-      return c+')';
+  function getTagProcessors(opt = {}) {
+    let tags = [];
+    let prefixes = [];
+    if (ls.aliases) {
+      tags = tags.concat(ls.aliases.map(item => {
+        return {
+          origin: item.a,
+          result: item.b
+        };
+      }));
+    }
+    if (opt.legacy) {
+      const data = legacyTagAliases();
+      tags = tags.concat(data.tags);
+      prefixes = prefixes.concat(data.prefixes);
+    }
+    const data = commonTagAliases();
+    tags = tags.concat(data.tags);
+    prefixes = prefixes.concat(data.prefixes);
+    return {tags, prefixes}
+  }
+
+  function legacyTagAliases() {
+    function getDateString(date) {
+      return `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+    }
+
+    function getYesterdayQuery(param) {
+      const date = new Date(Date.now() - parseInt(param)*24*60*60*1000);
+      return `created_at:${getDateString(date)}`;
     };
 
-    let getYearsQuery = (param) => {
-      const date = new Date(Date.now()-param*24*60*60*1000);
+    function getYearsQuery(param) {
+      const date = new Date(Date.now()-parseInt(param)*24*60*60*1000);
       let c = '(';
       const cc = 'created_at:';
       const dateString = '-' + (date.getMonth() + 1).toString().padStart(2, '0') + '-' + date.getDate().toString().padStart(2, '0');
 
-      for (let i = date.getFullYear() - 1; i>2011; i--) {
-        if (date.getMonth() == 1 && date.getDate() == 29 && i % 4 != 0) continue;
-        c += (c === '(' ? '' : ' || ') + cc + i + dateString;
+      for (let i = date.getFullYear() - 1; i > 2011; i--) {
+        if (date.getMonth() === 1 && date.getDate() === 29 && i % 4 !== 0) continue;
+        c += (c === '(' ? '' : ' OR ') + cc + i + dateString;
       }
 
       return c+')';
     };
 
-    let getYearsAltQuery = (param) => {
-      const date = new Date(Date.now()-param*24*60*60*1000);
+    function getYearsAltQuery(param) {
+      const date = new Date(Date.now()-parseInt(param)*24*60*60*1000);
       let c = '(';
       const cc = 'first_seen_at:';
       const dateString = '-' + (date.getMonth() + 1).toString().padStart(2, '0') + '-' + date.getDate().toString().padStart(2, '0');
 
-      for (let i = date.getFullYear() - 1; i>2011; i--) {
-        if (date.getMonth() == 1 && date.getDate() == 29 && i % 4 != 0) continue;
-        c += (c === '(' ? '' : ' || ') + cc + i + dateString;
+      for (let i = date.getFullYear() - 1; i > 2011; i--) {
+        if (date.getMonth() === 1 && date.getDate() === 29 && i % 4 !== 0) continue;
+        c += (c === '(' ? '' : ' OR ') + cc + i + dateString;
       }
 
       return c+')';
@@ -592,11 +571,18 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       return tags;
     }
 
-    async function onlyArtist(name) {
-      const depth = Math.min(name.length, 8);
-      const targets = (await fetchJson('GET', `/api/v1/json/tags/${makeSlug('artist:'+name)}`)
-      .then(resp => resp.json()).then(resp => resp.tag.aliases.map(unslug).concat(resp.tag.name)))
+    async function onlyArtist(content) {
+      const names = simpleParse(content);
+      const shortest = Math.min(...names.map(name => name.length));
+      const depth = Math.min(shortest, 9 - names.length);
+      const targets = (await Promise.all(names.map(name =>
+        fetchJson('GET', `/api/v1/json/tags/${makeSlug('artist:'+name)}`)
+          .then(resp => resp.json())
+          .then(resp => resp.tag.aliases.map(unslug).concat(resp.tag.name)))))
+      .flat()
+      .filter((a, b, c) => c.indexOf(a) === b)
       .filter(name => name.startsWith('artist:')).map(name => name.substring(7));
+
       let tags = [];
       for (let i = 0; i < depth; i++) {
         const prefixes = targets.map(item => item.substring(0, i)).filter((a, b, c) => c.indexOf(a) === b);
@@ -607,155 +593,54 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       return `(${tags.join(' OR ')})`;
     }
 
-    let metaNamespace = original.match(/^(__ydb_[a-z]+:)(__ydb_[a-z]+)/) || '';
-    let tagName = original;
-    if (metaNamespace) {
-      tagName = metaNamespace[2];
-      metaNamespace = metaNamespace[1];
+    const tags = [];
+    const prefixes = [];
+    tags.push({origin: '__ydb_lastyearsalt', result: getYearsAltQuery(0)});
+    tags.push({origin: '__ydb_lastyears', result: getYearsQuery(0)});
+    tags.push({origin: '__ydb_spoilered', result: spoileredQuery()});
+    tags.push({origin: '__ydb_hidden', result: spoileredQuery()});
+    tags.push({origin: '__ydb_yesterday', result: getYesterdayQuery(0)});
+
+    prefixes.push({origin: '__ydb_lastyearsalt:', result: getYearsAltQuery});
+    prefixes.push({origin: '__ydb_lastyears:', result: getYearsQuery});
+    prefixes.push({origin: '__ydb_daysago:', result: getYesterdayQuery});
+    prefixes.push({origin: '__ydb_onlyartist:', result: onlyArtist});
+
+    return {tags, prefixes};
+  }
+
+  function commonTagAliases() {
+    function artists(tag) {
+      if (tag === 'everyone') return '@everyone';
+      return 'artist:' + tag;
     }
-    if (tagName.startsWith('__ydb')) {
-      let param = 0;
-      if (tagName.split(':')[1]) param = original.split(':')[1];
-      if (tagName.startsWith('__ydb_lastyearsalt')) tagName = getYearsAltQuery(parseInt(param));
-      else if (tagName.startsWith('__ydb_lastyears')) tagName = getYearsQuery(parseInt(param));
-      else if (tagName.startsWith('__ydb_spoilered')) tagName = spoileredQuery();
-      else if (tagName.startsWith('__ydb_hidden')) tagName = hiddenQuery();
-      else if (tagName.startsWith('__ydb_yesterday')) tagName = getYesterdayQuery(1);
-      else if (tagName.startsWith('__ydb_daysago')) tagName = getYesterdayQuery(parseInt(param));
-      else if (tagName.startsWith('__ydb_onlyartist')) tagName = await onlyArtist(param);
-      original = metaNamespace + tagName;
+
+    function unspoilTag() {
+      let nonce;
+      if (!unsafeWindow._YDB_public.funcs.getNonce) nonce = 'unsafe_nonce';
+      else nonce = unsafeWindow._YDB_public.funcs.getNonce();
+      return '!__ydb_unspoil:'+md5(document.body.dataset.userName + nonce);
     }
-    return original;
+
+    return {
+      tags: [{origin: '__ydb_unspoil', result: unspoilTag}],
+      prefixes: [{origin: '@', result: artists}]
+    }
   }
 
   function compactURL(link) {
     return encodeURIComponent(link.replace(/ /g, '+')).replace(/%2B/g,'+').replace(/%2A/g, '*').replace(/%2C/g, ',').replace(/%3A/g, ':');
   }
 
-  async function tagAliases(original, opt) {
-    let limit = 8192;
-    checkAliases();
+  async function tagAliases(original) {
     let udata = readTagTools();
+    checkAliases();
 
-    let als = {};
-    if (ls.aliases != undefined) ls.aliases.forEach(v => {als[v.a] = v.b});
-    let iterations = 0;
+    const result = (await parseSearch(original, getTagProcessors({legacy: true}))).toString();
 
-    let cycledParse = function(orig) {
-      let changed = false;
-      let tags = goodParse(orig);
-      for (let i=0; i<tags.tags.length; i++) {
-        if (als[tags.tags[i].v] != undefined) {
-          tags.tags[i].v = '('+als[tags.tags[i].v]+')';
-          changed = true;
-        }
-      }
-      let q2 = goodCombine(tags);
-      iterations++;
-      if (changed && iterations < 16) q2 = cycledParse(q2);
-      return q2;
-    };
-
-    let artists = function(orig) {
-      let tags = goodParse(orig);
-      for (let i=0; i<tags.tags.length; i++) {
-        if (tags.tags[i].v.startsWith('@')) {
-          if (tags.tags[i].v == '@everyone') continue;
-          tags.tags[i].v = tags.tags[i].v.replace('@','artist:');
-        }
-      }
-      let q2 = goodCombine(tags);
-      return q2;
-    };
-
-    const compressSyntax = orig => {
-      let q2 = orig.replace(/ \&\& /g, ',');
-      q2 = q2.replace(/ \|\| /g, ' OR ');
-      while (q2.indexOf(', ')>-1) q2 = q2.replace(/, /g, ',');
-      while (q2.indexOf(' ,')>-1) q2 = q2.replace(/ ,/g, ',');
-      q2 = q2.replace(/ AND /g, ',');
-      q2 = q2.replace(/ NOT /g, ' -');
-      q2 = q2.replace(/'^NOT /g, '-');
-      q2 = q2.replace(/[ ,\(]!/g, str => str[0]+'-');
-      q2 = q2.replace(/^ +/g,'');
-      q2 = q2.replace(/ +$/g,'');
-      while (q2.indexOf('  ')>-1) q2 = q2.replace(/  /g, ' ');
-      return q2;
-    };
-
-    let compressAliases = function (orig) {
-      /*const tags = goodParse(orig);
-      const tt = getTagShortAliases();
-      if (!tt) return orig;
-      for (let i=0; i<tags.tags.length; i++) {
-        if (tt[tags.tags[i].v]) {
-          tags.tags[i].v = tt[tags.tags[i].v];
-        }
-      }
-      let q2 = goodCombine(tags);
-      return q2;*/
-    };
-
-    const compressArtists = orig => {
-      let tags = goodParse(orig);
-      tags.tags.forEach(tag => {
-        if (tag.v.startsWith('artist:')) {
-          tag.v = tag.v.replace('artist:','a*t:');
-        }
-      });
-      let q2 = goodCombine(tags);
-      return q2;
-    };
-
-    const toLowerCase = orig => {
-      let tags = goodParse(orig);
-      tags.tags.forEach(tag => {
-        tag.v = tag.v.toLowerCase();
-      });
-      let q2 = goodCombine(tags);
-      return q2;
-    };
-
-    let unspoilTag = function (orig) {
-      let nonce;
-      if (unsafeWindow._YDB_public.funcs.getNonce == undefined) nonce = 'unsafe_nonce';
-      else nonce = unsafeWindow._YDB_public.funcs.getNonce();
-      let tags = goodParse(orig);
-      for (let i=0; i<tags.tags.length; i++) {
-        if (tags.tags[i].v == '__ydb_unspoil') {
-          tags.tags[i].v = '!__ydb_unspoil:'+md5(document.body.dataset.userName+nonce+original);
-        }
-      }
-      let q2 = goodCombine(tags);
-      return q2;
-    };
-
-    async function smartLegacy (orig) {
-      let tags = goodParse(orig);
-      for (let i=0; i<tags.tags.length; i++) {
-        tags.tags[i].v = await legacyTagAliases(tags.tags[i].v);
-      }
-      let q2 = goodCombine(tags);
-      return q2;
-    };
-
-    //////////////////////////////////////////////////////
-
-    let q2 = toLowerCase(original);
-    let q = cycledParse(q2);
-    if (opt.legacy) q = await smartLegacy(q);
-    q = artists(q);
-    if (compactURL(q).length > limit) q = compressSyntax(q);
-    //if (compactURL(q).length > limit) q = compressAliases(q);
-    if (compactURL(q).length > limit) q = compressArtists(q);
-    q = unspoilTag(q);
-
-    if (q!=q2) {
-      debug('YDB:T',`Query with length ${original.length} transformed to ${q.length}`,0);
-      udata[md5(q)] = {q:original, t:getTimestamp()};
-      writeTagTools(udata);
-    }
-    return q;
+    udata[md5(result)] = {q:original, t:getTimestamp()};
+    writeTagTools(udata);
+    return result;
   }
 
   function unspoil(cont) {
@@ -828,15 +713,15 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         document.querySelector('#searchform > .block .block__header.flex .flex__right'));
     }
     let q = document.getElementsByClassName('header__input--search')[0].value;
-    let qc = goodParse(q);
+    let qc = simpleParse(q);
     let data = readTagTools();
     let s = md5(document.getElementsByClassName('header__input--search')[0].value);
 
-    for (let i=0; i<qc.tags.length; i++) {
-      if (qc.tags[i].v.startsWith('__ydb_unspoil')) {
-        let n = qc.tags[i].v.split(':').pop();
+    for (let i=0; i<qc.length; i++) {
+      if (qc[i].startsWith('__ydb_unspoil')) {
+        let n = qc[i].split(':').pop();
         if (!unsafeWindow._YDB_public.funcs.getNonce) {
-          document.getElementById('container').insertBefore(InfernoAddElem('div',{className:'flash flash--warning', innerHTML:'YDB:Settings 0.9.1+ strongly recommended! Using unsafe nonce.'},[]),document.getElementById('content'));
+          document.getElementById('container').insertBefore(createElement('div.flash.flash--warning', 'YDB:Settings 0.9.1+ strongly recommended! Using unsafe nonce.'),document.getElementById('content'));
         }
 
         let nonce;
@@ -844,13 +729,13 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         else nonce = unsafeWindow._YDB_public.funcs.getNonce();
 
         if (!data[s]) {
-          document.getElementById('container').insertBefore(InfernoAddElem('div',{className:'flash flash--warning', innerHTML:'Query lifetime expired. Please search again.'}),document.getElementById('content'));
+          document.getElementById('container').insertBefore(createElement('div.flash.flash--warning', 'Query lifetime expired. Please search again.'),document.getElementById('content'));
           break;
         }
 
-        let hash = md5(document.body.dataset.userName+nonce+data[s].q);
+        let hash = md5(document.body.dataset.userName+nonce);
         if (hash != n) {
-          document.getElementById('container').insertBefore(InfernoAddElem('div',{className:'flash flash--warning', innerHTML:'Invalid or outdated token!'}),document.getElementById('content'));
+          document.getElementById('container').insertBefore(createElement('div.flash.flash--warning', 'Invalid or outdated token!'),document.getElementById('content'));
           break;
         }
         if (document.getElementsByClassName('js-resizable-media-container')[0]) setTimeout(() => unspoil(document.getElementsByClassName('js-resizable-media-container')[0]), 100);
