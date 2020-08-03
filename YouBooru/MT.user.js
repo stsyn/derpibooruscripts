@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:MT
-// @version      0.1.16
+// @version      0.1.17
 // @author       stsyn
 // @namespace    http://derpibooru.org
 
@@ -320,6 +320,41 @@
     }
   }
 
+  function feedsExtension() {
+    function preParse(f) {
+      return f.del ? '&del='+f.del : '';
+    }
+
+    function firstTime() {
+      if (!unsafeWindow._YDB_public) unsafeWindow._YDB_public = {};
+      if (!unsafeWindow._YDB_public.funcs) unsafeWindow._YDB_public.funcs = {};
+      if (!unsafeWindow._YDB_public.funcs.feedURLs) unsafeWindow._YDB_public.funcs.feedURLs = {};
+      unsafeWindow._YDB_public.funcs.feedURLs.DOparse = preParse;
+    }
+
+    function checker() {
+      setTimeout(patchRegister, 10);
+    };
+
+    function patchRegister() {
+      if (!unsafeWindow._YDB_public || !unsafeWindow._YDB_public.settings || !unsafeWindow._YDB_public.settings.feeds) {
+        checker();
+        return;
+      }
+      const x = unsafeWindow._YDB_public.settings.feeds.s[8].s[2];
+      x[0].styleI.width = 'calc(100% - 15em)';
+      x.push({type:'select', name:'', parameter:'del', values:[
+        {name:'-D', value:''},
+        {name:'+D', value:'1'},
+        {name:'*D', value:'deleted'},
+        {name:'DO', value:'only'}
+      ]});
+    }
+
+    firstTime();
+    patchRegister();
+  }
+
   function handleAliases() {
     const href = location.pathname.split('/');
     if (!(href.pop() === 'aliases')) return;
@@ -468,4 +503,5 @@
   try {isThingReported();} catch(e) {error("isThingReported", e)};
   try {handleAliases();} catch(e) {error("handleAliases", e)};
   try {fixPollCount();} catch(e) {error("fixPollCount", e)};
+  try {feedsExtension();} catch(e) {error("feedsExtension", e)};
 })();
