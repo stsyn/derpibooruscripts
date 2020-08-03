@@ -1,24 +1,42 @@
 # derpibooruscripts
-Here are the userscripts related to the https://derpibooru.org. Most of them are provided under the common name of YourBooru (YDB). Functional descriptions are available on the links, here are just technical informations.
+Here are the userscripts related to the https://derpibooru.org. Most of them are provided under the common name of YourBooru (YDB). Most part of them should work on any philomena-based booru, but you need to manually include these sites in your userscript manager settings. Functional descriptions are available on the links below, this file is just technical informations.
 
 ## Quick installation links and descriptions
 
 **YDB:Settings** — https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
 
-**YDB:Feeds** — https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js — https://derpibooru.org/meta/userscript-youbooru-feeds-on-main-page
+**YDB:Feeds** — https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js — https://derpibooru.org/forums/meta/topics/userscript-yourbooru-feeds-on-the-main-page-0-5-37-0-9-34
 
-**YDB:Tools** — https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js — https://derpibooru.org/meta/youboorutools-0524-everything-what-you-ever-imagined-and-even-more
+**YDB:Tools** — https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js — https://derpibooru.org/forums/meta/topics/youboorutools-0524-everything-what-you-ever-imagined-and-even-more
 
-**Search Sorting Fixer** — https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js — https://www.derpibooru.org/meta/userscript-search-sorting-fixer-003
+**YDB:Search Ex** — https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/SearchFixer.user.js — https://derpibooru.org/forums/meta/topics/userscript-search-sorting-fixer-003
 
-**Fullscreen** — https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/Fullscreen.user.js — https://www.derpibooru.org/meta/topics/userscript-derp-fullscreen-viewer
+**Fullscreen** — https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/Fullscreen.user.js — https://derpibooru.org/meta/topics/userscript-derp-fullscreen-viewer
 
-**YDB:ADUp** — https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp.user.js — https://www.derpibooru.org/forums/meta/topics/userscript-semi-automated-derpibooru-uploader
+**YDB:ADUp** — https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp.user.js — https://derpibooru.org/forums/meta/topics/userscript-semi-automated-derpibooru-uploader
+
+**YDB:MT** — https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/MT.user.js
+
+## Common libraries
+
+**CreateElement.js** — https://github.com/stsyn/derpibooruscripts/blob/master/YouBooru/libs/CreateElement.js — implements React.createElement function with some small differences and on real DOM;
+
+**DerpibooruImitation.js** — https://github.com/stsyn/derpibooruscripts/blob/master/YouBooru/libs/DerpibooruImitation0UW.js — planned as generic library for application.js functional, right now only implements `DB_processImages(targetNode, forcedDespoil)` to process spoilers on images;
+
+**tagProcessor.js** — https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagProcessor.js — implements search query parser and patcher `parseSearch(searchString, extensions = { tags = [{ origin: string, result: string|function():string }], prefixes = [{origin: string, result: function(tag):string }] })`. Result may be ran on specific image (not tested) and converted back to the search string `.toString()`.
+
+## Common json-like databases
+
+**badgesDB.js** https://github.com/stsyn/derpibooruscripts/blob/master/YouBooru/libs/badgesDB0.js — `getBadgesImplications()` returns badge implications;
+
+**tagDB.js** https://github.com/stsyn/derpibooruscripts/blob/master/YouBooru/libs/tagDB0.js — `getTagDB()` returns tag categories regular expressions and matching tags list.
 
 ## Detailed technical descriptions
 
 ### YDB:Settings
 Main settings provider which allows to construct UI-based settings for userscript on Derpibooru settings page. Can be used as separate userscript, since 0.9.12 can be used as library, through. Since 0.9.17, only UW-version is maintainable.
+
+0.10 rewrite is planned, "API" will be changed.
 
 #### Implementing
 Despite the fact that the script was developed for the internal needs of the YDB (this is evident in some elements of the design), you can use it for your own purposes. Due to the nature of its development, it's always working realtime as normal userscript (not as typical function-library), but always no more than one instance of the script is active (which was launched first). See YDB tab in settings to make sure, which instantion works right now.
