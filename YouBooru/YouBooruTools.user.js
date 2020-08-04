@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         YDB:Tools
-// @version      0.9.0
+// @version      0.9.1
 // @description  Some UI tweaks and more
 // @author       stsyn
 // @namespace    http://derpibooru.org
 
-// @include      /http[s]*:\/\/(www\.|philomena\.|)(trixie|derpi)booru.org\/.*/
+// @include      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*/
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/adverts\/.*/
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*\.json.*/
 
@@ -574,7 +574,6 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     async function onlyArtist(content) {
       const names = simpleParse(content);
       const shortest = Math.min(...names.map(name => name.length));
-      const depth = Math.min(shortest, 9 - names.length);
       const targets = (await Promise.all(names.map(name =>
         fetchJson('GET', `/api/v1/json/tags/${makeSlug('artist:'+name)}`)
           .then(resp => resp.json())
@@ -582,6 +581,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       .flat()
       .filter((a, b, c) => c.indexOf(a) === b)
       .filter(name => name.startsWith('artist:')).map(name => name.substring(7));
+      const depth = Math.max(Math.min(shortest, 10 - Math.floor(Math.pow(targets.length, 0.95))), 2);
 
       let tags = [];
       for (let i = 0; i < depth; i++) {
