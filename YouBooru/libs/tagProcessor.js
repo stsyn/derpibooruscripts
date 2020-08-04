@@ -24,7 +24,7 @@ var _ = (() => {
             ['word', /^(?:[^\s,()]|\\[\s,()])+/]
         ],
         tokenListReverse = {
-            and_op: ', ',
+            and_op: ',',
             or_op: ' OR ',
         },
         numberFields = ['id', 'width', 'height', 'aspect_ratio',
