@@ -93,6 +93,10 @@ var _ = (() => {
         return this.term + (this.fuzz ? ('~' + this.fuzz) : '') + (this.boost ? ('^' + this.boost) : '');
     };
 
+    SearchTerm.prototype.notEmpty = function () {
+        return this.term.length > 0;
+    };
+
     SearchTerm.prototype.append = function (substr) {
         this.term += substr;
         this.parsed = false;
@@ -763,28 +767,41 @@ var _ = (() => {
         return ast1;
     }
 
+    SearchAST.prototype.notEmpty = function() {
+        return Boolean((this.leftOperand && this.leftOperand.notEmpty()) || (this.rightOperand && this.rightOperand.notEmpty()));
+    }
+
     SearchAST.prototype.toString = function () {
         let output = '';
-        if (this.negate) output += '-';
-        if (this.negate && this.rightOperand) output += '(';
+        const rightOperandExists = this.rightOperand && this.rightOperand.notEmpty();
+        const leftOperandExists = this.leftOperand && this.leftOperand.notEmpty();
+        const bothOperandsExist = rightOperandExists && leftOperandExists;
 
-        if (this.leftOperand instanceof SearchAST && this.leftOperand.op !== this.op && this.leftOperand.rightOperand) {
+        // wrap in () for negation if needed
+        if (this.negate) output += '-';
+        if (this.negate && bothOperandsExist) output += '(';
+
+        // should I put () for the left operand?
+        if (this.leftOperand instanceof SearchAST && this.leftOperand.op !== this.op && this.leftOperand.rightOperand && this.leftOperand.rightOperand.notEmpty()) {
             output += `(${this.leftOperand.toString()})`;
-        } else {
+        } else if (leftOperandExists) {
             output += this.leftOperand.toString();
         }
 
-        if (this.op) {
+        // we don't need an operation if there is only one operand
+        if (this.op && bothOperandsExist) {
             output += tokenListReverse[this.op] || this.op;
         }
 
-        if (this.rightOperand instanceof SearchAST && this.rightOperand.op !== this.op && this.rightOperand.rightOperand) {
+        // should I put () for the right operand?
+        if (this.rightOperand instanceof SearchAST && this.rightOperand.op !== this.op && this.rightOperand.rightOperand && this.rightOperand.rightOperand.notEmpty()) {
             output += `(${this.rightOperand.toString()})`;
-        } else if (this.rightOperand) {
+        } else if (rightOperandExists) {
             output += this.rightOperand.toString();
         }
 
-        if (this.negate && this.rightOperand) output += ')';
+        // wrap in () for negation if needed
+        if (this.negate && bothOperandsExist) output += ')';
 
         return output;
     }
@@ -912,9 +929,9 @@ var _ = (() => {
 
         return retStrArr.join('\n');
     };
-    
+
     return {
-        SearchAST, 
+        SearchAST,
         SearchTerm,
         parseSearch
     }
