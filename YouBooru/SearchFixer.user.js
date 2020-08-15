@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:Search Ex
-// @version      0.5.4
+// @version      0.5.5
 // @description  I hoped that this script could be deleted after moving to Philomena...
 // @author       stsyn
 // @namespace    http://derpibooru.org
@@ -589,7 +589,7 @@
 
     document.querySelector('form.header__search').classList.add('dropdown');
     document.querySelector('form.header__search').appendChild(
-      createElement('span.dropdown__content',{style:{position:'static',minWidth:0,zIndex:1}},[
+      createElement('span.dropdown__content',{style:{zIndex:1,top:0,left:'100%'}},[
         createElement('select#_ydb_s_qpusher_sf.input.header__input',{
           name: 'sf',
           size: 1,
