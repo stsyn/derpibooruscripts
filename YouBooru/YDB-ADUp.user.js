@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          YDB:ADUp
-// @version       0.4.5
+// @version       0.4.6
 // @author        stsyn
 
 // @match         *://*/*
@@ -217,8 +217,10 @@
     }
     if (decodeURIComponent(url.params.newImg) != 'undefined') {
       document.getElementById('image_scraper_url').value = decodeURIComponent(url.params.newImg);
+      const event = new unsafeWindow.CustomEvent('input');
+      document.getElementById('image_scraper_url').dispatchEvent(event);
       onceLoaded = true;
-      document.getElementById('js-scraper-preview').click();
+      setTimeout(() => document.getElementById('js-scraper-preview').click(), 2000);
     }
     if (decodeURIComponent(url.params.description) != 'undefined') {
       document.getElementById('image_description').value = decodeURIComponent(url.params.description).replace(/\n\s*\n/g, '\n').replace(/^\s*/mg, '');
