@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.35
+// @version      0.7.36
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -30,7 +30,7 @@
 #_ydb_fs_enable {
 display:none
 }
-#_ydb_fs_mainPopup {
+#_ydb_fs_mainPopup.active {
 position:relative;
 display: flex;
 flex-direction: column;
@@ -119,7 +119,10 @@ width:95vw;
 height:80vh;
 margin-top:10vh;
 }
-._fs_popup.active, ._fs_popup_back.active{
+._fs_popup.active{
+display: block;
+}
+._fs_popup_back.active{
 backdrop-filter: blur(2px);
 opacity: 1;
 pointer-events: all;
