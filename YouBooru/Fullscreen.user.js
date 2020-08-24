@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.34
+// @version      0.7.35
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
 // @include      /http[s]*:\/\/(www\.|philomena\.|)(trixie|derpi)booru.org\/.*/
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/adverts\/.*/
-// @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*\.json.*/
+// @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/api\/v1\/json/.*/
 
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
@@ -92,14 +92,17 @@ min-height:100%;
 z-index:200;
 }
 ._fs_popup_back {
-position:fixed;
-display:none;
-top:0;
-left:0;
-width:100%;
-height:100%;
-z-index:400;
-background:rgba(0,0,0,.5);
+backdrop-filter: blur(0);
+position: fixed;
+opacity: 0;
+pointer-events: none;
+transition: 0.15s;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+z-index: 400;
+background: rgba(0,0,0,.5);
 }
 ._fs_popup {
 display:none;
@@ -117,7 +120,9 @@ height:80vh;
 margin-top:10vh;
 }
 ._fs_popup.active, ._fs_popup_back.active{
-display:block;
+backdrop-filter: blur(2px);
+opacity: 1;
+pointer-events: all;
 }
 ._fs_down {
 display:none;
@@ -1499,7 +1504,8 @@ color: #777;
     if (settings.commentLink) objects.commButton.href = 'javascript://';
 
     objects.commButton.addEventListener('click',showComms);
-    popUps.back.addEventListener('click',hidePopups);
+    popUps.back.addEventListener('mousedown',hidePopups);
+    popUps.back.addEventListener('touchstart',hidePopups);
     document.body.addEventListener('mousemove',mouseListener);
 
     if (objects.image != undefined) loadedImgFetch();
@@ -1567,7 +1573,8 @@ color: #777;
     //objects.dcontainer.removeEventListener("click",disgustingLoadedImgFetch);
     objects.commButton.removeEventListener('click',showComms);
     objects.commButton.href = '#comments';
-    popUps.back.removeEventListener('click',hidePopups);
+    popUps.back.removeEventListener('mousedown',hidePopups);
+    popUps.back.removeEventListener('touchstart',hidePopups);
     document.body.removeEventListener('mousemove',mouseListener);
     objects.dcontainer.removeEventListener("wheel", wheelListener);
 
