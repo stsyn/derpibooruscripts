@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YCH.Commishes YDB:ADUp module
-// @version      0.2.3
+// @version      0.2.4
 // @author       stsyn
 // @include      https://portfolio.commishes.com/upload/show/*
 // @include      https://ych.commishes.com/followUp/show/*
@@ -14,7 +14,9 @@
 // @include      *://*.orzgs6djmvrg633souxg64th.*.*/upload/*
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/images/new*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/images/new*
+
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/ADUp-mini.js
 
 // @grant        unsafeWindow
 // @grant        GM_xmlhttpRequest
