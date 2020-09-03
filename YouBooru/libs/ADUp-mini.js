@@ -38,7 +38,7 @@
     const tagInput = document.getElementById('image_tag_input');
     const tagSwitch = document.querySelector('.button.button--state-primary.button--bold.js-taginput-show');
     const imageSource = document.getElementById('image_tag_input');
-    const scrapper = document.getElementById('image_scraper_url');
+    const scrapper = document.getElementById('image_scraper_url') || document.getElementById('scraper_url');
     const scrapperLoader = document.getElementById('js-scraper-preview');
     const description = document.getElementById('image_description');
 
