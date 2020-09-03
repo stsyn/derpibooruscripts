@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.3.2
+// @version      0.3.3
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/ADUp-mini.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp-DeviantArt.user.js
 // @grant        unsafeWindow
 // @grant        GM_download
