@@ -35,27 +35,34 @@
 
 
   function fillData1(url) {
-    if (decodeURIComponent(url.params.tags) != 'undefined') {
+    const tagInput = document.getElementById('image_tag_input');
+    const tagSwitch = document.querySelector('.button.button--state-primary.button--bold.js-taginput-show');
+    const imageSource = document.getElementById('image_tag_input');
+    const scrapper = document.getElementById('image_scraper_url');
+    const scrapperLoader = document.getElementById('js-scraper-preview');
+    const description = document.getElementById('image_description');
+
+    if (decodeURIComponent(url.params.tags) != 'undefined' && !tagInput.value) {
       if (url.params.origTags) {
-        document.getElementById('image_tag_input').value = url.params.origTags+','+decodeURIComponent(url.params.tags);
+        tagInput.value = url.params.origTags+','+decodeURIComponent(url.params.tags);
       }
       else {
         url.params.origTags = decodeURIComponent(url.params.tags);
-        document.getElementById('image_tag_input').value = decodeURIComponent(url.params.tags);
+        tagInput.value = decodeURIComponent(url.params.tags);
       }
-      document.querySelector('.button.button--state-primary.button--bold.js-taginput-show').click();
+      tagSwitch.click();
     }
-    if (decodeURIComponent(url.params.src) != 'undefined') {
-      document.getElementById('image_source_url').value = decodeURIComponent(url.params.src);
+    if (decodeURIComponent(url.params.src) != 'undefined' && !imageSource.value) {
+      imageSource.value = decodeURIComponent(url.params.src);
     }
-    if (decodeURIComponent(url.params.newImg) != 'undefined') {
-      document.getElementById('image_scraper_url').value = decodeURIComponent(url.params.newImg);
+    if (decodeURIComponent(url.params.newImg) != 'undefined' && !scrapper.value) {
+      scrapper.value = decodeURIComponent(url.params.newImg);
       const event = new win.CustomEvent('input');
-      document.getElementById('image_scraper_url').dispatchEvent(event);
-      setTimeout(() => document.getElementById('js-scraper-preview').click(), 1000);
+      scrapper.dispatchEvent(event);
+      setTimeout(() => scrapperLoader.click(), 1000);
     }
-    if (decodeURIComponent(url.params.description) != 'undefined') {
-      document.getElementById('image_description').value = decodeURIComponent(url.params.description).replace(/\n\s*\n/g, '\n').replace(/^\s*/mg, '');
+    if (decodeURIComponent(url.params.description) != 'undefined' && !description.value) {
+      description.value = decodeURIComponent(url.params.description).replace(/\n\s*\n/g, '\n').replace(/^\s*/mg, '');
     }
   }
 
@@ -69,6 +76,7 @@
         win._YDB_public.settings &&
         win._YDB_public.settings._adup) return;
     if (document.getElementById('_ydb_diff_container')) return;
+
     const url = parseURL(location.href);
     fillData1(url);
   }
