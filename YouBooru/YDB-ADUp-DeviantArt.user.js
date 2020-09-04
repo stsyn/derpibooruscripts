@@ -1,8 +1,9 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.3.3
+// @version      0.3.4
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
+// @include      /http(s|):\/\/(www\.|)(trixie|derpi)booru.org\/images\/new.*/
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/ADUp-mini.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp-DeviantArt.user.js
