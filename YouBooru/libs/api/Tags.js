@@ -86,7 +86,6 @@ var YDB_api = YDB_api || {};
         result[tag.name] = secondResult[tag.aliased_tag];
       });
     }
-    console.warn(result);
     return result;
   }
 })();
