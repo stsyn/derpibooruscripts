@@ -12,7 +12,7 @@ var YDB_api = YDB_api || {};
   // safe
   // -pony           — negate (NOT)
   // _origin         — category
-  // *sparkle        — wildcard only 1 * supported
+  // *sparkle        — wildcard (only 1 * supported)
   // *sparkle[>1]
   // _character[>1]  — can also be [x][<x]
   // *               — any tag
