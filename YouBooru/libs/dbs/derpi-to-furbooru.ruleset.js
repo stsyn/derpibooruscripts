@@ -1,0 +1,3 @@
+function GetDerpi2FurbooruRuleset() {
+
+}
