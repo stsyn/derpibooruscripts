@@ -264,4 +264,46 @@ var YDB_api = YDB_api || {};
     if (old[rulesetVersionField] > newer[rulesetVersionField]) temp[rulesetVersionField] = old[rulesetVersionField];
     return temp;
   }
+
+  YDB_api.applyRulesetResults = function(results, tagArray) {
+    function runRules(tags) {
+      tags = tags.filter(tag => !tagsToRemove.has(tag));
+      tags = tags.map(tag => {
+        let tx = tag;
+        if (renamesDeletions[tx]) {
+          tag = renamesDeletions[tx].reduce((t, f) => f(t), tag);
+        }
+        if (renamesAdditions[tx]) {
+          tag = renamesAdditions[tx].reduce((t, f) => f(t), tag);
+        }
+        return tag;
+      });
+      return tags.concat(Array.from(tagsToAdd.values())).filter((tag, index, tags) => index === tags.indexOf(tag));
+    }
+    const tagsToRemove = results.tagsToRemove;
+    const tagsToAdd = results.tagsToAdd;
+    const renamesDeletions = results.renamesDeletions;
+    const renamesAdditions = results.renamesAdditions;
+    return runRules(tagArray.map(tag => tag.name));
+  }
+
+  YDB_api.mergeRulesetResults = function(old, newer) {
+    const renamesDeletions = Object.assign(old.renamesDeletions);
+    for (let i in newer.renamesDeletions) {
+      renamesDeletions[i] = renamesDeletions[i] || [];
+      renamesDeletions[i] = renamesDeletions[i].concat(newer.renamesDeletions[i]);
+    }
+    const renamesAdditions = Object.assign(old.renamesAdditions);
+    for (let i in newer.renamesAdditions) {
+      renamesAdditions[i] = renamesAdditions[i] || [];
+      renamesAdditions[i] = renamesAdditions[i].concat(newer.renamesAdditions[i]);
+    }
+    return {
+      errors: old.errors.concat(newer.errors),
+      tagsToRemove: new Set(old.tagsToRemove, newer.tagsToRemove),
+      tagsToAdd: new Set(old.tagsToAdd, newer.tagsToAdd),
+      renamesDeletions: renamesDeletions,
+      renamesAdditions: renamesAdditions
+    }
+  }
 })();
