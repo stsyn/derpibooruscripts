@@ -8,40 +8,58 @@ var YDB_api = YDB_api || {};
     return index === array.indexOf(item);
   }
 
-  //// - rules be like (can have ^ to act negative)
-  // safe
-  // -pony           — negate (NOT)
+  ////// - rules be like (can have ^ to act negative)
+  //// selectors
+  // safe            — tag
   // _origin         — category
   // *sparkle        — wildcard (only 1 * supported)
-  // *sparkle[>1]
-  // _character[>1]  — can also be [x][<x]
   // *               — any tag
   // __              — no tag
 
+  //// subcases
+  // *sparkle[>1]
+  // _character[>1]  — can also be [x][<x]
+
+  //// listings
+  // pegasus,unicorn — listing (it's not OR!)
+  // pony,!anthro    — exclusion (it's not NOT!)
+  // artist:*[>1],idw[[1]] — use [[]] for count cases for listings
+
+  //// logics
+  // -pony           — negate (NOT) — do not have tag
   // solo+female     — combine (AND)
+  // ^solo+female    — global NOT (NAND)
+  // OR is not supported and will never be, dupe actions rows if needed
 
-  // pegasus,unicorn — listing (it's not global OR!)
-  // pony,!anthro    — exclusion (it's not global NOT!)
-  // artist:*,idw[[1]] — use [[]] for count cases for listings and exclusions
-
-  //// - actions be like
+  ////// - actions be like
+  //// adding
   // safe            — adds
+
+  //// removal
   // -safe           — remove tag
   // -[x]            — remove tags from x + match
+  // -               — remove whole match
+
+  //// part of tag removals
   // ? (mlp)
   // ? (mlp)[x]      — removes part
+
+  //// part of tag addings
   // %* (mlp)
   // %solo *
   // %* (mlp)[x]     — appends part to every tag
-  // ^error text     — throws error
 
+  //// returns error
+  // ^error text
+
+  //// logics
   // party+pinkie pie — combine actions (AND)
 
-  // Actions order is global for whole ruleset iteration:
+  //// Actions order is global for whole ruleset iteration:
   // 1. Tag removals;
   // 2. Part of tag removals;
-  // 3. Part of tag appends;
-  // 4. Tag appends.
+  // 3. Part of tag addings;
+  // 4. Tag addings.
 
   YDB_api.applyRulesetOnTags = function(ruleset, tagArray, dontApply) {
     const version = 0;
@@ -55,19 +73,21 @@ var YDB_api = YDB_api || {};
     const errors = [];
 
     function getMatchingTags(rule, tagArray) {
+      rule = rule.trim();
       function checkTag(rulePart) {
+        rulePart = rulePart.trim();
         if (rulePart === '__') return [];
         if (rulePart === '*') return tagArray;
 
         // category
         if (rulePart.startsWith('_')) {
-          const rule = rulePart.match(/_(.*)(\[.?\d+]|)/)[1];
+          const rule = rulePart.match(/_(.*)\s*(\[.?\d+]|)/)[1];
           const match = tagArray.filter(tag => tag.category === rule);
           return checkCondition(rulePart, match);
         }
         // wildcard
         if (rulePart.indexOf('*') > -1) {
-          const rule = rulePart.match(/(.*)(\[.?\d+]|)/)[1];
+          const rule = rulePart.match(/(.*)\s*(\[.?\d+]|)/)[1];
           const parts = rule.split('*');
           const match = tagArray.filter(tag => tag.name.startsWith(parts[0]) && tag.name.endsWith(parts[1]))
           return checkCondition(rulePart, match);
@@ -116,6 +136,7 @@ var YDB_api = YDB_api || {};
     }
 
     function applyTagRule(action, tags, rules) {
+      action = action.trim();
       action = action.replace(/\[\[plus]]/g, '+');
       // removals
       if (action.startsWith('-')) {
@@ -129,11 +150,13 @@ var YDB_api = YDB_api || {};
           }
         } else if (action.length > 0) {
           tagsToRemove.add(action);
+        } else {
+          tags.flat().forEach(tag => tagsToRemove.add(tag.name));
         }
       }
       // wildcard deletions
       else if (action.startsWith('?')) {
-        const match = action.match(/\?(.*)\[(\d+)]/);
+        const match = action.match(/\?(.*)\s*\[(\d+)]/);
         if (match[3]) {
           const t = tags[parseInt(match[3]) - 1];
           if (t) {
@@ -154,7 +177,7 @@ var YDB_api = YDB_api || {};
       // wildcard additions
       else if (action.startsWith('%')) {
         const beginning = action.startsWith('%*');
-        const match = action.match(/%(\*|)(.*)(\*|)(\[(\d+)]|)/);
+        const match = action.match(/%(\*|)(.*)(\*|)\s*(\[(\d+)]|)/);
         if (match[5]) {
           const t = tags[parseInt(match[5]) - 1];
           if (t) {
