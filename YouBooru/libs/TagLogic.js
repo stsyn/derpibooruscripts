@@ -12,6 +12,8 @@ var YDB_api = YDB_api || {};
   //// selectors
   // safe            — tag
   // _origin         — category
+  // twilight*
+  // princess *a
   // *sparkle        — wildcard (only 1 * supported)
   // *               — any tag
   // __              — no tag
