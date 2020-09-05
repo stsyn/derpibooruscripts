@@ -8,7 +8,7 @@ var YDB_api = YDB_api || {};
     return index === array.indexOf(item);
   }
 
-  ////// - rules be like (can have ^ to act negative)
+  ////// - rules be like
   //// selectors
   // safe            — tag
   // _origin         — category
