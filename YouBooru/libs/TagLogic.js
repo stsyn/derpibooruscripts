@@ -10,7 +10,7 @@ var YDB_api = YDB_api || {};
 
   //// - rules be like (can have ^ to act negative)
   // safe
-  // -pony           — negate
+  // -pony           — negate (NOT)
   // _origin         — category
   // *sparkle        — wildcard only 1 * supported
   // *sparkle[>1]
