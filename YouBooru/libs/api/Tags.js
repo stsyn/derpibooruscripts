@@ -6,7 +6,7 @@ var YDB_api = YDB_api || {};
   }
 
   function __slugToTag(tag) {
-    return unescape(tag.replace(/\-dash\-/g,'-').replace(/\-dot\-/g,'.').replace(/\+/g,' ').replace(/\-colon\-/g,':').replace(/\-fwslash\-/g,'/').replace(/\%25/g,'%'));
+    return unescape(tag.replace(/\-dash\-/g,'-').replace(/\-dot\-/g,'.').replace(/\+/g,' ').replace(/\-colon\-/g,':').replace(/\-fwslash\-/g,'/'));
   }
 
   function __getEnviroment() {
