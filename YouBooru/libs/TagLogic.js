@@ -138,8 +138,9 @@ var YDB_api = YDB_api || {};
       rule = rule.replace(/\[\[plus]]/g, '+');
       if (rule.indexOf(',') > -1) {
         const rules = rule.split(',');
-        const matched = rules.filter(rule => !rule.startsWith('!').map(checkTag)).flat().filter(__unique);
-        const notMatched = rules.filter(rule => rule.startsWith('!').map(rule => checkTag(rule.substring(1)))).flat();
+        console.warn(rules);
+        const matched = rules.filter(rule => !rule.startsWith('!')).map(checkTag).flat().filter(__unique);
+        const notMatched = rules.filter(rule => rule.startsWith('!')).map(rule => checkTag(rule.substring(1))).flat();
         const match = matched.filter(tag => !notMatched.includes(tag));
         return checkConditionGlobal(rule, match);
       } else {
