@@ -33,14 +33,32 @@ var YDB_api = YDB_api || {};
     }
   }
 
-  YDB_api.fetchManyTagsByName = async function(tagNames) {
+  YDB_api.fetchManyTagsByName = async function(tagNames, page = 0) {
     const enviroment = __getEnviroment();
+
+    const maxTagsPerPage = 25;
+    let pages = 1;
+    // philomena requires pagination
+    if (tagNames.length > maxTagsPerPage && enviroment === 'philomena' && page === 0) {
+      const result = {};
+      for (let i = 0; i < Math.ceil(tagNames.length / maxTagsPerPage); i++) {
+        const fetched = await YDB_api.fetchManyTagsByName(tagNames, i + 1);
+        for (let tag in fetched) {
+          if (fetched[tag]) {
+            result[tag] = fetched[tag];
+          }
+        }
+      }
+      return result;
+    }
+
     let url;
     if (enviroment === 'philomena') {
       // for philomena use tag search ability
       // slug:* atm looks too clumsy for real usage
       // url = '/api/v1/json/search/tags?q=slug:' + tagNames.map(tag => encodeURIComponent(__tagToSlug(tag))).join("+OR+slug:");
       url = '/api/v1/json/search/tags?q=name:' + tagNames.join("+OR+name:");
+      if (page) url += '&page=' + page;
     } else if (enviroment === 'bor') {
       // for bor use tag batch fetch
       url = '/api/v2/tags/fetch_many.json?name[]=' + tagNames.join("&name[]=");
