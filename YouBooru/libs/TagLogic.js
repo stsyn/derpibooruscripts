@@ -256,7 +256,7 @@ var YDB_api = YDB_api || {};
         actions.forEach(action => applyTagRule(action, finalTags, ruleTags));
       }
     }
-    const fTags = dontApply ? tagArray.map(tag => tag.name) : runRules(tagArray.map(tag => tag.name));
+    const fTags = dontApply ? tagArray.map(tag => tag.name || tag) : runRules(tagArray.map(tag => tag.name));
     return {tags: fTags, errors, tagsToRemove, tagsToAdd, renamesDeletions, renamesAdditions};
   }
 
