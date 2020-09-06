@@ -6,5 +6,8 @@ function GetDerpi2FurbooruRuleset() {
     'solo+male': 'solo male',
     'solo+futa': 'solo futa',
     'spoiler:*': '-',
+    'busty *': '-',
+    '_species[1]+human': 'not furry',
+    '*butt,!butt,!* butt': '-'
   }]
 }
