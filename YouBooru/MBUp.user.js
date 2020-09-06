@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         *Booru Multiuploader
+// @name         *Booru Uploader
 // @namespace    http://derpibooru.org/
 // @version      0.1
 // @description  Way to upload the same image on multiple sites
@@ -12,6 +12,9 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/dbs/furbooru-to-derpi.ruleset.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/TagLogic.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/ADUp-mini.js
+
+// @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/MBUp.user.js
+// @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/MBUp.user.js
 
 // @include      /http(s|):\/\/(www\.|)(trixie|derpi)booru.org\/images\/new.*/
 // @include      /http(s|):\/\/(www\.|)furbooru.org\/images\/new.*/
