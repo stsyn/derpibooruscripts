@@ -4,8 +4,8 @@ function GetDerpi2FurbooruRuleset() {
     '_character': '%* (mlp)+my little pony',
     // adds "not furry" if only "human" as species tag
     '_species[1]+human': 'not furry',
-    // removes "charbutt"
-    '*butt,!butt,!* butt': '-'
+    // removes "%char%butt"
+    '*butt,!butt,!* butt': '-',
     'semi-grimdark': '-',
     'solo+female': 'solo female',
     'solo+male': 'solo male',
