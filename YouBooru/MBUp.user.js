@@ -20,7 +20,6 @@
 // @include      /http(s|):\/\/(www\.|)furbooru.org\/images\/new.*/
 
 // @grant        unsafeWindow
-// @grant        GM_xmlhttpRequest
 // @grant        GM_openInTab
 // @grant        window.close
 // @grant        GM_setValue
