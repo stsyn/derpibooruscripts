@@ -58,6 +58,7 @@ var YDB_api = YDB_api || {};
     if (enviroment === 'philomena') {
       content.tags = content.tags.map(tag => {
         let newTag = getCommonTagFields(tag);
+        newTag.aliases = tag.aliases.map(__slugToTag);
         newTag.aliased_tag = __slugToTag(tag.aliased_tag || '');
         newTag.implied_tags = tag.implied_tags.map(__slugToTag);
         return newTag;
@@ -67,6 +68,7 @@ var YDB_api = YDB_api || {};
     if (enviroment === 'bor') {
       content.tags = content.tags.map(tag => {
         let newTag = getCommonTagFields(tag);
+        newTag.aliases = [];
         newTag.aliased_tag = tag.aliased_to;
         newTag.implied_tags = tag.implied_tags;
         return newTag;
