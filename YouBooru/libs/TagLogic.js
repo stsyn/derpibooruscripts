@@ -8,6 +8,16 @@ var YDB_api = YDB_api || {};
     return index === array.indexOf(item);
   }
 
+  function __flatSets(array) {
+    let result = new Set;
+    for (const set of array) {
+      for (const element of set) {
+        result.add(element);
+      }
+    }
+    return result;
+  }
+
   ////// - rules be like
   //// selectors
   // safe            — tag
@@ -23,8 +33,8 @@ var YDB_api = YDB_api || {};
   // _character[>1]  — can also be [x][<x]
 
   //// listings
-  // pegasus,unicorn — listing (it's not OR!)
-  // pony,!anthro    — exclusion (it's not NOT!)
+  // pegasus,unicorn — listing
+  // _species,!pony  — exclusion
   // artist:*[>1],idw[[1]] — use [[]] for count cases for listings
 
   //// logics
@@ -66,7 +76,7 @@ var YDB_api = YDB_api || {};
   YDB_api.applyRulesetOnTags = function(ruleset, tagArray, dontApply) {
     const version = 0;
     if (ruleset[rulesetVersionField] && parseInt(ruleset[rulesetVersionField].split('.')[1]) > version) {
-      throw new Error('Unsupported ruleset version');
+      throw new Error('Unsupported ruleset version, x.' + version + ' at most!');
     }
     const tagsToRemove = new Set();
     const tagsToAdd = new Set();
@@ -91,11 +101,11 @@ var YDB_api = YDB_api || {};
         if (rulePart.indexOf('*') > -1) {
           const rule = rulePart.match(/(.*)\s*(\[.?\d+]|)/)[1];
           const parts = rule.split('*');
-          const match = tagArray.filter(tag => tag.name.startsWith(parts[0]) && tag.name.endsWith(parts[1]))
+          const match = tagArray.filter(tag => (tag.name.startsWith(parts[0]) && tag.name.endsWith(parts[1])) || tag.aliases.find(t => t.startsWith(parts[0]) && t.endsWith(parts[1])))
           return checkCondition(rulePart, match);
         }
         // strict
-        const match = tagArray.filter(tag => tag.name === rulePart);
+        const match = tagArray.filter(tag => tag.name === rulePart || tag.aliases.find(t => t === rulePart));
         return checkCondition(rulePart, match);
       }
 
@@ -254,10 +264,10 @@ var YDB_api = YDB_api || {};
   YDB_api.mergeRulesets = function(old, newer) {
     const version = 0;
     if (old[rulesetVersionField] && parseInt(old[rulesetVersionField].split('.')[0]) > version) {
-      throw new Error('Unsupported ruleset version');
+      throw new Error('Unsupported ruleset version, ' + version + '.x at most!');
     }
     if (newer[rulesetVersionField] && parseInt(newer[rulesetVersionField].split('.')[0]) > version) {
-      throw new Error('Unsupported parseInt version');
+      throw new Error('Unsupported parseInt version, ' + version + '.x at most!');
     }
     let temp = Object.assign({}, old);
     temp = Object.assign(temp, newer);
@@ -284,7 +294,7 @@ var YDB_api = YDB_api || {};
     const tagsToAdd = results.tagsToAdd;
     const renamesDeletions = results.renamesDeletions;
     const renamesAdditions = results.renamesAdditions;
-    return runRules(tagArray.map(tag => tag.name));
+    return runRules(tagArray.map(tag => tag.name || tag));
   }
 
   YDB_api.mergeRulesetResults = function(old, newer) {
@@ -300,8 +310,8 @@ var YDB_api = YDB_api || {};
     }
     return {
       errors: old.errors.concat(newer.errors),
-      tagsToRemove: new Set(old.tagsToRemove, newer.tagsToRemove),
-      tagsToAdd: new Set(old.tagsToAdd, newer.tagsToAdd),
+      tagsToRemove: __flatSets([old.tagsToRemove, newer.tagsToRemove]),
+      tagsToAdd: __flatSets([old.tagsToAdd, newer.tagsToAdd]),
       renamesDeletions: renamesDeletions,
       renamesAdditions: renamesAdditions
     }
