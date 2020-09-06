@@ -33,6 +33,8 @@ var YDB_api = YDB_api || {};
     }
   }
 
+  // todo: paginating should be redone
+  // add optional way to fetch additional data on BoR
   YDB_api.fetchManyTagsByName = async function(tagNames, page = 0) {
     const enviroment = __getEnviroment();
 
@@ -55,8 +57,6 @@ var YDB_api = YDB_api || {};
     let url;
     if (enviroment === 'philomena') {
       // for philomena use tag search ability
-      // slug:* atm looks too clumsy for real usage
-      // url = '/api/v1/json/search/tags?q=slug:' + tagNames.map(tag => encodeURIComponent(__tagToSlug(tag))).join("+OR+slug:");
       url = '/api/v1/json/search/tags?q=name:' + tagNames.join("+OR+name:");
       if (page) url += '&page=' + page;
     } else if (enviroment === 'bor') {
