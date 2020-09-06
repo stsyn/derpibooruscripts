@@ -3,6 +3,11 @@ function GetFurbooru2DerpiRuleset() {
     'not furry': '-',
     'safe+solo female': '-solo female',
     'safe+solo male': '-solo male',
-    'safe+solo futa': '-solo futa'
+    'safe+solo futa': '-solo futa',
+    'equine': '-',
+    'mammal': '-',
+    'feral': '-',
+    'friendship is magic': '-',
+    'my little pony': '-',
   }]
 }
