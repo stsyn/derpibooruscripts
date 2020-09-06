@@ -168,7 +168,7 @@ var YDB_api = YDB_api || {};
       }
       // wildcard deletions
       else if (action.startsWith('?')) {
-        const match = action.match(/\?(.*)\s*\[(\d+)]/);
+        const match = action.match(/\?(.*)\s*(\[(\d+)]|)/);
         if (match[3]) {
           const t = tags[parseInt(match[3]) - 1];
           if (t) {
