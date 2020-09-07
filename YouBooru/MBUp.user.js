@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         *Booru Uploader
 // @namespace    http://derpibooru.org/
-// @version      0.1
+// @version      0.2
 // @description  Way to upload the same image on multiple sites
 // @author       stsyn
 
@@ -16,8 +16,7 @@
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/MBUp.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/MBUp.user.js
 
-// @include      /http(s|):\/\/(www\.|)(trixie|derpi)booru.org\/images\/new.*/
-// @include      /http(s|):\/\/(www\.|)furbooru.org\/images\/new.*/
+// @include      /http(s|):\/\/.*\/images\/new.*/
 
 // @grant        unsafeWindow
 // @grant        GM_openInTab
