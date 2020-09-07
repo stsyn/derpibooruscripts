@@ -6,6 +6,8 @@ function GetDerpi2FurbooruRuleset() {
     '_species[1]+human': 'not furry',
     // removes "%character%butt"
     '*butt,!butt,!* butt': '-',
+    '*betes': '-',
+    'cute*,!cute,!cute *': '-',
     // solo * always tagged
     'solo+female': 'solo female',
     'solo+male': 'solo male',
@@ -15,5 +17,6 @@ function GetDerpi2FurbooruRuleset() {
 
     'semi-grimdark': '-',
     'busty *': '-',
+    'woona': '-',
   }]
 }
