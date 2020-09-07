@@ -1,10 +1,18 @@
 function GetMBUpRulesets() {
   return (origin, target) => {
-    if (origin === 'derpibooru.org' && target === 'furbooru.org') {
-      return GetDerpi2FurbooruRuleset();
+    let firstPart = [], secondPart = [];
+    if (target === 'furbooru.org') {
+      secondPart = GetDerpi2FurbooruRuleset();
+    } else if (target === 'manebooru.art') {
+      secondPart = GetDerpi2ManebooruRuleset();
     }
-    if (origin === 'furbooru.org' && target === 'derpibooru.org') {
-      return GetFurbooru2DerpiRuleset();
+
+    if (origin === 'furbooru.org') {
+      firstPart = GetFurbooru2DerpiRuleset();
+    } else if (origin === 'manebooru.art') {
+      firstPart = GetManebooru2DerpiRuleset();
     }
+    
+    return firstPart.concat(secondPart);
   };
 }
