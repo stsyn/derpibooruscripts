@@ -1,25 +1,24 @@
 // ==UserScript==
 // @name         YCH.Commishes YDB:ADUp module
-// @version      0.2.4
+// @version      0.2.5
 // @author       stsyn
 // @include      https://portfolio.commishes.com/upload/show/*
 // @include      https://ych.commishes.com/followUp/show/*
 // @include      https://ych.commishes.com/auction/show/*
 
-// @include      *://trixiebooru.org/images/new*
-// @include      *://derpibooru.org/images/new*
-// @include      *://www.trixiebooru.org/images/new*
-// @include      *://www.derpibooru.org/images/new*
+// @include      /http(s|):\/\/(www\.|)(trixie|derpi)booru.org\/images\/new.*/
 // @include      *://*.o53xo.orzgs6djmvrg633souxg64th.*.*/images/new*
 // @include      *://*.orzgs6djmvrg633souxg64th.*.*/upload/*
 // @include      *://*.o53xo.mrsxe4djmjxw64tvfzxxezy.*.*/images/new*
 // @include      *://*.mrsxe4djmjxw64tvfzxxezy.*.*/images/new*
 
-// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
+// @require      https://github.com/stsyn/createElement/raw/master/min/es5.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/ADUp-mini.js
 
 // @grant        unsafeWindow
 // @grant        GM_xmlhttpRequest
+// @grant        GM_getValue
+// @grant        GM_setValue
 // @connect      commishes.com
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp-YCHC.user.js
