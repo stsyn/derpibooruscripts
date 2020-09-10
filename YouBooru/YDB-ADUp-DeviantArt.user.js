@@ -1,14 +1,16 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.3.4
+// @version      0.3.5
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @include      /http(s|):\/\/(www\.|)(trixie|derpi)booru.org\/images\/new.*/
-// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
+// @require      https://github.com/stsyn/createElement/raw/master/min/es5.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/ADUp-mini.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp-DeviantArt.user.js
 // @grant        unsafeWindow
 // @grant        GM_download
+// @grant        GM_getValue
+// @grant        GM_setValue
 // ==/UserScript==
 
 (function() {
@@ -74,8 +76,7 @@
   }
 
   function DA(p) {
-    if (l.indexOf('/art/') == -1) {
-      console.log('Not art');
+    if (l.indexOf('/art/') === -1) {
       return;
     }
     let dlink, text = '';
