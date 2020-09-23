@@ -1,7 +1,7 @@
 function GetDerpibooruRuleset() {
   return [{
     '[{[version]}]': '0.0',
-    '*[<3]': '^[E]At least 3 tags required!',
+    '^*[>2]': '^[E]At least 3 tags required!',
     '^_rating': '^[E]You forgot rating tags!',
     'safe+_rating[>1]': '^[E]You cannot use "safe" with any other rating tags!',
     'suggestive,questionable,explicit[[>1]]': '^[E]You cannot use more than one sexual ratings tag!',
