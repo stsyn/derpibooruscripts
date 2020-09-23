@@ -109,8 +109,7 @@ var YDB_api = YDB_api || {};
         return checkCondition(rulePart, match);
       }
 
-      function checkCondition(rule, match) {
-        const condition = rule.match(/\[(.?)(\d+)]/);
+      function resolveDupes(match) {
         const dupes = [];
         let newMatch = [].concat(match);
         match.forEach(m => {
@@ -126,6 +125,12 @@ var YDB_api = YDB_api || {};
             newMatch = newMatch.splice(secondIndex, 1);
           }
         });
+        return newMatch;
+      }
+
+      function checkCondition(rule, match) {
+        const condition = rule.match(/\[(.?)(\d+)]/);
+        const newMatch = resolveDupes(match);
         if (condition) {
           const value = parseInt(condition[2]);
           switch (condition[1]) {
@@ -139,12 +144,13 @@ var YDB_api = YDB_api || {};
 
       function checkConditionGlobal(rule, match) {
         const condition = rule.match(/\[\[(.?)(\d+)]]/);
+        const newMatch = resolveDupes(match);
         if (condition) {
           const value = parseInt(condition[2]);
           switch (condition[1]) {
-            case '>': return (match.length > value) ? match : [];
-            case '<': return (match.length < value) ? match : [];
-            case '': return (match.length === value) ? match : [];
+            case '>': return (newMatch.length > value) ? match : [];
+            case '<': return (newMatch.length < value) ? match : [];
+            case '': return (newMatch.length === value) ? match : [];
           }
         }
         return match;
