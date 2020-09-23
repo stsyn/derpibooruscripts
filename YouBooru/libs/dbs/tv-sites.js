@@ -3,7 +3,7 @@ function GetTVRulesets() {
     if (origin === 'furbooru.org') {
       return GetFurbooruRuleset();
     } else if (origin === 'derpibooru.org') {
-      return GetDerpiRuleset();
+      return GetDerpibooruRuleset();
     }
     return [{}, {}];
   };
