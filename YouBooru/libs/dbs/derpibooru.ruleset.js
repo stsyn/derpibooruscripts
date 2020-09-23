@@ -14,7 +14,7 @@ function GetDerpibooruRuleset() {
     'solo+male,female,futa[[>1]]': '^[E]%tag:female%, %tag:futa%, %tag:male% with %tag:solo%.',
     'solo+_character,_oc[[>1]]+-fusion': '^[E]Multiple characters while %tag:solo% tagged.',
 
-    '_oc[>1]': 'oc',
-    '_oc[>1]+_character[0]': 'oc only',
+    '_oc': 'oc',
+    '_oc+-_character': 'oc only',
   }]
 }
