@@ -26,6 +26,7 @@ var YDB_api = YDB_api || {};
     return {
       category: tag.category,
       description: tag.description,
+      empty: false,
       id: tag.id,
       images: tag.images,
       name: tag.name,
@@ -38,7 +39,27 @@ var YDB_api = YDB_api || {};
     }
   }
 
-  async function fetchTagPage(tagNames) {
+  function emptyTag(tag) {
+    return {
+      aliases: [],
+      aliased_tag: '',
+      category: '',
+      description: '',
+      dnp_entries: [],
+      empty: true,
+      id: -1,
+      images: -1,
+      implied_tags: [],
+      name: tag,
+      name_in_namespace: tag,
+      short_description: '',
+      slug: '',
+      spoiler_image_uri: '',
+      synonyms: []
+    }
+  }
+
+  async function fetchTagPage(tagNames, options) {
     const enviroment = __getEnviroment();
 
     let url;
@@ -90,14 +111,14 @@ var YDB_api = YDB_api || {};
     const result = {};
 
     tagNames.forEach(name => {
-      result[name] = content.tags.find(tag => tag.name === name) || {name, empty: true};
+      result[name] = content.tags.find(tag => tag.name === name) || emptyTag(name);
     });
 
     const secondPass = content.tags.filter(tag => tag.aliased_tag);
-    if (secondPass.length > 0) {
+    if (secondPass.length > 0 && !options.dontFollowAliases) {
       const secondResult = await YDB_api.fetchManyTagsByName(secondPass.map(tag => tag.aliased_tag));
       secondPass.forEach(tag => {
-        result[tag.name] = secondResult[tag.aliased_tag];
+        result[options.separateAliases ? tag.aliased_tag : tag.name] = secondResult[tag.aliased_tag];
       });
     }
     return result;
@@ -116,6 +137,8 @@ var YDB_api = YDB_api || {};
     if (options.resolveSynonims === undefined) options.resolveSynonims = false;
     if (options.alwaysLoadAliases === undefined) options.alwaysLoadAliases = false;
     if (options.alwaysLoadDnp === undefined) options.alwaysLoadDnp = false;
+    if (options.separateAliases === undefined) options.separateAliases = false;
+    if (options.dontFollowAliases === undefined) options.dontFollowAliases = false;
 
     const enviroment = __getEnviroment();
 
@@ -128,10 +151,10 @@ var YDB_api = YDB_api || {};
       return acc;
     }, []);
     for (let part of parts) {
-      const fetched = await fetchTagPage(tagNames);
-      part.forEach(tag => {
-        result[tag] = fetched[tag] || {name: tag, empty: true};
-      });
+      const fetched = await fetchTagPage(tagNames, options);
+      for (let tag in fetched) {
+        result[tag] = fetched[tag];
+      }
     }
 
     if (options.resolveSynonims) {
