@@ -5,7 +5,7 @@ function GetMBUpRulesets() {
       secondPart = GetDerpi2FurbooruRuleset();
     } else if (target === 'manebooru.art') {
       secondPart = GetDerpi2ManebooruRuleset();
-    } else if (target === 'twibooru.art') {
+    } else if (target === 'twibooru.org') {
       secondPart = GetDerpi2TwibooruRuleset();
     }
 
@@ -13,7 +13,7 @@ function GetMBUpRulesets() {
       firstPart = GetFurbooru2DerpiRuleset();
     } else if (origin === 'manebooru.art') {
       firstPart = GetManebooru2DerpiRuleset();
-    } else if (target === 'twibooru.art') {
+    } else if (target === 'twibooru.org') {
       firstPart = GetTwibooru2DerpiRuleset();
     }
     
