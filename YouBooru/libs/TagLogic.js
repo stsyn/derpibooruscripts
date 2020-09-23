@@ -93,13 +93,13 @@ var YDB_api = YDB_api || {};
 
         // category
         if (rulePart.startsWith('_')) {
-          const rule = rulePart.match(/_(.*)\s*(\[.?\d+]|)/)[1];
+          const rule = rulePart.match(/_([^\[\]]*)\s*(\[.?\d+]|)/)[1];
           const match = tagArray.filter(tag => tag.category === rule);
           return checkCondition(rulePart, match);
         }
         // wildcard
         if (rulePart.indexOf('*') > -1) {
-          const rule = rulePart.match(/(.*)\s*(\[.?\d+]|)/)[1];
+          const rule = rulePart.match(/([^\[\]]*)\s*(\[.?\d+]|)/)[1];
           const parts = rule.split('*');
           const match = tagArray.filter(tag => (tag.name.startsWith(parts[0]) && tag.name.endsWith(parts[1])) || tag.aliases.find(t => t.startsWith(parts[0]) && t.endsWith(parts[1])))
           return checkCondition(rulePart, match);
@@ -111,12 +111,27 @@ var YDB_api = YDB_api || {};
 
       function checkCondition(rule, match) {
         const condition = rule.match(/\[(.?)(\d+)]/);
+        const dupes = [];
+        let newMatch = [].concat(match);
+        match.forEach(m => {
+          m.synonyms.forEach(synonym => {
+            dupes.push([m.name, synonym]);
+            dupes.push([synonym, m.name]);
+          })
+        });
+        dupes.forEach(dupe => {
+          const firstIndex = newMatch.findIndex(m => m.name === dupe[0]);
+          const secondIndex = newMatch.findIndex(m => m.name === dupe[1]);
+          if (firstIndex > -1 && secondIndex > -1) {
+            newMatch = newMatch.splice(secondIndex, 1);
+          }
+        });
         if (condition) {
           const value = parseInt(condition[2]);
           switch (condition[1]) {
-            case '>': return (match.length > value) ? match : [];
-            case '<': return (match.length < value) ? match : [];
-            case '': return (match.length === value) ? match : [];
+            case '>': return (newMatch.length > value) ? match : [];
+            case '<': return (newMatch.length < value) ? match : [];
+            case '': return (newMatch.length === value) ? match : [];
           }
         }
         return match;
@@ -232,12 +247,15 @@ var YDB_api = YDB_api || {};
       return tags.concat(Array.from(tagsToAdd.values())).filter((tag, index, tags) => index === tags.indexOf(tag));
     }
 
-    for (let rule in ruleset) {
-      if (rule === rulesetVersionField) continue;
+    for (let originRule in ruleset) {
+      if (originRule === rulesetVersionField) continue;
+      let rule;
       // first letter - prefix
-      const negate = rule.startsWith('^');
+      const negate = originRule.startsWith('^');
       if (negate) {
-        rule = rule.substring(1);
+        rule = originRule.substring(1);
+      } else {
+        rule = originRule;
       }
       rule = rule.replace(/\\\+/g, '[[plus]]');
       const ruleTags = rule.split('+');
@@ -251,7 +269,7 @@ var YDB_api = YDB_api || {};
       const dontHaveBanned = foundBannedTags.filter(tags => tags.length > 0).length === 0;
       if ((foundNeeded && dontHaveBanned) ^ negate) {
         const finalTags = foundMatchedTags.map((tags, index) => tags.length > 0 ? tags : foundBannedTags[index]);
-        const alist = ruleset[rule].replace(/\\\+/g, '[[plus]]');
+        const alist = ruleset[originRule].replace(/\\\+/g, '[[plus]]');
         const actions = alist.split('+');
         actions.forEach(action => applyTagRule(action, finalTags, ruleTags));
       }
