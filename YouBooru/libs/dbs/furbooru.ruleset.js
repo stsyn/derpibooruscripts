@@ -37,3 +37,7 @@ function GetFurbooru2DerpiRuleset() {
   }]
 }
 
+function GetFurbooruRuleset() {
+  return [{}, {}]
+}
+
