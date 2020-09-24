@@ -151,7 +151,7 @@ var YDB_api = YDB_api || {};
       return acc;
     }, []);
     for (let part of parts) {
-      const fetched = await fetchTagPage(tagNames, options);
+      const fetched = await fetchTagPage(part, options);
       for (let tag in fetched) {
         result[tag] = fetched[tag];
       }
