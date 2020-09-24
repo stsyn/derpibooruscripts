@@ -11,7 +11,6 @@
 // @require       https://github.com/stsyn/createElement/raw/master/min/es5.js
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0UW.lib.js
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/api/Tags.js
-// @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/ADUp-mini.js
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/TagLogic.js
 
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/dbs/tv-sites.js
