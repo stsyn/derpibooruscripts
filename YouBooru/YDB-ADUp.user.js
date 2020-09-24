@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          YDB:ADUp
-// @version       0.4.6
+// @version       0.4.7
 // @author        stsyn
 
 // @match         *://*/*
@@ -18,13 +18,18 @@
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagDB0.js
-// @downloadURL   https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp.user.js
+// @downloadURL   https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-TV.user.js
 
 // @grant         GM_setValue
 // @grant         GM_getValue
 // @grant         unsafeWindow
 // @run-at        document-idle
 // ==/UserScript==
+
+/*
+IMPORTANT: This script is deprecated. All scripts, which required it, have to require ADUp-mini.
+Tag validation functionality transfered into TV
+*/
 
 (function() {
   'use strict';
@@ -228,6 +233,14 @@
     if (decodeURIComponent(url.params.originView) != 'undefined') {
       document.getElementById('_ydb_preview').src = url.params.originView;
     }
+
+    if (decodeURIComponent(url.params.originWidth) != 'undefined') {
+      document.getElementById('_ydb_old').innerHTML = url.params.originWidth+'x'+url.params.originHeight;
+    }
+    if (decodeURIComponent(url.params.newWidth) != 'undefined') {
+      overRideSize = true;
+      document.getElementById('_ydb_new').innerHTML = url.params.newWidth+'x'+url.params.newHeight;
+    }
   }
 
   function fillData1(url) {
@@ -244,14 +257,6 @@
           ])
         ]),
         document.querySelector('.dnp-warning'));
-    }
-
-    if (decodeURIComponent(url.params.originWidth) != 'undefined') {
-      document.getElementById('_ydb_old').innerHTML = url.params.originWidth+'x'+url.params.originHeight;
-    }
-    if (decodeURIComponent(url.params.newWidth) != 'undefined') {
-      overRideSize = true;
-      document.getElementById('_ydb_new').innerHTML = url.params.newWidth+'x'+url.params.newHeight;
     }
   }
 
