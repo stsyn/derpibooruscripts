@@ -20,9 +20,9 @@ function GetDerpibooruRuleset() {
     'solo+_character,oc:*[[>1]]+-fusion': '^[E]Multiple characters while %tag:solo% tagged.',
 
     '_character,oc:*[[2]]+-shipping': 'duo',
-    'duo+female+-male+-intersex+-futa': 'duo female',
-    'duo+male+-female+-intersex+-futa': 'duo male',
-    'duo+futa+-female+-male': 'duo futa',
+    'duo+female+-male,intersex,futa': 'duo female',
+    'duo+male+-female,intersex,futa': 'duo male',
+    'duo+futa+-female,male': 'duo futa',
 
     '^_species,equestria girls,no pony': '^No species tag!',
 
