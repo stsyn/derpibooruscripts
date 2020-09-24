@@ -5,6 +5,6 @@ function GetTVRulesets() {
     } else if (origin === 'derpibooru.org') {
       return GetDerpibooruRuleset();
     }
-    return [{}, {}];
+    return GetDerpibooruRuleset();
   };
 }
