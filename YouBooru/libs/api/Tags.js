@@ -65,7 +65,7 @@ var YDB_api = YDB_api || {};
     let url;
     if (enviroment === 'philomena') {
       // for philomena use tag search ability
-      url = '/api/v1/json/search/tags?q=name:' + tagNames.join("+OR+name:");
+      url = '/api/v1/json/search/tags?per_page=50&q=name:' + tagNames.join("+OR+name:");
     } else if (enviroment === 'bor') {
       // for bor use tag batch fetch
       url = '/api/v2/tags/fetch_many.json?name[]=' + tagNames.join("&name[]=");
@@ -142,7 +142,7 @@ var YDB_api = YDB_api || {};
 
     const enviroment = __getEnviroment();
 
-    const maxTagsPerPage = 25;
+    const maxTagsPerPage = 50;
     const result = {};
     const parts = tagNames.reduce((acc, tag, index) => {
       const page = Math.ceil(index / maxTagsPerPage);
