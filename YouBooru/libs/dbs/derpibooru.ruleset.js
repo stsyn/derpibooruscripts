@@ -29,8 +29,8 @@ function GetDerpibooruRuleset() {
     '^male,female,futa,intersex': '^No gender tag!',
     'pony+female+-mare,filly': 'mare+filly',
     'pony+male+-stallion,colt': 'stallion+colt',
-    'solo+pony+mare+filly+-fusion': 'Expected either %tag:mare% or %tag:filly%.',
-    'solo+pony+stallion+colt+-fusion': 'Expected either %tag:stallion% or %tag:colt%.',
+    'solo+pony+mare+filly+-fusion': '^Expected either %tag:mare% or %tag:filly%.',
+    'solo+pony+stallion+colt+-fusion': '^Expected either %tag:stallion% or %tag:colt%.',
 
     '_oc': 'oc',
     '_oc+-_character': 'oc only',
