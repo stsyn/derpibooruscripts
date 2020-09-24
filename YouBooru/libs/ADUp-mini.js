@@ -1,5 +1,5 @@
 /*
- * Lightweight replacer of YDB:ADUp without everything, except filling data from url.
+ * Lightweight replacer of YDB:ADUp.
  * - Either @grant unsafeWindow or @grant none required to prevent possible conflicts with full ADUp.
  * - @grant GM_getValue and GM_setValue required to allow remembering derpibooru domain
  */
@@ -65,7 +65,7 @@
       data.body = JSON.stringify(body);
     }
 
-    return fetch(endpoint, data);
+    return fetch(endpoint, data).then(response => response.json());
   }
 
   function hasData() {
@@ -95,15 +95,31 @@
     if (decodeURIComponent(url.params.description) != 'undefined' && !objects.description.value) {
       objects.description.value = decodeURIComponent(url.params.description).replace(/\n\s*\n/g, '\n').replace(/^\s*/mg, '');
     }
+    if (decodeURIComponent(url.params.originView) != 'undefined') {
+      objects.preview.src = url.params.originView;
+    }
   }
 
   function reverse(url) {
     alert('unsupported');
   }
 
-  function maybeFillData(url) {
+  async function fetchExtData(url) {
+    const response = await fetchJson('GET', '/api/v1/json/images/'+url.params.origin);
+    const x = response.image;
+    url.params.tags = encodeURIComponent(x.tags);
+    url.params.originWidth = x.width;
+    url.params.originHeight = x.height;
+    url.params.originView = x.representations.large;
+    if (url.params.src == 'undefined') url.params.src = encodeURIComponent(x.source_url);
+  }
+
+  async function maybeFillData(url) {
+    if (url.params.origin) {
+      await fetchExtData(url);
+    }
     if (!hasData()) {
-      fillData(url)
+      fillData(url);
     } else {
       document.querySelector('form[action="/images"]').insertBefore(
         objects.warning = createFromNotation('.dnp-warning', {style: {marginBottom: '0.5em'}},
@@ -113,7 +129,7 @@
             ' ',
             ['a', {onclick:() => objects.warning.style.display = 'none'}, 'Cancel']
           ])
-        ),
+        )
         document.querySelector('.dnp-warning');
     }
   }
@@ -137,11 +153,11 @@
     let img = objects.preview;
     ctx.drawImage(img, 0, 0);
     ctx.globalCompositeOperation = 'difference';
-    img = document.getElementById('js-image-upload-preview');
+    img = objects.origPreview;
     ctx.drawImage(img, 0, 0, objects.preview.naturalWidth, objects.preview.naturalHeight);
     if (!overRideSize) objects.newSizes.innerHTML = img.naturalWidth + 'x' + img.naturalHeight;
-    if (decodeURIComponent(url.params.src) != 'undefined') {
-      document.getElementById('image_source_url').value = decodeURIComponent(url.params.src);
+    if (decodeURIComponent(url.params.originWidth) != 'undefined') {
+      objects.oldSizes.innerHTML = url.params.originWidth+'x'+url.params.originHeight;
     }
   }
 
@@ -195,7 +211,7 @@
     });
   }
 
-  function init() {
+  async function init() {
     if (typeof unsafeWindow !== 'undefined') {
       win = unsafeWindow;
     } else {
@@ -209,7 +225,8 @@
     win._YDB_public.settings._madup = 'hello';
     const url = parseURL(location.href);
     markup(url);
-    maybeFillData(url);
+    await maybeFillData(url);
+    setTimeout(diffCheck, 100, url);
   }
 
   if (location.pathname == '/images/new') {
