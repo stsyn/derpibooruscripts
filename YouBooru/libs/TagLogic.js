@@ -4,6 +4,7 @@
 var YDB_api = YDB_api || {};
 (function() {
   const rulesetVersionField = '[{[version]}]';
+  const rulesetCategoriesField = '[{[categories]}]';
   function __unique(item, index, array) {
     return index === array.indexOf(item);
   }
@@ -27,6 +28,10 @@ var YDB_api = YDB_api || {};
   // *sparkle        — wildcard (only 1 * supported)
   // *               — any tag
   // __              — no tag
+  // >female         — matches all tags which imply this tag and this tag as well, won't search in aliases (version 0.1+)
+  // >oc:*           — wildcards can be used in implications (version 0.1+)
+  // /-sparkle       — escape logical operators on tag — will match "-sparkle", won't escape * (version 0.1+)
+  // __sexual        — use custom category (version 1.1)
 
   //// subcases
   // *sparkle[>1]
@@ -41,7 +46,14 @@ var YDB_api = YDB_api || {};
   // -pony           — negate (NOT) — do not have tag
   // solo+female     — combine (AND)
   // ^solo+female    — global NOT (NAND)
-  // OR is not supported and will never be, dupe actions rows if needed
+  // OR is not supported and will never be, dupe actions rows if needed+
+
+  //// custom categories (version 1.1+)
+  // Should be defined in [{[categories]}] field as integred object. Syntax is the same, as for rules:
+  // '[{[categories]}]': {
+  //   'sexual': 'suggestive,questionable,explicit',
+  // },
+  // Custom categories are prohibitted inside custom categories rules. ^ untested.
 
   ////// - actions be like
   //// adding
@@ -74,10 +86,11 @@ var YDB_api = YDB_api || {};
   // 4. Tag addings.
 
   YDB_api.applyRulesetOnTags = function(ruleset, tagArray, dontApply) {
-    const version = 0;
+    const version = 1;
     if (ruleset[rulesetVersionField] && parseInt(ruleset[rulesetVersionField].split('.')[1]) > version) {
       throw new Error('Unsupported ruleset version, x.' + version + ' at most!');
     }
+    let customCategories = {};
     const tagsToRemove = new Set();
     const tagsToAdd = new Set();
     const renamesDeletions = {};
@@ -94,7 +107,28 @@ var YDB_api = YDB_api || {};
         // category
         if (rulePart.startsWith('_')) {
           const rule = rulePart.match(/_([^\[\]]*)\s*(\[.?\d+]|)/)[1];
+          if (rule.startsWith('_')) {
+            const category = customCategories[rule.substring(1)];
+            if (category) {
+              return checkCondition(rulePart, category);
+            }
+            throw new Error('Category "' + rule.substring(1) + '" is not defined!');
+          }
           const match = tagArray.filter(tag => tag.category === rule);
+          return checkCondition(rulePart, match);
+        }
+        // implication
+        if (rulePart.startsWith('>')) {
+          const rule = rulePart.match(/>([^\[\]]*)\s*(\[.?\d+]|)/)[1];
+          // wildcard
+          if (rulePart.indexOf('*') > -1) {
+            const parts = rule.split('*');
+            const match = tagArray.filter(tag => {
+              return (tag.name.startsWith(parts[0]) && tag.name.endsWith(parts[1])) || tag.implied_tags.find(t => t.startsWith(parts[0]) && t.endsWith(parts[1]))
+            })
+            return checkCondition(rulePart, match);
+          }
+          const match = tagArray.filter(tag => tag.implied_tags.includes(rule) || tag.name === rule);
           return checkCondition(rulePart, match);
         }
         // wildcard
@@ -105,8 +139,9 @@ var YDB_api = YDB_api || {};
           return checkCondition(rulePart, match);
         }
         // strict
-        const match = tagArray.filter(tag => tag.name === rulePart || tag.aliases.find(t => t === rulePart));
-        return checkCondition(rulePart, match);
+        const name = rulePart.startsWith('/') ? rulePart.substring(1) : rulePart;
+        const match = tagArray.filter(tag => tag.name === name || tag.aliases.find(t => t === name));
+        return checkCondition(name, match);
       }
 
       function resolveDupes(match) {
@@ -253,8 +288,7 @@ var YDB_api = YDB_api || {};
       return tags.concat(Array.from(tagsToAdd.values())).filter((tag, index, tags) => index === tags.indexOf(tag));
     }
 
-    for (let originRule in ruleset) {
-      if (originRule === rulesetVersionField) continue;
+    function handleRule(originRule) {
       let rule;
       // first letter - prefix
       const negate = originRule.startsWith('^');
@@ -274,10 +308,24 @@ var YDB_api = YDB_api || {};
       const foundNeeded = foundMatchedTags.filter(tags => tags.length > 0).length === requiredTags.length;
       const dontHaveBanned = foundBannedTags.filter(tags => tags.length > 0).length === 0;
       if ((foundNeeded && dontHaveBanned) ^ negate) {
-        const finalTags = foundMatchedTags.map((tags, index) => tags.length > 0 ? tags : foundBannedTags[index]);
+        return {matched: foundMatchedTags.map((tags, index) => tags.length > 0 ? tags : foundBannedTags[index]), rules: ruleTags};
+      }
+      return {matched: [], rules: ruleTags};
+    }
+
+    if (ruleset[rulesetCategoriesField]) {
+      for (let category in ruleset[rulesetCategoriesField]) {
+        customCategories[category] = handleRule(ruleset[rulesetCategoriesField][category]).matched.flat().filter(__unique);
+      }
+    }
+    for (let originRule in ruleset) {
+      if (originRule === rulesetVersionField) continue;
+      if (originRule === rulesetCategoriesField) continue;
+      const finalTags = handleRule(originRule);
+      if (finalTags.matched.length > 0) {
         const alist = ruleset[originRule].replace(/\\\+/g, '[[plus]]');
         const actions = alist.split('+');
-        actions.forEach(action => applyTagRule(action, finalTags, ruleTags));
+        actions.forEach(action => applyTagRule(action, finalTags.matched, finalTags.rules));
       }
     }
     const fTags = dontApply ? tagArray.map(tag => tag.name || tag) : runRules(tagArray.map(tag => tag.name));
@@ -286,15 +334,17 @@ var YDB_api = YDB_api || {};
 
   // matched rules will be removed from first ruleset!
   YDB_api.mergeRulesets = function(old, newer) {
-    const version = 0;
+    const version = 1;
     if (old[rulesetVersionField] && parseInt(old[rulesetVersionField].split('.')[0]) > version) {
       throw new Error('Unsupported ruleset version, ' + version + '.x at most!');
     }
     if (newer[rulesetVersionField] && parseInt(newer[rulesetVersionField].split('.')[0]) > version) {
       throw new Error('Unsupported parseInt version, ' + version + '.x at most!');
     }
-    let temp = Object.assign({}, old);
-    temp = Object.assign(temp, newer);
+    let temp = Object.assign({}, old, newer);
+    if (temp[rulesetCategoriesField]) {
+      temp[rulesetCategoriesField] = Object.assign({}, old[rulesetCategoriesField] || {}, newer[rulesetCategoriesField] || {});
+    }
     if (old[rulesetVersionField] > newer[rulesetVersionField]) temp[rulesetVersionField] = old[rulesetVersionField];
     return temp;
   }
