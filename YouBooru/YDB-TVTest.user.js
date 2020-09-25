@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          YDB:TV Tester
-// @version       0.1.0
+// @version       0.1.1
 // @author        stsyn
 
 // @match         *://*/*
@@ -10,7 +10,6 @@
 // @require       https://github.com/stsyn/createElement/raw/master/min/es5.js
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruImitation0UW.js
-// @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0UW.lib.js
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/api/Basics.js
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/api/ImageSearch.js
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/api/Tags.js
@@ -148,8 +147,8 @@ var clearElement = clearElement || (() => {throw '"// @require https://github.co
     let portion = [];
     const limit = parseInt(elements.portions.value);
     while (!(portion.length > limit)) {
-      if (result.done) return;
       const result = await state.iterator.next();
+      if (result.done) return;
       state.total = result.value.total - result.value.images.length;
       const valid = result.value.images.filter(image => checkImage(state.ruleset, image));
       state.looked += result.value.images.length;
@@ -164,6 +163,10 @@ var clearElement = clearElement || (() => {throw '"// @require https://github.co
   }
 
   async function start() {
+    apiKey = elements.apiKey.value.trim();
+    const apiKeys = JSON.parse(GM_getValue('apiKey', '{}'));
+    apiKeys[location.hostname] = apiKey;
+    GM_setValue('apiKey', JSON.stringify(apiKeys));
     const rulesetCategoriesField = '[{[categories]}]';
     const parts = await makeQueryParts();
     const ruleset = {};
@@ -200,6 +203,7 @@ var clearElement = clearElement || (() => {throw '"// @require https://github.co
   }
 
   function prepareSearch() {
+    const apiKeys = JSON.parse(GM_getValue('apiKey', '{}'));
     const url = parseURL(location.href);
     elements.searchContainer = document.querySelector('.js-resizable-media-container');
     clearElement(elements.searchContainer);
@@ -221,6 +225,8 @@ var clearElement = clearElement || (() => {throw '"// @require https://github.co
       elements.subcategories = createElement('textarea.input.input--wide.js-search-field', {value: decodeURIComponent(url.params.sc)}),
       ['p', 'TV filter (lines are ORed)'],
       elements.filter = createElement('textarea.input.input--wide.js-search-field', {value: decodeURIComponent(url.params.f)}),
+      ['span', 'API key '],
+      elements.apiKey = createElement('input.input', {value: apiKeys[location.hostname] || '', type:'password', name:'api_key'}),
      // ['label', {for: '_ydb_tv_fetch_tags', title: 'No need to check if you don\' use categories, aliases or implications'}, 'Fetch tag data '],
      // elements.fetchTagData = createElement('input#_ydb_tv_fetch_tags', {type: 'checkbox'})
     ]), elements.search.children[1]);
@@ -238,12 +244,6 @@ var clearElement = clearElement || (() => {throw '"// @require https://github.co
   }
 
   if (enviroment !== 'unknown') {
-    try {
-      apiKey = unsafeWindow._YDB_public.funcs.getApiKey();
-    } catch(e) {
-      alert('Cannot get API key!');
-      alert(e);
-    }
     makeLink();
     if (location.search.includes('__ydb_tv_search')) {
       prepareSearch();
