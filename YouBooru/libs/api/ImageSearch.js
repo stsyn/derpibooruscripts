@@ -2,7 +2,7 @@ var YDB_api = YDB_api || {};
 
 (function() {
   const perPage = 50;
-  async function* performLongSearch(query, params) {
+  async function* longSearchIterator(query, params) {
     let notEmpty = true;
     let stopPoint = -1;
     while (notEmpty) {
@@ -11,7 +11,7 @@ var YDB_api = YDB_api || {};
         limiter = `id.lte:${stopPoint},`;
       }
       const data = await YDB_api.searchImages(limiter+query, params);
-      if (data.images.length > 0) params.stopPoint = data.images[data.images.length-1].id;
+      if (data.images.length > 0) stopPoint = data.images[data.images.length-1].id;
       if (data.images.length < perPage) notEmpty = false;
       yield data;
     }
@@ -21,7 +21,7 @@ var YDB_api = YDB_api || {};
     params.sd = '';
     params.sf = '';
     const data = {images: [], interactions: []};
-    const iterator = performLongSearch(query, params)
+    const iterator = longSearchIterator(query, params)
     for await (let content of iterator) {
       data.images = data.images.concat(content.images);
       data.interactions = data.interactions.concat(content.interactions);
@@ -33,7 +33,7 @@ var YDB_api = YDB_api || {};
   YDB_api.longSearch = function (query, params = {}) {
     params.sd = '';
     params.sf = '';
-    return performLongSearch(query, params);
+    return longSearchIterator(query, params);
   }
 
   YDB_api.searchImages = async function (query, params = {}) {
