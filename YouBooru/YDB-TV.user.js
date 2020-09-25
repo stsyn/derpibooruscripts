@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          YDB:Tag Validator
-// @version       1.5.0
+// @version       1.5.1
 // @author        stsyn
 // @description   Successor of ADUp's component — tag validator
 
@@ -10,6 +10,7 @@
 
 // @require       https://github.com/stsyn/createElement/raw/master/min/es5.js
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0UW.lib.js
+// @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/api/Basics.js
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/api/Tags.js
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/TagLogic.js
 
@@ -19,8 +20,6 @@
 
 // @downloadURL   https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-TV.user.js
 
-// @grant         GM_setValue
-// @grant         GM_getValue
 // @grant         unsafeWindow
 // @run-at        document-idle
 // ==/UserScript==
@@ -30,14 +29,7 @@ var clearElement = clearElement || (() => {throw '"// @require https://github.co
 (function() {
   'use strict';
   if (unsafeWindow.self !== unsafeWindow.top) return;
-  const enviroment = (function() {
-    const elem = document.querySelector('#serving_info');
-    if (elem && elem.innerText) {
-      if (elem.innerText.toLowerCase().indexOf('philomena') > -1) return 'philomena';
-      if (elem.innerText.toLowerCase().indexOf('booru-on-rails') > -1) return 'bor';
-    }
-    return 'unknown';
-  }());
+  const enviroment = YDB_api.getEnviroment();
 
   function __unique(item, index, array) {
     return index === array.indexOf(item);
@@ -238,7 +230,7 @@ var clearElement = clearElement || (() => {throw '"// @require https://github.co
       errors = errors.concat(primaryTags.filter(tag => tag.empty && !tag.aliased_tag).map(tag => `Tag %tag:${tag.name}% does not exists`));
       const aliases = primaryTags.filter(tag => tag.aliased_tag);
       const notifies = allNotifies.filter(notify => !notify.startsWith('[E]'));
-      const suggestions = Array.from(primaryData.tagsToAdd).concat(Array.from(secondaryData.tagsToAdd)).filter(__unique).filter(tag => !elements.cache[tag].present);
+      const suggestions = Array.from(primaryData.tagsToAdd).concat(Array.from(secondaryData.tagsToAdd)).filter(__unique).filter(tag => !elements.cache[tag] || !elements.cache[tag].present);
       const implications = primaryTags.filter(tag => tag.implied_tags.filter(impl => !(elements.cache[impl] && elements.cache[impl].present)).length);
       const implications2 = Object.values(elements.cache).filter(tag => !tag.present && tag.implied_by.length > 0);
 
@@ -316,9 +308,6 @@ var clearElement = clearElement || (() => {throw '"// @require https://github.co
     checker(elements, true);
   }
 
-  if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname)) {
-    GM_setValue('domain', location.hostname);
-  }
   if (isBooru) {
     if (!localStorage._adup) {
       localStorage._adup = JSON.stringify(settings);
