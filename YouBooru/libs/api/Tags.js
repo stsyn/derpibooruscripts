@@ -1,21 +1,12 @@
 var YDB_api = YDB_api || {};
 
 (function() {
-  function __tagToSlug(tag) {
+  YDB_api.tagToSlug = function (tag) {
     return escape(tag.replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/ /g,'+').replace(/\:/g,'-colon-').replace(/\//g,'-fwslash-'));
   }
 
-  function __slugToTag(tag) {
+  YDB_api.slugToTag = function (tag) {
     return unescape(tag.replace(/\-dash\-/g,'-').replace(/\-dot\-/g,'.').replace(/\+/g,' ').replace(/\-colon\-/g,':').replace(/\-fwslash\-/g,'/'));
-  }
-
-  function __getEnviroment() {
-    const elem = document.querySelector('#serving_info');
-    if (elem && elem.innerText) {
-      if (elem.innerText.toLowerCase().indexOf('philomena') > -1) return 'philomena';
-      if (elem.innerText.toLowerCase().indexOf('booru-on-rails') > -1) return 'bor';
-    }
-    return 'unknown';
   }
 
   function __unique(item, index, array) {
@@ -60,7 +51,7 @@ var YDB_api = YDB_api || {};
   }
 
   async function fetchTagPage(tagNames, options) {
-    const enviroment = __getEnviroment();
+    const enviroment = YDB_api.getEnviroment();
 
     let url;
     if (enviroment === 'philomena') {
@@ -90,9 +81,9 @@ var YDB_api = YDB_api || {};
             reason: dnp.reason || 'byte[], fix philomena plz',
           }
         });
-        newTag.aliases = tag.aliases.map(__slugToTag);
-        newTag.aliased_tag = __slugToTag(tag.aliased_tag || '');
-        newTag.implied_tags = tag.implied_tags.map(__slugToTag);
+        newTag.aliases = tag.aliases.map(YDB_api.slugToTag);
+        newTag.aliased_tag = YDB_api.slugToTag(tag.aliased_tag || '');
+        newTag.implied_tags = tag.implied_tags.map(YDB_api.slugToTag);
         return newTag;
       });
     }
@@ -125,7 +116,7 @@ var YDB_api = YDB_api || {};
   }
 
   YDB_api.fetchTagByName = async function(tagName) {
-    return await YDB_api.fetchTagBySlug(__tagToSlug(tagName));
+    return await YDB_api.fetchTagBySlug(YDB_api.tagToSlug(tagName));
   }
 
   YDB_api.fetchTagBySlug = async function(tagSlug) {
@@ -140,7 +131,7 @@ var YDB_api = YDB_api || {};
     if (options.separateAliases === undefined) options.separateAliases = false;
     if (options.dontFollowAliases === undefined) options.dontFollowAliases = false;
 
-    const enviroment = __getEnviroment();
+    const enviroment = YDB_api.getEnviroment();
 
     const maxTagsPerPage = 50;
     const result = {};
