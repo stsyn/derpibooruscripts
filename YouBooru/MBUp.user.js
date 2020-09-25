@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         *Booru Uploader
 // @namespace    http://derpibooru.org/
-// @version      0.2.2
+// @version      0.2.3
 // @description  Way to upload the same image on multiple sites
 // @author       stsyn
 
 // @require      https://github.com/stsyn/createElement/raw/master/min/es5.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/api/Basics.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/api/Tags.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/dbs/mbUp-sites.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/dbs/furbooru.ruleset.js
