@@ -7,26 +7,40 @@ function GetDerpibooruRuleset() {
     'suggestive,questionable,explicit[[>1]]': '^[E]You cannot use more than one sexual ratings tag!',
     'grimdark+semi-grimdark': '^[E]You cannot use more than one grimdark ratings tag!'
   }, {
-    '[{[version]}]': '0.0',
+    '[{[version]}]': '1.1',
+    '[{[categories]}]': {
+      'sexual': 'suggestive,questionable,explicit',
+      'genders': 'male,female,futa,intersex',
+      'characters': '_character,oc:*',
+    },
     '^artist:*,screencap,artist needed,anonymous artist': '^[E]No origin provided!',
-    '^_character,_oc,no pony': '^[E]No character tag!',
+    '^__characters,no pony': '^[E]No character tag!',
 
-    '_character,oc:*[[1]]': 'solo',
-    'safe+solo female,solo male, solo futa': 'solo+^[E]%tag:solo *% should be used only in sexual context. Use just %tag:solo% and correct gender tag!',
-    'suggestive,questionable,explicit+solo+female': 'solo female',
-    'suggestive,questionable,explicit+solo+male': 'solo male',
-    'suggestive,questionable,explicit+solo+futa': 'solo futa',
-    'solo+male,female,futa[[>1]]': '^[E]%tag:female%, %tag:futa%, %tag:male% with %tag:solo%.',
-    'solo+_character,oc:*[[>1]]+-fusion': '^[E]Multiple characters while %tag:solo% tagged.',
+    '__characters[1]': 'solo',
+    'safe+solo female,solo male,solo futa': 'solo+^[E]%tag:solo *% should be used only in sexual context. Use just %tag:solo% and correct gender tag!',
+    '__sexual+solo+female': 'solo female',
+    '__sexual+solo+male': 'solo male',
+    '__sexual+solo+futa': 'solo futa',
+    'solo+__characters[>1]+-fusion': '^[E]Multiple characters while %tag:solo% tagged.',
+    'solo+__genders[>1]': '^[E]Multiple genders while %tag:solo% tagged.',
 
-    '_character,oc:*[[2]]+-shipping': 'duo',
-    'duo+female+-male,intersex,futa': 'duo female',
-    'duo+male+-female,intersex,futa': 'duo male',
+    '__characters[2]+-shipping': 'duo',
+    'duo+female+-__genders,!female': 'duo female',
+    'duo+male+-__genders,!male': 'duo male',
     'duo+futa+-female,male': 'duo futa',
+
+    '__characters[3]+-shipping': 'trio',
+    'trio+female+-__genders,!female': 'trio female',
+    'trio+male+-__genders,!male': 'trio male',
+    'trio+futa+-female,male': 'trio futa',
+
+    '__sexual+__characters[>3]+-__genders,!female': 'females only',
+    '__sexual+__characters[>3]+-__genders,!male': 'males only',
+    '__sexual+__characters[>3]+-female,male': 'futa only',
 
     '^_species,equestria girls,no pony': '^No species tag!',
 
-    '^male,female,futa,intersex': '^No gender tag!',
+    '^__genders': '^No gender tag!',
     'pony+female+-mare,filly': 'mare+filly',
     'pony+male+-stallion,colt': 'stallion+colt',
     'solo+pony+mare+filly+-fusion': '^Expected either %tag:mare% or %tag:filly%.',
