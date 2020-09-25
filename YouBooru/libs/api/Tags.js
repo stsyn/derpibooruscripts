@@ -2,11 +2,11 @@
 var YDB_api = YDB_api || {};
 
 (function() {
-  YDB_api.tagToSlug = function (tag) {
+  YDB_api.tagToSlug = function(tag) {
     return escape(tag.replace(/\-/g,'-dash-').replace(/\./g,'-dot-').replace(/ /g,'+').replace(/\:/g,'-colon-').replace(/\//g,'-fwslash-'));
   }
 
-  YDB_api.slugToTag = function (tag) {
+  YDB_api.slugToTag = function(tag) {
     return unescape(tag.replace(/\-dash\-/g,'-').replace(/\-dot\-/g,'.').replace(/\+/g,' ').replace(/\-colon\-/g,':').replace(/\-fwslash\-/g,'/'));
   }
 
@@ -43,12 +43,18 @@ var YDB_api = YDB_api || {};
       images: -1,
       implied_tags: [],
       name: tag,
-      name_in_namespace: tag,
+      name_in_namespace: '',
       short_description: '',
       slug: '',
       spoiler_image_uri: '',
       synonyms: []
     }
+  }
+
+  YDB_api.makeTagObject = function(tagName) {
+    const tag = emptyTag(tagName);
+    tag.empty = false;
+    return tag;
   }
 
   async function fetchTagPage(tagNames, options) {
