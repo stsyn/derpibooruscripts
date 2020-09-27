@@ -13,7 +13,11 @@ Here are the userscripts related to the https://derpibooru.org. Most of them are
 
 **Fullscreen** — https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/Fullscreen.user.js — https://derpibooru.org/meta/topics/userscript-derp-fullscreen-viewer
 
-**YDB:ADUp** — https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp.user.js — https://derpibooru.org/forums/meta/topics/userscript-semi-automated-derpibooru-uploader
+~~**YDB:ADUp** — https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp.user.js~~
+
+**YDB:TV** https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-TV.user.js — https://derpibooru.org/forums/meta/topics/userscript-semi-automated-derpibooru-uploader
+
+**YDB:TVTest** https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-TVTest.user.js
 
 **YDB:MT** — https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/MT.user.js
 
