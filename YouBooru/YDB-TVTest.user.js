@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          YDB:TV Tester
-// @version       0.1.1
+// @version       0.1.2
 // @author        stsyn
 
 // @match         *://*/*
@@ -105,7 +105,7 @@ var clearElement = clearElement || (() => {throw '"// @require https://github.co
   }());
 
   function makeLink() {
-    const container = document.querySelector('a.header__link[href*="/tags"]');
+    const container = document.querySelector('.header--secondary a.header__link[href*="/tags"]');
     let dropdown;
     wrapElement(dropdown = createElement('.dropdown.header__dropdown'), container);
     container.appendChild(createFromNotation('span', {dataset: {clickPreventdefault: 'true'}},
