@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          YDB:TV Tester
-// @version       0.1.2
+// @version       0.2.0
 // @author        stsyn
 
 // @match         *://*/*
@@ -33,6 +33,7 @@ var clearElement = clearElement || (() => {throw '"// @require https://github.co
   const enviroment = YDB_api.getEnviroment();
   const elements = {};
   const state = {};
+  const tagCache = new Map();
   let iterator;
   let apiKey;
 
@@ -134,12 +135,20 @@ var clearElement = clearElement || (() => {throw '"// @require https://github.co
   }
 
   function checkImage(ruleset, image) {
-    const tags = image.tags.map(tag => YDB_api.makeTagObject(tag));
+    const tags = image.tags.map(tag => tagCache.get(tag) || YDB_api.makeTagObject(tag));
     return YDB_api.applyRulesetOnTags(ruleset, tags, false).errors.length > 0;
   }
 
   function updateStatus() {
     elements.stats.innerHTML = `${state.approved}/${state.looked}/${state.total}`;
+  }
+
+  async function fetchTags(images) {
+    const tagsToFetch = new Set();
+    images.forEach(image => image.tags.forEach(tagName => {
+      if (!tagCache.has(tagName)) tagsToFetch.add(tagName);
+    }));
+    await YDB_api.fetchManyTagsByName(Array.from(tagsToFetch), {resolveSynonims: true, alwaysLoadAliases: true, dontFollowAliases: true}, tagCache);
   }
 
   async function runPortion() {
@@ -150,6 +159,7 @@ var clearElement = clearElement || (() => {throw '"// @require https://github.co
       const result = await state.iterator.next();
       if (result.done) return;
       state.total = result.value.total - result.value.images.length;
+      if (elements.fetchTagData.checked) await fetchTags(result.value.images);
       const valid = result.value.images.filter(image => checkImage(state.ruleset, image));
       state.looked += result.value.images.length;
       state.approved += valid.length;
@@ -227,8 +237,8 @@ var clearElement = clearElement || (() => {throw '"// @require https://github.co
       elements.filter = createElement('textarea.input.input--wide.js-search-field', {value: decodeURIComponent(url.params.f)}),
       ['span', 'API key '],
       elements.apiKey = createElement('input.input', {value: apiKeys[location.hostname] || '', type:'password', name:'api_key'}),
-     // ['label', {for: '_ydb_tv_fetch_tags', title: 'No need to check if you don\' use categories, aliases or implications'}, 'Fetch tag data '],
-     // elements.fetchTagData = createElement('input#_ydb_tv_fetch_tags', {type: 'checkbox'})
+      ['label', {for: '_ydb_tv_fetch_tags', title: 'No need to check if you don\' use categories, aliases or implications'}, 'Fetch tag data '],
+      elements.fetchTagData = createElement('input#_ydb_tv_fetch_tags', {type: 'checkbox'})
     ]), elements.search.children[1]);
     elements.searchButton = elements.search.querySelector('button[type="submit"]');
     elements.searchButton.style.display = 'none';
