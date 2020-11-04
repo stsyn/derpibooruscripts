@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:MT
-// @version      0.1.17
+// @version      0.1.18
 // @author       stsyn
 // @namespace    http://derpibooru.org
 
@@ -188,10 +188,34 @@
     //image
     let c = document.querySelector('.block__tab[data-tab="administration"]');
     if (c) {
-      c.insertBefore(createElement('a',{href:'/admin/reports?rq=image_id%3A'+id+'&commit=Search',style:'margin-bottom:4px;display:inline-block'}, 'Show reports regarding this image'), c.firstChild);
+      c.insertBefore(createElement('a',{href:'/admin/reports?rq=image_id%3A'+id,style:'margin-bottom:4px;display:inline-block'}, 'Show reports regarding this image'), c.firstChild);
     }
 
-    //more to come
+    //user
+    c = document.querySelector('.profile-top__options.js-admin__options__toggle')
+    if (c) {
+      const userId = document.querySelector('a[href*="uploader_id"]').href.split('%').pop().substring(2);
+      c.querySelector('.profile-admin__options__column').appendChild(createElement('li', [
+        ['a', {href: `/admin/reports?rq=reportable_id%3A${userId}%2C+-image_id%3A${userId}`}, [
+          ['i.fa.fa-exclamation-triangle'],
+          ['span', ' Reported?']
+        ]]
+      ]));
+    }
+
+    // more to come
+    // maybe
+  }
+
+  function allUserLinks() {
+    const m = document.querySelector('a[href="/admin/user_links"]');
+    if (!m) return;
+
+    let c = document.querySelector('a.block__header--single-item[href*="/user_links/new"]')
+    if (c) {
+      const userName = location.pathname.split('/').pop();
+      c.parentNode.appendChild(createElement('a.block__header--single-item', {href: `/admin/user_links?q=${userName}`}, 'See all'));
+    }
   }
 
   function fixPollCount() {
@@ -250,7 +274,7 @@
       progressBar.style.display = 'none';
 
       voteTab.appendChild(createElement('div', [
-        recalcButton = createElement('button.button.button--state-warning.js-staff-action', {events: {click: recalc}}, 'Consider only votes from accounts older than '),
+        recalcButton = createElement('button.button.button--state-warning.js-staff-action', {onclick: recalc}, 'Consider only votes from accounts older than '),
         ' ',
         recalcFromField = createElement('input.input', { type: 'date' }),
         ' Count only active between 90-30 days ago: ',
@@ -283,14 +307,14 @@
 
           const percentage = count / totalCount * 100;
           clearElement(countContainer);
-          fillElement(countContainer, [
-            ['span', [
+          fillFromNotation(countContainer, [
+            ['span',
               ['b', percentage.toFixed(2)],
               '% ',
               ['strong', `${count}/${totalCount}`],
               ` vote${count === 1 ? '' : 's'}`
             ]
-            ]]);
+          ]);
           voteItem.getElementsByClassName('poll-bar__image')[0].style.width = percentage + '%';
           voteItem.getElementsByClassName('poll-bar__image')[0].style.opacity = hasYourSelf ? '1' : '0.6';
         } else {
@@ -315,7 +339,7 @@
         container = createElement('div', {innerHTML: resp});
         countVotes();
 
-        voteTab.appendChild(loadButton = createElement('button.button.button--state-warning.js-staff-action', {events: {click: filterByJoinDate}}, 'Gain data for join date split'));
+        voteTab.appendChild(loadButton = createElement('button.button.button--state-warning.js-staff-action', {onclick: filterByJoinDate}, 'Gain data for join date split'));
       })
     }
   }
@@ -372,39 +396,39 @@
     function prepareRenderPlace() {
       renderPlaceData = methods.map((name, index) => {
         let areaTop, areaHidden;
-        renderPlace.appendChild(createElement('div', [
+        renderPlace.appendChild(createFromNotation('div',
           ['h4', name],
-          ['table.table', [
+          ['table.table',
             renderTableHead(),
-            areaTop = createElement('tbody')]
+            areaTop = createElement('tbody')
           ],
           ['input.toggle-box', {id: '_alias_'+index, type: 'checkbox'}],
           ['label', {for: '_alias_'+index}, 'Older collisions'],
-          ['div.toggle-box-container', [
-            ['table.table', [
+          ['div.toggle-box-container',
+            ['table.table',
               renderTableHead(),
-              areaHidden = createElement('tbody')]
+              areaHidden = createElement('tbody')
             ]
-          ]]
-        ]));
+          ]
+        ));
         return {areaTop, areaHidden}
       });
     }
 
     function renderTableHead() {
-      return ['thead', [
-        ['tr', [
+      return ['thead',
+        ['tr',
           ['td', 'User'],
           ['td', 'Creation Date'],
           ['td', 'Ban Status'],
           ['td', 'IP Collision Date'],
           ['td', 'FP Collision Date'],
-        ]]
-      ]];
+        ]
+      ];
     }
 
     function makeTableLine(item) {
-      return createElement('tr', [item.user, item.date, item.ban, ['td', item.ipCollision], ['td', item.fpCollision]]);
+      return createFromNotation('tr', item.user, item.date, item.ban, ['td', item.ipCollision], ['td', item.fpCollision]);
     }
 
     function renderData(data) {
@@ -439,8 +463,8 @@
         const areaHidden = renderPlaceData[index].areaHidden;
         clearElement(areaTop);
         clearElement(areaHidden);
-        fillElement(areaTop, listing[0]);
-        fillElement(areaHidden, listing[1]);
+        fillFromNotation(areaTop, listing[0]);
+        fillFromNotation(areaHidden, listing[1]);
       });
     }
 
@@ -501,6 +525,7 @@
   setTimeout(() => {try {syncDupesDespoil();} catch(e) {error("syncDupesDespoil", e)};}, 300);
   try {hideTools();} catch(e) {error("hideTools", e)};
   try {isThingReported();} catch(e) {error("isThingReported", e)};
+  try {allUserLinks();} catch(e) {error("allUserLinks", e)};
   try {handleAliases();} catch(e) {error("handleAliases", e)};
   try {fixPollCount();} catch(e) {error("fixPollCount", e)};
   try {feedsExtension();} catch(e) {error("feedsExtension", e)};
