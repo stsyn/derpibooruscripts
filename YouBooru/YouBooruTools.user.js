@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:Tools
-// @version      0.9.1
+// @version      0.9.2
 // @description  Some UI tweaks and more
 // @author       stsyn
 // @namespace    http://derpibooru.org
@@ -443,7 +443,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
 
   //tag tools
   function simpleParse(x) {
-    return x.replace(/(\|\|| OR | AND | \&\&)/g, ',').split(',').map(y => y.trim().replace(/(^\(|\)$)/, ''));
+    return x.replace(/(\|\|| OR | AND | \&\&)/g, ',').split(',').map(y => y.trim().replace(/(^\(|\)$|^\-|^\!)/, ''));
   }
 
   function simpleCombine(y, separator = ' OR ') {
