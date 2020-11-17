@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:MT
-// @version      0.1.18
+// @version      0.1.19
 // @author       stsyn
 // @namespace    http://derpibooru.org
 
@@ -71,8 +71,9 @@
   }
 
   function ajaxDupes() {
-    const container = document.querySelector('.grid.grid--dupe-report-list');
+    const container = document.querySelector('.grid.grid--dupe-report-list:not(._ydb_ajax_patched)');
     if (container) {
+      container.classList.add('_ydb_ajax_patched');
       container.querySelectorAll('.grid--dupe-report-list__cell:not(.hide-desktop)').forEach((c, i) => {
         c.dataset.index = i;
         c.querySelectorAll('a[data-method="post"][href*="reject"]').forEach(item => {
@@ -88,11 +89,23 @@
                 container.getElementsByClassName('grid--dupe-report-list__cell')[k].classList.add('hide-desktop');
                 container.getElementsByClassName('grid--dupe-report-list__cell')[k].classList.add('hide-mobile');
               }
-            })
-
+            });
           });
         });
+
+        if (!isNaN(id)) {
+          c.querySelectorAll('a[data-method="post"][href*="/accept"]').forEach(item => {
+            item.addEventListener('click', e => {
+              e.stopPropagation();
+              e.preventDefault();
+              const elem = e.target.closest('a');
+              fetchJson('POST',elem.href).then(response => location.reload());
+            });
+          });
+        }
       });
+    } else if (!isNaN(id)) {
+      setTimeout(ajaxDupes, 100);
     }
   }
 
