@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         It's much better, than Tumblr's archive!
-// @version      0.8.2
+// @version      0.8.3
 // @author       stsyn
 // @match        https://*/archive2
 // @match        https://www.tumblr.com/dashboard2/*
@@ -18,6 +18,7 @@ Currently the only thing which reveals hidden posts for now.
 
 How to:
 1. Open /archive2 page of the desired blog.
+1.5. Or www.tumblr.com/dashboard2/blog/BLOGNAME.
 2. Profit.
 
 *************************/
@@ -53,10 +54,11 @@ body {position:static; background: #f2f2f2 !important}`;
 
     try {
       let renderHead = (data, preview2) => {
+        const blog = data.blog || data.brokenBlog;
         preview2.appendChild(InfernoAddElem('div', {className:'_3LoFw'}, [
-          InfernoAddElem('img', {src:data.blog.avatar[3].url, width: 32, height: 32}, []),
-          InfernoAddElem('a', {href:data.blog.url, target:'_blank', innerHTML:data.blog.title+' ('+data.blog.name+')'}, []),
-          InfernoAddElem('a', {href:'//tumblr.com/dashboard2/blog/' + data.blog.name, target:'_blank', innerHTML:' [TBA]'}, [])
+          InfernoAddElem('img', {src:blog.avatar[3].url, width: 32, height: 32}, []),
+          InfernoAddElem('a', {href:blog.url, target:'_blank', innerHTML:blog.title+' ('+blog.name+')'}, []),
+          InfernoAddElem('a', {href:'//tumblr.com/dashboard2/blog/' + blog.name, target:'_blank', innerHTML:' [TBA]'}, [])
         ]))
       };
 
@@ -70,7 +72,8 @@ body {position:static; background: #f2f2f2 !important}`;
                 newText = newText.replace(inner, '<a href="'+f.url+'" target="_blank">'+inner+'</a>');
               }
               else if (f.type=='mention') {
-                newText = newText.replace(inner, '<a href="'+f.blog.url+'" target="_blank">'+inner+'</a>');
+                const blog = f.blog || f.brokenBlog;
+                newText = newText.replace(inner, '<a href="'+blog.url+'" target="_blank">'+inner+'</a>');
               }
               else if (f.type=='bold') {
                 newText = newText.replace(inner, '<strong>'+inner+'</strong>');
