@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.36
+// @version      0.7.37
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -497,7 +497,8 @@ background:_fs_4component;
 
 .header--secondary>.flex>.hide-mobile a.header__link:hover, .header--secondary .header__dropdown:hover>a, .input:focus, .communication__toolbar__button:hover, .tag__dropdown__link,
 .block__header, .block__header--single-item,
-.block__header a, .block__header--single-item a, .block__list a.block__list__link,
+.block__header--single-item>span, .block__header--single-item a, .block__header--sub>span, .block__header--sub a, .block__header>span, .block__header a, .header__span,
+.block__header a, .block__list a.block__list__link,
 .communication__options, .button:not(.commission__category):not(.button--state-warning):not(.button--state-danger):not(.button--state-success),
 a.media-box__header--link:hover, .header--secondary span.header__counter,
 #js-image-upload-previews .scraper-preview--label .scraper-preview--input:checked+.scraper-preview--image-wrapper,
