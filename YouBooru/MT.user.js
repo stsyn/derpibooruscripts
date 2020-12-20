@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:MT
-// @version      0.1.19
+// @version      0.1.20
 // @author       stsyn
 // @namespace    http://derpibooru.org
 
@@ -320,13 +320,13 @@
 
           const percentage = count / totalCount * 100;
           clearElement(countContainer);
-          fillFromNotation(countContainer, [
-            ['span',
+          fillElement(countContainer, [
+            ['span', [
               ['b', percentage.toFixed(2)],
               '% ',
               ['strong', `${count}/${totalCount}`],
               ` vote${count === 1 ? '' : 's'}`
-            ]
+            ]]
           ]);
           voteItem.getElementsByClassName('poll-bar__image')[0].style.width = percentage + '%';
           voteItem.getElementsByClassName('poll-bar__image')[0].style.opacity = hasYourSelf ? '1' : '0.6';
@@ -409,39 +409,39 @@
     function prepareRenderPlace() {
       renderPlaceData = methods.map((name, index) => {
         let areaTop, areaHidden;
-        renderPlace.appendChild(createFromNotation('div',
+        renderPlace.appendChild(createElement('div', [
           ['h4', name],
-          ['table.table',
+          ['table.table', [
             renderTableHead(),
             areaTop = createElement('tbody')
-          ],
+          ]],
           ['input.toggle-box', {id: '_alias_'+index, type: 'checkbox'}],
           ['label', {for: '_alias_'+index}, 'Older collisions'],
-          ['div.toggle-box-container',
-            ['table.table',
+          ['div.toggle-box-container', [
+            ['table.table', [
               renderTableHead(),
               areaHidden = createElement('tbody')
-            ]
-          ]
-        ));
+            ]]
+          ]]
+        ]));
         return {areaTop, areaHidden}
       });
     }
 
     function renderTableHead() {
-      return ['thead',
-        ['tr',
+      return ['thead', [
+        ['tr', [
           ['td', 'User'],
           ['td', 'Creation Date'],
           ['td', 'Ban Status'],
           ['td', 'IP Collision Date'],
           ['td', 'FP Collision Date'],
-        ]
-      ];
+        ]]
+      ]];
     }
 
     function makeTableLine(item) {
-      return createFromNotation('tr', item.user, item.date, item.ban, ['td', item.ipCollision], ['td', item.fpCollision]);
+      return createElement('tr', [item.user, item.date, item.ban, ['td', item.ipCollision], ['td', item.fpCollision]]);
     }
 
     function renderData(data) {
@@ -476,8 +476,8 @@
         const areaHidden = renderPlaceData[index].areaHidden;
         clearElement(areaTop);
         clearElement(areaHidden);
-        fillFromNotation(areaTop, listing[0]);
-        fillFromNotation(areaHidden, listing[1]);
+        fillElement(areaTop, listing[0]);
+        fillElement(areaHidden, listing[1]);
       });
     }
 
