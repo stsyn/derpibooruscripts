@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://derpibooru.org
-// @version      0.7.40
+// @version      0.7.41
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -892,8 +892,8 @@ image-rendering: pixelated;
   }
 
   function init() {
-    document.querySelector('#content>.block:first-child').appendChild(objects.disable = createElement('a#_ydb_fs_disable', {style: {display:'none'}, events: { click: disable } }, 'Disable'));
-    document.body.appendChild(objects.enable = createElement('a#_ydb_fs_enable.header__link', {events: { click: () => enable(true) } }, 'Fullscreen'));
+    document.querySelector('#content>.block:first-child').appendChild(objects.disable = createElement('a#_ydb_fs_disable', {style: {display:'none'}, onclick: disable }, 'Disable'));
+    document.body.appendChild(objects.enable = createElement('a#_ydb_fs_enable.header__link', {onclick: () => enable(true) }, 'Fullscreen'));
     document.getElementsByClassName('header__force-right')[0].insertBefore(objects.enable, document.getElementsByClassName('header__force-right')[0].childNodes[0]);
     started = true;
   }
@@ -907,11 +907,11 @@ image-rendering: pixelated;
   function loadedImgFetch() {
     objects.image = document.getElementById('image-display');
 
-    if (settings.singleMode && objects.dcontainer != undefined) {
+    if (settings.singleMode && objects.dcontainer) {
       append('imageZoom');
       if (!pub.isVideo) {
-        objects.fullImage = createElement('img',{style:{display:'none'}, src:JSON.parse(objects.icontainer.dataset.uris).full, events:{
-          load:() => objects.dcontainer.addEventListener('click', singleEvent)}});
+        objects.fullImage = createElement('img',{style:{display:'none'}, src:JSON.parse(objects.icontainer.dataset.uris).full,
+                                                 onload:() => objects.dcontainer.addEventListener('click', singleEvent)});
       }
       else {
         if (!/\/[\d]+.webm$/.test(objects.image.querySelector('[type="video/webm"]').src)) {
@@ -1529,7 +1529,7 @@ image-rendering: pixelated;
         const oldContent = objects.icontainer.dataset.uris;
         const newContent = JSON.stringify(x);
         objects.icontainer.dataset.uris = newContent;
-        objects.dcontainer.dataset.uris = oldContent;
+        objects.icontainer.dataset.uris = oldContent;
         objects.icontainer.dataset.uris = newContent;
         // ебал я этот хром :(
       }
