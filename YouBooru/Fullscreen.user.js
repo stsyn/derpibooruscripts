@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://derpibooru.org
-// @version      0.7.38
+// @version      0.7.39
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -798,8 +798,8 @@ color: #777;
 
   function append(id, accentFix) {
     if (dictionary[id] && !accentFix) dictionary[id].media = 'all';
-    else dictionary[id] = GM.addStyle(styles[id]);
-    if (accentFix) dictionary[id] = GM.addStyle(styles[id]);
+    else GM.addStyle(styles[id]).then(x => dictionary[id] = x);
+    if (accentFix) GM.addStyle(styles[id]).then(x => dictionary[id] = x);
     return 0;
   }
 
