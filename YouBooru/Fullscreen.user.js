@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
-// @namespace    https://github.com/stsyn/derp-fullscreen/
-// @version      0.7.37
+// @namespace    https://derpibooru.org
+// @version      0.7.38
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
-// @include      /http[s]*:\/\/(www\.|philomena\.|)(trixie|derpi)booru.org\/.*/
+// @include      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*/
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/adverts\/.*/
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/api\/v1\/json/.*/
 
@@ -19,6 +19,9 @@
 // @grant        unsafeWindow
 
 // @run-at       document-start
+
+// @require      https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
+// @grant        GM.addStyle
 // ==/UserScript==
 
 
@@ -491,13 +494,13 @@ background:_fs_component;
 }
 
 #footer, .alternating-color:nth-child(even), .table>tbody>tr:nth-child(even), .block__header--sub, .block__header--sub a, .block__content>.label.label--primary.label--block,
+.block__header--single-item>span, .block__header--single-item a, .block__header--sub>span, .block__header--sub a, .header__span,
 .block__content .profile-top__options ul li {
 background:_fs_4component;
 }
 
 .header--secondary>.flex>.hide-mobile a.header__link:hover, .header--secondary .header__dropdown:hover>a, .input:focus, .communication__toolbar__button:hover, .tag__dropdown__link,
 .block__header, .block__header--single-item,
-.block__header--single-item>span, .block__header--single-item a, .block__header--sub>span, .block__header--sub a, .block__header>span, .block__header a, .header__span,
 .block__header a, .block__list a.block__list__link,
 .communication__options, .button:not(.commission__category):not(.button--state-warning):not(.button--state-danger):not(.button--state-success),
 a.media-box__header--link:hover, .header--secondary span.header__counter,
@@ -795,8 +798,8 @@ color: #777;
 
   function append(id, accentFix) {
     if (dictionary[id] && !accentFix) dictionary[id].media = 'all';
-    else dictionary[id] = GM_addStyle(styles[id]);
-    if (accentFix) dictionary[id] = GM_addStyle(styles[id]);
+    else dictionary[id] = GM.addStyle(styles[id]);
+    if (accentFix) dictionary[id] = GM.addStyle(styles[id]);
     return 0;
   }
 
