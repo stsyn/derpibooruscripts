@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://derpibooru.org
-// @version      0.7.39
+// @version      0.7.40
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -9,7 +9,7 @@
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/adverts\/.*/
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/api\/v1\/json/.*/
 
-// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
+// @require      https://github.com/stsyn/createElement/raw/master/min/es5.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/Fullscreen.user.js
@@ -24,7 +24,8 @@
 // @grant        GM.addStyle
 // ==/UserScript==
 
-
+var createElement = createElement || (() => {throw '"// @require https://github.com/stsyn/createElement/raw/master/min/es5.js" broken'});
+var fillElement = fillElement || (() => {throw '"// @require https://github.com/stsyn/createElement/raw/master/min/es5.js" broken'});
 (function() {
   'use strict';
   const currentColorApi = 4;
@@ -585,20 +586,6 @@ image-rendering: pixelated;
 }
 `;
 
-  styles.noneTag = `
-body[data-theme*="dark"] .tag[data-tag-category="none"], .tag[data-tag-category="none"].explicit_dark {
-background: #333;
-border-color: #555;
-color: #888;
-}
-
-.tag[data-tag-category="none"] {
-background: #ccc;
-border-color: #888;
-color: #777;
-}
-`;
-
   const de = document.documentElement;
   let popUps = {};
   let objects = {};
@@ -609,7 +596,7 @@ color: #777;
   let started = false;
   let dictionary = {};
 
-  let ponymarks = {
+  const ponymarks = {
     bgs:{
       aj:'https://camo.derpicdn.net/9ec1a92c1d98be04d750f719c5285e14eb0af3e7?url=https%3A%2F%2Fi.imgur.com%2FiOy09ti.png',
       dh:'https://camo.derpicdn.net/497efe3f86ad217bd0999dd1c904e4cb9c9f897c?url=https%3A%2F%2Fi.imgur.com%2FOdsgUat.png',
@@ -636,7 +623,7 @@ color: #777;
       character: 'rd',
       rating: 'luna',
       origin: 'ry',
-      none: 'dh'
+      'body-type': 'dh'
     },
     fix_brightness: {
       light:{},
@@ -763,7 +750,7 @@ color: #777;
           {name:'Cyan', value:'character'},
           {name:'Blue', value:'rating'},
           {name:'Violet', value:'origin'},
-          {name:'Grey', value:'none'}
+          {name:'Grey', value:'body-type'}
         ], attrI:{id:'_fs_color_setting'}},
         {type:'checkbox', name:'Match site palette', parameter:'colorAccent'},
         {type:'select', name:'Cutiemark BG', parameter:'pony_mark', values:[
@@ -1158,7 +1145,7 @@ color: #777;
     if (document.getElementsByClassName('js-notification-ticker')[0] != undefined && parseInt(document.getElementsByClassName('js-notification-ticker')[0].innerHTML) > 0) s += ' '+parseInt(document.getElementsByClassName('js-notification-ticker')[0].dataset.notificationCount);
     if (parseInt(document.querySelector('a[href*="/conversations"] .fa-embedded__text').innerHTML) > 0) s += (s.length>0?'+':' ')+'M'+parseInt(document.querySelector('a[href*="/conversations"] .fa-embedded__text').innerHTML);
 
-    if (s.length>0) {
+    if (s.length > 0) {
       objects.mainButtonNotify.innerHTML = s;
       objects.mainButton.style.background = '#800';
     }
@@ -1169,7 +1156,7 @@ color: #777;
 
     if (pub.scaled == 'true' || (settings.singleMode && pub.defzoom >= pub.zoom)) {
       if ((pub.mouseY/unsafeWindow.innerHeight > 0.15 && pub.mouseY/unsafeWindow.innerHeight < 0.85) &&
-        !(popUps.down.classList.contains('active') || popUps.back.classList.contains('active')))  {
+        !(popUps.down.classList.contains('active') || popUps.back.classList.contains('active'))) {
         pub.static++;
       }
       else {
@@ -1296,7 +1283,7 @@ color: #777;
 
   function preEnableColor() {
     if (settings.colorAccent) {
-      objects.colorAccent = addElem('div', {id:'_fs_colorAccent', className:'tag hidden', dataset:{tagCategory:settings.style}}, document.body);
+      document.body.appendChild(objects.colorAccent = createElement('div#_fs_colorAccent.tag.hidden', {dataset: {tagCategory:settings.style}}));
       pub.isDark = isDarkF();
 
       if (settings.style != colors.value || pub.isDark != colors.isDark || !state.colorApi || state.colorApi < currentColorApi) {
@@ -1379,7 +1366,7 @@ color: #777;
   }
 
   function cm_bg() {
-    if (settings.pony_mark != 'off') {
+    if (settings.pony_mark !== 'off') {
       let theme = 'light'
       let mark = settings.pony_mark;
       if (document.getElementById('_fs_pony_mark_setting')) mark = document.getElementById('_fs_pony_mark_setting').value;
@@ -1395,8 +1382,8 @@ color: #777;
       let ccolor = settings.style;
       if (document.getElementById('_fs_color_setting')) ccolor = document.getElementById('_fs_color_setting').value;
 
-      if (mark == 'auto') mark = ponymarks.defaults[ccolor];
-      if (mark == 'random') {
+      if (mark === 'auto') mark = ponymarks.defaults[ccolor];
+      if (mark === 'random') {
         let x = parseInt(Math.random()*13);
         let i;
         for (i in ponymarks.bgs) {
@@ -1406,13 +1393,13 @@ color: #777;
         mark = i;
       }
 
-      document.getElementById('container').insertBefore(InfernoAddElem('div',{id:'_fs_pony_mark', style:{
+      document.getElementById('container').insertBefore(createElement('div#_fs_pony_mark', { style:{
         backgroundImage:'url('+ponymarks.bgs[mark]+')',
         filter:(
-            ccolor=="none"?'grayscale(1) '+(theme=='light'?'brightness(300%)':'brightness(150%)'):
-            'hue-rotate('+ponymarks.filter[theme][ccolor]+'deg)'+
-            (theme=='light'?' invert(1) saturate(250%) brightness(95%)':'')+
-            (!ponymarks.fix_brightness[theme][ccolor]?'':' brightness('+ponymarks.fix_brightness[theme][ccolor]+'%)')
+            ccolor === 'body-type' ? 'grayscale(1) ' + (theme === 'light' ? 'brightness(300%)' : 'brightness(150%)') :
+            'hue-rotate(' + ponymarks.filter[theme][ccolor] + 'deg)' +
+            (theme === 'light' ? ' invert(1) saturate(250%) brightness(95%)' : '')+
+            (!ponymarks.fix_brightness[theme][ccolor] ? '' : ' brightness(' + ponymarks.fix_brightness[theme][ccolor] + '%)')
         )
       }}), document.getElementById('container').firstChild);
     }
@@ -1443,19 +1430,21 @@ color: #777;
     if (state.hidden) pub.static = 100000;
     else pub.static = 0;
 
-    popUps.back = addElem('div', {id:'_ydb_fs_backSide', className:'_fs_popup_back'}, document.body);
-    popUps.coms = addElem('div', {id:'_ydb_fs_commPopup', className:'_fs_popup _fs_popup_big block__content'}, popUps.back);
-    popUps.main = addElem('div', {id:'_ydb_fs_mainPopup', className:'_fs_popup _fs_popup_vbig block__content'}, popUps.back);
-    popUps.down = addElem('div', {id:'_fs_down', className:'_fs_down'}, document.body);
-    popUps.downBack = addElem('div', {id:'_fs_down_back', className:'_fs_down_back tag', dataset:{tagCategory:settings.style}}, popUps.down);
-    popUps.downContainer = addElem('div', {id:'_fs_down_container', className:'_fs_down_container'}, popUps.down);
-    objects.mainButton = InfernoAddElem('a', {id:'_fs_main', events:{
-      'click':() => callPopup('main')
-    }}, [
-      InfernoAddElem('span', {}, [
-        InfernoAddElem('i', {className:'fa', innerHTML:'\uf0c9'}, []),
-        objects.mainButtonNotify = InfernoAddElem('span', {}, [])
+    fillElement(document.body, [
+      popUps.back = createElement('div#_ydb_fs_backSide._fs_popup_back', [
+        popUps.coms = createElement('div#_ydb_fs_commPopup._fs_popup._fs_popup_big.block__content'),
+        popUps.main = createElement('div#_ydb_fs_mainPopup._fs_popup._fs_popup_vbig.block__content')
+      ]),
+      popUps.down = createElement('div#_fs_down._fs_down', [
+        popUps.downBack = createElement('div#_fs_down_back._fs_down_back.tag', {dataset: {tagCategory: settings.style}}),
+        popUps.downContainer = createElement('div#_fs_down_container._fs_down_container', {dataset: {tagCategory: settings.style}})
       ])
+    ])
+    objects.mainButton = createElement('a#_fs_main', {onclick:() => callPopup('main')}, [
+      ['span', [
+        ['i.fa', '\uf0c9'],
+        objects.mainButtonNotify = createElement('span')
+      ]]
     ]);
 
     document.querySelector('.image-metabar').childNodes[1].insertBefore(objects.mainButton,document.querySelector('.interaction--fave'));
@@ -1470,7 +1459,7 @@ color: #777;
       popUps.downContainer.appendChild(document.querySelector('.block__header--user-credit > div'));
     }
     else {
-      document.querySelector('#content .block.block__header').appendChild(InfernoAddElem('div',{id:'_fs_top_bg',style:{backgroundColor:getComputedStyle(document.getElementById('container')).backgroundColor}},[]));
+      document.querySelector('#content .block.block__header').appendChild(createElement('div#_fs_top_bg',{style:{backgroundColor:getComputedStyle(document.getElementById('container')).backgroundColor}}));
     }
     popUps.downContainer.appendChild(document.querySelectorAll('#content>div')[2]);
     //popUps.downContainer.appendChild(popUps.coms.querySelector('#image_options_area'));
@@ -1479,26 +1468,22 @@ color: #777;
 
     popUps.main.appendChild(document.querySelector('header'));
     popUps.main.appendChild(document.querySelector('nav.header.header--secondary'));
-    ChildsAddElem('div', {className:'block__header'}, popUps.main, [
-      InfernoAddElem('span',{innerHTML:'Image Tools:',style:{marginLeft:'1em'}}, []),
-      InfernoAddElem('a',{className:'js-up', events:{'click':() =>
-        document.querySelector('.image-metabar .js-up').click()
-      }}, [
-        InfernoAddElem('i',{className:'fa fa-chevron-up'},[]),
-        InfernoAddElem('span',{innerHTML:' Find'},[])
-      ]),
-      InfernoAddElem('a',{className:'js-random', events:{'click':() =>
-        document.querySelector('.image-metabar .js-rand').click()
-      }}, [
-        InfernoAddElem('i',{className:'fa fa-random'},[]),
-        InfernoAddElem('span',{innerHTML:' Random'},[])
-      ]),
+    popUps.main.appendChild(createElement('div.block__header', [
+      ['span', { style: { marginLeft: '1em' } }, 'Image Tools:'],
+      ['a.js-up',{ onclick:() => document.querySelector('.image-metabar .js-up').click()}, [
+        ['i.fa.fa-chevron-up'],
+        ['span', ' Find']
+      ]],
+      ['a.js-random',{onclick:() => document.querySelector('.image-metabar .js-rand').click()}, [
+        ['i.fa.fa-random'],
+        ['span', ' Random']
+      ]],
       document.querySelectorAll('#content>.block:first-child>* .js-subscription-link')[0].cloneNode(true),
       document.querySelectorAll('#content>.block:first-child>* .js-subscription-link')[1].cloneNode(true),
       document.querySelector('#content>.block:first-child>* .dropdown').cloneNode(true),
       //document.querySelector('#content>.block:first-child>* [title="Related Images"').cloneNode(true),
       document.querySelector('#content>.block:first-child>*>div:nth-child(4)').cloneNode(true)
-    ]);
+    ]));
     document.querySelector('#_ydb_fs_mainPopup>.block__header>div:last-child').style.display = 'inline';
     //document.querySelector('#_ydb_fs_mainPopup>.block__header>div>.image-size').style.display = 'none';
     popUps.main.appendChild(document.querySelector('footer'));
@@ -1618,7 +1603,6 @@ color: #777;
   }
 
   register();
-  append('noneTag');
   if (document.title == "Update Deployment - Derpibooru - My Little Pony: Friendship is Magic Imageboard") return;
   document.addEventListener('DOMContentLoaded', () => {
     cm_bg();
