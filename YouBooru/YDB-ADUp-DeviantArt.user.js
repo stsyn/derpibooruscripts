@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.3.5
+// @version      0.4.0
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @include      /http(s|):\/\/(www\.|)(trixie|derpi)booru.org\/images\/new.*/
@@ -75,7 +75,15 @@
     document.getElementById('description').appendChild(createElement('a', {href:`http://orig01.deviantart.net/x_by_x-d${code}.png`}, 'https://fav.me/d'+code));
   }
 
-  function DA(p) {
+  async function fetchFullFromLoginScreen() {
+    const data = await fetch('https://www.deviantart.com/users/login', { credentials: 'omit' });
+    const x = await data.text();
+    const temp = createElement('div', {innerHTML: x});
+    const element = temp.getElementsByClassName('M7X83')[0];
+    return element.style.backgroundImage.slice(5, -2);
+  }
+
+  async function DA(p) {
     if (l.indexOf('/art/') === -1) {
       return;
     }
@@ -87,7 +95,7 @@
     const url = `https://www.deviantart.com/_napi/shared_api/deviation/extended_fetch?deviationid=${location.href.split('-').pop()}&type=art`;
     fetch(url)
     .then(resp => resp.json())
-    .then(resp => {
+    .then(async resp => {
       const data = resp.deviation.media;
 
       // failsafe
@@ -108,6 +116,8 @@
       dlink = data.baseUri.replace('.com/f/', '.com/intermediary/f/');
 
       spawn(dlink, 'intermediary');
+
+      spawn(await fetchFullFromLoginScreen(), 'login leak');
     })
 
     // leak
@@ -116,6 +126,7 @@
     spawn(dlink, "leak");
 
     if (document.querySelector('.dev-description .text.block')) text = '[bq]'+document.querySelector('.dev-description .text.block').innerText+'[/bq]';*/
+
   }
 
   function DA_check() {
