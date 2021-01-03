@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://derpibooru.org
-// @version      0.7.41
+// @version      0.7.42
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -910,16 +910,15 @@ image-rendering: pixelated;
     if (settings.singleMode && objects.dcontainer) {
       append('imageZoom');
       if (!pub.isVideo) {
-        objects.fullImage = createElement('img',{style:{display:'none'}, src:JSON.parse(objects.icontainer.dataset.uris).full,
-                                                 onload:() => objects.dcontainer.addEventListener('click', singleEvent)});
+        objects.fullImage = createElement('img',{style:{display:'none'}, src:JSON.parse(objects.icontainer.dataset.uris).full});
       }
       else {
         if (!/\/[\d]+.webm$/.test(objects.image.querySelector('[type="video/webm"]').src)) {
           objects.image.querySelector('[type="video/webm"]').src = JSON.parse(objects.icontainer.dataset.uris).full;
           objects.image.querySelector('[type="video/mp4"]').src = JSON.parse(objects.icontainer.dataset.uris).full.replace(/\.webm$/, '.mp4');
-          objects.image.addEventListener('click', singleEvent);
         }
       }
+      objects.dcontainer.addEventListener('click', singleEvent);
     }
     if (!pub.isVideo && !singleFirstChange && settings.singleMode) {
       rescale();
