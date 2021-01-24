@@ -37,7 +37,7 @@ var YDB_api = YDB_api || {};
   }
 
   YDB_api.searchImages = async function (query, params = {}) {
-    let url = `api/v1/json/search/images?q=${encodeURIComponent(query)}&per_page=${perPage}`;
+    let url = `/api/v1/json/search/images?q=${encodeURIComponent(query)}&per_page=${perPage}`;
     if (params.del) url += '&del='+params.del;
     if (params.sf) url += '&sf='+params.sf;
     if (params.sd) url += '&sd='+params.sd;
