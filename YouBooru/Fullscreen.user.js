@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://derpibooru.org
-// @version      0.7.42
+// @version      0.7.43
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -1392,7 +1392,10 @@ image-rendering: pixelated;
         mark = i;
       }
 
-      document.getElementById('container').insertBefore(createElement('div#_fs_pony_mark', { style:{
+      if (objects.ponymark) {
+        objects.ponymark.parentNode.removeChild(objects.ponymark);
+      }
+      document.getElementById('container').insertBefore(objects.ponymark = createElement('div#_fs_pony_mark', { style:{
         backgroundImage:'url('+ponymarks.bgs[mark]+')',
         filter:(
             ccolor === 'body-type' ? 'grayscale(1) ' + (theme === 'light' ? 'brightness(300%)' : 'brightness(150%)') :
