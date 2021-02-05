@@ -1,6 +1,10 @@
 let styles = {};
 
-styles.general = ` 
+styles.general = `
+#_fs_main {
+  display: inline !important;
+}
+
 #_ydb_fs_enable {
   display: none
 }
