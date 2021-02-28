@@ -4,6 +4,7 @@
 // @description  You can run but you can't hide
 // @include      http*://*.deviantart.com/*
 
+// @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/other/DAF.user.js
 // @require      https://github.com/stsyn/createElement/raw/master/min/es5.js
 
 // @grant        unsafeWindow
