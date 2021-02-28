@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         DeviantArt Fucker
+// @name         DеviantArt Fucker
 // @version      0.1
 // @description  You can run but you can't hide
 // @include      http*://*.deviantart.com/*
@@ -9,8 +9,6 @@
 
 // @grant        unsafeWindow
 // @grant        GM_download
-// @grant        GM_getValue
-// @grant        GM_setValue
 // ==/UserScript==
 
 (function() {
