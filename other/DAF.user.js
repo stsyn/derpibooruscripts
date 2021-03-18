@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DеviantArt Fucker
-// @version      0.1
+// @version      0.2
 // @description  You can run but you can't hide
 // @include      http*://*.deviantart.com/*
 
@@ -100,8 +100,8 @@
     const maxHeight = fullview.h;
     const deltaWidth = Math.floor(maxWidth * 1);
     const deltaHeight = Math.floor(maxHeight * 1);
-    const canvas = createElement('canvas', { width: targetWidth, height: targetHeight});
-    const ctx = canvas.getContext('2d');
+    let canvas = createElement('canvas', { width: targetWidth, height: targetHeight});
+    let ctx = canvas.getContext('2d');
     const url = () => data.media.baseUri + `/v1/crop/x_${offsetX},y_${offsetY},w_${maxWidth},h_${maxHeight},q_100/${data.media.prettyName}-pre.png?token=` + data.media.token[0];
 
     let offsetX = 0;
@@ -112,7 +112,16 @@
       while (offsetY <= targetHeight - maxHeight) {
         console.log(offsetX, offsetY, deltaWidth, deltaHeight);
         const image = await fetchImage(url());
-        ctx.drawImage(image, offsetX, offsetY);
+
+        const temp = createElement('canvas', { width: targetWidth, height: targetHeight});
+        const tempCtx = temp.getContext('2d');
+
+        tempCtx.drawImage(image, offsetX, offsetY);
+        tempCtx.drawImage(canvas, 0, 0);
+
+        ctx = tempCtx;
+        canvas = temp;
+
         if (offsetY === targetHeight - maxHeight) {
           break;
         }
