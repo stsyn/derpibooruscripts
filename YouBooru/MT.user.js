@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:MT
-// @version      0.1.20
+// @version      0.1.21
 // @author       stsyn
 // @namespace    http://derpibooru.org
 
@@ -221,13 +221,13 @@
   }
 
   function allUserLinks() {
-    const m = document.querySelector('a[href="/admin/user_links"]');
+    const m = document.querySelector('a[href="/admin/artist_links"]');
     if (!m) return;
 
-    let c = document.querySelector('a.block__header--single-item[href*="/user_links/new"]')
+    let c = document.querySelector('a.block__header--single-item[href*="/artist_links/new"]')
     if (c) {
       const userName = location.pathname.split('/').pop();
-      c.parentNode.appendChild(createElement('a.block__header--single-item', {href: `/admin/user_links?q=${userName}`}, 'See all'));
+      c.parentNode.appendChild(createElement('a.block__header--single-item', {href: `/admin/artist_links?q=${userName}`}, 'See all'));
     }
   }
 
