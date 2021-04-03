@@ -19,22 +19,36 @@ function getBadgesImplications() {
 			'Platinum Patron':['Happy Derpy']
 		},
 		extreme:{
+			// community collabs
 			'Friendship, Art, and Magic (2018)':['Friendship, Art, and Magic (2017)'],
 			'Friendship, Art, and Magic (2019)':['Friendship, Art, and Magic (2017)','Friendship, Art, and Magic (2018)'],
 			'Friendship, Art, and Magic (2020)':['Friendship, Art, and Magic (2017)','Friendship, Art, and Magic (2018)','Friendship, Art, and Magic (2019)'],
-			'Helpful Owl':['Friendly Griffon'],
-			'Toola Roola':['Friendly Griffon', 'Helpful Owl'],
-			'Dream Come True!':['Friendly Griffon', 'Helpful Owl', 'Toola Roola'],
+			'Twinkling Balloon':['Friendship, Art, and Magic (2017)','Friendship, Art, and Magic (2018)','Friendship, Art, and Magic (2019)','Friendship, Art, and Magic (2020)'],
 
+			// community collab helping
+			'Friendly Griffon':['Friendship, Art, and Magic (2017)'],
+			'Helpful Owl':['Friendship, Art, and Magic (2018)', 'Friendly Griffon'],
+			'Toola Roola':['Friendship, Art, and Magic (2019)', 'Friendly Griffon', 'Helpful Owl'],
+			'The Magic of Friendship Grows':['Friendship, Art, and Magic (2020)', 'Friendly Griffon', 'Helpful Owl', 'Toola Roola'],
+			'Philomena':['Twinkling Balloon', 'Friendly Griffon', 'Helpful Owl', 'Toola Roola','The Magic of Friendship Grows'],
+
+			// mlp anniversary
+			'A Tale For The Ages':['Birthday Cake'],
+			'Dream Come True!':['Birthday Cake', 'A Tale For The Ages'],
+			'Ten years of changes':['Birthday Cake', 'A Tale For The Ages', 'Dream Come True!'],
+
+			// 1st april
 			'Equality':['Not a Llama'],
 			'Condensed Milk':['Not a Llama'],
+
 			'Wallet After Summer Sale':['Not a Llama', 'Equality', 'Condensed Milk'],
 			'Economist':['Not a Llama', 'Equality', 'Condensed Milk'],
+
 			'My Little Pony':['Not a Llama', 'Equality', 'Condensed Milk', 'Economist', 'Wallet After Summer Sale'],
 			'Best Art Program Ever':['Not a Llama', 'Equality', 'Condensed Milk', 'Economist', 'Wallet After Summer Sale', 'My Little Pony'],
 
-			'A Tale For The Ages':['Birthday Cake'],
-			'Dream Come True!':['Birthday Cake', 'A Tale For The Ages'],
+			'Preenhub':['Not a Llama', 'Equality', 'Condensed Milk', 'Economist', 'Wallet After Summer Sale', 'My Little Pony', 'Best Art Program Ever'],
+			'Verified Pegasus':['Not a Llama', 'Equality', 'Condensed Milk', 'Economist', 'Wallet After Summer Sale', 'My Little Pony', 'Best Art Program Ever', 'Preenhub'],
 		},
 		donations:{
 			'Platinum Patron':['Emerald','Ruby','Sapphire','Diamond','Heart Gem','Element of Generosity','Gold Bit','Silver Bit','Bronze Bit'],
