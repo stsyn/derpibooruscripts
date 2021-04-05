@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DеviantArt Fucker
-// @version      0.2
+// @version      0.2.1
 // @description  You can run but you can't hide
 // @include      http*://*.deviantart.com/*
 
@@ -13,7 +13,7 @@
 
 (function() {
   'use strict';
-  if (window.top !== window) return;
+  if (unsafeWindow.top !== unsafeWindow) return;
 
   function makeElement(name, action) {
     let container, target2;
@@ -134,7 +134,7 @@
       offsetX = Math.min(targetWidth - maxWidth, offsetX + deltaWidth);
     }
 
-    spawn('Open full (Ctrl+ = download)', (event) => openOrDownload(canvas.toDataURL(), data.prettyName + '-full.png'));
+    spawn('Open full (Ctrl+ = download)', (event) => openOrDownload(canvas.toDataURL(), data.media.prettyName + '-full.png'));
   }
 
 
