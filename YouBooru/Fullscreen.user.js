@@ -2,7 +2,7 @@
 
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://derpibooru.org
-// @version      0.7.44
+// @version      0.7.45
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -73,6 +73,7 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
 
   if (settings.extended === undefined) settings.extended = true;
   if (settings.scrollSpeed === undefined) settings.scrollSpeed = 20;
+  if (settings.zoomSpeed === undefined) settings.zoomSpeed = settings.scrollSpeed;
   if (settings.scrollMultiply === undefined) settings.scrollMultiply = 5;
   if (settings.staticTime === undefined) settings.staticTime = 20;
   if (settings.staticEnabled === undefined) settings.staticEnabled = true;
@@ -82,7 +83,8 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
   if (settings.button === undefined) settings.button = 'Download (short filename)';
   if (settings.pony_mark === undefined) settings.pony_mark = 'none';
   settings.scrollSpeed = parseInt(settings.scrollSpeed);
-  settings.scrollMultiply = parseInt(settings.scrollMultiply);
+  settings.zoomSpeed = parseInt(settings.zoomSpeed);
+  settings.scrollMultiply = parseFloat(settings.scrollMultiply);
   settings.staticTime = parseInt(settings.staticTime);
   localStorage._ydb_fs = JSON.stringify(settings);
 
@@ -99,9 +101,11 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
       link:'/meta/topics/userscript-derp-fullscreen-viewer',
       s:[
         {type:'checkbox', name:'Show UI', parameter:'extended'},
+        {type:'checkbox', name:'Remove href from comments link', parameter:'commentLink'},
+        {type:'breakline'},
         {type:'input', name:'Scroll speed', parameter:'scrollSpeed', validation:{type:'int',min:5, max:100, default:20}},
         {type:'input', name:'Scroll multiplier', parameter:'scrollMultiply', validation:{type:'float',min:1, max:10, default:2}},
-        {type:'checkbox', name:'Remove href from comments link', parameter:'commentLink'},
+        {type:'input', name:'Zoom speed', parameter:'zoomSpeed', validation:{type:'int',min:5, max:100, default:20}},
         {type:'breakline'},
         {type:'checkbox', name:'New experimental UI', parameter:'new'},
         {type:'checkbox', name:'All in one mode', parameter:'singleMode'},
@@ -567,11 +571,11 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
     let delta = e.deltaY || e.detail || e.wheelDelta;
     let dt;
 
-    if (pub.zoom<0.5) dt = 0.005*settings.scrollSpeed;
-    else if (pub.zoom<1) dt = 0.01*settings.scrollSpeed;
-    else if (pub.zoom<2.5) dt = 0.015*settings.scrollSpeed;
-    else if (pub.zoom<5) dt = 0.025*settings.scrollSpeed;
-    else dt = 0.05*settings.scrollSpeed;
+    if (pub.zoom<0.5) dt = 0.005*settings.zoomSpeed;
+    else if (pub.zoom<1) dt = 0.01*settings.zoomSpeed;
+    else if (pub.zoom<2.5) dt = 0.015*settings.zoomSpeed;
+    else if (pub.zoom<5) dt = 0.025*settings.zoomSpeed;
+    else dt = 0.05*settings.zoomSpeed;
 
     if (delta>0 && pub.zoom<10) {
       pub.zoom+=dt;
