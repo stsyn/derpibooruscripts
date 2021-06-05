@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.4.0
+// @version      0.4.1
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @include      /http(s|):\/\/(www\.|)(trixie|derpi)booru.org\/images\/new.*/
@@ -17,6 +17,13 @@
   'use strict';
   if (window.top !== window) return;
   let mainDomain = 'www.derpibooru.org';
+
+  const RIGHTPAD = '.M353Q._1ahil._3HBBj';
+  const PAD = '.HqVZr';
+  const SPAD = '.g7zGt';
+  const LINK = '.AdqW4';
+  const LOGIN = 'BoW0n';
+
   const leak = true;
   const derpImage = "url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgdmlld0JveD0iMCAwIDE2IDE2Ij48cGF0aCBkPSJtMTMuMiwuNmM1LDkuMi0uMiwxNS41LTIuOSwxNS4zcy0zLjYsLTQuNy05LjIsLTQuNWMyLjYsLTMuNCA4LjMsLS4zIDkuOCwtMS42czMuNywtNS40IDIuMywtOS4yIiBmaWxsPSIjNzNkNmVkIj48L3BhdGg+PHBhdGggZD0ibTExLDAuNi0xLjcsMS40LTEuNywtMS4yLjgsMi0xLjcsMWgxLjhsLTUuNSw5LjcuNCwuMiA1LjUsLTkuNy42LDEuOCAuNSwtMiAyLjIsLS4xLTEuOCwtMS4xLjYsLTIiIGZpbGw9IiM5NGMxZGQiPjwvcGF0aD48Y2lyY2xlIGN4PSIxMy41IiBjeT0iOC41IiBmaWxsPSIjZmZmIiBpZD0iZSIgcj0iMC41Ij48L2NpcmNsZT48dXNlIHg9Ii0yIiB5PSIzIiB4bGluazpocmVmPSIjZSI+PC91c2U+PHVzZSB4PSItNiIgeT0iNCIgeGxpbms6aHJlZj0iI2UiPjwvdXNlPjx1c2UgeD0iLTIuOCIgeT0iNiIgeGxpbms6aHJlZj0iI2UiPjwvdXNlPjwvc3ZnPgo=')";
 
@@ -25,12 +32,10 @@
   function spawn(link, text) {
     let target, target2, target3;
 
-    target = document.querySelector('._3fcE7._15yPL.fXGZA');
-    target2 = target.querySelector('._ydb_adup') || document.createElement('div');
-    target2.className = 'JQhXs _ydb_adup';
+    target = document.querySelector(RIGHTPAD);
+    target2 = target.querySelector('._ydb_adup') || createElement('div._ydb_adup' + PAD);
     target.insertBefore(target2, target.children[0]);
-    target3 = document.createElement('div');
-    target3.className = '_2iAFC';
+    target3 = document.createElement('div' + SPAD);
     target2.appendChild(target3);
 
     let href = '//'+mainDomain+'/images/new?newImg='+encodeURIComponent(link)+
@@ -40,8 +45,7 @@
       '&newWidth='+width+
       '&newHeight='+height;
 
-    let ds = createElement('a', {
-      className: 'V7yJQ',
+    let ds = createElement('a' + LINK, {
       target: '_blank',
       href,
       style: 'width:calc(50% - 18px);display:inline-block;margin-right:4px'
@@ -79,11 +83,11 @@
     const data = await fetch('https://www.deviantart.com/users/login', { credentials: 'omit' });
     const x = await data.text();
     const temp = createElement('div', {innerHTML: x});
-    const element = temp.getElementsByClassName('M7X83')[0];
+    const element = temp.getElementsByClassName(LOGIN)[0];
     return element.style.backgroundImage.slice(5, -2);
   }
 
-  async function DA(p) {
+  async function DA() {
     if (l.indexOf('/art/') === -1) {
       return;
     }
@@ -140,7 +144,7 @@
     if (document.querySelector('#deviantART-v5.error-404:not(.patched)')) {
       l = window.location.pathname;
       DA404();
-    } else if (document.querySelector('._3fcE7._15yPL.fXGZA:not(.patched)')) {
+    } else if (document.querySelector(RIGHTPAD + ':not(.patched)')) {
       l = window.location.pathname;
       DA();
     } else if (l != window.location.pathname) {
