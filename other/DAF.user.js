@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DеviantArt Fucker
-// @version      0.2.1
+// @version      0.2.2
 // @description  You can run but you can't hide
 // @include      http*://*.deviantart.com/*
 
@@ -15,19 +15,23 @@
   'use strict';
   if (unsafeWindow.top !== unsafeWindow) return;
 
+  const RIGHTPAD = '.M353Q._1ahil._3HBBj';
+  const PAD = '.HqVZr';
+  const SPAD = '.g7zGt';
+  const LINK = '.AdqW4';
+
   function makeElement(name, action) {
     let container, target2;
 
-    const element = createElement('div._2iAFC', [
-      createElement('a.V7yJQ', {
+    const element = createElement('div' + SPAD, [
+      ['a' + LINK, {
         target: '_blank',
         style: 'width:calc(100% - 9px);display:inline-block;margin-right:4px',
         onclick: e => action(e, element)
-      }, name)
+      }, name]
     ]);
-    container = document.querySelector('._3fcE7._15yPL.fXGZA');
-    target2 = container.querySelector('._ydb_adup') || document.createElement('div');
-    target2.className = 'JQhXs _ydb_adup';
+    container = document.querySelector(RIGHTPAD);
+    target2 = container.querySelector('._ydb_adup') || createElement('div._ydb_adup' + PAD);
     target2.appendChild(element);
     container.insertBefore(target2, container.children[0]);
   }
