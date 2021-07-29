@@ -13,13 +13,15 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @require      https://github.com/stsyn/createElement/raw/master/min/es5.js
 
+// @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp-Reuploader.user.js
+// @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp-Reuploader.user.js
 // @grant        unsafeWindow
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @run-at       document-end
 // ==/UserScript==
 
-// Internal usage only. Unstable.
+// internal usage only. Unstable.
 
 var createElement = createElement || (() => { throw new Error('https://github.com/stsyn/createElement/raw/master/min/es5.js is broken') });
 (async function() {
