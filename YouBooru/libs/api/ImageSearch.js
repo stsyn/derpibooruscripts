@@ -37,18 +37,10 @@ var YDB_api = YDB_api || {};
   }
 
   YDB_api.searchImages = async function (query, params = {}) {
-    let url = `/api/v1/json/search/images?q=${encodeURIComponent(query)}&per_page=${perPage}`;
-    if (params.del) url += '&del='+params.del;
-    if (params.sf) url += '&sf='+params.sf;
-    if (params.sd) url += '&sd='+params.sd;
-    if (params.page) url += '&page='+params.page;
-    if (params.key) url += '&key='+params.key;
-    const response = await fetch(url, {method:'GET'});
-    if (!response.ok) {
-      console.error(response);
-      throw new Error('Error during request');
-    }
-    const content = await response.json();
-    return content;
+    return await YDB_api.fetchGetJson('search/images', {
+      per_page: perPage,
+      ...params,
+      q: query,
+    });
   }
 }());
