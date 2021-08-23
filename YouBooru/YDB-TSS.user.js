@@ -17,6 +17,7 @@
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/ui/Inputs.js
 
 // @downloadURL   https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-TSS.user.js
+// @updateURL     https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-TSS.user.js
 
 // @grant         GM_setValue
 // @grant         GM_getValue
