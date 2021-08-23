@@ -5,6 +5,7 @@
 
 // @match         *://*/*
 
+// @exclude       *://*/api*/json/*
 // @exclude       *://*/adverts/*
 
 // @require       https://github.com/stsyn/createElement/raw/component/min/es5.js
