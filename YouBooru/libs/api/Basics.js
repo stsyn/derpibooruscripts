@@ -24,6 +24,11 @@ var unsafeWindow = unsafeWindow || undefined;
     });
   }
 
+  YDB_api.booru = async function() {
+    await waitFor(() => unsafeWindow.booru);
+    return unsafeWindow.booru;
+  }
+
   YDB_api.getEnviroment = function() {
     const elem = document.querySelector('#serving_info');
     if (elem && elem.innerText) {
