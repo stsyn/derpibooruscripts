@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          YDB Tag Score Statistics
-// @version       0.1.0
+// @version       0.1.1
 // @author        stsyn
 
 // @match         *://*/*
@@ -8,7 +8,7 @@
 // @exclude       *://*/api*/json/*
 // @exclude       *://*/adverts/*
 
-// @require       https://github.com/stsyn/createElement/raw/component/min/es5.js
+// @require       https://github.com/stsyn/createElement/raw/component/src/es5.js
 // @require       https://github.com/stsyn/createElement/raw/component/src/extensions/forms.js
 
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
@@ -16,6 +16,7 @@
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/api/ImageSearch.js
 
 // @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/ui/Inputs.js
+// @require       https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/ui/TagInput.js
 
 // @downloadURL   https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-TSS.user.js
 // @updateURL     https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-TSS.user.js
@@ -51,10 +52,11 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
       return [
         [formElement, { data: formData }, [
           [YDB_api.UI.input, { type: 'password', name: 'apiKey', label: 'API key' }],
-          [YDB_api.UI.textarea, { name: 'tagName', fullWidth: true, label: 'Tag to look' }],
+          [YDB_api.UI.input, { type: 'number', name: 'filterId', label: 'Filter id', value: 56027 }],
+          [YDB_api.UI.tagInput, { name: 'tagName', fullWidth: true, label: 'Tag to look' }],
           [YDB_api.UI.textarea, { name: 'tagDecor', fullWidth: true, label: 'Search wrapper' }],
           [YDB_api.UI.textarea, { name: '_scores', fullWidth: true, label: 'Scores' }],
-          ['button.button', {onclick: selectTags}, 'Start'],
+          [YDB_api.UI.button, {onclick: selectTags}, 'Start'],
           elements.renderPlace = createElement('table.table')
         ]]
       ];
@@ -87,7 +89,10 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
     }
 
     async function fetchAndWrite(currentScoreId, grandTotal, tagName, search) {
-      const data = await YDB_api.searchImages(search + ', score.gte:' + formData.scores[currentScoreId], {key: apiKey, sf: 'score', sd: 'asc'});
+      const data = await YDB_api.searchImages(
+        search + ', score.gte:' + formData.scores[currentScoreId],
+        { key: apiKey, sf: 'score', sd: 'asc', filter_id: formData.filterId }
+      );
 
       let offset = 0;
       const base = Math.min(50, data.total);
@@ -144,7 +149,10 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
         return tagDecor.replace(/\$1/g, tagName);
       })();
 
-      const data = await YDB_api.searchImages(search, {key: apiKey, sf: 'score', sd: 'asc'});
+      const data = await YDB_api.searchImages(
+        search,
+        { key: apiKey, sf: 'score', sd: 'asc', filter_id: formData.filterId }
+      );
 
       if (data.total > 0) {
         const initial = data.images[0].score;
