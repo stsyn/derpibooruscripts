@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YCH.Commishes YDB:ADUp module
-// @version      0.2.5
+// @version      0.2.6
 // @author       stsyn
 // @include      https://portfolio.commishes.com/upload/show/*
 // @include      https://ych.commishes.com/followUp/show/*
@@ -99,9 +99,10 @@
     };
 
     const error = function() {
-      let button = container.appendChild(createElement('a.like-toggle.iconless', {style:{fontSize:'120%',marginTop:'0.2em',display:'inline-block'}}, 'Sorry, file is inaccessible :('));
+      let button = container.appendChild(createElement('a.like-toggle.iconless', {style:{fontSize:'120%',marginTop:'0.2em',display:'inline-block',href:src}}, 'Sorry, file is inaccessible :('));
     }
 
+    console.log(src);
     GM_xmlhttpRequest({
       method:   "HEAD",
       url:      src,
