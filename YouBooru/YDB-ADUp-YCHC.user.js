@@ -99,7 +99,7 @@
     };
 
     const error = function() {
-      let button = container.appendChild(createElement('a.like-toggle.iconless', {style:{fontSize:'120%',marginTop:'0.2em',display:'inline-block',href:src}}, 'Sorry, file is inaccessible :('));
+      let button = container.appendChild(createElement('a.like-toggle.iconless', {style:{fontSize:'120%',marginTop:'0.2em',display:'inline-block'},href:src}, 'Sorry, file is inaccessible :('));
     }
 
     console.log(src);
