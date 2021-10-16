@@ -2,7 +2,7 @@
 
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://derpibooru.org
-// @version      0.7.45
+// @version      0.7.46
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -79,6 +79,7 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
   if (settings.staticEnabled === undefined) settings.staticEnabled = true;
   if (settings.commentLink === undefined) settings.commentLink = true;
   if (settings.colorAccent === undefined) settings.colorAccent = false;
+  if (settings.webmControls === undefined) settings.webmControls = true;
   if (settings.style === undefined) settings.style = 'rating';
   if (settings.button === undefined) settings.button = 'Download (short filename)';
   if (settings.pony_mark === undefined) settings.pony_mark = 'none';
@@ -109,7 +110,7 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
         {type:'breakline'},
         {type:'checkbox', name:'New experimental UI', parameter:'new'},
         {type:'checkbox', name:'All in one mode', parameter:'singleMode'},
-        //{type:'checkbox', name:'Enchanced webm controls', parameter:'webmControls'},
+        {type:'checkbox', name:'Don\'t cover webms if possible', parameter:'webmControls'},
         {type:'breakline'},
         {type:'checkbox', name:'Autohide UI', parameter:'staticEnabled'},
         {type:'input', name:'Autohide timeout', parameter:'staticTime', validation:{type:'int',min:0, max:600, default:50}},
@@ -197,25 +198,21 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
 
     let forced = settings.singleMode && singleDefSize;
 
-    if (pub.scaled !== objects.dcontainer.dataset.scaled) {
-      if (!settings.singleMode) {
-        pub.scaled = objects.dcontainer.dataset.scaled;
-        if (pub.scaled !== 'true') {
-          append('hideAll');
-          append('imageZoom');
-          pub.zoom = 1;
-        }
-        else {
-          remove('hideAll');
-          remove('imageZoom');
-        }
-      }
-    }
-
     if (settings.singleMode) {
       if (pub.scaled === 'partscaled') {
         pub.scaled = 'false';
         initalZoom();
+      }
+    } else if (pub.scaled !== objects.dcontainer.dataset.scaled) {
+      pub.scaled = objects.dcontainer.dataset.scaled;
+      if (pub.scaled !== 'true') {
+        append('hideAll');
+        append('imageZoom');
+        pub.zoom = 1;
+      }
+      else {
+        remove('hideAll');
+        remove('imageZoom');
       }
     }
 
@@ -518,7 +515,18 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
     if (pub.scaled == 'false' || settings.singleMode) setMargin();
 
     if (objects.dcontainer) {
-      if ((pub.scaled == 'true' || (settings.singleMode && pub.defzoom >= pub.zoom)) && pub.mouseY/unsafeWindow.innerHeight >= (popUps.down.classList.contains('active')?0.3:0.85) && !popUps.back.classList.contains('active')) popUps.down.classList.add('active');
+      const rect = objects.image?.getBoundingClientRect();
+      const alreadyVisible = popUps.down.classList.contains('active');
+      if (
+        (pub.scaled == 'true' || (settings.singleMode && pub.defzoom >= pub.zoom))
+        && pub.mouseY/unsafeWindow.innerHeight >= (alreadyVisible ? 0.3 : 0.85)
+        && (!settings.webmControls || alreadyVisible
+            || (rect?.bottom ?? 0) < pub.mouseY
+            || pub.mouseX < (rect?.left ?? Number.POSITIVE_INFINITY)
+            || pub.mouseX > (rect?.right ?? 0))
+        && !popUps.back.classList.contains('active')) {
+        popUps.down.classList.add('active');
+      }
       else popUps.down.classList.remove('active');
     }
 
@@ -541,7 +549,7 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
         pub.static++;
       }
       else {
-        if (pub.static>0) {
+        if (pub.static > 0) {
           pub.static = 0;
           state.hidden = false;
           pub.hidden = false;
@@ -801,7 +809,7 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
     }
     if (!settings.new) append('keepVanila');
     if (settings.staticEnabled) append('hider');
-    // if (settings.webmControls) append('webmControls');
+    if (settings.webmControls) append('webm');
   }
 
   function enable(notInital) {
@@ -943,6 +951,7 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
     remove('ex');
     remove('hider');
     remove('keepVanila');
+    remove('webm');
     unscale();
 
     objects.dcontainer.removeEventListener("DOMNodeInserted",loadedImgFetch);
