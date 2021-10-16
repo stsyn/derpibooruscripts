@@ -373,7 +373,7 @@ styles.ex = `
   width: 100%;
   z-index: 300;
   bottom: 0;
-  height: 15vh;
+  height: 1vh;
   overflow: hidden;
   position: fixed;
   left: 0;
@@ -383,16 +383,15 @@ styles.ex = `
   transition: .3s;
   max-width: 1000px;
   margin: auto;
-  margin-top: 14vh;
-  height: 1vh;
+  height: 0.5vh;
+  margin-top: 0.5vh;
 }
 
 ._fs_down_back {
   transition: .3s;
   width: 100%;
-  height: calc(100% - 13vh);
+  height: 100%;
   position: absolute;
-  top: 13vh;
   left: 0;
   z-index: -1;
   opacity: .8;
