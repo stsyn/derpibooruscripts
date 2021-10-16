@@ -65,6 +65,7 @@ footer {
   top: 0;
   height: 100%;
   width: 10%;
+  box-sizing: border-box;
 }
 
 #content>.block:first-child>* a.js-prev {
@@ -698,5 +699,12 @@ styles.adc_pixel=`
 #image_target {
   image-rendering: crisp-edges;
   image-rendering: pixelated;
+}
+`;
+
+styles.webm=`
+
+video#image-display::-webkit-media-controls-panel {
+  padding: 0 10%;
 }
 `;
