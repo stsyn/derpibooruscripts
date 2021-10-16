@@ -2,7 +2,7 @@
 
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://derpibooru.org
-// @version      0.7.46
+// @version      0.7.47
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -520,7 +520,7 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
       if (
         (pub.scaled == 'true' || (settings.singleMode && pub.defzoom >= pub.zoom))
         && pub.mouseY/unsafeWindow.innerHeight >= (alreadyVisible ? 0.3 : 0.85)
-        && (!settings.webmControls || alreadyVisible
+        && (!settings.webmControls || !pub.isVideo || alreadyVisible
             || (rect?.bottom ?? 0) < pub.mouseY
             || pub.mouseX < (rect?.left ?? Number.POSITIVE_INFINITY)
             || pub.mouseX > (rect?.right ?? 0))
