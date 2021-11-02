@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:Tools
-// @version      0.9.2
+// @version      0.9.3
 // @description  Some UI tweaks and more
 // @author       stsyn
 // @namespace    http://derpibooru.org
@@ -17,12 +17,13 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/badgesDB0.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YouBooruSettings0UW.lib.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruImitation0UW.js
-// /require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruCSRFPatch.lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruTools.user.js
 // @grant        unsafeWindow
 // @grant        GM_addStyle
+// @grant        GM_getValue
+// @grant        GM_setValue
 // @run-at       document-idle
 // ==/UserScript==
 
@@ -1653,7 +1654,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     };
 
     let getId = function(name, callback) {
-      fetch('/profiles/'+nameEncode(name)+'.json',{method:'GET'})
+      fetch('/profiles/'+nameEncode(name),{method:'GET'})
         .then(function (response) {
         const errorMessage = {fail:true};
         if (!response.ok) {
@@ -1666,7 +1667,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
           debug('YDB:U','Redirected response while performing "updateId" on "'+name+'". Encoded to '+nameEncode(name), 2);
           return errorMessage;
         }
-        return response.json();
+        return response.text();
       })
         .then(data => {
         if (data.fail) {
@@ -1674,11 +1675,16 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
           return;
         }
         try {
-          callback(data.id);
-          debug('YDB:U','Received id '+id+' of user "'+id+'".', 0);
+          const container = createElement('div', { innerHTML: data });
+          const url = container.querySelector('a[href*="/conversations?with="]');
+          if (url) {
+            const id = url.href.split('=').pop();
+            callback(id);
+            debug('YDB:U','Received id '+id+' of user "'+id+'".', 0);
+          }
         }
         catch(e) {
-          debug('YDB:U','Failed to decode ID in reponse while performing "updateId" on "'+name+'". Encoded to '+nameEncode(name), 2);
+          debug('YDB:U','Failed to decode ID in reponse while performing "updateId" on "'+name+'". Encoded to '+nameEncode(name)+'. '+e.message, 2);
         }
       });
     };
