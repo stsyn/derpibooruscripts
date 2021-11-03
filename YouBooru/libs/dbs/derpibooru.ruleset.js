@@ -22,7 +22,7 @@ function GetDerpibooruRuleset() {
     '__sexual+solo+male': 'solo male',
     '__sexual+solo+futa': 'solo futa',
     'solo+__characters[>1]+-fusion+-disguise': '^[E]Multiple characters while %tag:solo% tagged.',
-    'solo+male,female,futa,ambiguous gender[[>1]]': '^[E]Multiple genders while %tag:solo% tagged.',
+    'solo+__genders,!intersex[[>1]]': '^[E]Multiple genders while %tag:solo% tagged.',
 
     '__characters[2]+-shipping': 'duo',
     'duo+female+-__genders,!female': 'duo female',
