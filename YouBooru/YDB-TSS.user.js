@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          YDB Tag Score Statistics
-// @version       0.1.1
+// @version       0.1.2
 // @author        stsyn
 
 // @match         *://*/*
@@ -90,7 +90,7 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
 
     async function fetchAndWrite(currentScoreId, grandTotal, tagName, search) {
       const data = await YDB_api.searchImages(
-        search + ', score.gte:' + formData.scores[currentScoreId],
+        '(' + search + '), score.gte:' + formData.scores[currentScoreId],
         { key: apiKey, sf: 'score', sd: 'asc', filter_id: formData.filterId }
       );
 
@@ -145,7 +145,7 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
       const tagDecor = formData.tagDecor.trim();
       const search = (() => {
         if (!tagDecor) return tagName;
-        if (tagDecor.indexOf('$1') < 0) return tagName + ',' + tagDecor;
+        if (tagDecor.indexOf('$1') < 0) return tagName + ', (' + tagDecor + ')';
         return tagDecor.replace(/\$1/g, tagName);
       })();
 
