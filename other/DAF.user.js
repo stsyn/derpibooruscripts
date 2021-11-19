@@ -1,8 +1,9 @@
 // ==UserScript==
 // @name         DеviantArt Fucker
-// @version      0.2.2
+// @version      0.2.3
 // @description  You can run but you can't hide
 // @include      http*://*.deviantart.com/*
+// @include      http://*.mrsxm2lbnz2gc4tufzrw63i.cmle.*/*
 
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/other/DAF.user.js
 // @require      https://github.com/stsyn/createElement/raw/master/min/es5.js
@@ -15,7 +16,7 @@
   'use strict';
   if (unsafeWindow.top !== unsafeWindow) return;
 
-  const RIGHTPAD = '.M353Q._1ahil._3HBBj';
+  const RIGHTPAD = '._1ahil._3HBBj';
   const PAD = '.HqVZr';
   const SPAD = '.g7zGt';
   const LINK = '.AdqW4';
@@ -150,7 +151,7 @@
       return;
     }
 
-    const url = `https://www.deviantart.com/_napi/shared_api/deviation/extended_fetch?deviationid=${location.href.split('-').pop()}&type=art`;
+    const url = `${location.protocol}//${location.hostname}/_napi/shared_api/deviation/extended_fetch?deviationid=${location.href.split('-').pop()}&type=art`;
     const data = (await fetch(url).then(resp => resp.json())).deviation;
 
     spawnPreStarter('Unwatermark', () => unwatermark(data));
