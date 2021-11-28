@@ -14,7 +14,7 @@ function GetDerpibooruRuleset() {
       'characters': '_character,oc:*',
     },
     '^artist:*,screencap,artist needed,anonymous artist': '^[E]No origin provided!',
-    '^__characters,no pony': '^[E]No character tag!',
+    '^__characters,no pony,oc': '^[E]No character tag!',
 
     '__characters[1]': 'solo',
     'safe+solo female,solo male,solo futa': 'solo+^[E]%tag:solo *% should be used only in sexual context. Use just %tag:solo% and correct gender tag!',
@@ -39,6 +39,8 @@ function GetDerpibooruRuleset() {
     '__sexual+__characters[>3]+-female,male': 'futa only',
 
     '^_species,equestria girls,no pony': '^No species tag!',
+
+    'solo,duo,trio[[>1]]': '^[E]Multiple character count tags',
 
     '^__genders': '^No gender tag!',
     'pony+female+-mare,filly': 'mare+filly',
