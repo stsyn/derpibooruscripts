@@ -12,7 +12,7 @@
 // /require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruCSRFPatch.lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.34
+// @version      0.9.36
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
 // @grant        unsafeWindow
@@ -986,13 +986,6 @@
 
   ////////////////////////////
 
-  function YB_createEmpty() {
-    if (document.querySelector('#content h1').innerHTML != 'API') return;
-    document.querySelector('#content h1').innerHTML = 'Derp!';
-    document.querySelector('#content .walloftext').innerHTML = '<p>I know the script is callled "YourBooru", but as much as I would want it to be truly yours, I could not find a page you specified. Nope. Nothing at all! I tried though.</p><p>Make sure that the URL you are trying to access is valid and that you aren\'t trying to hunt ghosts here. Otherwise you might have hit a bug and it would be a good idea to report it to me!</p>';
-  }
-
-  ///////////////////////////
   function YB_logs() {
     let active = {}, ex = {};
 
@@ -1077,7 +1070,7 @@
 
   function yourbooruPage() {
     let x = location.search.slice(1);
-    if (location.search == "?") YB_createEmpty();
+    if (location.search == "?") return;
     else {
       let u = x.split('?');
       if (u[0] == "backup") setTimeout(function() {
@@ -1109,7 +1102,6 @@
         };
         c();
       }, 100);
-      else if (location.search != '') setTimeout(YB_createEmpty, 100);
     }
   }
 
