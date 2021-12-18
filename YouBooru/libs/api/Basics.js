@@ -38,17 +38,40 @@ var unsafeWindow = unsafeWindow || undefined;
     return 'unknown';
   }
 
-  YDB_api.fetchPage = async function(verb, path, body) {
+  function buildFormData(formData, data, parentKey) {
+    if (data && typeof data === 'object' && !(data instanceof Date) && !(data instanceof File)) {
+      Object.keys(data).forEach(key => {
+        buildFormData(formData, data[key], parentKey ? `${parentKey}[${key}]` : key);
+      });
+    } else {
+      const value = data == null ? '' : data;
+
+      formData.append(parentKey, value);
+    }
+  }
+
+  YDB_api.fetchPage = async function(verb, path, body, useFormData) {
     if (!path.startsWith('https://' + location.hostname)) path = 'https://' + location.hostname + path;
 
     const data = {
       method: verb,
       credentials: 'same-origin',
+      headers: {
+        'Upgrade-Insecure-Requests': 1,
+      }
     };
 
     if (body) {
       body._method = verb;
       data.body = JSON.stringify(body);
+    }
+
+    if (useFormData) {
+      const formData = new FormData();
+      for (let i in body) {
+        buildFormData(formData, body[i], i);
+      }
+      data.body = formData;
     }
 
     return await fetch(path, data);
