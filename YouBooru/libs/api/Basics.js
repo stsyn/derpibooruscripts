@@ -50,15 +50,13 @@ var unsafeWindow = unsafeWindow || undefined;
     }
   }
 
-  YDB_api.fetchPage = async function(verb, path, body, useFormData) {
+  YDB_api.fetchPage = async function(verb, path, body, options) {
     if (!path.startsWith('https://' + location.hostname)) path = 'https://' + location.hostname + path;
 
     const data = {
       method: verb,
       credentials: 'same-origin',
-      headers: {
-        'Upgrade-Insecure-Requests': 1,
-      }
+      headers: options?.headers,
     };
 
     if (body) {
@@ -66,7 +64,7 @@ var unsafeWindow = unsafeWindow || undefined;
       data.body = JSON.stringify(body);
     }
 
-    if (useFormData) {
+    if (options?.useFormData) {
       const formData = new FormData();
       for (let i in body) {
         buildFormData(formData, body[i], i);
