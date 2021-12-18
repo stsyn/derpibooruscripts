@@ -70,12 +70,18 @@ YDB_api.UI.fuckIe = () => (
 )
 
 YDB_api.UI.button = (props, content) => {
-  const { bold, state, className, ...otherProps } = props;
+  const { bold, state, className, onclick, ...otherProps } = props;
+  const handleOnclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onclick && onclick(e);
+  }
 
   return [
     'button.button',
     {
       ...otherProps,
+      onclick: handleOnclick,
       className: (className || '') + ' ' + (bold ? 'button--bold ': '') + (state ? 'button--state-' + state : ''),
     },
     content,
