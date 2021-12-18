@@ -136,18 +136,18 @@ var YDB_api = YDB_api || {};
 
 
     // component
-    const { label, fieldLabel, value, fancy = true, ...otherProps } = props;
+    const { label, fieldLabel, value, _redraw, fancy = true, ...otherProps } = props;
     const cl = otherProps.id || `${otherProps.name}-${Math.floor(Math.random() * 10000)}`;
 
     let field;
 
-    return ['.field', { _cast: e => Z(e.querySelector('.js-tag-block')) }, [
+    return ['.field', { _cast: e => Z(e.querySelector('.js-tag-block')), _redraw }, [
       label ? ['label', label + ' '] : null,
       ['.js-tag-block.fancy-tag-edit', [
         ['textarea.input.input--wide.tagsinput.js-image-input.js-taginput.js-taginput-plain',
          {
            ...otherProps,
-           className: (cl ? cl : '') + ' ' + (fancy ? 'hidden' : ''),
+           className: (cl || '') + ' ' + (fancy ? 'hidden' : ''),
            placeholder: 'Add tags separated with commas',
          },
         ],
@@ -155,7 +155,7 @@ var YDB_api = YDB_api || {};
           ['input.input.js-taginput-input',
            {
              type: 'text',
-             className: (cl ? cl : '') + ' ' + (fancy ? '' : 'hidden'),
+             className: (cl || '') + ' ' + (fancy ? '' : 'hidden'),
              placeholder: 'add a tag',
              autocapitalize: 'none',
              autocomplete: 'off',
