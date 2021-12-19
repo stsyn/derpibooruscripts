@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YDB: ABP
 // @namespace    http://tampermonkey.net/
-// @version      0.1.0
+// @version      0.1.1
 // @description  Super lazy mode
 // @author       stsyn
 
@@ -41,6 +41,32 @@
   const state = {};
   const processors = [];
 
+  const undeleteProcessor = {
+    apiType: 'single',
+    name: 'Undelete',
+    options: [
+      ['', 'Restores matched images.']
+    ],
+    defaultData: {},
+    executor: async (_, image) => {
+      const csrf = unsafeWindow.booru.csrfToken;
+      await YDB_api.fetchPage('DELETE', `/images/${image.id}/delete`, { _csrf_token: csrf }, { useFormData: true });
+    },
+  };
+
+  const deleteProcessor = {
+    apiType: 'single',
+    name: 'Delete',
+    options: [
+      [YDB_api.UI.input, { label: 'Deletion reason', fieldLabel: 'Deletes matched images.', name: 'reason' }]
+    ],
+    defaultData: {},
+    executor: async ({ reason }, image) => {
+      const csrf = unsafeWindow.booru.csrfToken;
+      await YDB_api.fetchPage('POST', `/images/${image.id}/delete`, { _csrf_token: csrf, 'image[deletion_reason]': reason }, { useFormData: true });
+    },
+  };
+
   const voteRetractorProcessor = {
     apiType: 'single',
     name: 'Vote retractor',
@@ -50,7 +76,7 @@
     defaultData: {},
     executor: async ({ userId }, image) => {
       const csrf = unsafeWindow.booru.csrfToken;
-      await YDB_api.fetchPage('POST', `/images/${image}/tamper?user_id=${userId}`, { _csrf_token: csrf }, { useFormData: true });
+      await YDB_api.fetchPage('POST', `/images/${image.id}/tamper?user_id=${userId}`, { _csrf_token: csrf }, { useFormData: true });
     },
   };
 
@@ -66,7 +92,7 @@
       const csrf = unsafeWindow.booru.csrfToken;
       const removeTags = remove.trim.length > 0 ? ('-' + remove.split(',').map(v => v.trim()).join(',-')) : '';
       await YDB_api.fetchPage('PUT', `/admin/batch/tags`, {
-        image_ids: images.map(v => String(v)),
+        image_ids: images.map(v => String(v.id)),
         tags: add + ((add && removeTags) ? ',' : '') + remove,
       }, { headers: {
         'content-type': 'application/json',
@@ -76,15 +102,16 @@
     },
   };
 
+  const definedProcessors = [batchTaggingProcessor, voteRetractorProcessor, undeleteProcessor, deleteProcessor];
 
 
   async function processImages() {
     GM_setValue('apiKey', JSON.stringify(search.apiKey))
-    const iterator = YDB_api.longSearch(search.query, { key: search.apiKey });
+    const iterator = YDB_api.longSearch(search.query, { key: search.apiKey, del: search.del });
     let images = [];
     let result = await iterator.next();
     while (!result.done) {
-      images = images.concat(result.value.images.map(i => i.id));
+      images = images.concat(result.value.images);
       search.got = images.length;
       result = await iterator.next();
     }
@@ -104,10 +131,11 @@
         }
       }
     }
+
+    alert('Done');
   }
 
   function YDB_ABP() {
-    const definedProcessors = [batchTaggingProcessor, voteRetractorProcessor];
     let redrawPostprocessors = () => {};
     let redrawStartButton = () => {};
 
@@ -165,8 +193,14 @@
       [formElement, { data: search }, [
         [YDB_api.UI.input, { type: 'password', label: 'API key', name: 'apiKey' }],
         [YDB_api.UI.textarea, { name: 'query', label: 'Search query', fullWidth: true }],
+        [YDB_api.UI.select, { options: [
+          { name: 'Exclude deleted', value: '' },
+          { name: 'Include Deleted/Merged', value: '1' },
+          { name: 'Deleted Only', value: 'deleted' },
+          { name: 'Deleted/Merged Only', value: 'only' },
+        ], name: 'del' }],
         [YDB_api.UI.button, { onclick: async () => {
-          search.total = (await YDB_api.searchImages(search.query, { key: search.apiKey })).total;
+          search.total = (await YDB_api.searchImages(search.query, { key: search.apiKey, del: search.del })).total;
           drawStart();
         } }, 'Validate'],
         [YDB_api.UI.input, { label: 'Images to be affected', disabled: true, name: 'total' }],
