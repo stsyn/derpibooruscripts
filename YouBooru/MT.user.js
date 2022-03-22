@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:MT
-// @version      0.1.21
+// @version      0.1.22
 // @author       stsyn
 // @namespace    http://derpibooru.org
 
@@ -8,7 +8,7 @@
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/adverts\/.*/
 // @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*\.json.*/
 
-// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
+// @require      https://github.com/stsyn/createElement/raw/component/src/es5.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/MT.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/MT.user.js
