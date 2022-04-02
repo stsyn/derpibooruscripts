@@ -2,7 +2,7 @@
 
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://derpibooru.org
-// @version      0.7.47
+// @version      0.7.48
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -532,7 +532,9 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
 
     let s = '';
     if (document.getElementsByClassName('js-notification-ticker')[0] != undefined && parseInt(document.getElementsByClassName('js-notification-ticker')[0].innerHTML) > 0) s += ' '+parseInt(document.getElementsByClassName('js-notification-ticker')[0].dataset.notificationCount);
-    if (parseInt(document.querySelector('a[href*="/conversations"] .fa-embedded__text').innerHTML) > 0) s += (s.length>0?'+':' ')+'M'+parseInt(document.querySelector('a[href*="/conversations"] .fa-embedded__text').innerHTML);
+    if (parseInt(document.querySelector('a[href*="/conversations"] .header__counter').innerHTML) > 0) {
+      s += (s.length>0?'+':' ')+'M'+document.querySelector('a[href*="/conversations"] .header__counter').innerHTML;
+    }
 
     if (s.length > 0) {
       objects.mainButtonNotify.innerHTML = s;
