@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.5.0
+// @version      0.5.1
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @include      /http(s|):\/\/(www\.|)(trixie|derpi)booru.org\/images\/new.*/
@@ -117,12 +117,12 @@
 
       spawn(dlink, 'intermediary');
 
-      spawn(await fetchFullFromLoginScreen(), 'login leak');
-
       // token kek
       // All credit goes to @Ironchest337
       const payload = `{"sub":"urn:app:","iss":"urn:app:","obj":[[{"path":"\/f\/${data.baseUri.split('/f/')[1].replace(/\//g, '\/')}"}]],"aud":["urn:service:file.download"]}`;
       spawn(`${data.baseUri}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.${btoa(payload).replace(/=/g, '')}.`, 'token kek');
+
+      spawn(await fetchFullFromLoginScreen(), 'login leak');
     })
 
     // if (document.querySelector('.dev-description .text.block')) text = '[bq]'+document.querySelector('.dev-description .text.block').innerText+'[/bq]';
