@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.5.1
+// @version      0.5.2
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @include      /http(s|):\/\/(www\.|)(trixie|derpi)booru.org\/images\/new.*/
@@ -18,10 +18,10 @@
   if (window.top !== window) return;
   let mainDomain = 'www.derpibooru.org';
 
-  const RIGHTPAD = '._1ahil._3HBBj';
-  const PAD = '.HqVZr';
-  const SPAD = '.g7zGt';
-  const LINK = '.AdqW4';
+  const RIGHTPAD = '._1VvVp._10lmT';
+  const PAD = '._3L-AU';
+  const SPAD = '._2rl2o';
+  const LINK = '._277bf._3VrNw';
   const LOGIN = 'BoW0n';
 
   const leak = true;
