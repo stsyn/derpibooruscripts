@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YDB:MADUp - DeviantArt
 // @namespace    http://derpibooru.org
-// @version      0.1
+// @version      0.1.1
 // @description  Automates process of image updating (for DeviantArt)
 // @author       stsyn
 
@@ -41,23 +41,28 @@
   }
 
   async function tryFetch() {
-    elems.button.disabled = true;
+    try {
+      elems.button.disabled = true;
 
-    const response = await GM.fetch(source);
-    const text = await response.text();
-    const match = text.match(/window.__INITIAL_STATE__ = JSON.parse\("(.*)"\);/)[1].replace(/\\(.)/g, '$1');
-    const content = JSON.parse(match);
-    const deviationId = Object.keys(content['@@entities'].deviationExtended)[0];
-    const deviation = content['@@entities'].deviation[deviationId];
+      const response = await GM.fetch(source);
+      const text = await response.text();
+      const match = text.match(/window.__INITIAL_STATE__ = JSON.parse\("(.*)"\);/)[1].replace(/\\(.)/g, '$1');
+      const content = JSON.parse(match);
+      const deviationId = Object.keys(content['@@entities'].deviationExtended)[0];
+      const deviation = content['@@entities'].deviation[deviationId];
 
-    const payload = `{"sub":"urn:app:","iss":"urn:app:","obj":[[{"path":"\/f\/${deviation.media.baseUri.split('/f/')[1].replace(/\//g, '\/')}"}]],"aud":["urn:service:file.download"]}`;
-    const link = `${deviation.media.baseUri}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.${btoa(payload).replace(/=/g, '')}.`;
+      const payload = `{"sub":"urn:app:","iss":"urn:app:","obj":[[{"path":"\/f\/${deviation.media.baseUri.split('/f/')[1].replace(/\//g, '\/')}"}]],"aud":["urn:service:file.download"]}`;
+      const link = `${deviation.media.baseUri}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.${btoa(payload).replace(/=/g, '')}.`;
 
-    replaceInput.value = link;
-    replaceFetch.disabled = false;
-    await wait(200);
-    replaceFetch.click();
-
-    elems.button.disabled = false;
+      replaceInput.value = link;
+      replaceFetch.disabled = false;
+      await wait(200);
+      replaceFetch.click();
+    } catch(e) {
+      alert('Something went wrong. See the console or check deviation page');
+      throw e;
+    } finally {
+      elems.button.disabled = false;
+    }
   }
 })();
