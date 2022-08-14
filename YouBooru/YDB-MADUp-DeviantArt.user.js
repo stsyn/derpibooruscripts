@@ -13,6 +13,9 @@
 // @require      https://github.com/stsyn/createElement/raw/component/src/es5.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/ui/Inputs.js
 
+// @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-MADUp-DeviantArt.user.js
+// @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-MADUp-DeviantArt.user.js
+
 // @grant        GM.xmlHttpRequest
 // ==/UserScript==
 
