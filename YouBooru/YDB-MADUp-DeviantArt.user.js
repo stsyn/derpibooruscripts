@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YDB:MADUp - DeviantArt
 // @namespace    http://derpibooru.org
-// @version      0.1.1
+// @version      0.1.2
 // @description  Automates process of image updating (for DeviantArt)
 // @author       stsyn
 
@@ -27,7 +27,7 @@
   const replaceFetch = document.getElementById('js-scraper-preview');
   const elems = {};
 
-  if (container && source.match(/.*\.deviantart\.com\/art\/.*/)) {
+  if (container && (source.match(/.*\.deviantart\.com\/art\/.*/) || source.match(/.*\/\/fav\.me\/d.*/))) {
     appendButton();
   }
 
@@ -41,13 +41,14 @@
   }
 
   async function tryFetch() {
+    let content;
     try {
       elems.button.disabled = true;
 
       const response = await GM.fetch(source);
       const text = await response.text();
       const match = text.match(/window.__INITIAL_STATE__ = JSON.parse\("(.*)"\);/)[1].replace(/\\(.)/g, '$1');
-      const content = JSON.parse(match);
+      content = JSON.parse(match);
       const deviationId = Object.keys(content['@@entities'].deviationExtended)[0];
       const deviation = content['@@entities'].deviation[deviationId];
 
@@ -60,6 +61,7 @@
       replaceFetch.click();
     } catch(e) {
       alert('Something went wrong. See the console or check deviation page');
+      console.log(content);
       throw e;
     } finally {
       elems.button.disabled = false;
