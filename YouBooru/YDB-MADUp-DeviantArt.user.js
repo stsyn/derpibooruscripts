@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YDB:MADUp - DeviantArt
 // @namespace    http://derpibooru.org
-// @version      0.1.2
+// @version      0.1.3
 // @description  Automates process of image updating (for DeviantArt)
 // @author       stsyn
 
@@ -27,7 +27,7 @@
   const replaceFetch = document.getElementById('js-scraper-preview');
   const elems = {};
 
-  if (container && (source.match(/.*\.deviantart\.com\/art\/.*/) || source.match(/.*\/\/fav\.me\/d.*/))) {
+  if (container && (source.match(/.*\.deviantart\.com\/(.*\/|)art\/.*/) || source.match(/.*\/\/fav\.me\/d.*/))) {
     appendButton();
   }
 
