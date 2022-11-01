@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.5.2
+// @version      0.6.0
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @include      /http(s|):\/\/(www\.|)(trixie|derpi)booru.org\/images\/new.*/
@@ -63,7 +63,6 @@
     });
     ls.querySelector('span.text').innerHTML = ' '+text;
     target3.appendChild(ls);
-    target.classList.add('patched');
   }
 
   function DA404() {
@@ -92,11 +91,18 @@
     const o = Array.from(document.querySelectorAll('.pimp a.thumb')).pop();
     artist = document.querySelector('[data-hook="deviation_meta"] a[data-hook="user_link"]').dataset.username.toLowerCase();
 
-    const url = `https://www.deviantart.com/_napi/shared_api/deviation/extended_fetch?deviationid=${location.href.split('-').pop()}&type=art`;
-    fetch(url)
-    .then(resp => resp.json())
+    document.querySelector(RIGHTPAD).classList.add('patched');
+
+    fetch(location.href)
+    .then(resp => resp.text())
     .then(async resp => {
-      const data = resp.deviation.media;
+      const match = resp.match(/window.__INITIAL_STATE__ = JSON.parse\("(.*)"\);/)[1].replace(/\\(.)/g, '$1');
+      const content = JSON.parse(match);
+
+      const deviationId = Object.keys(content['@@entities'].deviationExtended)[0];
+      const deviation = content['@@entities'].deviation[deviationId];
+
+      const data = deviation.media;
 
       // failsafe
       const isSourcePng = data.baseUri.endsWith('.png');
