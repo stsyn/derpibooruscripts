@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YDB:MADUp - DeviantArt
 // @namespace    http://derpibooru.org
-// @version      0.1.3
+// @version      0.1.4
 // @description  Automates process of image updating (for DeviantArt)
 // @author       stsyn
 
@@ -12,6 +12,7 @@
 // @require      https://github.com/stsyn/GM_fetch/raw/master/GM_fetch.js
 // @require      https://github.com/stsyn/createElement/raw/component/src/es5.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/ui/Inputs.js
+// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/api/Basics.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-MADUp-DeviantArt.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-MADUp-DeviantArt.user.js
@@ -21,6 +22,12 @@
 
 (function() {
   'use strict';
+  const enviroment = YDB_api.getEnviroment();
+  const isBooru = enviroment !== 'unknown';
+  if (!isBooru) {
+    return;
+  }
+
   const container = document.querySelector('.block__tab[data-tab="replace"] form');
   const source = document.querySelector('.js-source-link').href;
   const replaceInput = document.getElementById('image_scraper_url');
