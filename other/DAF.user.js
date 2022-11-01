@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DеviantArt Fucker
-// @version      0.2.3
+// @version      0.3.0
 // @description  You can run but you can't hide
 // @include      http*://*.deviantart.com/*
 // @include      http://*.mrsxm2lbnz2gc4tufzrw63i.cmle.*/*
@@ -16,10 +16,10 @@
   'use strict';
   if (unsafeWindow.top !== unsafeWindow) return;
 
-  const RIGHTPAD = '._1ahil._3HBBj';
-  const PAD = '.HqVZr';
-  const SPAD = '.g7zGt';
-  const LINK = '.AdqW4';
+  const RIGHTPAD = '._1VvVp._10lmT';
+  const PAD = '._3L-AU';
+  const SPAD = '._2rl2o';
+  const LINK = '._277bf._3VrNw';
 
   function makeElement(name, action) {
     let container, target2;
@@ -151,8 +151,12 @@
       return;
     }
 
-    const url = `${location.protocol}//${location.hostname}/_napi/shared_api/deviation/extended_fetch?deviationid=${location.href.split('-').pop()}&type=art`;
-    const data = (await fetch(url).then(resp => resp.json())).deviation;
+    const response = await fetch(location.href);
+    const text = await response.text();
+    const match = text.match(/window.__INITIAL_STATE__ = JSON.parse\("(.*)"\);/)[1].replace(/\\(.)/g, '$1');
+    const content = JSON.parse(match);
+    const deviationId = Object.keys(content['@@entities'].deviationExtended)[0];
+    const data = content['@@entities'].deviation[deviationId];
 
     spawnPreStarter('Unwatermark', () => unwatermark(data));
     spawnPreStarter('Combine full', () => combine(data));
