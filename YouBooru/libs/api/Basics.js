@@ -29,13 +29,18 @@ var unsafeWindow = unsafeWindow || undefined;
     return unsafeWindow.booru;
   }
 
+  let cachedEnv;
   YDB_api.getEnviroment = function() {
+    if (cachedEnv) {
+      return cachedEnv;
+    }
+
     const elem = document.querySelector('#serving_info');
     if (elem && elem.innerText) {
-      if (elem.innerText.toLowerCase().indexOf('philomena') > -1) return 'philomena';
-      if (elem.innerText.toLowerCase().indexOf('booru-on-rails') > -1) return 'bor';
+      if (elem.innerText.toLowerCase().indexOf('philomena') > -1) return cachedEnv = 'philomena';
+      if (elem.innerText.toLowerCase().indexOf('booru-on-rails') > -1) return cachedEnv = 'bor';
     }
-    return 'unknown';
+    return cachedEnv = 'unknown';
   }
 
   function buildFormData(formData, data, parentKey) {
