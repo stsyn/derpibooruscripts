@@ -2,7 +2,7 @@
 
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://derpibooru.org
-// @version      0.7.49
+// @version      0.7.50
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -281,15 +281,8 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
     started = true;
   }
 
-  function disgustingLoadedImgFetch() {
-    if (!state.enabled) return;
-    setTimeout(loadedImgFetch, 1);
-    if (pub.scaled == 'false') zeroZoom();
-  }
-
   function loadedImgFetch() {
     objects.image = document.getElementById('image-display');
-
     if (settings.singleMode && objects.dcontainer) {
       append('imageZoom');
       if (!pub.isVideo) {
@@ -300,11 +293,13 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
           const url = JSON.parse(objects.icontainer.dataset.uris).full;
           objects.image.querySelector('[type="video/webm"]').src = url;
           objects.image.querySelector('[type="video/mp4"]').src = url.replace(/\.webm$/, '.mp4');
+          objects.image.load();
+          objects.image.play();
         }
       }
       objects.dcontainer.addEventListener('click', singleEvent);
     }
-    if (!pub.isVideo && !singleFirstChange && settings.singleMode) {
+    if (!singleFirstChange && settings.singleMode) {
       rescale();
       singleFirstChange = true;
     }
@@ -511,14 +506,6 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
 
     }
 
-    if (objects.image && pub.isVideo && settings.singleMode && (!/\/[\d]+.webm/.test(objects.image.querySelector('[type="video/webm"]').src) || !singleFirstChange)) {
-      objects.image.removeAttribute('src');
-      objects.image.querySelector('[type="video/webm"]').src = JSON.parse(objects.icontainer.dataset.uris).full;
-      objects.image.querySelector('[type="video/mp4"]').src = JSON.parse(objects.icontainer.dataset.uris).full.replace(/\.webm$/, '.mp4');
-      rescale();
-      singleFirstChange = true;
-    }
-
     if (pub.scaled == 'false' || settings.singleMode) setMargin();
 
     if (objects.dcontainer) {
@@ -620,28 +607,25 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
     if (!state.enabled || !settings.singleMode) return;
     if (document.querySelector('#image_target.hidden')) return;
     if (event) event.stopPropagation();
-    //dropExecution(event);
 
     singleDefSize = !singleDefSize;
     pub.scaled = ''+singleDefSize;
     if (pub.scaled != 'false') {
-      /*if (pub.isVideo) */pub.zoom = pub.defzoom;
+      pub.zoom = pub.defzoom;
+      if (pub.isVideo) {
+        event.preventDefault();
+      }
     }
     else {
       pub.zoom = 1;
       initalZoom();
     }
     objects.dcontainer.dataset.scaled = pub.scaled;
-    if (pub.isVideo && !/\/[\d]+.webm$/.test(objects.image.querySelector('[type="video/webm"]').src)) {
-      objects.image.querySelector('[type="video/webm"]').src = JSON.parse(objects.icontainer.dataset.uris).full;
-      objects.image.querySelector('[type="video/mp4"]').src = JSON.parse(objects.icontainer.dataset.uris).full.replace(/\.webm$/, '.mp4');
-    }
     return false;
   }
 
 
   function advancedTagTools() {
-    //
     let t = JSON.parse(objects.icontainer.dataset.imageTags);
     if (t.indexOf(37875)>=0) {
       append('adc_pixel');
@@ -809,8 +793,13 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
     }
   }
 
+  function isForbidden() {
+    return (document.title.indexOf('This image has been deleted.') == 0 || document.querySelector('#content>.walloftext>.block--warning')) ||
+      (document.querySelector('#content>.block--warning:first-child'));
+  }
+
   function preenable() {
-    if (document.title.indexOf('This image has been deleted.') == 0 || document.querySelector('#content>.walloftext>.block--warning')) return;
+    if (isForbidden()) return;
     append('general');
     if (settings.extended) {
       append('base');
@@ -822,7 +811,7 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
   }
 
   function enable(notInital) {
-    if (document.title.indexOf('This image has been deleted.') == 0 || document.querySelector('#content>.walloftext>.block--warning')) return;
+    if (isForbidden()) return;
     if (notInital) preenable();
     if (!started) init();
 
@@ -894,6 +883,13 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
     objects.image = document.getElementById('image-display');
     objects.de = document.documentElement;
     objects.icontainer = document.getElementsByClassName('image-show-container')[0];
+
+    const extension = JSON.parse(objects.icontainer.dataset.uris).full.split('.').pop();
+    pub.isVideo = extension == 'webm';
+    pub.gif = extension == 'gif';
+    pub.jpg = extension == 'jpg' || extension == 'jpeg';
+    pub.isSvg = !pub.gif && !pub.isVideo && !pub.jpg && document.querySelector('.image-size').innerText.split(' ')[1] == 'SVG';
+
     objects.dcontainer = document.getElementById('image_target');
     objects.commButton = document.getElementsByClassName('interaction--comments')[0];
     if (settings.commentLink) objects.commButton.href = 'javascript://';
@@ -916,25 +912,17 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
     //to avoid bugs on unloaded images
     if (objects.dcontainer) {
       objects.dcontainer.addEventListener("DOMNodeInserted",loadedImgFetch);
-      //objects.dcontainer.addEventListener("click",disgustingLoadedImgFetch);
       objects.dcontainer.addEventListener("wheel", wheelListener);
       advancedTagTools();
-      const extension = JSON.parse(objects.icontainer.dataset.uris).full.split('.').pop();
-      pub.isVideo = extension == 'webm';
-      pub.gif = extension == 'gif';
-      pub.jpg = extension == 'jpg' || extension == 'jpeg';
-      pub.isSvg = !pub.gif && !pub.isVideo && !pub.jpg && document.querySelector('.image-size').innerText.split(' ')[1] == 'SVG';
       if ((pub.gif || pub.isVideo) && settings.singleMode) {
         let x = JSON.parse(objects.icontainer.dataset.uris);
         for (let i in x) {
           x[i] = x.full;
         }
+
         const oldContent = objects.icontainer.dataset.uris;
         const newContent = JSON.stringify(x);
         objects.icontainer.dataset.uris = newContent;
-        objects.icontainer.dataset.uris = oldContent;
-        objects.icontainer.dataset.uris = newContent;
-        // ебал я этот хром :(
       }
 
       if (pub.isSvg) {
@@ -968,7 +956,6 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
     unscale();
 
     objects.dcontainer.removeEventListener("DOMNodeInserted",loadedImgFetch);
-    //objects.dcontainer.removeEventListener("click",disgustingLoadedImgFetch);
     objects.commButton.removeEventListener('click',showComms);
     objects.commButton.href = '#comments';
     popUps.back.removeEventListener('mousedown',hidePopups);
