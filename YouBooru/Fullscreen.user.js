@@ -2,7 +2,7 @@
 
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://derpibooru.org
-// @version      0.7.48
+// @version      0.7.49
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -268,9 +268,16 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
   }
 
   function init() {
-    document.querySelector('#content>.block:first-child').appendChild(objects.disable = createElement('a#_ydb_fs_disable', {style: {display:'none'}, onclick: disable }, 'Disable'));
-    document.body.appendChild(objects.enable = createElement('a#_ydb_fs_enable.header__link', {onclick: () => enable(true) }, 'Fullscreen'));
-    document.getElementsByClassName('header__force-right')[0].insertBefore(objects.enable, document.getElementsByClassName('header__force-right')[0].childNodes[0]);
+    const header = document.getElementsByClassName('header__force-right')[0];
+    header.insertBefore(
+      objects.disable = createElement('a.header__link', {style: { display: 'none' }, onclick: disable }, 'Disable'),
+      header.childNodes[0],
+    );
+
+    header.insertBefore(
+      objects.enable = createElement('a.header__link', { onclick: () => enable(true) }, 'Fullscreen'),
+      header.childNodes[0],
+    );
     started = true;
   }
 
@@ -819,6 +826,8 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
     if (notInital) preenable();
     if (!started) init();
 
+    objects.disable.style.display = '';
+    objects.enable.style.display = 'none';
     pub.mouseX = unsafeWindow.innerWidth/2;
     pub.mouseY = unsafeWindow.innerHeight/2;
     if (state.hidden) pub.static = 100000;
@@ -948,6 +957,8 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
   }
 
   function disable() {
+    objects.disable.style.display = 'none';
+    objects.enable.style.display = '';
     remove('general');
     remove('base');
     remove('ex');
