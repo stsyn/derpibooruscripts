@@ -1,12 +1,11 @@
 let styles = {};
 
 styles.general = `
+#footer #footer_content {
+  flex-direction: row !important;
+}
 #_fs_main {
   display: inline !important;
-}
-
-#_ydb_fs_enable {
-  display: none
 }
 
 #_ydb_fs_mainPopup.active {
@@ -151,21 +150,6 @@ footer {
   max-width: none;
   margin: auto;
   display: block;
-}
-
-#_ydb_fs_disable {
-  left: 0;
-  top: 0;
-  position: fixed;
-  z-index: 202;
-  display: inline-block !important;
-  opacity: 0.3;
-  font-size: 120%;
-  line-height: 205%;
-}
-
-#_ydb_fs_disable:hover {
-  opacity: .7
 }
 
 .block__header__title {
