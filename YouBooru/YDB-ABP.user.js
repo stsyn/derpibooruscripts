@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YDB: ABP
 // @namespace    http://tampermonkey.net/
-// @version      0.1.1
+// @version      0.1.2
 // @description  Super lazy mode
 // @author       stsyn
 
@@ -90,10 +90,10 @@
     defaultData: {},
     executor: async ({ add, remove }, images) => {
       const csrf = unsafeWindow.booru.csrfToken;
-      const removeTags = remove.trim.length > 0 ? ('-' + remove.split(',').map(v => v.trim()).join(',-')) : '';
+      const removeTags = remove.trim().length > 0 ? ('-' + remove.split(',').map(v => v.trim()).join(',-')) : '';
       await YDB_api.fetchPage('PUT', `/admin/batch/tags`, {
         image_ids: images.map(v => String(v.id)),
-        tags: add + ((add && removeTags) ? ',' : '') + remove,
+        tags: add + ((add && removeTags) ? ',' : '') + removeTags,
       }, { headers: {
         'content-type': 'application/json',
         'x-csrf-token': csrf,
