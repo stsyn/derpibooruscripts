@@ -2,7 +2,7 @@
 
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://derpibooru.org
-// @version      0.7.50
+// @version      0.7.51
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -884,11 +884,14 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
     objects.de = document.documentElement;
     objects.icontainer = document.getElementsByClassName('image-show-container')[0];
 
-    const extension = JSON.parse(objects.icontainer.dataset.uris).full.split('.').pop();
-    pub.isVideo = extension == 'webm';
-    pub.gif = extension == 'gif';
-    pub.jpg = extension == 'jpg' || extension == 'jpeg';
-    pub.isSvg = !pub.gif && !pub.isVideo && !pub.jpg && document.querySelector('.image-size').innerText.split(' ')[1] == 'SVG';
+    // not ready to serve images fix
+    if (objects.icontainer) {
+      const extension = JSON.parse(objects.icontainer.dataset.uris).full.split('.').pop();
+      pub.isVideo = extension == 'webm';
+      pub.gif = extension == 'gif';
+      pub.jpg = extension == 'jpg' || extension == 'jpeg';
+      pub.isSvg = !pub.gif && !pub.isVideo && !pub.jpg && document.querySelector('.image-size').innerText.split(' ')[1] == 'SVG';
+    }
 
     objects.dcontainer = document.getElementById('image_target');
     objects.commButton = document.getElementsByClassName('interaction--comments')[0];
