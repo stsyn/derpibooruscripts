@@ -137,25 +137,27 @@ var YDB_api = YDB_api || {};
 
     // component
     const { label, fieldLabel, value, _redraw, fancy = true, ...otherProps } = props;
-    const cl = otherProps.id || `${otherProps.name}-${Math.floor(Math.random() * 10000)}`;
+    const cl = otherProps.id || `${otherProps.name}-${Math.floor(Math.random() * 10000)}` || '';
 
     let field;
 
-    return ['.field', { _cast: e => Z(e.querySelector('.js-tag-block')), _redraw }, [
+    return ['.field', { _cast: e => {
+      Z(e.querySelector('.js-tag-block'));
+    }, _redraw }, [
       label ? ['label', label + ' '] : null,
       ['.js-tag-block.fancy-tag-edit', [
         ['textarea.input.input--wide.tagsinput.js-image-input.js-taginput.js-taginput-plain',
          {
            ...otherProps,
-           className: (cl || '') + ' ' + (fancy ? 'hidden' : ''),
+           className: cl + (fancy ? ' hidden' : ''),
            placeholder: 'Add tags separated with commas',
          },
         ],
-        ['.js-taginput.input.input--wide.tagsinput.js-taginput-fancy', { dataset: { clickFocus: `.js-taginput-input.${cl}` } }, [
+        ['.js-taginput.input.input--wide.tagsinput.js-taginput-fancy', { className: cl, dataset: { clickFocus: `.js-taginput-input.${cl}` } }, [
           ['input.input.js-taginput-input',
            {
              type: 'text',
-             className: (cl || '') + ' ' + (fancy ? '' : 'hidden'),
+             className: cl + (fancy ? '' : ' hidden'),
              placeholder: 'add a tag',
              autocapitalize: 'none',
              autocomplete: 'off',
@@ -172,11 +174,11 @@ var YDB_api = YDB_api || {};
        {
          state: 'primary',
          bold: true,
-         className: 'js-taginput-show' + (fancy ? ' hidden' : ''),
+         className: 'js-taginput-show ' + cl + (fancy ? ' hidden' : ''),
          dataset: {
            clickFocus: `.js-taginput-input.${cl}`,
-           clickHide: '.js-taginput-plain,.js-taginput-show',
-           clickShow: '.js-taginput-fancy,.js-taginput-hide',
+           clickHide: `.js-taginput-plain.${cl},.js-taginput-show.${cl}`,
+           clickShow: `.js-taginput-fancy.${cl},.js-taginput-hide.${cl}`,
          },
        },
        'Fancy Editor ',
@@ -185,11 +187,11 @@ var YDB_api = YDB_api || {};
        {
          state: 'primary',
          bold: true,
-         className: 'js-taginput-hide' + (fancy ? '' : ' hidden'),
+         className: 'js-taginput-hide ' + cl + (fancy ? '' : ' hidden'),
          dataset: {
            clickFocus: `.js-taginput-plain.${cl}`,
-           clickHide: '.js-taginput-fancy,.js-taginput-hide',
-           clickShow: '.js-taginput-plain,.js-taginput-show',
+           clickHide: `.js-taginput-fancy.${cl},.js-taginput-hide.${cl}`,
+           clickShow: `.js-taginput-plain.${cl},.js-taginput-show.${cl}`,
          },
        },
        'Plain Editor ',
@@ -199,5 +201,4 @@ var YDB_api = YDB_api || {};
       ]] : null,
     ]];
   }
-
 })();
