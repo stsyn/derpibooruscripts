@@ -94,22 +94,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
 #searchform textarea{min-width:100%;max-width:100%;min-height:2.4em;line-height:1.5em;height:7em}`
   }
 
-  let tagDB = {
-    normal:{
-      character:["twilight sparkle","rainbow dash","pinkie pie","fluttershy","rarity","applejack","princess luna","princess celestia","spike","trixie","derpy hooves","scootaloo",
-                 "sweetie belle","sunset shimmer","apple bloom","vinyl scratch","starlight glimmer","queen chrysalis","dj pon-3","princess cadance","discord","lyra heartstrings",
-                 "big macintosh","octavia melody","shining armor","nightmare moon","sci-twi","bon bon","sweetie drops","soarin'","spitfire","sonata dusk","king sombra","maud pie",
-                 "adagio dazzle","flash sentry","doctor whooves","time turner","cheerilee","diamond tiara","gilda","angel bunny","aria blaze","zecora","silver spoon","royal guard",
-                 "berry punch","berryshine","braeburn","daring do"],
-      'content-official':["equestria girls","rainbow rocks","my little pony: the movie","friendship games","legend of everfree"],
-      'content-fanmade':["fallout equestria"],
-      error:["artist needed","source needed","dead source","useless source url"],
-      oc:["oc","oc only"],
-      origin:["screencap","edit","edited screencap","derpibooru exclusive","alternate version","color edit"],
-      rating:["safe","explicit","questionable","suggestive","grimdark","semi-grimdark", "grotesque"],
-      spoiler:[]},
-    regulars:{oc:/^oc:/g,origin:/^(artist:|editor:|colorist:)/g,spoiler:/^spoiler:/g,'content-fanmade':/^(comic:|fanfic:|artpack:|tumblr:)/g},list:{oc:[],origin:[]}
-  };
+  let tagDB = { normal:{}, regulars:{} };
   function _getTagDB() {
     try {
       tagDB = getTagDB();
