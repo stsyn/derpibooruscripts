@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:Tools
-// @version      0.9.3
+// @version      0.9.4
 // @description  Some UI tweaks and more
 // @author       stsyn
 // @namespace    http://derpibooru.org
@@ -11,7 +11,7 @@
 
 // @require      https://raw.githubusercontent.com/blueimp/JavaScript-MD5/master/js/md5.min.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
-// @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/CreateElement.js
+// @require      https://github.com/stsyn/createElement/raw/component/src/es5.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagProcessor.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/tagDB0.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/badgesDB0.js
@@ -892,16 +892,20 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   //spoilers
   //help
   function YDBSpoilersHelp() {
-    for (let i=0; i<document.getElementsByClassName('textile_help').length; i++) {
-      document.getElementsByClassName('textile_help')[i].insertBefore(createElement('span', [
-        createElement('ins','YDB Spoilers:'),
-        ' +',
-        createElement('strong','$'),
-        'Spoiler name+[bq]Spoiler body[/bq], [bq]',
-        createElement('strong','$'),
-        'Nameless spoiler body[/bq] ([bq] can be replaced with [spoiler])',
-        createElement('br')
-      ]), document.getElementsByClassName('textile_help')[i].getElementsByTagName('strong')[0]);
+    if (location.pathname === '/pages/markdown') {
+      document.getElementById('content').appendChild(
+        createElement('', [
+          ['h4','YDB Spoilers:'],
+          ['.paragraph', [
+            'Non-official feature for collapsable spoilers to use less space. Still readable without scripts.',
+            'Named spoiler:',
+            ['pre', ['__$Spoiler name__\n||Spoiler body||']],
+            'Nameless spoiler:',
+            ['pre', ['||$Spoiler body||']],
+            'Keep in mind, that "$" in the beginning is used to detect spoilers. You can also use quote sintax ( > ) instead of spoiler ( || ) if you prefer to don\'t hide things for people without script.',
+          ]],
+        ])
+      );
     }
   }
 
@@ -921,27 +925,30 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
       });
     }, 100);
 
-    for (let i=0; i<e.querySelectorAll('ins').length; i++) {
-      let el = e.querySelectorAll('ins')[i];
-      if (el.innerHTML.startsWith('$')) {
-        if (el.style.display == 'none') continue;
-        let uid = '_ydb_spoil';
-        let h = InfernoAddElem('div',{className:'block'},[
-          InfernoAddElem('div',{className:'block__header'},[
-            InfernoAddElem('a',{className:uid},[
-              InfernoAddElem('i', {className:'fa', innerHTML:'\uF061'}),
-              InfernoAddElem('span',{innerHTML:' '+el.innerHTML.slice(1)},[])
-            ])
-          ])
+    const relatedElements = e.querySelectorAll('ins, blockquote, .spoiler');
+
+    for (let i=0; i<relatedElements.length; i++) {
+      const el = relatedElements[i];
+      if (!el.innerText.startsWith('$') || el.style.display === 'none') {
+        continue;
+      }
+
+      if (el.tagName === 'INS') {
+        if (relatedElements[i + 1].tagName === 'INS') {
+          continue;
+        }
+
+        const n = relatedElements[i + 1];
+        const h = createElement('.block', [
+          ['.block__header', [
+            ['a._ydb_spoil', [
+              ['i.fa', '\uF061'],
+              ['span', { innerHTML: ' ' + el.innerHTML.slice(1) }],
+            ]]
+          ]],
+          n,
         ]);
 
-        let n = el.nextSibling;
-        while (n.tagName !='BLOCKQUOTE' && !(n.classList != undefined && n.classList.contains('spoiler'))) {
-          n = n.nextSibling;
-          if (n == undefined) break;
-        };
-        if (n == undefined) break;
-        h.appendChild(n);
         n.classList.add('block__content');
         n.classList.add('hidden');
         n.classList.remove('spoiler');
@@ -949,58 +956,13 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         n.style.margin = 0;
         el.style.display = 'none';
         el.parentNode.insertBefore(h,el);
-        YDBSpoilers(n);
       }
     }
-    for (let i=0; i<e.querySelectorAll('blockquote, .spoiler').length; i++) {
-      let el = e.querySelectorAll('blockquote, .spoiler')[i];
-      if (el.innerHTML.startsWith('$')) {
-        let uid = '_ydb_spoil';
-        let h = InfernoAddElem('div',{className:'block'},[
-          InfernoAddElem('div',{className:'block__header'},[
-            InfernoAddElem('a',{className:uid},[
-              InfernoAddElem('i', {className:'fa', innerHTML:'\uF061'}),
-              InfernoAddElem('span',' Spoiler')
-            ])
-          ])
-        ]);
-        el.innerHTML = el.innerHTML.slice(1);
-        el.parentNode.insertBefore(h,el);
-        h.appendChild(el);
-        el.classList.add('block__content');
-        el.classList.add('hidden');
-        el.classList.remove('spoiler');
-        el.classList.add('ydb_t_block');
-        el.style.margin = 0;
-      }
-    }
-  }
-
-  //bad links fixes
-  function urlSearchInElem(e) {
-    let exclude = [];
-    for (let i=0; i<e.querySelectorAll('a').length; i++) exclude.push(e.querySelectorAll('a')[i].href);
-    for (let i=0; i<e.querySelectorAll('img').length; i++) exclude.push(e.querySelectorAll('img')[i].src);
-    for (let i=0; i<e.querySelectorAll('.image-show-container').length; i++) exclude.push(e.querySelectorAll('.image-show-container')[i].dataset.sourceUrl);
-    e.innerHTML = e.innerHTML.replace(/(.{0,2})(https?:\/\/|ftp:\/\/)((?![.,?!;:()]*(\s|$|\"|<))[^\s]){2,}/gim, function(str2) {
-      let ind = str2.search(/(https?:\/\/|ftp:\/\/)/);
-      let str = str2.substring(ind);
-      let apx = str2.substring(0, ind);
-      if (str2.startsWith(">")) return str2;
-      str = str.replace(/\&amp;/g,'&');
-      for (let i=0; i<exclude.length; i++) if (exclude[i] == str) return str2;
-      for (let i=0; i<exclude.length; i++) if (exclude[i] == str+'/') return str2;
-      for (let i=0; i<exclude.length; i++) if (exclude[i]+'/' == str) return str2;
-      if (e.innerText.indexOf(str) < 0) return str2;
-      let color = getComputedStyle(document.querySelector('footer a')).color;
-      return apx+'<a href="'+str+'" style="border-bottom: 1px dotted '+color+'">'+str+'</a>';
-    });
   }
 
   function urlSearch(e) {
     Array.from(e.querySelectorAll('.communication__body__text, .profile-about, .image-description')).forEach(elem => {
       greentext(elem);
-      urlSearchInElem(elem);
       YDBSpoilers(elem);
     });
   }
