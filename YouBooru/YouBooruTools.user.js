@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:Tools
-// @version      0.9.4
+// @version      0.9.5
 // @description  Some UI tweaks and more
 // @author       stsyn
 // @namespace    http://derpibooru.org
@@ -85,10 +85,10 @@
     general:`body[data-theme*=dark] ._ydb_green{background:#5b9b26;color:#e0e0e0!important}
 body ._ydb_green{background:#67af2b!important;color:#fff!important}
 body[data-theme*=dark] ._ydb_orange{background:#8b5b26;color:#e0e0e0!important}
-body ._ydb_orange{background:#9f6f2b!important;color:#fff!important}._ydb_t_patched{overflow-y:hidden}
-.ydb_t_block.block__content:not(.hidden){display:block}body[data-theme*=dark] .spoiler ._ydb_greentext{color:#782c21}
-body[data-theme*=dark] ._ydb_greentext,body[data-theme*=dark] .spoiler-revealed ._ydb_greentext,body[data-theme*=dark] .spoiler:hover ._ydb_greentext{color:#66e066}
-.spoiler ._ydb_greentext{color:#e88585}._ydb_greentext,.spoiler-revealed ._ydb_greentext,.spoiler:hover ._ydb_greentext{color:#0a0}`,
+body ._ydb_orange{background:#9f6f2b!important;color:#fff!important}
+._ydb_t_patched{overflow-y:hidden}
+.ydb_t_block.block__content:not(.hidden){display:block}
+.ydb_t_block.block__content>*:first-child::first-letter{font-size: 0;}`,
     bigSearch:`header ._ydb_t_textarea{resize:none;overflow:hidden;line-height:2em;white-space:pre}
 header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;overflow:auto;position:absolute;width:calc(100vw - 350px);height:5em;z-index:5;white-space:pre-wrap}
 #searchform textarea{min-width:100%;max-width:100%;min-height:2.4em;line-height:1.5em;height:7em}`
@@ -141,13 +141,6 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         {type:'input', name:'Shrink comments and posts longer than (px)', parameter:'shrinkComms', validation:{type:'int',min:280, default:500}},
         {type:'breakline'},
         {type:'checkbox', name:'Button to shrink expanded posts', parameter:'shrinkButt'},
-        {type:'breakline'},
-        {type:'checkbox', name:'Greentext (don\'t tell TSP about it)', parameter:'greenText',eventsI:{change:function (e) {
-          if ((document.body.dataset.userName == 'The Frowning Pony') || (document.body.dataset.userName == 'The Smiling Pony')) {
-            alert(errorMessages[errorLog++%errorMessages.length]);
-            e.target.checked = false;
-          }
-        }}},
         {type:'breakline'},
         {type:'checkbox', name:'Use endless related images search', parameter:'similar'},
         {type:'breakline'},
@@ -334,24 +327,6 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     ls.hideBadgesX = false;
     write(ls);
   }
-
-  if ((document.body.dataset.userName == 'The Frowning Pony') || (document.body.dataset.userName == 'The Smiling Pony')) {
-    ls.greenText = false;
-    localStorage._fucken_grin_ = 'caught';
-    write(ls);
-  }
-  else if (localStorage._fucken_grin_ == 'caught' && ls.greenText) {
-    alert('It\'s still you? :P');
-    ls.greenText = false;
-    write(ls);
-  }
-  if (ls.greenText === undefined) {
-    ls.greenText = true;
-    if (localStorage._fucken_grin_ == 'caught') ls.greenText = false;
-    write(ls);
-  }
-  let errorMessages = ['Nope', 'Nope', 'N-nope!', 'Stahp it', 'You don\'t want it', 'Go ewey', 'ples', 'Look, I don\'t want permaban, so, stop it c:', 'Plz', ':c', 'why u so bad?'];
-  let errorLog = 0;
 
   /*/////////////////////////////////////////////////
 
@@ -843,37 +818,6 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
     setTimeout(colorTags,500);
   }
 
-  //greenText
-  function greentext(e) {
-    let parser = function(et) {
-      for (let i=0; i<et.childNodes.length; i++) {
-        let el = et.childNodes[i];
-        if (el.tagName != undefined) {
-          if (el.tagName != 'A') parser(el);
-        }
-        else {
-          let x = el.textContent.replace(/^\s+/g,'');
-          let els = [el];
-          let z = el.nextSibling;
-          while (z && z.tagName != 'BR' && z.tagName != 'BLOCKQUOTE') {
-            els.push(z);
-            if (z.outerHTML) x += z.outerHTML;
-            else x += z.textContent;
-            z = z.nextSibling;
-          }
-          if (x.startsWith('>')) {
-            let t = createElement('span._ydb_greentext', x);
-            et.insertBefore(t,el);
-            for (let j=0; j<els.length; j++) {
-              et.removeChild(els[j]);
-            }
-          }
-        }
-      }
-    };
-    parser(e);
-  }
-
   //spoilers
   //help
   function YDBSpoilersHelp() {
@@ -941,13 +885,30 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
         n.style.margin = 0;
         el.style.display = 'none';
         el.parentNode.insertBefore(h,el);
+      } else {
+        const h = createElement('.block', [
+          ['.block__header', [
+            ['a._ydb_spoil', [
+              ['i.fa', '\uF061'],
+              ['span', ' Spoiler'],
+            ]]
+          ]],
+        ]);
+
+        el.classList.add('block__content');
+        el.classList.add('hidden');
+        el.classList.remove('spoiler');
+        el.classList.add('ydb_t_block');
+        el.style.margin = 0;
+
+        el.parentNode.insertBefore(h, el);
+        h.appendChild(el);
       }
     }
   }
 
   function urlSearch(e) {
     Array.from(e.querySelectorAll('.communication__body__text, .profile-about, .image-description')).forEach(elem => {
-      greentext(elem);
       YDBSpoilers(elem);
     });
   }
