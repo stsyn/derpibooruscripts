@@ -93,7 +93,7 @@
       setTimeout(() => objects.scrapperLoader.click(), 1000);
     }
     if (decodeURIComponent(url.params.description) != 'undefined' && !objects.description.value) {
-      objects.description.value = decodeURIComponent(url.params.description).replace(/\n\s*\n/g, '\n').replace(/^\s*/mg, '');
+      objects.description.value = decodeURIComponent(url.params.description).replace(/[^\S\n]+\n/mg, '\n');
     }
     if (decodeURIComponent(url.params.originView) != 'undefined') {
       objects.preview.src = url.params.originView;
