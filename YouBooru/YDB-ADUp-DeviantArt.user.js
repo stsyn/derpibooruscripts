@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.6.0
+// @version      0.6.1
 // @author       stsyn
 // @include      http*://*.deviantart.com/*
 // @include      /http(s|):\/\/(www\.|)(trixie|derpi)booru.org\/images\/new.*/
@@ -24,8 +24,6 @@
   const LINK = '._277bf._3VrNw';
   const LOGIN = 'BoW0n';
 
-  const leak = true;
-  
   let l, width, height, artist;
 
   function spawn(link, text) {
@@ -34,7 +32,7 @@
     target = document.querySelector(RIGHTPAD);
     target2 = target.querySelector('._ydb_adup') || createElement('div._ydb_adup' + PAD);
     target.insertBefore(target2, target.children[0]);
-    target3 = document.createElement('div' + SPAD);
+    target3 = createElement('div' + SPAD);
     target2.appendChild(target3);
 
     let href = '//'+mainDomain+'/images/new?newImg='+encodeURIComponent(link)+
@@ -88,7 +86,6 @@
     }
     let dlink, text = '';
 
-    const o = Array.from(document.querySelectorAll('.pimp a.thumb')).pop();
     artist = document.querySelector('[data-hook="deviation_meta"] a[data-hook="user_link"]').dataset.username.toLowerCase();
 
     document.querySelector(RIGHTPAD).classList.add('patched');
