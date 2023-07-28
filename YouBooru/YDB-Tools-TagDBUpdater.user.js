@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name          YDB:Tools Tag DB Filler
 // @namespace     http://derpibooru.org
-// @version       0.1
+// @version       0.1.1
 // @description   Fullfills static db for tag highlighting
 // @author        stsyn
-// @include       /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*/
+// @include         /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*/
 // @grant         none
 
 // @require       https://github.com/stsyn/createElement/raw/component/src/es5.js
@@ -43,7 +43,7 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
     },
     regulars: {
       oc:/^oc:/,
-      origin:/^(artist:|editor:|colorist:|photographer:)/,
+      origin:/^(artist:|editor:|colorist:|photographer:|generator:|prompter:)/,
       'content-fanmade':/^(comic:|fanfic:|art pack:|tumblr:|series:)/,
       spoiler:/^spoiler:/
     },
@@ -51,7 +51,7 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
 
   const prefixes = {
     oc: ['oc:'],
-    origin: ['artist:', 'editor:', 'colorist:', 'photographer:' ],
+    origin: ['artist:', 'editor:', 'colorist:', 'photographer:', 'generator:', 'prompter:' ],
     'content-fanmade': ['comic:', 'fanfic:', 'art pack:', 'tumblr:', 'series:' ],
     spoiler: ['spoiler:'],
   }
