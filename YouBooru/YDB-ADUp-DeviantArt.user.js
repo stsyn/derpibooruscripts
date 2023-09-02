@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.6.1
+// @version      0.6.2
 // @author       stsyn
-// @include      http*://*.deviantart.com/*
-// @include      /http(s|):\/\/(www\.|)(trixie|derpi)booru.org\/images\/new.*/
+// @match        http*://*.deviantart.com/*
+// @match        /http(s|):\/\/(www\.|)(trixie|derpi)booru.org\/images\/new.*/
 // @require      https://github.com/stsyn/createElement/raw/master/min/es5.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/ADUp-mini.js
+// @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp-DeviantArt.user.js
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp-DeviantArt.user.js
 // @grant        unsafeWindow
 // @grant        GM_download
@@ -122,7 +123,7 @@
 
       // token kek
       // All credit goes to @Ironchest337
-      const payload = `{"sub":"urn:app:","iss":"urn:app:","obj":[[{"path":"\/f\/${data.baseUri.split('/f/')[1].replace(/\//g, '\/')}"}]],"aud":["urn:service:file.download"]}`;
+      const payload = `{"sub":"urn:app:","iss":"urn:app:","obj":[[{"path":"\/f\/${data.baseUri.split(/\/[if]\//)[1].replace(/\//g, '\/')}"}]],"aud":["urn:service:file.download"]}`;
       spawn(`${data.baseUri}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.${btoa(payload).replace(/=/g, '')}.`, 'token kek');
 
       spawn(await fetchFullFromLoginScreen(), 'login leak');
