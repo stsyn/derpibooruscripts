@@ -91,7 +91,7 @@
     }
 
     elems.button.addEventListener('click', async(e) => {
-      const currentSource = document.querySelector('._madup-url');
+      const currentSource = document.querySelector('._madup-url').value;
       if (!isOurTarget(currentSource)) {
         return;
       }
