@@ -1,9 +1,12 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.6.2
+// @version      0.6.3
 // @author       stsyn
 // @match        http*://*.deviantart.com/*
-// @match        /http(s|):\/\/(www\.|)(trixie|derpi)booru.org\/images\/new.*/
+// @match        https://derpibooru.org/images/new*
+// @match        https://www.derpibooru.org/images/new*
+// @match        https://trixiebooru.org/images/new*
+// @match        https://www.trixiebooru.org/images/new*
 // @require      https://github.com/stsyn/createElement/raw/master/min/es5.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/ADUp-mini.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-ADUp-DeviantArt.user.js
@@ -111,10 +114,12 @@
         } else {
           dlink = data.baseUri + `/v1/fill/w_${fullview.w},h_${fullview.h},q_100,strp/${data.prettyName}-pre.jpg?token=` + data.token[0];
         }
-      } else {
+      } else if (data.token) {
           dlink = data.baseUri + '?token=' + data.token[0];
       }
-      spawn(dlink, 'failsafe');
+      if (dlink) {
+        spawn(dlink, 'failsafe');
+      }
 
       // intermediary
       dlink = data.baseUri.replace('.com/f/', '.com/intermediary/f/');
