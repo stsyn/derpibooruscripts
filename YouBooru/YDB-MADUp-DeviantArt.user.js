@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         YDB:MADUp - DeviantArt
 // @namespace    http://derpibooru.org
-// @version      0.1.4
-// @description  Automates process of image updating (for DeviantArt)
+// @version      0.2.0
+// @description  Simplifies process of image updating and uploading (for DeviantArt)
 // @author       stsyn
 
 // @match        *://*/*
@@ -29,13 +29,21 @@
   }
 
   const container = document.querySelector('.block__tab[data-tab="replace"] form');
-  const source = document.querySelector('.js-source-link').href;
+  const source = document.querySelector('.js-source-link')?.href;
   const replaceInput = document.getElementById('image_scraper_url');
   const replaceFetch = document.getElementById('js-scraper-preview');
   const elems = {};
 
-  if (container && (source.match(/.*\.deviantart\.com\/(.*\/|)art\/.*/) || source.match(/.*\/\/fav\.me\/d.*/))) {
+  const uploadContainer = document.querySelector('form[action="/images"][method="post"]');
+
+  const isOurTarget = str => str.match(/.*\.deviantart\.com\/(.*\/|)art\/.*/) || str.match(/.*\/\/fav\.me\/d.*/);
+
+  if (container && isOurTarget(source)) {
     appendButton();
+  }
+
+  if (uploadContainer) {
+    appendSection();
   }
 
   function wait(time) {
@@ -44,22 +52,75 @@
 
   function appendButton() {
     container.appendChild(createElement('hr'));
-    container.appendChild(createElement(YDB_api.UI.button, { onclick: tryFetch, _cast: e => elems.button = e }, 'Auto-fetch'));
+    container.appendChild(createElement(YDB_api.UI.button, { onclick: () => tryFetch(source), _cast: e => elems.button = e }, 'Auto-fetch'));
   }
 
-  async function tryFetch() {
+  function appendSection() {
+    const oldButton = document.querySelector('_madup-fetch');
+    if (!oldButton) {
+      const target = document.querySelector('.image-other');
+      target.appendChild(createElement('hr'));
+      let currentSource;
+      target.appendChild(createElement('.field.field--inline', [
+        [YDB_api.UI.input, {
+          className: '_madup-url',
+          _cast: e => elems.input = e,
+          inline: true,
+          fullWidth: true,
+          onchange: (e) => currentSource = e.target.value,
+          placeholder: 'Input for alternative fetch'
+        }],
+        [YDB_api.UI.button, {
+          className: ' _madup-fetch',
+          onclick: async(e) => {
+            if (!currentSource) {
+              return;
+            }
+            alert('Either no known targets found or another error occuppied, fallbacking to default fetch');
+
+            replaceInput.value = currentSource;
+            replaceFetch.disabled = false;
+            await wait(200);
+            replaceFetch.click();
+          },
+          _cast: e => elems.button = e,
+        }, 'Alt fetch']
+      ]));
+    } else {
+      elems.button = oldButton;
+    }
+
+    elems.button.addEventListener('click', async(e) => {
+      const currentSource = document.querySelector('._madup-url');
+      if (!isOurTarget(currentSource)) {
+        return;
+      }
+      e.stopImmediatePropagation();
+      tryFetch(currentSource);
+      let srcElement = Array.from(document.querySelectorAll('.js-source-url')).filter(e => !e.value)[0];
+      if (!srcElement) {
+        document.querySelector('.js-image-add-source').click();
+        await wait(200);
+        srcElement = Array.from(document.querySelectorAll('.js-source-url')).filter(e => !e.value)[0];
+      }
+
+      srcElement.value = currentSource;
+    }, { capture: true });
+  }
+
+  async function tryFetch(url) {
     let content;
     try {
       elems.button.disabled = true;
 
-      const response = await GM.fetch(source);
+      const response = await GM.fetch(url);
       const text = await response.text();
       const match = text.match(/window.__INITIAL_STATE__ = JSON.parse\("(.*)"\);/)[1].replace(/\\(.)/g, '$1');
       content = JSON.parse(match);
       const deviationId = Object.keys(content['@@entities'].deviationExtended)[0];
       const deviation = content['@@entities'].deviation[deviationId];
 
-      const payload = `{"sub":"urn:app:","iss":"urn:app:","obj":[[{"path":"\/f\/${deviation.media.baseUri.split('/f/')[1].replace(/\//g, '\/')}"}]],"aud":["urn:service:file.download"]}`;
+      const payload = `{"sub":"urn:app:","iss":"urn:app:","obj":[[{"path":"\/f\/${deviation.media.baseUri.split(/\/[if]\//)[1].replace(/\//g, '\/')}"}]],"aud":["urn:service:file.download"]}`;
       const link = `${deviation.media.baseUri}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.${btoa(payload).replace(/=/g, '')}.`;
 
       replaceInput.value = link;
