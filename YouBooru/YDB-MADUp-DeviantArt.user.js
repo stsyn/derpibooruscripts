@@ -84,7 +84,7 @@
             replaceFetch.click();
           },
           _cast: e => elems.button = e,
-        }, 'Alt fetch']
+        }, ['Alt fetch']]
       ]));
     } else {
       elems.button = oldButton;
