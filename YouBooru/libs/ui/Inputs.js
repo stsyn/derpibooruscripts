@@ -6,12 +6,12 @@ YDB_api.UI.input = props => {
   const id = otherProps.id || `${otherProps.name}-${Math.floor(Math.random() * 10000)}`;
 
   if (inline) {
-    return ['input.input', { ...otherProps, oninput: onchange, onchange, _redraw, className: (fullWidth ? 'input--wide' : '') + (className || '') , id }];
+    return ['input.input', { ...otherProps, oninput: onchange, onchange, _redraw, className: (fullWidth ? 'input--wide ' : '') + (className || '') , id }];
   }
 
   return ['.field', { _redraw }, [
     label ? ['label', { for: id }, label + ' '] : null,
-    ['input.input', { ...otherProps, oninput: onchange, onchange, className: (fullWidth ? 'input--wide' : '') + (className || '') , id }],
+    ['input.input', { ...otherProps, oninput: onchange, onchange, className: (fullWidth ? 'input--wide ' : '') + (className || '') , id }],
     fieldLabel ? ['div', [
       ['i', fieldLabel],
     ]] : null,
