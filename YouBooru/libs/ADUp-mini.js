@@ -11,7 +11,7 @@
   const objects = {};
   objects.tagInput = document.getElementById('image_tag_input');
   objects.tagSwitch = document.querySelector('.button.button--state-primary.button--bold.js-taginput-show');
-  objects.imageSource = document.getElementById('image_source_url');
+  objects.imageSource = document.getElementById('image_sources_0_source');
   objects.scrapper = document.getElementById('image_scraper_url') || document.getElementById('scraper_url');
   objects.scrapperLoader = document.getElementById('js-scraper-preview');
   objects.description = document.getElementById('image_description');
@@ -69,7 +69,7 @@
   }
 
   function hasData() {
-    return objects.tagInput.value || objects.imageSource.value || objects.scrapper.value || objects.description.value;
+    return objects.tagInput.value || objects.scrapper.value || objects.description.value;
   }
 
   function fillData(url) {
