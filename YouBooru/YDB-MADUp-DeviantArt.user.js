@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YDB:MADUp - DeviantArt
 // @namespace    http://derpibooru.org
-// @version      0.2.0
+// @version      0.2.1
 // @description  Simplifies process of image updating and uploading (for DeviantArt)
 // @author       stsyn
 
@@ -52,7 +52,7 @@
 
   function appendButton() {
     container.appendChild(createElement('hr'));
-    container.appendChild(createElement(YDB_api.UI.button, { onclick: () => tryFetch(source), _cast: e => elems.button = e }, 'Auto-fetch'));
+    container.appendChild(createElement(YDB_api.UI.button, { onclick: () => tryFetch(source), _cast: e => elems.button = e }, ['Auto-fetch']));
   }
 
   function appendSection() {
