@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YDB:MADUp - DeviantArt
 // @namespace    http://derpibooru.org
-// @version      0.2.1
+// @version      0.2.2
 // @description  Simplifies process of image updating and uploading (for DeviantArt)
 // @author       stsyn
 
@@ -29,7 +29,7 @@
   }
 
   const container = document.querySelector('.block__tab[data-tab="replace"] form');
-  const source = document.querySelector('.js-source-link')?.href;
+  const sources = Array.from(document.querySelectorAll('.image_source__link a')).map(v => v.href);
   const replaceInput = document.getElementById('image_scraper_url');
   const replaceFetch = document.getElementById('js-scraper-preview');
   const elems = {};
@@ -38,8 +38,8 @@
 
   const isOurTarget = str => str.match(/.*\.deviantart\.com\/(.*\/|)art\/.*/) || str.match(/.*\/\/fav\.me\/d.*/);
 
-  if (container && isOurTarget(source)) {
-    appendButton();
+  if (container) {
+    sources.filter(isOurTarget).forEach(appendButton);
   }
 
   if (uploadContainer) {
@@ -50,9 +50,9 @@
     return new Promise(resolve => setTimeout(resolve, time));
   }
 
-  function appendButton() {
+  function appendButton(href) {
     container.appendChild(createElement('hr'));
-    container.appendChild(createElement(YDB_api.UI.button, { onclick: () => tryFetch(source), _cast: e => elems.button = e }, ['Auto-fetch']));
+    container.appendChild(createElement(YDB_api.UI.button, { onclick: () => tryFetch(href), _cast: e => elems.button = e }, ['DeviantArt auto-fetch']));
   }
 
   function appendSection() {
