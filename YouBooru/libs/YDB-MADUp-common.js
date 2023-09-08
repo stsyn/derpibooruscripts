@@ -4,7 +4,7 @@
 // @description  Simplifies process of image updating and uploading — shared derpi code
 // @author       stsyn
 
-// literally all boorus are supported by common library
+// literally all Philomena boorus are supported by common library
 // @match        *://*/*
 // @exclude      *://*/api*/json/*
 // @exclude      *://*/adverts/*
