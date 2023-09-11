@@ -1,10 +1,10 @@
 // ==UserScriptLib==
 // @name         YDB:MADUp - Common
-// @version      1.0.0L
+// @version      1.0.1L
 // @description  Simplifies process of image updating and uploading — shared derpi code
 // @author       stsyn
 
-// literally all Philomena boorus are supported by common library
+// literally all boorus are supported by common library
 // @match        *://*/*
 // @exclude      *://*/api*/json/*
 // @exclude      *://*/adverts/*
@@ -33,7 +33,9 @@ var YDB_MADUp = (function() {
   const enviroment = YDB_api.getEnviroment();
   const isBooru = enviroment !== 'unknown';
   if (!isBooru) {
-    return [noop];
+    return {
+      registerFetcher: noop,
+    };
   }
 
   const container = document.querySelector('.block__tab[data-tab="replace"] form');
