@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YDB:MADUp - DeviantArt
 // @namespace    http://derpibooru.org
-// @version      1.0.0
+// @version      1.0.1
 // @description  Simplifies process of image updating and uploading (for DeviantArt)
 // @author       stsyn
 
@@ -37,7 +37,7 @@
         const deviation = content['@@entities'].deviation[deviationId];
 
         const payload = `{"sub":"urn:app:","iss":"urn:app:","obj":[[{"path":"\/f\/${deviation.media.baseUri.split(/\/[if]\//)[1].replace(/\//g, '\/')}"}]],"aud":["urn:service:file.download"]}`;
-        const link = `${deviation.media.baseUri}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.${btoa(payload).replace(/=/g, '')}.`;
+        const link = `${deviation.media.baseUri.replace("//images-wixmp", "//wixmp")}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.${btoa(payload).replace(/=/g, '')}.`;
 
         return link;
       } catch(e) {
