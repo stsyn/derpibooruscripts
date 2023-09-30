@@ -1,6 +1,6 @@
 // ==UserScriptLib==
 // @name         YDB:MADUp - Common
-// @version      1.0.1L
+// @version      1.0.2L
 // @description  Simplifies process of image updating and uploading — shared derpi code
 // @author       stsyn
 
@@ -40,11 +40,11 @@ var YDB_MADUp = (function() {
 
   const container = document.querySelector('.block__tab[data-tab="replace"] form');
   const sources = Array.from(document.querySelectorAll('.image_source__link a')).map(v => v.href);
-  const replaceInput = document.getElementById('image_scraper_url');
+  const replaceInput = document.querySelector('#image_scraper_url, #image_url');
   const replaceFetch = document.getElementById('js-scraper-preview');
   const elems = {};
 
-  const uploadContainer = document.querySelector('form[action="/images"][method="post"]');
+  const uploadContainer = document.querySelector('form[action="/images"][method="post"], form[action="/search/reverse"][method="post"]');
 
   function registerFetcher(name, isOurTarget, fetchTarget) {
     const tryFetch = async(url) => {
@@ -112,7 +112,12 @@ var YDB_MADUp = (function() {
 
         await tryFetch(currentSource);
 
-        let srcElement = Array.from(document.querySelectorAll('.js-source-url')).filter(e => !e.value)[0];
+        const sources = Array.from(document.querySelectorAll('.js-source-url'));
+        if (!sources.length) {
+            return;
+        }
+
+        let srcElement = sources.filter(e => !e.value)[0];
         if (!srcElement) {
           document.querySelector('.js-image-add-source').click();
           await wait(200);
