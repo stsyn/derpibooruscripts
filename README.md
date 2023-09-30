@@ -3,7 +3,7 @@ Here are the userscripts related to the https://derpibooru.org. Most of them are
 
 ## Quick installation links and descriptions
 
-**YDB:Settings** — https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
+~~**YDB:Settings** — https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js~~ standalone is deprecated
 
 **YDB:Feeds** — https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooru.user.js — https://derpibooru.org/forums/meta/topics/userscript-yourbooru-feeds-on-the-main-page-0-5-37-0-9-34
 
