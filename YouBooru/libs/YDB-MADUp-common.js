@@ -1,6 +1,6 @@
 // ==UserScriptLib==
 // @name         YDB:MADUp - Common
-// @version      1.0.2L
+// @version      1.0.3L
 // @description  Simplifies process of image updating and uploading — shared derpi code
 // @author       stsyn
 
@@ -68,7 +68,7 @@ var YDB_MADUp = (function() {
     }
 
     const appendSection = () => {
-      const oldButton = document.querySelector('_madup-fetch');
+      const oldButton = document.querySelector('._madup-fetch');
       if (!oldButton) {
         const target = document.querySelector('.image-other');
         target.appendChild(createElement('hr'));
