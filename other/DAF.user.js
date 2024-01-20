@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DеviantArt Fucker
-// @version      0.3.0
+// @version      0.3.1
 // @description  You can run but you can't hide
 // @include      http*://*.deviantart.com/*
 // @include      http://*.mrsxm2lbnz2gc4tufzrw63i.cmle.*/*
@@ -47,8 +47,8 @@
   function spawnPreStarter(name, action) {
     makeElement(name, (e, element) => {
       e.preventDefault();
-      action(e);
-      element.parentNode.removeChild(element);
+      action(e, element);
+      element.style.pointerEvents = 'none';
     })
   }
 
@@ -97,10 +97,10 @@
     spawn('Open unwatermarked (Ctrl+ = download)', (event) => openOrDownload(canvas.toDataURL(), data.prettyName + '-uw.png'));
   }
 
-  async function combine(data) {
+  async function combine(data, extendedData, elem) {
     const fullview = data.media.types.find(item => item.t === 'fullview');
-    const targetWidth = data.extended.originalFile.width;
-    const targetHeight = data.extended.originalFile.height;
+    const targetWidth = extendedData.originalFile.width;
+    const targetHeight = extendedData.originalFile.height;
     const maxWidth = fullview.w;
     const maxHeight = fullview.h;
     const deltaWidth = Math.floor(maxWidth * 1);
@@ -112,10 +112,13 @@
     let offsetX = 0;
     let offsetY = 0;
 
+    const piecesTotal = Math.ceil(targetWidth / maxWidth) * Math.ceil(targetHeight / maxHeight);
+    let i = 0;
+
     while (offsetX <= targetWidth - maxWidth) {
       offsetY = 0;
       while (offsetY <= targetHeight - maxHeight) {
-        console.log(offsetX, offsetY, deltaWidth, deltaHeight);
+        elem.innerHTML = `${++i}/${piecesTotal}`;
         const image = await fetchImage(url());
 
         const temp = createElement('canvas', { width: targetWidth, height: targetHeight});
@@ -157,9 +160,10 @@
     const content = JSON.parse(match);
     const deviationId = Object.keys(content['@@entities'].deviationExtended)[0];
     const data = content['@@entities'].deviation[deviationId];
+    const extendedData = content['@@entities'].deviationExtended[deviationId];
 
-    spawnPreStarter('Unwatermark', () => unwatermark(data));
-    spawnPreStarter('Combine full', () => combine(data));
+    spawnPreStarter('Unwatermark', (_, elem) => unwatermark(data, extendedData, elem));
+    spawnPreStarter('Combine full', (_, elem) => combine(data, extendedData, elem));
   }
 
   window.addEventListener('popstate', _ => getMeta);
