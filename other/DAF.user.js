@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         DеviantArt Fucker
-// @version      0.3.1
+// @version      0.3.2
 // @description  You can run but you can't hide
-// @include      http*://*.deviantart.com/*
-// @include      http://*.mrsxm2lbnz2gc4tufzrw63i.cmle.*/*
+// @match        http*://*.deviantart.com/*
 
+// @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/other/DAF.user.js
 // @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/other/DAF.user.js
 // @require      https://github.com/stsyn/createElement/raw/master/min/es5.js
+// @require      https://github.com/stsyn/pngtoy/raw/patch-1/pngtoy.min.js
 
 // @grant        unsafeWindow
 // @grant        GM_download
@@ -20,6 +21,22 @@
   const PAD = '._3L-AU';
   const SPAD = '._2rl2o';
   const LINK = '._277bf._3VrNw';
+
+  function loadFileAsArrayBuffer(url) {
+    return new Promise((resolve, reject) => {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url);
+      xhr.responseType = 'arraybuffer';
+      xhr.onload = function(e) {
+        if (this.status === 200) {
+          resolve(this.response);
+        } else {
+          reject(this.response);
+        }
+      };
+      xhr.send();
+    })
+  };
 
   function makeElement(name, action) {
     let container, target2;
@@ -89,8 +106,8 @@
     while (width > 5) {
       const image = await fetchImage(url());
       ctx.drawImage(image, 0, offsetY, width, fullview.h - offsetY * 2, offsetX, offsetY, width, fullview.h - offsetY * 2);
-      offsetX += Math.floor(width / 4);
-      offsetY += Math.floor(height / 6);
+      offsetX += Math.floor(width / 4 + 0.5);
+      offsetY += Math.floor(height / 6 + 0.5);
       width = fullview.w - offsetX * 2;
       height = fullview.h - offsetY * 2;
     }
@@ -103,14 +120,19 @@
     const targetHeight = extendedData.originalFile.height;
     const maxWidth = fullview.w;
     const maxHeight = fullview.h;
-    const deltaWidth = Math.floor(maxWidth * 1);
-    const deltaHeight = Math.floor(maxHeight * 1);
+
     let canvas = createElement('canvas', { width: targetWidth, height: targetHeight});
     let ctx = canvas.getContext('2d');
-    const url = () => data.media.baseUri + `/v1/crop/x_${offsetX},y_${offsetY},w_${maxWidth},h_${maxHeight},q_100/${data.media.prettyName}-pre.png?token=` + data.media.token[0];
+    const url = (oX, oY, mW, mH) => data.media.baseUri + `/v1/crop/x_${oX},y_${oY},w_${mW},h_${mH},q_100/${data.media.prettyName}-pre.png?token=` + data.media.token[0];
+
+    const pngtoy = new PngToy();
+    let warnings = 0;
+    let errors = 0;
 
     let offsetX = 0;
     let offsetY = 0;
+    let currentWidth = maxWidth;
+    let currentHeight = maxHeight;
 
     const piecesTotal = Math.ceil(targetWidth / maxWidth) * Math.ceil(targetHeight / maxHeight);
     let i = 0;
@@ -118,8 +140,29 @@
     while (offsetX <= targetWidth - maxWidth) {
       offsetY = 0;
       while (offsetY <= targetHeight - maxHeight) {
-        elem.innerHTML = `${++i}/${piecesTotal}`;
-        const image = await fetchImage(url());
+
+        elem.innerHTML = `${++i}/${piecesTotal} ${errors ? ' (tainted)' : ''}`;
+
+        currentWidth = Math.min(maxWidth, targetWidth - offsetX);
+        currentHeight = Math.min(maxHeight, targetHeight - offsetY);
+        const arrayBuffer = await loadFileAsArrayBuffer(url(offsetX, offsetY, currentWidth, currentHeight));
+
+        await pngtoy.fetch(arrayBuffer);
+
+        const phys = pngtoy.getChunk('pHYs');
+        if (!phys || !phys.ppuX || !phys.ppuY) {
+            warnings++;
+        } else if (phys.ppuX == 1000 || phys.ppuY == 1000) {
+            errors++;
+            console.log(offsetX, offsetY, 'tainted');
+        }
+
+        const arrayBufferView = new Uint8Array(arrayBuffer);
+        const blob = new Blob([arrayBufferView], { type: "image/png" });
+        const urlCreator = window.URL || window.webkitURL;
+        const imageUrl = urlCreator.createObjectURL(blob);
+
+        const image = await fetchImage(imageUrl);
 
         const temp = createElement('canvas', { width: targetWidth, height: targetHeight});
         const tempCtx = temp.getContext('2d');
@@ -127,22 +170,28 @@
         tempCtx.drawImage(image, offsetX, offsetY);
         tempCtx.drawImage(canvas, 0, 0);
 
+        image.remove();
+        URL.revokeObjectURL(imageUrl);
+
         ctx = tempCtx;
         canvas = temp;
 
         if (offsetY === targetHeight - maxHeight) {
           break;
         }
-        offsetY = Math.min(targetHeight - maxHeight, offsetY + deltaHeight);
+        offsetY = Math.min(targetHeight - maxHeight, offsetY + maxHeight);
       }
 
       if (offsetX === targetWidth - maxWidth) {
         break;
       }
-      offsetX = Math.min(targetWidth - maxWidth, offsetX + deltaWidth);
+      offsetX = Math.min(targetWidth - maxWidth, offsetX + maxWidth);
     }
 
-    spawn('Open full (Ctrl+ = download)', (event) => openOrDownload(canvas.toDataURL(), data.media.prettyName + '-full.png'));
+    spawn(
+      'Open full (Ctrl+ = download)' + (errors ? ' [Low quality detected!]' : (warnings ? ' [Unable to check quality]' : '')),
+      (event) => openOrDownload(canvas.toDataURL(), data.media.prettyName + '-full.png'),
+    );
   }
 
 
