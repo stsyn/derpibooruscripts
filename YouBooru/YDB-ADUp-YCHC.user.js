@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YCH.Commishes YDB:ADUp module
-// @version      0.2.6
+// @version      0.3.0
 // @author       stsyn
 // @include      https://portfolio.commishes.com/upload/show/*
 // @include      https://ych.commishes.com/followUp/show/*
@@ -83,7 +83,7 @@
     container.style.height = 'auto';
     container.style.marginBottom = '20px';
 
-    const xid = document.querySelector('meta[name="og:image"]').content.split('/')[5];
+    const xid = parseInt(location.pathname.split('/')[3], 32);
     const src = 'https://portfolio.commishes.com/image/'+xid+'/original/';
     const aname = document.querySelector('.span.s2 div a').innerText;
 
