@@ -1,6 +1,6 @@
 // ==UserScriptLib==
 // @name         YDB:MADUp - Common
-// @version      1.0.3L
+// @version      1.1.0L
 // @description  Simplifies process of image updating and uploading — shared derpi code
 // @author       stsyn
 
@@ -24,11 +24,16 @@
  * YDB_MADUp.registerFetcher(name, siteMatcher, fetcher) => void
  * @param name string — human-readable target site name;
  * @param siteMatcher (url: string) => boolean — function to check if script is able to evaluate source;
- * @param fetcher (url: string, options: Options) => Promise<string | { imageUrl: string }> — function to fetch provided url and retrieve image url.
+ * @param fetcher (url: string, options: Options) => Promise<string | Response> — function to fetch provided url and retrieve image url or more content.
+ * Response is:
+ * - imageUrl — just plain image url;
+ * - blob (API version 1+) — image blob to be inserted in form directly.
  * It's expected that you will show the error message and reject in case of troble.
  * * @param options — right now it's just {}, some properties could be added.
+ * @param apiVersionRequired — minimal version of API you rely on. Right now maximum is 1.
  */
 var YDB_MADUp = (function() {
+  const apiVersion = 1;
   const noop = () => {};
   const enviroment = YDB_api.getEnviroment();
   const isBooru = enviroment !== 'unknown';
@@ -41,18 +46,34 @@ var YDB_MADUp = (function() {
   const container = document.querySelector('.block__tab[data-tab="replace"] form');
   const sources = Array.from(document.querySelectorAll('.image_source__link a')).map(v => v.href);
   const replaceInput = document.querySelector('#image_scraper_url, #image_url');
+  const replaceFileInput = document.querySelector('#image_image');
   const replaceFetch = document.getElementById('js-scraper-preview');
   const elems = {};
 
   const uploadContainer = document.querySelector('form[action="/images"][method="post"], form[action="/search/reverse"][method="post"]');
 
-  function registerFetcher(name, isOurTarget, fetchTarget) {
+  function registerFetcher(name, isOurTarget, fetchTarget, apiVersionRequired) {
+    if ((apiVersionRequired ?? 0) > apiVersion) {
+        alert(`${name} fetcher (from "${GM.info.script.name}" v.${GM.info.script.version}) requires newer library version.
+Please reinstall fetcher to update library or contact developer.
+
+Or disable it if this popup annoys you and nothing works`);
+    }
     const tryFetch = async(url) => {
       try {
         elems.button.disabled = true;
         const result = await fetchTarget(url);
         const imageUrl = typeof result === 'string' ? result : result.imageUrl;
-        replaceInput.value = imageUrl;
+        if (result.blob) {
+          const file = new File([result.blob], 'img', { type: result.blob.type, lastModified: Date.now() });
+          const container = new DataTransfer();
+          container.items.add(file);
+          replaceFileInput.files = container.files;
+          const event = new Event('change');
+          replaceFileInput.dispatchEvent(event);
+        } else {
+          replaceInput.value = imageUrl;
+        }
         // fixing derpi ui
         replaceFetch.disabled = false;
         await wait(200);
@@ -98,7 +119,6 @@ var YDB_MADUp = (function() {
             _cast: e => elems.button = e,
           }, ['Alt fetch']]
         ]));
-        console.log(target);
       } else {
         elems.button = oldButton;
       }
