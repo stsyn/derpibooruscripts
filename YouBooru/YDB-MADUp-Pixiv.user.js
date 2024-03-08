@@ -14,8 +14,8 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/api/Basics.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/YDB-MADUp-common.js
 
-// @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-MADUp-DeviantArt.user.js
-// @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-MADUp-DeviantArt.user.js
+// @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-MADUp-Pixiv.user.js
+// @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YDB-MADUp-Pixiv.user.js
 
 // @grant        GM.xmlHttpRequest
 // ==/UserScript==
