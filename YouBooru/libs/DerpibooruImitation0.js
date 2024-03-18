@@ -230,22 +230,22 @@ function processor(f, a) {
 		querySelectAll(".image-container", a).filter(function(a) {
 			return forcedOff || !isSpoilered(a, hasTags(a, b), hiddenImageProtoShort)
 		}).filter(function(a) {
-			return forcedOff || !isSpoilered(a, e.hitsImage(a), hiddenComplexImageProtoShort)
+			return forcedOff || !isSpoilered(a, e(a), hiddenComplexImageProtoShort)
 		}).filter(function(a) {
 			return forcedOff || !isSpoilered(a, hasTags(a, c), spoileredImageProtoShort)
 		}).filter(function(a) {
-			return forcedOff || !isSpoilered(a, f.hitsImage(a), spoileredComplexImageProtoShort)
+			return forcedOff || !isSpoilered(a, f(a), spoileredComplexImageProtoShort)
 		}).forEach(function(a) {
 			return ia(a)
 		});
 		querySelectAll(".image-show-container", a).filter(function(a) {
 			return forcedOff || !isSpoilered(a, hasTags(a, b), hiddenImageProto)
 		}).filter(function(a) {
-			return forcedOff || !isSpoilered(a, e.hitsImage(a), hiddenComplexImageProto)
+			return forcedOff || !isSpoilered(a, e(a), hiddenComplexImageProto)
 		}).filter(function(a) {
 			return forcedOff || !isSpoilered(a, hasTags(a, c), spoileredImageProto)
 		}).filter(function(a) {
-			return forcedOff || !isSpoilered(a, f.hitsImage(a), spoileredComplexImageProto)
+			return forcedOff || !isSpoilered(a, f(a), spoileredComplexImageProto)
 		}).forEach(function(a) {
 			return unspoilImage(a)
 		})
