@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:Feeds
-// @version      0.5.44
+// @version      0.5.45
 // @description  Feedz
 // @author       stsyn
 // @namespace    http://derpibooru.org
