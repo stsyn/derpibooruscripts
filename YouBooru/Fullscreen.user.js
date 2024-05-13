@@ -2,7 +2,7 @@
 
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://derpibooru.org
-// @version      0.7.52
+// @version      0.7.53
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -34,7 +34,7 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
   'use strict';
   const currentColorApi = 4;
 
-  const de = document.documentElement;
+  let de = document.documentElement;
   let popUps = {};
   let objects = {};
   let pub = {};
@@ -1001,6 +1001,7 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
   register();
   if (document.title == "Update Deployment - Derpibooru - My Little Pony: Friendship is Magic Imageboard") return;
   document.addEventListener('DOMContentLoaded', () => {
+    de = de || document.documentElement;
     cm_bg();
     if (document.getElementById('user_theme')) document.getElementById('user_theme').addEventListener('change',() => {
       remove('colorAccent');
@@ -1008,7 +1009,7 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
         if (isDarkF()) objects.colorAccent.classList.add('explicit_dark');
         else objects.colorAccent.classList.remove('explicit_dark');
       }, 200);
-      setTimeout(() => enableColor(true),777);
+      setTimeout(() => enableColor(true), 777);
     });
     setTimeout(() => {
       if (document.getElementById('_fs_color_setting')) {
