@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:Tools
-// @version      0.9.5
+// @version      0.9.6
 // @description  Some UI tweaks and more
 // @author       stsyn
 // @namespace    http://derpibooru.org
@@ -1327,9 +1327,9 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
 
   //similar images
   function similar() {
-    if (document.getElementById('image_old_tag_list') == undefined) return;
-    let tags = '('+document.getElementById('image_old_tag_list').value.replace(/\, /g,' || ')+' || *), -(id:'+document.getElementsByClassName('image-show-container')[0].dataset.imageId+')';
-    document.querySelectorAll('a[href*="/related/"]').forEach(function(e,i,a) {e.href = '/search?q='+encodeURIComponent(tags).replace(/%20/g,'+')+'&sd=desc&sf=random';});
+    if (document.getElementById('tags-form_tag_input') == undefined) return;
+    let tags = '('+document.getElementById('tags-form_tag_input').value.replace(/\, /g,' || ')+' || *), -(id:'+document.getElementsByClassName('image-show-container')[0].dataset.imageId+')';
+    document.querySelectorAll('a[href*="/related"]').forEach(function(e,i,a) {e.href = '/search?q='+encodeURIComponent(tags).replace(/%20/g,'+')+'&sd=desc&sf=_score';});
   }
 
   function commentButtons(e) {
@@ -2898,7 +2898,7 @@ header ._ydb_t_textarea:focus{max-width:calc(100vw - 350px);margin-top:1.5em;ove
   try {aliases();} catch(e) {error("aliases", e)};
   try {asWatchlist();} catch(e) {error("asWatchlist", e)};
   try {YDBSpoilersHelp();} catch(e) {error("YDBSpoilersHelp", e)};
-  if (ls.similar) try {similar();} catch(e) {error("bigSearch", e)};
+  if (ls.similar) try {similar();} catch(e) {error("similar", e)};
   try {listRunInComms(document);} catch(e) {error("listRunInComms", e)};
   if (ls.deactivateButtons) try {deactivateButtons(document, true);} catch(e) {error("deactivateButtons", e)};
   if (ls.oldHead) try {oldHeaders();} catch(e) {error("oldHead", e)};
