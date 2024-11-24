@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:MT
-// @version      0.1.22
+// @version      0.1.23
 // @author       stsyn
 // @namespace    http://derpibooru.org
 
@@ -182,7 +182,13 @@
       if (e.keyCode == 72) {
         if (!(e.altKey || e.ctrlKey || e.metaKey || "INPUT" === document.activeElement.tagName || "TEXTAREA" === document.activeElement.tagName)) {
           if (styleElem) styleElem.media = 'all';
-          else styleElem = GM_addStyle('.js-staff-action{display:none !important}');
+          else styleElem = GM_addStyle(`
+          .communication__options > .flex ~ *,
+          a[href*="ip_profiles"],
+          a[href*="fingerprint_profiles"],
+          .js-staff-action
+            { display:none !important }
+          `);
         }
       }
     });
