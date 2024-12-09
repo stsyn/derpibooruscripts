@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Tantabus Vote Migrator
-// @version      0.0.2
+// @version      0.0.3
 // @description  Copies votes from one booru to another
 // @author       stsyn
 
@@ -59,7 +59,11 @@
   }
 
   function writeLog(data) {
-    log.insertBefore(createElement('div', [data]), log.children[0]);
+    try {
+      log.insertBefore(createElement('div', [data]), log.children[0]);
+    } catch(e) {
+      console.error(data);
+    }
   }
 
   async function pause(ms) {
@@ -115,7 +119,7 @@
         `!!! Several pics (${data.total}) matched the same `,
         ['a', { target: '_blank', href: `https://derpibooru.org/${id}` }, id],
         ':',
-        imgs.map((id) => ['a', { target: '_blank', href: `https://tantabus.ai/${id}` }, id]),
+        ...imgs.map((id) => ['a', { target: '_blank', href: `https://tantabus.ai/${id}` }, id]),
       ]]);
 
       return null;
@@ -159,18 +163,22 @@
       if (newId != undefined) {
         imgsToDoStuff.push(newId);
       }
+      if (newId == undefined) {
+        continue;
+      }
       await queue;
       queue = vote(newId, handler, kind);
     }
     writeLog(`Processed ${imgsToDoStuff.length} of ${ids.length} from ${kind}`);
   }
 
-  async function start() {
+  async function start(ignore) {
     writeLog(`Do NOT close the window which have just opened right now!`);
     writeLog(`Process started, do not interact with either of derpibooru or tantabus!`);
     nearest = window.open(getImageUrl({ id: 3 }), '_blank', 'location=yes,height=400,width=520,scrollbars=yes,status=yes');
     let queue;
     for (let kind in handlers) {
+      if (ignore.includes(kind)) continue;
       const handler = handlers[kind];
       const images = await fetchAll(handler.extender, kind);
       writeLog(`Everything from ${kind} fetched, gathering matches, be patient...`);
@@ -182,22 +190,24 @@
   }
 
   function render() {
-    let input, input2;
+    let input, input2, input3;
 
     return [
       [YDB_api.UI.block, [
         'Import votes from derpibooru',
         [YDB_api.UI.input, { type: 'password', _cast: (e) => input = e, label: 'API key from origin site (derpibooru)' }],
         [YDB_api.UI.input, { type: 'password', _cast: (e) => input2 = e, label: 'API key from target site (tantabus)' }],
+        [YDB_api.UI.input, { type: 'text', _cast: (e) => input3 = e, label: 'Skip up to "faves, upvotes, hidden"' }],
         [YDB_api.UI.button, { onclick: async() => {
           if (inProgress || !input.value || !input2.value) {
             return
           }
 
+          const ignore = (input3.value || '').split(',').map(v => v.toLowerCase().trim());
           key = input.value;
           targetKey = input2.value;
           inProgress = true;
-          start();
+          start(ignore);
         } }, 'Process'],
       ]],
 
