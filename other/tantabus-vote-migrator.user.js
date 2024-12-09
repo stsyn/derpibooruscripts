@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Tantabus Vote Migrator
-// @version      0.0.4
+// @version      0.1.0
 // @description  Copies votes from one booru to another
 // @author       stsyn
 
@@ -74,22 +74,43 @@
     nearest.location.href = url;
 
     return new Promise((resolve) => {
+      let tries = 0;
       const interval = setInterval(() => {
-        if (url === nearest.location.href && ["complete", "interactive"].includes(nearest.document.readyState)) {
+        if (url === nearest.location.href.split('#')[0] && ["complete", "interactive"].includes(nearest.document.readyState)) {
           clearInterval(interval);
           resolve();
         }
-      }, 100);
+
+        tries++;
+        if (tries % 5 === 4) {
+          nearest.location.href = url;
+        }
+      }, 200);
     })
   }
 
-  async function fetchAll(extender, kind) {
+  async function fetchAll(extender, kind, from, to) {
     let total = 0;
     let collected = [];
     let page = 1;
+    let fromArg = Number.isNaN(from) ? null : from;
+    let toArg = Number.isNaN(to) ? null : to;
+
+    const largeExtender = (() => {
+      let temp = extender;
+      if (fromArg != null) {
+        temp += `%2Cid.gte%3A${fromArg}`;
+      }
+
+      if (toArg != null) {
+        temp += `%2Cid.lte%3A${toArg}`;
+      }
+
+      return temp;
+    })();
 
     do {
-      const response = await GM.fetch(getOriginSearchUrl({ key, extender, page }));
+      const response = await GM.fetch(getOriginSearchUrl({ key, extender: largeExtender, page }));
       const data = await response.json();
       if (!total) {
         writeLog(`Retrieving ${data.total} of ${kind}...`);
@@ -167,12 +188,12 @@
         continue;
       }
       await queue;
-      queue = vote(newId, handler, kind);
+      queue = Promise.all([vote(newId, handler, kind), pause(1000)]);
     }
     writeLog(`Processed ${imgsToDoStuff.length} of ${ids.length} from ${kind}`);
   }
 
-  async function start(ignore) {
+  async function start(ignore, { from, to }) {
     writeLog(`Do NOT close the window which have just opened right now!`);
     writeLog(`Process started, do not interact with either of derpibooru or tantabus!`);
     nearest = window.open(getImageUrl({ id: 3 }), '_blank', 'location=yes,height=400,width=520,scrollbars=yes,status=yes');
@@ -180,7 +201,7 @@
     for (let kind in handlers) {
       if (ignore.includes(kind)) continue;
       const handler = handlers[kind];
-      const images = await fetchAll(handler.extender, kind);
+      const images = await fetchAll(handler.extender, kind, from, to);
       writeLog(`Everything from ${kind} fetched, gathering matches, be patient...`);
       await queue;
       queue = interactWithEverything(images, handler, kind);
@@ -190,14 +211,16 @@
   }
 
   function render() {
-    let input, input2, input3;
+    let input, input2, input3, inputFrom, inputTo;
 
     return [
       [YDB_api.UI.block, [
         'Import votes from derpibooru',
-        [YDB_api.UI.input, { type: 'password', _cast: (e) => input = e, label: 'API key from origin site (derpibooru)' }],
-        [YDB_api.UI.input, { type: 'password', _cast: (e) => input2 = e, label: 'API key from target site (tantabus)' }],
+        [YDB_api.UI.input, { type: 'password', _cast: (e) => input = e, label: 'API key from origin site (derpibooru)', name: 'derpiKey' }],
+        [YDB_api.UI.input, { type: 'password', _cast: (e) => input2 = e, label: 'API key from target site (tantabus)', name: 'tantabusKey' }],
         [YDB_api.UI.input, { type: 'text', _cast: (e) => input3 = e, label: 'Skip up to "faves, upvotes, hidden"' }],
+        [YDB_api.UI.input, { type: 'number', _cast: (e) => inputFrom = e, label: 'From derpi image id (smaller one) - omit if unneeded', name: 'from' }],
+        [YDB_api.UI.input, { type: 'number', _cast: (e) => inputTo = e, label: 'To derpi image id (larger one) - omit if unneeded', name: 'to' }],
         [YDB_api.UI.button, { onclick: async() => {
           if (inProgress || !input.value || !input2.value) {
             return
@@ -207,7 +230,7 @@
           key = input.value;
           targetKey = input2.value;
           inProgress = true;
-          start(ignore);
+          start(ignore, { from: parseInt(inputFrom.value), to: parseInt(inputTo.value) });
         } }, 'Process'],
       ]],
 
