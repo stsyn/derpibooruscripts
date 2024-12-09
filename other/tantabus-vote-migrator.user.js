@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Tantabus Vote Migrator
-// @version      0.0.3
+// @version      0.0.4
 // @description  Copies votes from one booru to another
 // @author       stsyn
 
@@ -75,7 +75,7 @@
 
     return new Promise((resolve) => {
       const interval = setInterval(() => {
-        if (url === nearest.location.href && nearest.document.readyState === "complete") {
+        if (url === nearest.location.href && ["complete", "interactive"].includes(nearest.document.readyState)) {
           clearInterval(interval);
           resolve();
         }
