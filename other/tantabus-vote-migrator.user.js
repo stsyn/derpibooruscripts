@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Tantabus Vote Migrator
-// @version      0.0.1
+// @version      0.0.2
 // @description  Copies votes from one booru to another
 // @author       stsyn
 
@@ -156,7 +156,7 @@
     let queue;
     for (let id of ids) {
       const newId = await findPic(id);
-      if (newId !== undefined) {
+      if (newId != undefined) {
         imgsToDoStuff.push(newId);
       }
       await queue;
