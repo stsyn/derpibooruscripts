@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Tantabus Vote Migrator
-// @version      0.1.0
+// @version      0.1.2
 // @description  Copies votes from one booru to another
 // @author       stsyn
 
@@ -110,13 +110,11 @@
     })();
 
     do {
-      const response = await GM.fetch(getOriginSearchUrl({ key, extender: largeExtender, page }));
+      const [response] = await Promise.all([GM.fetch(getOriginSearchUrl({ key, extender: largeExtender, page })), pause(200)]);
       const data = await response.json();
-      if (!total) {
-        writeLog(`Retrieving ${data.total} of ${kind}...`);
-      }
       total = data.total;
       collected = collected.concat(data.images);
+      writeLog(`Retrieving ${collected.length}/${data.total} of ${kind}...`);
       if (data.images.length === 0) {
         break;
       }
@@ -143,7 +141,7 @@
         ...imgs.map((id) => ['a', { target: '_blank', href: `https://tantabus.ai/${id}` }, id]),
       ]]);
 
-      return null;
+      return [null];
     }
 
     if (data.total === 0) {
@@ -152,12 +150,17 @@
         ['a', { target: '_blank', href: `https://derpibooru.org/${id}` }, id],
       ]]);
 
-      return null;
+      return [null];
     }
 
-    cache.set(id, imgs[0]);
+    const interactions = data.interactions.map(({ interaction_type, value }) => {
+      if (interaction_type === 'faved') return 'faves';
+      if (interaction_type === 'voted' && value === 'up') return 'upvotes';
+      if (interaction_type === 'hidden') return 'hidden';
+    });
+    cache.set(id, [imgs[0], interactions]);
 
-    return imgs[0];
+    return [imgs[0], interactions];
   }
 
   async function vote(id, handler, kind) {
@@ -180,13 +183,18 @@
     let imgsToDoStuff = [];
     let queue;
     for (let id of ids) {
-      const newId = await findPic(id);
-      if (newId != undefined) {
-        imgsToDoStuff.push(newId);
-      }
+      const [[newId, interactions]] = await Promise.all([findPic(id), pause(100)]);
       if (newId == undefined) {
         continue;
       }
+      if (interactions?.includes(kind)) {
+        writeLog(['span', [
+          ['a', { target: '_blank', href: `https://tantabus.ai/${id}` }, id],
+          ` is interacted that way already`,
+        ]]);
+        continue;
+      }
+      imgsToDoStuff.push(newId);
       await queue;
       queue = Promise.all([vote(newId, handler, kind), pause(1000)]);
     }
