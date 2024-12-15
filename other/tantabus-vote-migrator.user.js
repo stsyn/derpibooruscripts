@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Tantabus Vote Migrator
-// @version      0.2.0
+// @version      0.3.0
 // @description  Copies votes from one booru to another
 // @author       stsyn, feat. Cloppershy
 
@@ -20,6 +20,8 @@
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/ui/Inputs.js
 
 // @grant        GM.xmlHttpRequest
+// @grant        GM.setValue
+// @grant        GM.getValue
 // @run-at       document-idle
 // ==/UserScript==
 
@@ -73,7 +75,7 @@
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  async function fetchAll(extender, kind, from, to) {
+  async function fetchAll(extender, kind, { from, to, sameSite } = {}) {
     let total = 0;
     let collected = [];
     let page = 1;
@@ -94,7 +96,7 @@
     })();
 
     do {
-      const [response] = await Promise.all([GM.fetch(getOriginSearchUrl({ key, extender: largeExtender, page })), pause(200)]);
+      const [response] = await Promise.all([(sameSite ? fetch : GM.fetch)(getOriginSearchUrl({ key, extender: largeExtender, page })), pause(200)]);
       const data = await response.json();
       total = data.total;
       collected = collected.concat(data.images);
@@ -113,7 +115,7 @@
       return cache.get(id);
     }
 
-    const [response] = await Promise.all([GM.fetch(getTargetSearchUrl({ key: targetKey, id })), pause(250)]);
+    const [response] = await Promise.all([fetch(getTargetSearchUrl({ key: targetKey, id })), pause(250)]);
     const data = await response.json();
     const imgs = data.images.map(image => image.id);
 
@@ -194,22 +196,6 @@
     writeLog(`Processed ${voted} ${kind} out of ${ids.length} (${alreadyVoted} already voted, ${notFound} not found)`);
   }
 
-  async function start(ignore, { from, to }) {
-    writeLog(`Do NOT close this window/tab!`);
-    writeLog(`Process started, do not interact with either of derpibooru or tantabus!`);
-    let queue;
-    for (let kind in handlers) {
-      if (ignore.includes(kind)) continue;
-      const handler = handlers[kind];
-      const images = await fetchAll(handler.extender, kind, from, to);
-      writeLog(`Everything from ${kind} fetched, gathering matches, be patient...`);
-      await queue;
-      queue = interactWithEverything(images, handler, kind);
-    }
-    await queue;
-    writeLog(`Done.`);
-  }
-
   function render() {
     let input, input2, input3, inputFrom, inputTo;
 
@@ -230,12 +216,102 @@
           key = input.value.trim();
           targetKey = input2.value.trim();
           inProgress = true;
-          start(ignore, { from: parseInt(inputFrom.value), to: parseInt(inputTo.value) });
+
+          writeLog(`Do NOT close this window/tab!`);
+          writeLog(`Process started, do not interact with either of derpibooru or tantabus!`);
+          let queue;
+          for (let kind in handlers) {
+            if (ignore.includes(kind)) continue;
+            const handler = handlers[kind];
+            const images = await fetchAll(handler.extender, kind, { from: parseInt(inputFrom.value), to: parseInt(inputTo.value) });
+            writeLog(`Everything from ${kind} fetched, gathering matches, be patient...`);
+            await queue;
+            queue = interactWithEverything(images, handler, kind);
+          }
+          await queue;
+          writeLog(`Done.`);
         } }, 'Process'],
       ]],
 
       ['', { _cast: (elem) => log = elem }],
     ];
   }
+
+  function renderFrom() {
+    let input;
+
+    return [
+      [YDB_api.UI.block, [
+        'Import votes from derpibooru',
+        [YDB_api.UI.input, { type: 'password', _cast: (e) => input = e, label: 'API key from origin site (derpibooru)', name: 'derpiKey' }],
+        [YDB_api.UI.button, { onclick: async() => {
+          if (inProgress || !input.value) {
+            return
+          }
+
+          key = input.value.trim();
+          inProgress = true;
+
+          writeLog(`Do NOT close this window/tab!`);
+          writeLog(`Importing process started.`);
+          let images = {};
+          for (let kind in handlers) {
+            const handler = handlers[kind];
+            images[kind] = await fetchAll(handler.extender, kind, { sameSite: true });
+            writeLog(`Everything from ${kind} fetched.`);
+          }
+          GM.setValue('__db-ttb-vote-data', JSON.stringify(images));
+          writeLog(`Done.`);
+        } }, 'Process'],
+      ]],
+
+      ['', { _cast: (elem) => log = elem }],
+    ];
+  }
+
+  async function renderTo() {
+    let input2, input3;
+
+    if (!await GM.getValue('__db-ttb-vote-data')) {
+      return ['Import from derpi not found'];
+    }
+
+    return [
+      [YDB_api.UI.block, [
+        'Write votes from derpibooru',
+        [YDB_api.UI.input, { type: 'password', _cast: (e) => input2 = e, label: 'API key from target site (tantabus)', name: 'tantabusKey' }],
+        [YDB_api.UI.input, { type: 'text', _cast: (e) => input3 = e, label: 'Skip up to "faves, upvotes, hidden"' }],
+        [YDB_api.UI.button, { onclick: async() => {
+          if (inProgress || !input2.value) {
+            return
+          }
+
+          const ignore = (input3.value || '').split(',').map(v => v.toLowerCase().trim());
+          targetKey = input2.value.trim();
+          inProgress = true;
+
+          writeLog(`Do NOT close this window/tab!`);
+          writeLog(`Writing process started, do not interact with tantabus!`);
+          let queue;
+          let images = JSON.parse(await GM.getValue('__db-ttb-vote-data', '{}'));
+          for (let kind in handlers) {
+            if (ignore.includes(kind)) continue;
+            const handler = handlers[kind];
+            writeLog(`Everything from ${kind} fetched, gathering matches, be patient...`);
+            await queue;
+            queue = interactWithEverything(images[kind], handler, kind);
+          }
+          await queue;
+          writeLog(`Done.`);
+        } }, 'Process'],
+      ]],
+
+      ['', { _cast: (elem) => log = elem }],
+    ];
+  }
+
+
   YDB_api.pages.add('migrate-votes', render);
+  YDB_api.pages.add('migrate-votes-from', renderFrom);
+  renderTo().then(data => YDB_api.pages.add('migrate-votes-to', () => data));
 })();
