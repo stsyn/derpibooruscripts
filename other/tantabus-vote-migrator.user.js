@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Tantabus Vote Migrator
-// @version      0.1.2
+// @version      0.2.0
 // @description  Copies votes from one booru to another
-// @author       stsyn
+// @author       stsyn, feat. Cloppershy
 
 // @match        *://*/*
 
@@ -45,16 +45,19 @@
 
   const handlers = {
     'faves': {
-      selector: '.interaction--fave',
       extender: '%2Cmy%3Afaves',
+      action: '/images/{id}/fave',
+      body: {},
     },
     'upvotes': {
-      selector: '.interaction--upvote',
       extender: '%2Cmy%3Aupvotes',
+      action: '/images/{id}/vote',
+      body: {up:true},
     },
     'hidden': {
-      selector: '.interaction--hide',
       extender: '%2Cmy%3Ahidden',
+      action: '/images/{id}/hide',
+      body: {},
     },
   }
 
@@ -68,25 +71,6 @@
 
   async function pause(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  async function waitForUrl(url) {
-    nearest.location.href = url;
-
-    return new Promise((resolve) => {
-      let tries = 0;
-      const interval = setInterval(() => {
-        if (url === nearest.location.href.split('#')[0] && ["complete", "interactive"].includes(nearest.document.readyState)) {
-          clearInterval(interval);
-          resolve();
-        }
-
-        tries++;
-        if (tries % 5 === 4) {
-          nearest.location.href = url;
-        }
-      }, 200);
-    })
   }
 
   async function fetchAll(extender, kind, from, to) {
@@ -129,7 +113,7 @@
       return cache.get(id);
     }
 
-    const response = await GM.fetch(getTargetSearchUrl({ key: targetKey, id }));
+    const [response] = await Promise.all([GM.fetch(getTargetSearchUrl({ key: targetKey, id })), pause(250)]);
     const data = await response.json();
     const imgs = data.images.map(image => image.id);
 
@@ -137,11 +121,11 @@
       writeLog(['span', [
         `!!! Several pics (${data.total}) matched the same `,
         ['a', { target: '_blank', href: `https://derpibooru.org/${id}` }, id],
-        ':',
-        ...imgs.map((id) => ['a', { target: '_blank', href: `https://tantabus.ai/${id}` }, id]),
+        ': ',
+        ...imgs.flatMap((id) => [['a', { target: '_blank', href: `https://tantabus.ai/${id}` }, id], ', ']).slice(0, -1),
       ]]);
 
-      return [null];
+      return [null, []];
     }
 
     if (data.total === 0) {
@@ -150,7 +134,7 @@
         ['a', { target: '_blank', href: `https://derpibooru.org/${id}` }, id],
       ]]);
 
-      return [null];
+      return [null, []];
     }
 
     const interactions = data.interactions.map(({ interaction_type, value }) => {
@@ -163,48 +147,56 @@
     return [imgs[0], interactions];
   }
 
-  async function vote(id, handler, kind) {
-    await waitForUrl(getImageUrl({ id }));
-    const element = nearest.document.querySelector(handler.selector);
-    if (element.classList.contains('active')) {
-      return writeLog(['span', [
-        ['a', { target: '_blank', href: `https://tantabus.ai/${id}` }, id],
-        ` is interacted that way already`,
-      ]]);
-    }
-
-    element.click();
-    do {
-      await pause(10);
-    } while(!element.classList.contains('active'));
+  async function vote(id, handler, kind, oldId) {
+      try {
+          const response = await fetchJson('POST', handler.action.replace('{id}', id), handler.body);
+          if (response.status !== 200) {
+              throw new Error(`${response.status}`);
+          }
+          const cacheItem = cache.get(oldId);
+          cacheItem?.[1]?.push(kind);
+          if (kind === 'faves') cacheItem?.[1]?.push('upvotes');
+      } catch (e) {
+          writeLog(['span', [
+            ['a', { target: '_blank', href: `https://tantabus.ai/${id}` }, id],
+            ` ERROR! ${e}`,
+          ]]);
+          await pause(5000);
+      }
   }
 
   async function interactWithEverything(ids, handler, kind) {
-    let imgsToDoStuff = [];
-    let queue;
+    let voted = 0;
+    let alreadyVoted = 0;
+    let notFound = 0;
+
+    const logProcess = () => writeLog(`${kind}: ${((voted + alreadyVoted + notFound) / ids.length * 100).toFixed(1)}% ${voted}/${ids.length - alreadyVoted - notFound} (${alreadyVoted} already voted, ${notFound} not found)`);
+
     for (let id of ids) {
-      const [[newId, interactions]] = await Promise.all([findPic(id), pause(100)]);
+      const [newId, interactions] = await findPic(id);
       if (newId == undefined) {
+        notFound++;
         continue;
       }
       if (interactions?.includes(kind)) {
-        writeLog(['span', [
-          ['a', { target: '_blank', href: `https://tantabus.ai/${id}` }, id],
-          ` is interacted that way already`,
-        ]]);
+        alreadyVoted++;
+        if (alreadyVoted % 10 === 0) {
+          logProcess();
+        }
         continue;
       }
-      imgsToDoStuff.push(newId);
-      await queue;
-      queue = Promise.all([vote(newId, handler, kind), pause(1000)]);
+      await Promise.all([vote(newId, handler, kind, id), pause(250)]);
+      voted++;
+      if (voted % 10 === 0) {
+          logProcess();
+      }
     }
-    writeLog(`Processed ${imgsToDoStuff.length} of ${ids.length} from ${kind}`);
+    writeLog(`Processed ${voted} ${kind} out of ${ids.length} (${alreadyVoted} already voted, ${notFound} not found)`);
   }
 
   async function start(ignore, { from, to }) {
-    writeLog(`Do NOT close the window which have just opened right now!`);
+    writeLog(`Do NOT close this window/tab!`);
     writeLog(`Process started, do not interact with either of derpibooru or tantabus!`);
-    nearest = window.open(getImageUrl({ id: 3 }), '_blank', 'location=yes,height=400,width=520,scrollbars=yes,status=yes');
     let queue;
     for (let kind in handlers) {
       if (ignore.includes(kind)) continue;
@@ -235,8 +227,8 @@
           }
 
           const ignore = (input3.value || '').split(',').map(v => v.toLowerCase().trim());
-          key = input.value;
-          targetKey = input2.value;
+          key = input.value.trim();
+          targetKey = input2.value.trim();
           inProgress = true;
           start(ignore, { from: parseInt(inputFrom.value), to: parseInt(inputTo.value) });
         } }, 'Process'],
