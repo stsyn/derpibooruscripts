@@ -1,6 +1,6 @@
 // ==UserScriptLib==
 // @name         YourBooru:Settings
-// @version      0.9.36L
+// @version      0.9.37L
 // @description  Global library script for YourBooru script family
 // @grant        unsafeWindow
 // @grant        GM_addStyle
@@ -13,7 +13,7 @@ const _YDB_S_OuterScope = {};
 
 (function() {
   let win = (typeof unsafeWindow == 'undefined' ? window : unsafeWindow);
-  if (/(www\.|)(derpi|trixie)booru\.org/.test(location.hostname) && (win.self === win.top)) {
+  if ((win.self === win.top)) {
 
   //https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
   if (typeof addElem == 'undefined') function addElem(e,l,n){return n.appendChild(InfernoAddElem(e,l,[]))}
@@ -22,7 +22,7 @@ const _YDB_S_OuterScope = {};
 
   const getDonateLink = () => '';
   const scriptId = 'settings';
-  const internalVersion = '0.9.35LUW';
+  const internalVersion = '0.9.37LUW';
   const version = GM_info.script.version;
   let settings;
   const features = {
