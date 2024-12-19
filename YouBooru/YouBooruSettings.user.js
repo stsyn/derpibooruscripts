@@ -2,19 +2,22 @@
 // @name         YourBooru:Settings
 // @namespace    http://tampermonkey.net/
 
-// @include      /http[s]*:\/\/(www\.|philomena\.|)(trixie|derpi)booru.org\/.*/
-// @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/adverts\/.*/
-// @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*\.json.*/
+// @match        *://*/*
+
+// @exclude      *://*/api*/json/*
+// @exclude      *://*/adverts/*
 
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/SettingsData0.js
 // @require      https://github.com/LZMA-JS/LZMA-JS/raw/master/src/lzma_worker-min.js
-// /require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/libs/DerpibooruCSRFPatch.lib.js
 
 // @downloadURL  https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
-// @version      0.9.36
+// @updateURL    https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/YouBooruSettings.user.js
+
+// @version      0.9.37
 // @description  Global settings script for YourBooru script family
 // @author       stsyn
+
 // @grant        unsafeWindow
 // @grant        GM_addStyle
 // @grant        GM_getValue
@@ -26,7 +29,7 @@
   'use strict';
 
   const scriptId = 'settings';
-  const internalVersion = '0.9.34';
+  const internalVersion = '0.9.37';
   try {if (unsafeWindow._YDB_public.settings[scriptId]) return;}
   catch(e){}
   const version = GM_info.script.version;
