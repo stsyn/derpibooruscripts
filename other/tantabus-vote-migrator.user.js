@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Tantabus Vote Migrator
-// @version      0.3.1
+// @version      0.3.2
 // @description  Copies votes from one booru to another
 // @author       stsyn, feat. Cloppershy
 
@@ -38,12 +38,14 @@
   .replace('{extender}', extender)
   .replace('{page}', page);
 
+  const hostname = location.hostname;
+
   const getTargetSearchUrl = ({ id, key }) =>
-  'https://tantabus.ai/api/v1/json/search/images?q=derpibooru+import%2C+source_url%3Ahttps%3A%2F%2Fderpibooru.org%2Fimages%2F{id}&hidden=1&key={key}&per_page=50&filter_id=2'
+  `https://${hostname}/api/v1/json/search/images?q=derpibooru+import%2C+source_url%3Ahttps%3A%2F%2Fderpibooru.org%2Fimages%2F{id}&hidden=1&key={key}&per_page=50&filter_id=2`
   .replace('{key}', key)
   .replace('{id}', id);
 
-  const getImageUrl = ({ id }) => 'https://tantabus.ai/{id}'
+  const getImageUrl = ({ id }) => `https://${hostname}/{id}`
   .replace('{id}', id);
 
   const handlers = {
@@ -125,7 +127,7 @@
         `!!! Several pics (${data.total}) matched the same `,
         ['a', { target: '_blank', href: `https://derpibooru.org/${id}` }, id],
         ': ',
-        ...imgs.flatMap((id) => [['a', { target: '_blank', href: `https://tantabus.ai/${id}` }, id], ', ']).slice(0, -1),
+        ...imgs.flatMap((id) => [['a', { target: '_blank', href: `https://${hostname}/${id}` }, id], ', ']).slice(0, -1),
       ]]);
 
       return [null, []];
@@ -161,7 +163,7 @@
           if (kind === 'faves') cacheItem?.[1]?.push('upvotes');
       } catch (e) {
           writeLog(['span', [
-            ['a', { target: '_blank', href: `https://tantabus.ai/${id}` }, id],
+            ['a', { target: '_blank', href: `https://${hostname}/${id}` }, id],
             ` ERROR! ${e}`,
           ]]);
           await pause(5000);
