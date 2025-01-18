@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Tantabus Vote Migrator
-// @version      0.3.2
-// @description  Copies votes from one booru to another
+// @name         Vote Migrator
+// @version      0.4.0
+// @description  Copies votes from one booru to another (filename is legacy)
 // @author       stsyn, feat. Cloppershy
 
 // @match        *://*/*
@@ -30,37 +30,56 @@
   'use strict';
   let inProgress = false;
   let key, targetKey, log, nearest;
+  let importPattern, exportPattern, everythingFilterId;
   let cache = new Map();
 
-  const getOriginSearchUrl = ({ key, extender, page }) =>
-  'https://derpibooru.org/api/v1/json/search/images?q=ai+content{extender}&hidden=1&key={key}&per_page=50&page={page}&filter_id=56027'
-  .replace('{key}', key)
-  .replace('{extender}', extender)
-  .replace('{page}', page);
+  const everythingFilter = {
+    'derpibooru.org': '56027',
+    'trixiebooru.org': '56027',
+    'tantabus.ai': '2',
+    'twibooru.org': '2',
+    'ponybooru.org': '2', // not actual everything
+    'ponerpics.org': '2',
+    'manebooru.art': '2',
+  }
+  const getOriginSearchUrl = ({ key, extender, page }) => [
+    'search/images',
+    {
+      q: `${importPattern}${extender}`,
+      hidden: 1,
+      key,
+      per_page: 50,
+      page,
+      filter_id: everythingFilterId,
+    }
+  ];
+  const getTargetSearchUrl = ({ key, id, page }) => [
+    'search/images',
+    {
+      q: exportPattern.replace('{id}', id),
+      hidden: 1,
+      key,
+      per_page: 50,
+      filter_id: everythingFilterId,
+    }
+  ];
 
-  const hostname = location.hostname;
-
-  const getTargetSearchUrl = ({ id, key }) =>
-  `https://${hostname}/api/v1/json/search/images?q=derpibooru+import%2C+source_url%3Ahttps%3A%2F%2Fderpibooru.org%2Fimages%2F{id}&hidden=1&key={key}&per_page=50&filter_id=2`
-  .replace('{key}', key)
-  .replace('{id}', id);
-
-  const getImageUrl = ({ id }) => `https://${hostname}/{id}`
+  const getImageUrl = ({ id }) => `https://${location.host}/{id}`
   .replace('{id}', id);
 
   const handlers = {
     'faves': {
-      extender: '%2Cmy%3Afaves',
+      extender: ',my:faves',
       action: '/images/{id}/fave',
       body: {},
     },
     'upvotes': {
-      extender: '%2Cmy%3Aupvotes',
+      extender: ',my:upvotes',
       action: '/images/{id}/vote',
       body: {up:true},
     },
     'hidden': {
-      extender: '%2Cmy%3Ahidden',
+      extender: ',my:hidden',
       action: '/images/{id}/hide',
       body: {},
     },
@@ -99,8 +118,7 @@
     })();
 
     do {
-      const [response] = await Promise.all([(sameSite ? fetch : GM.fetch)(getOriginSearchUrl({ key, extender: largeExtender, page })), pause(200)]);
-      const data = await response.json();
+      const [data] = await Promise.all([YDB_api.fetchGetJson(...getOriginSearchUrl({ key, extender: largeExtender, page })), pause(200)]);
       total = data.total;
       collected = collected.concat(data.images);
       writeLog(`Retrieving ${collected.length}/${data.total} of ${kind}...`);
@@ -118,8 +136,7 @@
       return cache.get(id);
     }
 
-    const [response] = await Promise.all([fetch(getTargetSearchUrl({ key: targetKey, id })), pause(250)]);
-    const data = await response.json();
+    const [data] = await Promise.all([YDB_api.fetchGetJson(...getTargetSearchUrl({ key: targetKey, id })), pause(250)]);
     const imgs = data.images.map(image => image.id);
 
     if (data.total > 1) {
@@ -127,7 +144,7 @@
         `!!! Several pics (${data.total}) matched the same `,
         ['a', { target: '_blank', href: `https://derpibooru.org/${id}` }, id],
         ': ',
-        ...imgs.flatMap((id) => [['a', { target: '_blank', href: `https://${hostname}/${id}` }, id], ', ']).slice(0, -1),
+        ...imgs.flatMap((id) => [['a', { target: '_blank', href: `https://tantabus.ai/${id}` }, id], ', ']).slice(0, -1),
       ]]);
 
       return [null, []];
@@ -163,7 +180,7 @@
           if (kind === 'faves') cacheItem?.[1]?.push('upvotes');
       } catch (e) {
           writeLog(['span', [
-            ['a', { target: '_blank', href: `https://${hostname}/${id}` }, id],
+            ['a', { target: '_blank', href: `https://tantabus.ai/${id}` }, id],
             ` ERROR! ${e}`,
           ]]);
           await pause(5000);
@@ -199,58 +216,28 @@
     writeLog(`Processed ${voted} ${kind} out of ${ids.length} (${alreadyVoted} already voted, ${notFound} not found)`);
   }
 
-  function render() {
-    let input, input2, input3, inputFrom, inputTo;
-
-    return [
-      [YDB_api.UI.block, [
-        'Import votes from derpibooru',
-        [YDB_api.UI.input, { type: 'password', _cast: (e) => input = e, label: 'API key from origin site (derpibooru)', name: 'derpiKey' }],
-        [YDB_api.UI.input, { type: 'password', _cast: (e) => input2 = e, label: 'API key from target site (tantabus)', name: 'tantabusKey' }],
-        [YDB_api.UI.input, { type: 'text', _cast: (e) => input3 = e, label: 'Skip up to "faves, upvotes, hidden"' }],
-        [YDB_api.UI.input, { type: 'number', _cast: (e) => inputFrom = e, label: 'From derpi image id (smaller one) - omit if unneeded', name: 'from' }],
-        [YDB_api.UI.input, { type: 'number', _cast: (e) => inputTo = e, label: 'To derpi image id (larger one) - omit if unneeded', name: 'to' }],
-        [YDB_api.UI.button, { onclick: async() => {
-          if (inProgress || !input.value || !input2.value) {
-            return
-          }
-
-          const ignore = (input3.value || '').split(',').map(v => v.toLowerCase().trim());
-          key = input.value.trim();
-          targetKey = input2.value.trim();
-          inProgress = true;
-
-          writeLog(`Do NOT close this window/tab!`);
-          writeLog(`Process started, do not interact with either of derpibooru or tantabus!`);
-          let queue;
-          for (let kind in handlers) {
-            if (ignore.includes(kind)) continue;
-            const handler = handlers[kind];
-            const images = await fetchAll(handler.extender, kind, { from: parseInt(inputFrom.value), to: parseInt(inputTo.value) });
-            writeLog(`Everything from ${kind} fetched, gathering matches, be patient...`);
-            await queue;
-            queue = interactWithEverything(images, handler, kind);
-          }
-          await queue;
-          writeLog(`Done.`);
-        } }, 'Process'],
-      ]],
-
-      ['', { _cast: (elem) => log = elem }],
-    ];
-  }
-
   function renderFrom() {
-    let input;
+    let input, patternInput, filterInput;
 
     return [
       [YDB_api.UI.block, [
-        'Import votes from derpibooru',
-        [YDB_api.UI.input, { type: 'password', _cast: (e) => input = e, label: 'API key from origin site (derpibooru)', name: 'derpiKey' }],
+        'Generate voting data (will override already saved)',
+        [YDB_api.UI.input, { type: 'password', _cast: (e) => input = e, label: 'API key from this site', name: 'derpiKey' }],
+        [YDB_api.UI.input, { type: 'text', _cast: (e) => patternInput = e, label: 'Search pattern', name: 'pattern', fullWidth: true, value: 'ai generated' }],
+        [YDB_api.UI.input, {
+          type: 'number',
+          _cast: (e) => filterInput = e,
+          label: 'Everything filter id (number in filter url on this site – default is usually fine, but ponybooru doesn\'t have public Everything filter)',
+          name: 'filterId',
+          value: everythingFilter[location.host] ?? 2,
+        }],
         [YDB_api.UI.button, { onclick: async() => {
-          if (inProgress || !input.value) {
+          if (inProgress || !input.value || !patternInput.value || !filterInput.value) {
             return
           }
+
+          importPattern = patternInput.value.trim();
+          everythingFilterId = filterInput.value;
 
           key = input.value.trim();
           inProgress = true;
@@ -265,6 +252,7 @@
           }
           GM.setValue('__db-ttb-vote-data', JSON.stringify(images));
           writeLog(`Done.`);
+          writeLog([YDB_api.UI.input, { type: 'text', label: 'Raw import result (if you need it for some reason)', value: JSON.stringify(images) }])
         } }, 'Process'],
       ]],
 
@@ -273,34 +261,60 @@
   }
 
   async function renderTo() {
-    let input2, input3;
-
-    if (!await GM.getValue('__db-ttb-vote-data')) {
-      return ['Import from derpi not found'];
-    }
+    let input2, input3, patternInput, dataInput, filterInput;
 
     return [
       [YDB_api.UI.block, [
-        'Write votes from derpibooru',
-        [YDB_api.UI.input, { type: 'password', _cast: (e) => input2 = e, label: 'API key from target site (tantabus)', name: 'tantabusKey' }],
+        'Apply imported votes',
+        [YDB_api.UI.input, { type: 'password', _cast: (e) => input2 = e, label: 'API key from this site', name: 'tantabusKey' }],
+        [YDB_api.UI.input, {
+          type: 'text',
+          _cast: (e) => patternInput = e,
+          label: 'Matching pattern (have to use "{id}" to insert image id in search)',
+          name: 'pattern',
+          fullWidth: true,
+          value: 'derpibooru import, source_url:https://derpibooru.org/images/{id}'
+        }],
+        [YDB_api.UI.input, {
+          type: 'number',
+          _cast: (e) => filterInput = e,
+          label: 'Everything filter id (number in filter url on this site – default is usually fine, but ponybooru doesn\'t have public Everything filter)',
+          name: 'filterId',
+          value: everythingFilter[location.host] ?? 2,
+        }],
         [YDB_api.UI.input, { type: 'text', _cast: (e) => input3 = e, label: 'Skip up to "faves, upvotes, hidden"' }],
+        [YDB_api.UI.input, { type: 'text', _cast: (e) => dataInput = e, label: 'Manual import data (skip if you don\'t know what it is for)' }],
         [YDB_api.UI.button, { onclick: async() => {
-          if (inProgress || !input2.value) {
+          if (inProgress || !input2.value || !patternInput.value.includes('{id}') || !filterInput.value) {
             return
           }
 
+          exportPattern = patternInput.value.trim();
+          everythingFilterId = filterInput.value;
           const ignore = (input3.value || '').split(',').map(v => v.toLowerCase().trim());
           targetKey = input2.value.trim();
           inProgress = true;
+          const content = dataInput.value || await GM.getValue('__db-ttb-vote-data', '');
+          if (!content) {
+            writeLog(`Import data missing`);
+            return;
+          }
+
+          let images;
+          try {
+            images = JSON.parse(content);
+            writeLog(`Ready to import faves:${images.faves.length}, upvotes:${images.upvotes.length}, hidden:${images.hidden.length}`);
+          } catch(e) {
+            writeLog(`Import data wrong format`);
+          }
 
           writeLog(`Do NOT close this window/tab!`);
           writeLog(`Writing process started, do not interact with tantabus!`);
           let queue;
-          let images = JSON.parse(await GM.getValue('__db-ttb-vote-data', '{}'));
           for (let kind in handlers) {
-            if (ignore.includes(kind)) continue;
+            if (ignore.includes(kind) || !images[kind]) continue;
             const handler = handlers[kind];
-            writeLog(`Everything from ${kind} fetched, gathering matches, be patient...`);
+            writeLog(`Working with ${kind}, be patient...`);
             await queue;
             queue = interactWithEverything(images[kind], handler, kind);
           }
@@ -314,7 +328,6 @@
   }
 
 
-  YDB_api.pages.add('migrate-votes', render);
   YDB_api.pages.add('migrate-votes-from', renderFrom);
   renderTo().then(data => YDB_api.pages.add('migrate-votes-to', () => data));
 })();
