@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Vote Migrator
-// @version      0.4.0
+// @version      0.4.1
 // @description  Copies votes from one booru to another (filename is legacy)
 // @author       stsyn, feat. Cloppershy
 
@@ -56,7 +56,7 @@
   const getTargetSearchUrl = ({ key, id, page }) => [
     'search/images',
     {
-      q: exportPattern.replace('{id}', id),
+      q: exportPattern.replace(/\{id\}/g, id),
       hidden: 1,
       key,
       per_page: 50,
