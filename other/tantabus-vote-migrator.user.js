@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Vote Migrator
-// @version      0.4.1
+// @version      0.4.2
 // @description  Copies votes from one booru to another (filename is legacy)
 // @author       stsyn, feat. Cloppershy
 
@@ -51,6 +51,7 @@
       per_page: 50,
       page,
       filter_id: everythingFilterId,
+      del: 1,
     }
   ];
   const getTargetSearchUrl = ({ key, id, page }) => [
