@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          YDB Tag Score Statistics
-// @version       0.1.3
+// @version       0.1.4
 // @author        stsyn
 
 // @match         *://*/*
@@ -39,7 +39,7 @@ async function pause(ms) {
 (function() {
   'use strict';
   // const scores = [-150, -100, -75, -50, -25, -10, -5, 0, 5, 10, 15, 20, 25, 50, 75, 100, 125, 150, 200, 300, 400, 500, 600, 800, 1000, 1250, 1500, 1750, 2000, 2500, 3000, 3500, 4000];
-  const scores = [1, 2, 3, 4, 5, 6, 8, 10, 15, 20, 25, 50, 75, 100, 125, 150, 200, 300, 400, 500, 600, 800, 1000, 1250, 1500, 1750, 2000, 2500, 3000, 3500, 4000];
+  const scores = [0, 10, 50, 100, 200, 300, 500, 750, 1000, 2000, 3000];
 
   const formData = {};
   const elements = {};
@@ -96,7 +96,7 @@ async function pause(ms) {
     async function fetchAndWrite(currentScoreId, grandTotal, tagName, search) {
       const [data] = await Promise.all([YDB_api.searchImages(
         '(' + search + '), score.gte:' + formData.scores[currentScoreId],
-        { key: apiKey, sf: 'score', sd: 'asc', filter_id: formData.filterId, del: 1 }
+        { key: apiKey, sf: 'score', sd: 'asc', filter_id: formData.filterId }
       ), pause(750)]);
 
       let offset = 0;
@@ -152,7 +152,7 @@ async function pause(ms) {
 
       const data = await YDB_api.searchImages(
         search,
-        { key: apiKey, sf: 'score', sd: 'asc', filter_id: formData.filterId, del: 1 }
+        { key: apiKey, sf: 'score', sd: 'asc', filter_id: formData.filterId }
       );
 
       if (data.total > 0) {
