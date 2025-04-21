@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          YDB Tag Score Statistics
-// @version       0.1.2
+// @version       0.1.3
 // @author        stsyn
 
 // @match         *://*/*
@@ -31,6 +31,11 @@ var createElement = createElement || (() => {throw '"// @require https://github.
 var wrapElement = wrapElement || (() => {throw '"// @require https://github.com/stsyn/createElement/raw/master/min/es5.js" broken'});
 var clearElement = clearElement || (() => {throw '"// @require https://github.com/stsyn/createElement/raw/master/min/es5.js" broken'});
 var fillElement = fillElement || (() => {throw '"// @require https://github.com/stsyn/createElement/raw/master/min/es5.js" broken'});
+
+async function pause(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 (function() {
   'use strict';
   // const scores = [-150, -100, -75, -50, -25, -10, -5, 0, 5, 10, 15, 20, 25, 50, 75, 100, 125, 150, 200, 300, 400, 500, 600, 800, 1000, 1250, 1500, 1750, 2000, 2500, 3000, 3500, 4000];
@@ -89,28 +94,22 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
     }
 
     async function fetchAndWrite(currentScoreId, grandTotal, tagName, search) {
-      const data = await YDB_api.searchImages(
+      const [data] = await Promise.all([YDB_api.searchImages(
         '(' + search + '), score.gte:' + formData.scores[currentScoreId],
-        { key: apiKey, sf: 'score', sd: 'asc', filter_id: formData.filterId }
-      );
+        { key: apiKey, sf: 'score', sd: 'asc', filter_id: formData.filterId, del: 1 }
+      ), pause(750)]);
 
       let offset = 0;
       const base = Math.min(50, data.total);
       let previousFit = base;
-      let drawnOnce = false;
 
       while (currentScoreId + offset <= formData.scores.length) {
-        if (offset > 0) {
-          drawnOnce = true;
-          draw(currentScoreId + offset - 1, data.total - base + previousFit, grandTotal);
-        }
-        if (currentScoreId + offset + 1 === formData.scores.length) {
-          break;
-        }
+        draw(currentScoreId + offset, data.total - base + previousFit, grandTotal);
+        offset++;
+
         const fit = data.images.filter(image => image.score >= formData.scores[currentScoreId + offset]);
         if (fit.length > 0) {
           previousFit = fit.length;
-          offset++;
         } else break;
       }
 
@@ -119,6 +118,8 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
           detailedFill(data, currentScoreId + offset, grandTotal);
         } else if (currentScoreId + offset < formData.scores.length) {
           await fetchAndWrite(currentScoreId + offset, grandTotal, tagName, search);
+        } else {
+          endIt(currentScoreId + offset);
         }
       } else {
         endIt(currentScoreId + offset);
@@ -151,7 +152,7 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
 
       const data = await YDB_api.searchImages(
         search,
-        { key: apiKey, sf: 'score', sd: 'asc', filter_id: formData.filterId }
+        { key: apiKey, sf: 'score', sd: 'asc', filter_id: formData.filterId, del: 1 }
       );
 
       if (data.total > 0) {
