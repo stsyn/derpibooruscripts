@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         YDB:Feeds
-// @version      0.5.45
+// @version      0.6.1
 // @description  Feedz
 // @author       stsyn
 // @namespace    http://derpibooru.org
 
-// @include      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*/
-// @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/adverts\/.*/
-// @exclude      /http[s]*:\/\/(www\.|)(trixie|derpi)booru.org\/.*\.json.*/
+// @match        *://*/*
+
+// @exclude      *://*/api*/json/*
+// @exclude      *://*/adverts/*
 
 // @require      https://github.com/stsyn/createElement/raw/master/min/es5.js
 // @require      https://github.com/stsyn/derpibooruscripts/raw/master/YouBooru/lib.js
@@ -25,6 +26,9 @@
 // ==/UserScript==
 
 var createElement = createElement || (() => {throw '"// @require https://github.com/stsyn/createElement/raw/master/min/es5.js" broken'});
+const FEAT_FLAGS = {
+  new_grid_layout: !!getComputedStyle(document.documentElement).getPropertyValue('--media-small-container-width'),
+};
 
 (function() {
   'use strict';
@@ -33,8 +37,15 @@ var createElement = createElement || (() => {throw '"// @require https://github.
 
   let privated = false;
   const feedCSS = `
-    ._ydb_feedloading {display:none}
-    ._ydb_feedshadow .block__content {opacity:0.5}
+    ._ydb_row_resizable .media-box__content {
+      padding-top: 0;
+    }
+    ._ydb_feedloading {
+      display:none;
+    }
+    ._ydb_feedshadow .block__content {
+      opacity:0.5;
+    }
     ._ydb_feedshadow ._ydb_feedloading {
       display:block !important;
       position:absolute;
@@ -630,7 +641,7 @@ var createElement = createElement || (() => {throw '"// @require https://github.
     let votes = feed.temp.querySelector('.js-datastore').getAttribute('data-interactions');
     if (votes) votes = JSON.parse(votes);
 
-    const pc = feed.temp.querySelector('.block__content.js-resizable-media-container');
+    const pc = feed.temp.querySelector('.block__content.js-resizable-media-container, .block__content.media-list');
     let aloff = false;
     if (unsafeWindow._YDB_public.funcs && unsafeWindow._YDB_public.funcs.tagSimpleParser) {
       let t = unsafeWindow._YDB_public.funcs.tagSimpleParser(feed.query);
@@ -809,8 +820,14 @@ var createElement = createElement || (() => {throw '"// @require https://github.
             ['span.hide-mobile', ' Reload feed']
           ]]
         ]],
-        f.container = createElement('div.block__content.js-resizable-media-container._ydb_row_resizable',
+        f.container = createElement('div.block__content._ydb_row_resizable',
           {
+            style: FEAT_FLAGS.new_grid_layout ? {
+              display: 'grid',
+              gridAutoFlow: 'column',
+              gridTemplateRows: f.double ? '1fr 1fr' : undefined,
+              gridGap: 'var(--padding-small)',
+            } : undefined,
             className: (f.double ? ' _ydb_row_double' : '')
           })
       ]));
