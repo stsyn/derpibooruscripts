@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YDB:Feeds
-// @version      0.6.1
+// @version      0.6.2
 // @description  Feedz
 // @author       stsyn
 // @namespace    http://derpibooru.org
@@ -63,6 +63,7 @@ const FEAT_FLAGS = {
     doNotRemoveControls:true,
     watchFeedLinkOnRightSide:true
   };
+  const getImagesPerRow = () => Math.floor(config.imagesInFeeds * (privated ? 1.2 : 1));
   let feedz = [
     {
       name:'Hot',
@@ -242,8 +243,8 @@ const FEAT_FLAGS = {
 
   function resizeEverything() {
     const ccont = document.getElementsByClassName('column-layout__main')[0];
-    const mwidth = parseInt(ccont.clientWidth) - 14;
-    const twidth = parseInt(mwidth/parseInt(config.imagesInFeeds*(privated?1.2:1))-8);
+    const mwidth = Math.floor(ccont.clientWidth) - 14;
+    const twidth = Math.floor(mwidth / getImagesPerRow() -8);
     const s = twidth+22+7;
     try {
       while (sizingCSSNode.cssRules.length > 0) sizingCSSNode.deleteRule(0);
@@ -380,7 +381,7 @@ const FEAT_FLAGS = {
           if (svd2.feeds !== undefined) config = svd2.feeds;
         }
         catch (e) {
-        debug('YDB:F','Cannot get configs', 1);
+          debug('YDB:F','Cannot get configs', 1);
         }
       }
       let c2 = {};
@@ -649,7 +650,7 @@ const FEAT_FLAGS = {
     }
     const c = feed.container;
     const mwidth = parseInt(cont.clientWidth) - 14;
-    const twidth = parseInt(mwidth/parseInt(config.imagesInFeeds*(privated?1.2:1))-8);
+    const twidth = Math.floor(mwidth/getImagesPerRow()-8);
 
     clearElement(c);
     c.parentNode.classList.remove('_ydb_feedshadow');
@@ -663,7 +664,7 @@ const FEAT_FLAGS = {
           }
         });
       }
-      for (let i = 0, l = parseInt(config.imagesInFeeds*(feed.double?2:1)*1.2); i < l; i++) {
+      for (let i = 0, l = Math.floor(config.imagesInFeeds*(feed.double?2:1)*1.2); i < l; i++) {
         const elem = pc.childNodes[0];
         if (!elem) break;
 
@@ -708,8 +709,7 @@ const FEAT_FLAGS = {
 
         const th = elem.querySelector('picture *[src], video *[src]');
         if (th) th.src = th.src.replace('/thumb_small.','/thumb.');
-        elem.classList.add('_ydb_resizible');
-        if (i >= parseInt(config.imagesInFeeds*(privated?1.2:1))*(feed.double?2:1)) elem.classList.add('hidden');
+        if (i >= getImagesPerRow() * (feed.double ? 2 : 1)) elem.classList.add('hidden');
         c.appendChild(pc.childNodes[0]);
         updateEvents(elem, feed);
       }
@@ -754,7 +754,7 @@ const FEAT_FLAGS = {
       for (let i=0, l = parseInt(config.imagesInFeeds*(feed.double?2:1)*1.2); i < l; i++) {
         const elem = c.childNodes[i];
         if (!elem) break;
-        if (i >= parseInt(config.imagesInFeeds*(privated?1.2:1)*(feed.double?2:1))) elem.classList.add('hidden');
+        if (i >= getImagesPerRow() * (feed.double?2:1)) elem.classList.add('hidden');
         else elem.classList.remove('hidden');
         applyEvents(elem, feed);
       }
@@ -801,7 +801,7 @@ const FEAT_FLAGS = {
       f.internalId = i;
       f.temp = createElement('div');
 
-      cont.appendChild(createElement('div.block', {style: {position: 'relative'}}, [
+      cont.appendChild(createElement('div.block', { style: { position: 'relative' } }, [
         ['div.block__header', [
           ['span.block__header__title', f.name],
           f.url = createElement('a', {style: {float: config.watchFeedLinkOnRightSide ? 'right' : ''}}, [
@@ -820,15 +820,17 @@ const FEAT_FLAGS = {
             ['span.hide-mobile', ' Reload feed']
           ]]
         ]],
-        f.container = createElement('div.block__content._ydb_row_resizable',
+        f.container = createElement('div.block__content.media-list',
           {
             style: FEAT_FLAGS.new_grid_layout ? {
               display: 'grid',
-              gridAutoFlow: 'column',
-              gridTemplateRows: f.double ? '1fr 1fr' : undefined,
+              gridTemplateColumns: `repeat(${getImagesPerRow()}, 1fr)`,
               gridGap: 'var(--padding-small)',
+              gridAutoRows: '1fr',
             } : undefined,
-            className: (f.double ? ' _ydb_row_double' : '')
+            className:
+              (!FEAT_FLAGS.new_grid_layout && f.double ? ' _ydb_row_double' : '') +
+              (FEAT_FLAGS.new_grid_layout ? '' : '_ydb_row_resizable')
           })
       ]));
 
