@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DеviantArt Fucker
-// @version      0.3.2
+// @version      0.4.0
 // @description  You can run but you can't hide
 // @match        http*://*.deviantart.com/*
 
@@ -21,6 +21,7 @@
   const PAD = '._3L-AU';
   const SPAD = '._2rl2o';
   const LINK = '._277bf._3VrNw';
+  const IMAGE_VIEW = '.TZM0T._2NIJr';
 
   function loadFileAsArrayBuffer(url) {
     return new Promise((resolve, reject) => {
@@ -89,14 +90,21 @@
     else GM_download(dataUrl, filename);
   }
 
+  function getMedia(data, extendedData) {
+    const baseUri = document.querySelector(IMAGE_VIEW).src.split('/v1')[0];
+    const medias = [
+        { ...data.media, originalFile: extendedData.originalFile },
+        ...extendedData.additionalMedia.map(v => ({ ...v.media, originalFile: extendedData.originalFile }))];
+    return medias.find(m => m.baseUri === baseUri);
+  }
 
-
-  async function unwatermark(d) {
-    const data = d.media;
-    const fullview = data.types.find(item => item.t === 'fullview');
+  async function unwatermark(data, extendedData) {
+    const media = getMedia(data, extendedData);
+    const fullview = media.types.find(item => item.t === 'fullview');
     const canvas = createElement('canvas', { width: fullview.w, height: fullview.h});
     const ctx = canvas.getContext('2d');
-    const url = () => data.baseUri + `/v1/fill/w_${width},h_${fullview.h},q_100,strp/${data.prettyName}-pre.png?token=` + data.token[0];
+    const baseUri = document.querySelector(IMAGE_VIEW).src.split('/v1')[0];
+    const url = () => baseUri + `/v1/fill/w_${width},h_${fullview.h},q_100,strp/${media.prettyName}-pre.png?token=` + media.token[0];
 
     let width = fullview.w;
     let height = fullview.h;
@@ -111,19 +119,20 @@
       width = fullview.w - offsetX * 2;
       height = fullview.h - offsetY * 2;
     }
-    spawn('Open unwatermarked (Ctrl+ = download)', (event) => openOrDownload(canvas.toDataURL(), data.prettyName + '-uw.png'));
+    spawn('Open unwatermarked (Ctrl+ = download)', (event) => openOrDownload(canvas.toDataURL(), media.prettyName + '-uw.png'));
   }
 
   async function combine(data, extendedData, elem) {
-    const fullview = data.media.types.find(item => item.t === 'fullview');
-    const targetWidth = extendedData.originalFile.width;
-    const targetHeight = extendedData.originalFile.height;
+    const media = getMedia(data, extendedData);
+    const fullview = media.types.find(item => item.t === 'fullview');
+    const targetWidth = media.originalFile.width;
+    const targetHeight = media.originalFile.height;
     const maxWidth = fullview.w;
     const maxHeight = fullview.h;
 
     let canvas = createElement('canvas', { width: targetWidth, height: targetHeight});
     let ctx = canvas.getContext('2d');
-    const url = (oX, oY, mW, mH) => data.media.baseUri + `/v1/crop/x_${oX},y_${oY},w_${mW},h_${mH},q_100/${data.media.prettyName}-pre.png?token=` + data.media.token[0];
+    const url = (oX, oY, mW, mH) => media.baseUri + `/v1/crop/x_${oX},y_${oY},w_${mW},h_${mH},q_100/${media.prettyName}-pre.png?token=` + media.token[0];
 
     const pngtoy = new PngToy();
     let warnings = 0;
@@ -190,7 +199,7 @@
 
     spawn(
       'Open full (Ctrl+ = download)' + (errors ? ' [Low quality detected!]' : (warnings ? ' [Unable to check quality]' : '')),
-      (event) => openOrDownload(canvas.toDataURL(), data.media.prettyName + '-full.png'),
+      (event) => openOrDownload(canvas.toDataURL(), media.prettyName + '-full.png'),
     );
   }
 
