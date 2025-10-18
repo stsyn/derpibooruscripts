@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DеviantArt Fucker
-// @version      0.4.0
+// @version      0.4.1
 // @description  You can run but you can't hide
 // @match        http*://*.deviantart.com/*
 
@@ -17,11 +17,11 @@
   'use strict';
   if (unsafeWindow.top !== unsafeWindow) return;
 
-  const RIGHTPAD = '._1VvVp._10lmT';
-  const PAD = '._3L-AU';
-  const SPAD = '._2rl2o';
-  const LINK = '._277bf._3VrNw';
-  const IMAGE_VIEW = '.TZM0T._2NIJr';
+  const RIGHTPAD = '.WbD1El.JH3hcf';
+  const PAD = '.mAoqfR';
+  const SPAD = '.Sqg093';
+  const LINK = '.WoO1qU.CizDJc';
+  const IMAGE_VIEW = '.lGws3n.imYPxe';
 
   function loadFileAsArrayBuffer(url) {
     return new Promise((resolve, reject) => {
@@ -94,7 +94,7 @@
     const baseUri = document.querySelector(IMAGE_VIEW).src.split('/v1')[0];
     const medias = [
         { ...data.media, originalFile: extendedData.originalFile },
-        ...extendedData.additionalMedia.map(v => ({ ...v.media, originalFile: extendedData.originalFile }))];
+        ...(extendedData.additionalMedia ?? []).map(v => ({ ...v.media, originalFile: extendedData.originalFile }))];
     return medias.find(m => m.baseUri === baseUri);
   }
 
