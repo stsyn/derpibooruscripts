@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.6.5
+// @version      0.6.6
 // @author       stsyn
 // @match        http*://*.deviantart.com/*
 // @match        https://derpibooru.org/images/new*
@@ -22,12 +22,12 @@
   if (window.top !== window) return;
   let mainDomain = 'www.derpibooru.org';
 
-  const RIGHTPAD = '._1VvVp._10lmT';
-  const PAD = '._3L-AU';
-  const SPAD = '._2rl2o';
-  const LINK = '._277bf._3VrNw';
+  const RIGHTPAD = '.WbD1El.JH3hcf';
+  const PAD = '.mAoqfR';
+  const SPAD = '.Sqg093';
+  const LINK = '.WoO1qU.CizDJc';
   const LOGIN = 'BoW0n';
-  const USERNAME = '._3UDQj ._4GWw7 .user-link._277bf[data-username]';
+  const USERNAME = '.fsAiOV .IotxLO .user-link.WoO1qU[data-username]';
 
   let l, width, height, artist;
 
@@ -130,9 +130,9 @@
       // token kek
       // All credit goes to @Ironchest337
       /*const payload = `{"sub":"urn:app:","iss":"urn:app:","obj":[[{"path":"\/f\/${data.baseUri.split(/\/[if]\//)[1].replace(/\//g, '\/')}"}]],"aud":["urn:service:file.download"]}`;
-      spawn(`${data.baseUri.replace("//images-wixmp", "//wixmp")}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.${btoa(payload).replace(/=/g, '')}.`, 'token kek');
+      spawn(`${data.baseUri.replace("//images-wixmp", "//wixmp")}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.${btoa(payload).replace(/=/g, '')}.`, 'token kek');*/
 
-      spawn(await fetchFullFromLoginScreen(), 'login leak');*/
+      spawn(await fetchFullFromLoginScreen(), 'login leak');
     })
 
     // if (document.querySelector('.dev-description .text.block')) text = '[bq]'+document.querySelector('.dev-description .text.block').innerText+'[/bq]';
