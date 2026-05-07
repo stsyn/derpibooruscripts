@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         DeviantArt ADUp Module
-// @version      0.6.6
+// @version      0.6.7
 // @author       stsyn
 // @match        http*://*.deviantart.com/*
 // @match        https://derpibooru.org/images/new*
@@ -22,12 +22,12 @@
   if (window.top !== window) return;
   let mainDomain = 'www.derpibooru.org';
 
-  const RIGHTPAD = '.WbD1El.JH3hcf';
-  const PAD = '.mAoqfR';
-  const SPAD = '.Sqg093';
-  const LINK = '.WoO1qU.CizDJc';
-  const LOGIN = 'BoW0n';
-  const USERNAME = '.fsAiOV .IotxLO .user-link.WoO1qU[data-username]';
+  const RIGHTPAD = '.HLH4WN.v2LHGI';
+  const PAD = '._ern3r';
+  const SPAD = '.fg3JQ_';
+  const LINK = '.PX4oKN.wl3JTQ';
+  const LOGIN = 'gl5OTb';
+  const USERNAME = '.BSGLEZ .g4q3kb .user-link.PX4oKN[data-username]';
 
   let l, width, height, artist;
 
