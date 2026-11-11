@@ -2,7 +2,7 @@
 
 // @name         Resurrected Derp Fullscreen
 // @namespace    https://derpibooru.org
-// @version      0.7.54
+// @version      0.7.55
 // @description  Make Fullscreen great again!
 // @author       stsyn
 
@@ -839,7 +839,7 @@ var fillElement = fillElement || (() => {throw '"// @require https://github.com/
       ]]
     ]);
 
-    document.querySelector('.image-metabar').childNodes[1].insertBefore(objects.mainButton, document.querySelector('.interaction--fave'));
+    document.querySelector('.image-metabar').childNodes[2].insertBefore(objects.mainButton, document.querySelector('.interaction--fave'));
     //document.querySelectorAll('#content>div')[3].appendChild(document.getElementById('image_options_area'));    console.log(document.getElementsByTagName('form'), document.getElementById('js-comment-form'));
     if (document.querySelector('form[action*="/comments"][method="post"]')) popUps.coms.appendChild(document.querySelector('form[action*="/comments"][method="post"]'));
     popUps.coms.appendChild(document.getElementById('comments'));
